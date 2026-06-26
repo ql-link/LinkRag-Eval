@@ -1,0 +1,36 @@
+# —— 密钥 / 配置真值(绝不进版本库)——
+.env
+.env.eval
+.env.*.local
+
+# —— 评测数据产物(语料 / golden / qrels / 跑分中间物)——
+.specs/
+golden/
+data/
+*.jsonl
+*.tsv
+runs/
+reports/*.html
+
+# —— Python ——
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# —— 本地数据库 ——
+*.db
+*.sqlite
+*.sqlite3
+
+# —— IDE / OS ——
+.idea/
+.vscode/
+.DS_Store

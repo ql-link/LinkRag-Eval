@@ -13,7 +13,7 @@
 | 项 | 取值 |
 | --- | --- |
 | 仓库名 | `LinkRag-Eval` |
-| Python 包 | `linkrag_eval`(`src/linkrag_eval/`,src-layout) |
+| Python 包 | `linkrag_eval`(**扁平布局**,包在仓库根 `linkrag_eval/`,不套 `src/`) |
 | CLI 入口 | `linkrag-eval`(`linkrag_eval.cli:main`) |
 | 生产依赖包 | `toLink-Rag`(import 名 `src.*`,通过 path/git 依赖装入) |
 | 环境变量前缀 | `EVAL_`(judge 用 `EVAL_JUDGE_*`) |
@@ -25,22 +25,25 @@
 
 ## 二、仓库目录结构(最终形态)
 
+> **为什么扁平布局(无 `src/`)**:toLink-Rag 把自身打成名为 `src` 的顶层包(`tool.hatch ... packages = ["src"]`),`import src.core` 才成立。若本项目用 src-layout,自己的 `src/` 目录会与装入的 rag `src` 包互相遮蔽。故包置于仓库根 `linkrag_eval/`。
+
 ```
 LinkRag-Eval/
 ├── AGENTS.md                  # 本文件(实现约定)
 ├── CLAUDE.md                  # → AGENTS.md 的 symlink(物理同一份)
 ├── README.md                  # 项目入口
-├── pyproject.toml             # src-layout;rag 钉版本依赖
+├── pyproject.toml             # 扁平布局;rag 作 path/git 依赖
+├── .importlinter              # 依赖边界机器规则(第三节)
 ├── .env.eval.example          # 配置样例(真值进 .env.eval,gitignored)
 ├── .gitignore
 ├── docs/
 │   ├── architecture/          # 权威架构(decoupling-plan / dependency-boundary / storage)
 │   ├── design/                # 迁移自源仓库的历史设计(monorepo 时期)
 │   └── reports/               # 历史评测实证发现
-├── src/linkrag_eval/
-│   ├── compute/               # 产物计算封装(唯一允许 import rag 的地方)
+├── linkrag_eval/
+│   ├── compute/               # 产物计算封装(rag_adapter 是唯一允许 import rag 的地方)
 │   ├── store/                 # 独立存储(EvalVectorStore + Postgres repo)
-│   ├── retrieval/             # 召回装配(注入 eval 前缀)
+│   ├── retrieval/             # 召回装配(recall_factory 注入 eval 前缀)
 │   ├── metrics/               # 指标(纯函数)
 │   ├── golden/                # golden 生成 / 编目
 │   ├── judge/                 # eval_llm(judge,已解耦)

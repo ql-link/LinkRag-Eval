@@ -1,0 +1,54 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "linkrag-eval"
+version = "0.1.0"
+description = "Standalone evaluation / quality-check harness for toLink-Rag"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "JiXu" }]
+
+# 注:生产计算依赖 toLink-Rag(顶层包名 `src`)。它不在 PyPI,通过本地可编辑安装接入:
+#   pip install -e /Users/jixu/Project/Agent/toLink-Rag   # 暴露 `src` 顶层包 + 拉齐其重依赖
+# 装好 rag 后再 `pip install -e .` 装本项目。CI/复现场景把 rag 钉到 git sha(见 AGENTS.md 七)。
+# 这里不把 tolink-rag 写进 dependencies,避免构建期解析失败;由安装步骤显式接入。
+dependencies = [
+    "qdrant-client>=1.9.0",
+    "SQLAlchemy[asyncio]>=2.0.0",
+    "asyncpg>=0.29.0",
+    "alembic>=1.13.0",
+    "httpx>=0.27.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.0.0",
+    "loguru>=0.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "import-linter>=2.0",
+    "ruff>=0.4.0",
+]
+
+[project.scripts]
+linkrag-eval = "linkrag_eval.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["linkrag_eval"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "integration: 需要真实 Qdrant/PG/embedder 的活栈测试(默认 CI 跳过)",
+    "contract: rag 纯函数契约测试(防签名漂移)",
+]

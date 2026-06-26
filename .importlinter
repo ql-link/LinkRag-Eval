@@ -1,0 +1,37 @@
+# 依赖边界机器规则(见 AGENTS.md 三)。跑:  lint-imports
+# 黑名单:linkrag_eval 任何模块都不得 import 这些生产模块。
+# "rag import 只许出现在 compute.rag_adapter / retrieval.recall_factory 两文件" 这条
+# 更细的规则由 tests/test_import_boundary.py(grep)强制——import-linter 不便表达"白名单豁免"。
+
+[importlinter]
+root_package = linkrag_eval
+include_external_packages = True
+
+[importlinter:contract:forbid-write-pipelines]
+name = 禁止 import 生产写 pipeline(算+写绑死)
+type = forbidden
+source_modules =
+    linkrag_eval
+forbidden_modules =
+    src.core.storage.es
+    src.core.storage.vector.sparse_indexing
+    src.core.storage.vector.pipeline
+
+[importlinter:contract:forbid-write-orm-and-config]
+name = 禁止 import 写 ORM / 生产配置 / 全栈解析 / MinIO
+type = forbidden
+source_modules =
+    linkrag_eval
+forbidden_modules =
+    src.models
+    src.config
+    src.core.pipeline.parse_task
+    src.services.storage
+
+[importlinter:contract:forbid-per-user-resolvers]
+name = 禁止 import per-user 配置解析(会拖回共享库)
+type = forbidden
+source_modules =
+    linkrag_eval
+forbidden_modules =
+    src.core.storage.chunks.repository

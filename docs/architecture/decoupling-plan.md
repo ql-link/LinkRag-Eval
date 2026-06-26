@@ -28,8 +28,10 @@
 
 ## 独立 repo 结构
 
+> 布局:**扁平**(包在仓库根 `linkrag_eval/`,不套 `src/`)。因 toLink-Rag 自身打成名为 `src` 的顶层包,src-layout 会与之遮蔽。详见 [AGENTS.md 二](../../AGENTS.md)。
+
 ```
-src/linkrag_eval/
+linkrag_eval/
 ├── compute/        protocol.py(新) rag_adapter.py(新,唯一碰 rag) bm25_stub.py(新)
 ├── store/          vector_store.py(新 EvalVectorStore) indexer.py(替换 live_indexer)
 │                   corpus_repo.py(新 PG) ingestor.py(改写去 ORM) models.py/engine.py(搬迁→PG)

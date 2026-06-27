@@ -9,6 +9,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import time
 from typing import TYPE_CHECKING
 
@@ -23,24 +24,33 @@ if TYPE_CHECKING:
 class RecallEvaluable:
     layer = Layer.RETRIEVAL
 
-    def __init__(self, pipeline: "RecallPipeline", top_k: int):
+    def __init__(self, pipeline: "RecallPipeline", top_k: int, *, retries: int = 5):
         self.pipeline = pipeline
         self.top_k = top_k
+        # per-query 重试:远端 Qdrant/embedding 网关偶发 502,某条 query 两路同时挂会抛
+        # RecallError;召回只读、幂等,退避重试即可,避免一条抖动毁掉整轮评测。
+        self.retries = retries
 
     async def run(
         self, sample: Sample, *, upstream: StageOutput | None = None
     ) -> StageOutput:
         from src.core.pipeline.recall.models import RecallRequest
 
-        started = time.monotonic()
-        resp = await self.pipeline.execute(
-            RecallRequest(
-                query=sample.query,
-                user_id=sample.user_id,
-                dataset_ids=sample.dataset_ids,
-                top_k=self.top_k,
-            )
+        req = RecallRequest(
+            query=sample.query,
+            user_id=sample.user_id,
+            dataset_ids=sample.dataset_ids,
+            top_k=self.top_k,
         )
+        started = time.monotonic()
+        for attempt in range(1, self.retries + 1):
+            try:
+                resp = await self.pipeline.execute(req)
+                break
+            except Exception:
+                if attempt == self.retries:
+                    raise
+                await asyncio.sleep(2 * attempt)
         wall_ms = int((time.monotonic() - started) * 1000)
         return self._to_stage_output(sample.query, resp, wall_ms)
 

@@ -17,11 +17,13 @@ PKG_ROOT = Path(__file__).resolve().parent.parent / "src" / "linkrag_eval"
 #   store/vector_store       —— Qdrant 原语(QdrantIndexStore/BucketRouter/point 模型)
 #   retrieval/recall_factory —— 召回装配(被测对象 RecallPipeline,指向 eval 前缀)
 #   retrieval/recall_adapter —— RecallRequest/Response marshalling(被测对象类型)
+#   cleaning/adapter         —— ParserFactory(CLEANING 层被测对象:清洗/解析那一步)
 ALLOWED_RAG_IMPORTERS = {
     "compute/rag_adapter.py",
     "store/vector_store.py",
     "retrieval/recall_factory.py",
     "retrieval/recall_adapter.py",
+    "cleaning/adapter.py",
 }
 
 _RAG_IMPORT = re.compile(r"^\s*(?:from\s+src[.\s]|import\s+src[.\s])", re.MULTILINE)

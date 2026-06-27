@@ -38,6 +38,15 @@ class EvalSettings(BaseSettings):
     embed_model: str = Field(default="text-embedding-v4")
     embed_dim: int = Field(default=1024)
 
+    # —— sparse 编码器(eval 自带 llm 模块,模型可选;生产无系统工厂故 eval 自持)——
+    sparse_provider: str = Field(default="ark")  # ark(doubao-vision/volcengine)| ...
+    sparse_base_url: str = Field(default="")  # 完整端点;缺省回退 provider 默认
+    sparse_api_key: str = Field(default="")
+    sparse_model: str = Field(default="")
+    sparse_top_k: int = Field(default=256)
+    sparse_min_weight: float = Field(default=0.0)
+    sparse_timeout_ms: int = Field(default=60000)
+
     # —— 路由常量(非真实用户,仅 bucket 分区)——
     user_id: int = Field(default=990001)
 

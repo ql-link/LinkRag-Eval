@@ -43,6 +43,15 @@ class RagProductComputer:
         chunking_engine_factory: Any | None = None,
         tokenizer_factory: Any | None = None,
     ) -> None:
+        # 缺省装配 eval 自带的 config 驱动 sparse 编码器(生产无系统工厂)。
+        if sparse_encoder is None:
+            from linkrag_eval.llm.sparse_client import build_sparse_encoder
+
+            try:
+                sparse_encoder = build_sparse_encoder()
+            except Exception:
+                # 未配置 EVAL_SPARSE_* 时不在构造期失败;compute_sparse 调用时再报清晰错误。
+                sparse_encoder = None
         self._sparse_encoder = sparse_encoder
         self._dense_factory = dense_pipeline_factory or _default_dense_pipeline
         self._chunker_factory = chunking_engine_factory or _default_chunking_engine

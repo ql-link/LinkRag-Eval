@@ -35,6 +35,18 @@ class RenderedRef:
     pdf_backend: str | None = None  # 仅 PDF
 
 
+def parse_rendered(path: Path, fmt: str, pdf_backend: str | None = None) -> str:
+    """用生产 ``ParserFactory`` 把一个渲染件清洗/解析回文本(被测对象的统一接缝)。
+
+    CLEANING 层与 Track B 合成灌库都需要"渲染件→文本"这一步;收在本(已白名单)文件里,
+    其余模块经注入复用,无需各自 import rag。
+    """
+    from src.core.parser import ParserFactory
+
+    kwargs = {"backend": pdf_backend} if fmt == "pdf" and pdf_backend else {}
+    return ParserFactory.get_parser(fmt, **kwargs).parse(path)
+
+
 class CleaningEvaluable:
     """layer=CLEANING。一次 run = 取一个渲染件清洗回 md,计清洗时间。
 
@@ -48,21 +60,17 @@ class CleaningEvaluable:
         self.stability_runs = max(1, stability_runs)
 
     async def run(self, rendered: RenderedRef, *, upstream: StageOutput | None = None) -> StageOutput:
-        from src.core.parser import ParserFactory
-
         md_ref = Path(rendered.md_ref_path).read_text(encoding="utf-8")
         source = Path(rendered.rendered_path)
-        kwargs = {"backend": rendered.pdf_backend} if rendered.fmt == "pdf" and rendered.pdf_backend else {}
 
         produced = ""
         repeats: list[str] = []
         ok = True
         t0 = perf_counter()
         try:
-            parser = ParserFactory.get_parser(rendered.fmt, **kwargs)
-            produced = parser.parse(source)
+            produced = parse_rendered(source, rendered.fmt, rendered.pdf_backend)
             for _ in range(self.stability_runs - 1):
-                repeats.append(ParserFactory.get_parser(rendered.fmt, **kwargs).parse(source))
+                repeats.append(parse_rendered(source, rendered.fmt, rendered.pdf_backend))
         except Exception:  # 清洗异常 → ok=False,桶内仍计入(不静默丢样本)
             ok = False
         elapsed_ms = int((perf_counter() - t0) * 1000)

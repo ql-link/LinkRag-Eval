@@ -7,9 +7,15 @@
 root_package = linkrag_eval
 include_external_packages = True
 
+# allow_indirect_imports:只查 linkrag_eval **直接** import 黑名单模块。
+# 不查间接——因为调 rag 白名单纯函数(如 create_chunk_embedding_pipeline)时,rag 内部
+# 会用自己的 src.config,那是 rag 的事,不算 eval 违规。"直接 import 只许两文件" 由
+# tests/test_import_boundary.py(grep)兜。
+
 [importlinter:contract:forbid-write-pipelines]
 name = 禁止 import 生产写 pipeline(算+写绑死)
 type = forbidden
+allow_indirect_imports = True
 source_modules =
     linkrag_eval
 forbidden_modules =
@@ -20,6 +26,7 @@ forbidden_modules =
 [importlinter:contract:forbid-write-orm-and-config]
 name = 禁止 import 写 ORM / 生产配置 / 全栈解析 / MinIO
 type = forbidden
+allow_indirect_imports = True
 source_modules =
     linkrag_eval
 forbidden_modules =
@@ -31,6 +38,7 @@ forbidden_modules =
 [importlinter:contract:forbid-per-user-resolvers]
 name = 禁止 import per-user 配置解析(会拖回共享库)
 type = forbidden
+allow_indirect_imports = True
 source_modules =
     linkrag_eval
 forbidden_modules =

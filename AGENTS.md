@@ -13,7 +13,7 @@
 | 项 | 取值 |
 | --- | --- |
 | 仓库名 | `LinkRag-Eval` |
-| Python 包 | `linkrag_eval`(**扁平布局**,包在仓库根 `linkrag_eval/`,不套 `src/`) |
+| Python 包 | `linkrag_eval`(**src-layout**,包在 `src/linkrag_eval/`;包名是 `linkrag_eval`,**不是** `src`) |
 | CLI 入口 | `linkrag-eval`(`linkrag_eval.cli:main`) |
 | 生产依赖包 | `toLink-Rag`(import 名 `src.*`,通过 path/git 依赖装入) |
 | 环境变量前缀 | `EVAL_`(judge 用 `EVAL_JUDGE_*`) |
@@ -25,14 +25,14 @@
 
 ## 二、仓库目录结构(最终形态)
 
-> **为什么扁平布局(无 `src/`)**:toLink-Rag 把自身打成名为 `src` 的顶层包(`tool.hatch ... packages = ["src"]`),`import src.core` 才成立。若本项目用 src-layout,自己的 `src/` 目录会与装入的 rag `src` 包互相遮蔽。故包置于仓库根 `linkrag_eval/`。
+> **为什么 src-layout 但包名不是 `src`**:src-layout 规范指"包放进 `src/` 文件夹",包名不变——`src/` 只是外层目录、本身不是包(无 `__init__.py`),import 仍是 `from linkrag_eval.x`。**包名绝不能叫 `src`**:toLink-Rag 自身打成名为 `src` 的顶层包(`import src.core`),若本项目包也叫 `src`,两个顶层 `src` 在 sys.path 互相遮蔽、无法同时 import,而 eval 必须 import rag。故采 src-layout + 包名 `linkrag_eval`。
 
 ```
 LinkRag-Eval/
 ├── AGENTS.md                  # 本文件(实现约定)
 ├── CLAUDE.md                  # → AGENTS.md 的 symlink(物理同一份)
 ├── README.md                  # 项目入口
-├── pyproject.toml             # 扁平布局;rag 作 path/git 依赖
+├── pyproject.toml             # src-layout(packages=["src/linkrag_eval"]);rag 作 path/git 依赖
 ├── .importlinter              # 依赖边界机器规则(第三节)
 ├── .env.eval.example          # 配置样例(真值进 .env.eval,gitignored)
 ├── .gitignore
@@ -40,7 +40,7 @@ LinkRag-Eval/
 │   ├── architecture/          # 权威架构(decoupling-plan / dependency-boundary / storage)
 │   ├── design/                # 迁移自源仓库的历史设计(monorepo 时期)
 │   └── reports/               # 历史评测实证发现
-├── linkrag_eval/
+├── src/linkrag_eval/          # ← src-layout:包在此,import 仍 `from linkrag_eval.x`
 │   ├── compute/               # 产物计算封装(rag_adapter 是唯一允许 import rag 的地方)
 │   ├── store/                 # 独立存储(EvalVectorStore + MySQL repo,独立库)
 │   ├── retrieval/             # 召回装配(recall_factory 注入 eval 前缀)
@@ -54,7 +54,7 @@ LinkRag-Eval/
 ├── tests/
 │   ├── unit/                  # 纯核心(注入 fake,零活栈)
 │   ├── contract/              # rag 纯函数契约测试(防签名漂移)
-│   └── integration/           # 真实活栈 smoke(连远端 Qdrant/PG)
+│   └── integration/           # 真实活栈 smoke(连远端 Qdrant/MySQL)
 └── scripts/                   # ingest / run / report 驱动脚本
 ```
 

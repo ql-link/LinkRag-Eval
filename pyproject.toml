@@ -41,7 +41,7 @@ dev = [
 linkrag-eval = "linkrag_eval.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["linkrag_eval"]
+packages = ["src/linkrag_eval"]
 
 [tool.ruff]
 line-length = 100

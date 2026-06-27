@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-PKG_ROOT = Path(__file__).resolve().parent.parent / "linkrag_eval"
+PKG_ROOT = Path(__file__).resolve().parent.parent / "src" / "linkrag_eval"
 
 # 允许 import toLink-Rag(src.*)的 adapter 文件(相对 PKG_ROOT),按关注点各一:
 #   compute/rag_adapter   —— 纯计算(chunk/dense/bm25)

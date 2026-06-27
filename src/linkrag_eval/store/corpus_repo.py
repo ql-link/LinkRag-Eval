@@ -12,6 +12,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Sequence
 
+from sqlalchemy import select
+
 from linkrag_eval.store.engine import get_eval_sessionmaker, init_eval_schema
 from linkrag_eval.store.models import EvalCorpusChunkDB, EvalDatasetDB
 
@@ -45,6 +47,23 @@ class EvalCorpusRepo:
     async def init_schema(self) -> None:
         """建表(仅本地/测试;生产用 alembic)。"""
         await init_eval_schema(self._url)
+
+    async def fetch_status(self, chunk_ids: list[str]) -> dict[str, str]:
+        """precheck 用:给一批 chunk_id,返回 ``{存在的 chunk_id: "ACTIVE"}``。
+
+        eval 语料无生命周期态,存在即视为 ACTIVE(满足 ``golden.precheck`` 的注入式 fetch_status)。
+        """
+        if not chunk_ids:
+            return {}
+        async with self._sm() as s:
+            rows = (
+                await s.execute(
+                    select(EvalCorpusChunkDB.chunk_id).where(
+                        EvalCorpusChunkDB.chunk_id.in_(chunk_ids)
+                    )
+                )
+            ).scalars().all()
+        return {cid: "ACTIVE" for cid in rows}
 
     async def register_dataset(
         self,

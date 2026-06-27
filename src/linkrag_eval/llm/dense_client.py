@@ -75,6 +75,14 @@ class OpenAIDenseEmbedder:
         [vec] = await self.aembed([text])
         return vec
 
+    async def aembed_query_detailed(self, text: str) -> tuple[list[float], None]:
+        """召回 facade 期望的 query 编码口径:返回 (向量, usage)。
+
+        生产 ``search_dense_chunks`` 调 ``embedding_pipeline.aembed_query_detailed``;eval 注入
+        本编码器当 resolver 结果,故需此方法。usage 不上报,返回 None。
+        """
+        return await self.aembed_query(text), None
+
     async def _embed_batch(self, batch: list[str]) -> list[list[float]]:
         data = await self._post({"model": self._model, "input": batch})
         rows = data.get("data") if isinstance(data, dict) else None

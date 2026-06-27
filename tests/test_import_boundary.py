@@ -12,14 +12,16 @@ from pathlib import Path
 
 PKG_ROOT = Path(__file__).resolve().parent.parent / "src" / "linkrag_eval"
 
-# 允许 import toLink-Rag(src.*)的 adapter 文件(相对 PKG_ROOT),按关注点各一:
-#   compute/rag_adapter   —— 纯计算(chunk/dense/bm25)
-#   retrieval/recall_factory —— 召回真链路(被测对象)
-#   store/vector_store     —— Qdrant 原语(QdrantIndexStore/BucketRouter/point 模型)
+# 允许 import toLink-Rag(src.*)的 adapter 文件(相对 PKG_ROOT),按关注点:
+#   compute/rag_adapter      —— 纯计算(chunk 切分 + bm25 分词)
+#   store/vector_store       —— Qdrant 原语(QdrantIndexStore/BucketRouter/point 模型)
+#   retrieval/recall_factory —— 召回装配(被测对象 RecallPipeline,指向 eval 前缀)
+#   retrieval/recall_adapter —— RecallRequest/Response marshalling(被测对象类型)
 ALLOWED_RAG_IMPORTERS = {
     "compute/rag_adapter.py",
-    "retrieval/recall_factory.py",
     "store/vector_store.py",
+    "retrieval/recall_factory.py",
+    "retrieval/recall_adapter.py",
 }
 
 _RAG_IMPORT = re.compile(r"^\s*(?:from\s+src[.\s]|import\s+src[.\s])", re.MULTILINE)

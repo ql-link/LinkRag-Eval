@@ -84,10 +84,11 @@ LinkRag-Eval/
 
 ### 收口原则
 
-- **rag 的 import 只允许出现在三个 adapter 文件**,按关注点各一:
+- **rag 的 import 只允许出现在这几个 adapter 文件**,按关注点:
   - `compute/rag_adapter.py` —— 纯计算(chunk 切分 + bm25 分词;dense/sparse 走 eval llm)
-  - `retrieval/recall_factory.py` —— 召回真链路(被测对象)
   - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/`BucketRouter`/point 模型)
+  - `retrieval/recall_factory.py` —— 召回装配(被测对象 `RecallPipeline`,指向 eval 前缀)
+  - `retrieval/recall_adapter.py` —— `RecallRequest`/`RecallResponse` marshalling(被测对象类型)
   其余模块依赖 `compute/protocol.py` 的抽象。
 - 新增对 rag 的任何 import,必须先问:这是纯计算 / 被测对象 / Qdrant 原语吗?能否走抽象?默认答案是"走抽象"。允许的 adapter 文件清单由 `tests/test_import_boundary.py` 强制。
 

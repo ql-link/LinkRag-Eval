@@ -25,10 +25,15 @@ async def run_ingest(
     corpus_repo: Any,
     catalog: dict[str, Any] | None = None,
     batch: int = 25,
+    retries: int = 4,
     limit: int | None = None,
     progress: Callable[[str], None] | None = None,
 ) -> int:
-    """读 manifest(success)+ collection → EvalPassage → 编目 + 分批灌库。返回写入 chunk 数。"""
+    """读 manifest(success)+ collection → EvalPassage → 编目 + 分批灌库。返回写入 chunk 数。
+
+    分批 + 批级重试(远端 Qdrant/embedding 偶发 502/限流;uuid5 幂等,重试与重跑均安全)。
+    """
+    import asyncio
     records = [r for r in load_manifest(manifest_path) if r.status == "success"]
     records.sort(key=lambda r: r.doc_id)
     corpus = read_tsv_collection(collection_path)
@@ -53,12 +58,28 @@ async def run_ingest(
         await corpus_repo.register_dataset(dataset_id, **catalog)
 
     total = 0
+    failed = 0
+    n_batches = (len(passages) + batch - 1) // batch
     for start in range(0, len(passages), batch):
         chunk = passages[start : start + batch]
-        got = await indexer.index_passages(dataset_id, chunk)
-        total += got
-        if progress:
-            progress(f"  批 {start // batch + 1}: +{got}(累计 {total}/{len(passages)})")
+        idx = start // batch + 1
+        for attempt in range(1, retries + 1):
+            try:
+                got = await indexer.index_passages(dataset_id, chunk)
+                total += got
+                if progress:
+                    progress(f"  批 {idx}/{n_batches}: +{got}(累计 {total}/{len(passages)})")
+                break
+            except Exception as exc:
+                if attempt == retries:
+                    failed += len(chunk)
+                    if progress:
+                        progress(f"  批 {idx}: 重试 {retries} 次仍失败,跳过 — "
+                                 f"{type(exc).__name__}: {str(exc)[:100]}")
+                    break
+                await asyncio.sleep(2 * attempt)
+    if failed and progress:
+        progress(f"注意:{failed} 条最终失败(uuid5 幂等,重跑本命令补齐)")
     return total
 
 

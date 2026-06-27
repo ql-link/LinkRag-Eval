@@ -65,6 +65,43 @@ class EvalCorpusRepo:
             ).scalars().all()
         return {cid: "ACTIVE" for cid in rows}
 
+    async def fetch_chunks_for_datasets(
+        self, dataset_ids: Sequence[int], *, min_content_chars: int = 0
+    ) -> list[CorpusChunkRow]:
+        """取若干 dataset 下的全部语料 chunk(按 chunk_id 定序),供采样器分层抽样。
+
+        eval 语料无生命周期态,落库即活;``min_content_chars`` 过滤过短 chunk(降"答不出"噪声)。
+        """
+        ids = list(dataset_ids)
+        if not ids:
+            return []
+        async with self._sm() as s:
+            rows = (
+                await s.execute(
+                    select(EvalCorpusChunkDB)
+                    .where(EvalCorpusChunkDB.dataset_id.in_(ids))
+                    .order_by(EvalCorpusChunkDB.chunk_id)
+                )
+            ).scalars().all()
+        out: list[CorpusChunkRow] = []
+        for r in rows:
+            if len((r.content or "").strip()) < min_content_chars:
+                continue
+            out.append(
+                CorpusChunkRow(
+                    chunk_id=r.chunk_id,
+                    dataset_id=r.dataset_id,
+                    doc_id=r.doc_id,
+                    content=r.content,
+                    content_hash=r.content_hash,
+                    source_passage_id=r.source_passage_id,
+                    ordinal=r.ordinal,
+                    char_len=r.char_len,
+                    token_len=r.token_len,
+                )
+            )
+        return out
+
     async def register_dataset(
         self,
         dataset_id: int,

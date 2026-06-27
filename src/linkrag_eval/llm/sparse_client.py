@@ -127,6 +127,88 @@ class ArkSparseEncoder:
             await self._client.aclose()
 
 
+class BgeM3HttpSparseEncoder:
+    """BGE-M3 HTTP 服务稀疏编码器(对齐生产 ``bge_m3_http`` provider 口径,无需 key)。
+
+    ``POST {endpoint}`` body ``{"texts":[...],"return_dense":false,"return_sparse":true}``,
+    响应 ``data["sparse"]`` 每条一个 ``{token_id: weight}``,经 :func:`normalize_lexical_weights`
+    清洗。批量一次请求(与 Ark 逐条不同)。这是生产系统级 sparse 实际所用,故 eval 对齐它最稳。
+    """
+
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        model: str = "BAAI/bge-m3",
+        top_k: int = 256,
+        min_weight: float = 0.0,
+        timeout_ms: int = 60000,
+        max_retries: int = 3,
+        http_client: httpx.AsyncClient | None = None,
+    ) -> None:
+        if not (base_url or "").strip():
+            raise SparseEncodeError("EVAL_SPARSE_BASE_URL 未配置(bge_m3_http 端点)。")
+        self._endpoint = base_url.rstrip("/")
+        self._model = model
+        self._top_k = top_k
+        self._min_weight = min_weight
+        self._timeout_ms = timeout_ms
+        self._max_retries = max_retries
+        self._client = http_client
+
+    @property
+    def model_name(self) -> str:
+        return self._model
+
+    async def aencode(self, texts: Sequence[str]) -> list[SparseVec]:
+        items = list(texts)
+        if not items:
+            return []
+        data = await self._post(
+            {"texts": items, "return_dense": False, "return_sparse": True}
+        )
+        sparse = data.get("sparse") if isinstance(data, dict) else None
+        if not isinstance(sparse, list) or len(sparse) != len(items):
+            raise SparseEncodeError(
+                f"bge_m3_http 响应 sparse 数量不符:got "
+                f"{len(sparse) if isinstance(sparse, list) else 'N/A'}, expected {len(items)}。"
+            )
+        return [
+            normalize_lexical_weights(w, top_k=self._top_k, min_weight=self._min_weight)
+            for w in sparse
+        ]
+
+    async def _post(self, payload: dict, attempt: int = 0) -> dict:
+        client = await self._get_client()
+        try:
+            resp = await client.post(self._endpoint, json=payload)
+        except (httpx.TimeoutException, httpx.ConnectError) as exc:
+            if attempt < self._max_retries:
+                await asyncio.sleep(2 * (attempt + 1))
+                return await self._post(payload, attempt + 1)
+            raise SparseEncodeError(f"bge_m3_http 连接失败:{type(exc).__name__}。") from exc
+        if resp.status_code >= 500:
+            if attempt < self._max_retries:
+                await asyncio.sleep(2 * (attempt + 1))
+                return await self._post(payload, attempt + 1)
+            raise SparseEncodeError(f"bge_m3_http 服务端错误 {resp.status_code}。")
+        if 400 <= resp.status_code < 500:
+            raise SparseEncodeError(f"bge_m3_http 客户端错误 {resp.status_code}:{resp.text[:200]!r}。")
+        try:
+            return resp.json()
+        except ValueError as exc:
+            raise SparseEncodeError("bge_m3_http 返回非 JSON。") from exc
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=httpx.Timeout(self._timeout_ms / 1000))
+        return self._client
+
+    async def aclose(self) -> None:
+        if self._client is not None and not self._client.is_closed:
+            await self._client.aclose()
+
+
 def build_sparse_encoder(settings=None):
     """按 EVAL_SPARSE_* 配置装配稀疏编码器。``provider`` 选 provider,模型/端点/key 全走配置。"""
     if settings is None:
@@ -143,4 +225,12 @@ def build_sparse_encoder(settings=None):
             min_weight=settings.sparse_min_weight,
             timeout_ms=settings.sparse_timeout_ms,
         )
-    raise SparseEncodeError(f"未知 sparse provider:{provider!r}(当前内置 'ark')。")
+    if provider in ("bge_m3_http", "bge_m3", "bgem3"):
+        return BgeM3HttpSparseEncoder(
+            base_url=settings.sparse_base_url,
+            model=settings.sparse_model or "BAAI/bge-m3",
+            top_k=settings.sparse_top_k,
+            min_weight=settings.sparse_min_weight,
+            timeout_ms=settings.sparse_timeout_ms,
+        )
+    raise SparseEncodeError(f"未知 sparse provider:{provider!r}(内置 'ark' / 'bge_m3_http')。")

@@ -20,10 +20,15 @@ from typing import Any
 
 
 class _EvalSparseQueryService:
-    """把 eval sparse 编码器适配成生产 facade 期望的 ``vectorize_query -> rag SparseVector``。"""
+    """把 eval sparse 编码器适配成生产 facade 期望的 sparse 服务:``vectorize_query`` + ``model_name``。"""
 
     def __init__(self, encoder: Any) -> None:
         self._enc = encoder
+
+    @property
+    def model_name(self) -> str:
+        """facade.search_sparse 读 ``service.model_name`` 上报。"""
+        return getattr(self._enc, "model_name", "eval_sparse")
 
     async def vectorize_query(self, query: str):
         from src.core.encoding.sparse.models import SparseVector

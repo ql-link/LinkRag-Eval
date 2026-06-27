@@ -59,6 +59,17 @@ class OpenAIDenseEmbedder:
     def dim(self) -> int:
         return self._dim
 
+    # —— 生产召回 facade 期望的属性形状(被当 resolved embedding_pipeline 用)——
+    @property
+    def embedding_model(self) -> str:
+        """facade.search_dense 读 ``embedding_pipeline.embedding_model`` 上报用量。"""
+        return self._model
+
+    @property
+    def embedder(self):
+        """facade 读 ``embedding_pipeline.embedder.provider_type``(getattr 容错);返回 self 即可。"""
+        return self
+
     async def aembed(self, texts: Sequence[str]) -> list[list[float]]:
         """批量编码,返回与输入同序、等长的向量列表(按 batch_size 分批)。"""
         items = list(texts)

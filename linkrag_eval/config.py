@@ -24,8 +24,13 @@ class EvalSettings(BaseSettings):
     qdrant_prefix: str = Field(default="eval_kb_bucket")
     qdrant_bucket_count: int = Field(default=16)
 
-    # —— eval 自持元数据/结果库(独立 Postgres)——
-    pg_dsn: str = Field(default="")
+    # —— eval 自持元数据/结果库(MySQL:同生产服务器、独立库 tolink_rag_eval_db)——
+    db_host: str = Field(default="127.0.0.1")
+    db_port: int = Field(default=3306)
+    db_user: str = Field(default="root")
+    db_password: str = Field(default="")
+    db_name: str = Field(default="tolink_rag_eval_db")
+    db_url: str = Field(default="")  # 完整 DSN 覆盖;否则由上面字段构建(mysql+aiomysql)
 
     # —— judge LLM(解耦,纯环境变量)——
     judge_base_url: str = Field(default="")
@@ -70,6 +75,18 @@ class EvalSettings(BaseSettings):
         if v not in allowed:
             raise ValueError(f"EVAL_BM25_MODE={v!r} 非法;应为 {sorted(allowed)} 之一。")
         return v
+
+    def mysql_dsn(self) -> str:
+        """eval 库异步 DSN(mysql+aiomysql)。``EVAL_DB_URL`` 覆盖优先,否则由字段构建。"""
+        if self.db_url:
+            return self.db_url
+        from urllib.parse import quote_plus
+
+        pwd = quote_plus(self.db_password)
+        return (
+            f"mysql+aiomysql://{self.db_user}:{pwd}@{self.db_host}:{self.db_port}"
+            f"/{self.db_name}?charset=utf8mb4"
+        )
 
 
 @lru_cache

@@ -1,7 +1,7 @@
 """灌库编排(``EvalVectorIndexer``)——取代源仓库 ``live_indexer.py``,是解耦承重墙本体。
 
 把 passage 经 ``ProductComputer`` 算出产物(dense / sparse / [bm25])→ ``EvalVectorStore`` 写
-eval 前缀 Qdrant → ``EvalCorpusRepo`` 落 Postgres。**不 import 任何生产写 pipeline / ORM**,
+eval 前缀 Qdrant → ``EvalCorpusRepo`` 落 MySQL 独立库。**不 import 任何生产写 pipeline / ORM**,
 全部经 compute/store 抽象;rag 仅在 rag_adapter / vector_store 两个 adapter 内被触碰。
 
 passage 语义:一个 passage 即一个 chunk(``ordinal`` 为 doc 内序号);需切分的 corpus 走另一条
@@ -50,7 +50,7 @@ class EvalVectorIndexer:
         self._run_id = run_id
 
     async def index_passages(self, dataset_id: int, passages: Sequence[EvalPassage]) -> int:
-        """算产物 → 写 Qdrant → 落 Postgres。返回写入 chunk 数。
+        """算产物 → 写 Qdrant → 落 MySQL。返回写入 chunk 数。
 
         失败上抛、不落库——避免"库里标已索引、实则没进 Qdrant"的静默假成功。
         """

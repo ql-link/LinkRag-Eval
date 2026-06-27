@@ -1,6 +1,6 @@
 # LinkRag-Eval 实现约定
 
-`LinkRag-Eval` 是从生产 RAG 仓库(toLink-Rag)剥离的**独立评测/质检项目**。它只通过"产物级纯函数"复用生产计算能力,自己负责入库、检索、算分,使用独立 Postgres + eval 独立前缀的 Qdrant collection。
+`LinkRag-Eval` 是从生产 RAG 仓库(toLink-Rag)剥离的**独立评测/质检项目**。它只通过"产物级纯函数"复用生产计算能力,自己负责入库、检索、算分,使用独立 MySQL 库 `tolink_rag_eval_db`(同生产服务器、库级隔离)+ eval 独立前缀的 Qdrant collection。
 
 本文件是 Agent / 开发者的**强制规范**。总方案见 [docs/architecture/decoupling-plan.md](docs/architecture/decoupling-plan.md);历史设计见 [docs/design/](docs/design/);实证报告见 [docs/reports/](docs/reports/)。
 
@@ -19,7 +19,7 @@
 | 环境变量前缀 | `EVAL_`(judge 用 `EVAL_JUDGE_*`) |
 | 配置文件 | `.env.eval`(gitignored,绝不进版本库) |
 | Qdrant 前缀 | 必须含 `eval`(如 `eval_kb_bucket`) |
-| Postgres 库 | eval 独立实例,DSN 经 `EVAL_PG_DSN` |
+| MySQL 库 | `tolink_rag_eval_db`(同生产服务器,`EVAL_DB_*` 配置,复用账号只换库名) |
 
 ---
 
@@ -42,7 +42,7 @@ LinkRag-Eval/
 │   └── reports/               # 历史评测实证发现
 ├── linkrag_eval/
 │   ├── compute/               # 产物计算封装(rag_adapter 是唯一允许 import rag 的地方)
-│   ├── store/                 # 独立存储(EvalVectorStore + Postgres repo)
+│   ├── store/                 # 独立存储(EvalVectorStore + MySQL repo,独立库)
 │   ├── retrieval/             # 召回装配(recall_factory 注入 eval 前缀)
 │   ├── metrics/               # 指标(纯函数)
 │   ├── golden/                # golden 生成 / 编目
@@ -124,10 +124,12 @@ class ProductComputer(Protocol):
 - **`chunk_id` 用 uuid5 确定性**:`uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{ordinal}")`。同输入恒等 → 冻结语料 re-ingest 不变 → qrels 不失效;dense/sparse/bm25 三路与 qrels 共用同一 id。
 - 写入侧 `compute_dense` 与召回侧 query embedding resolver **必须用同一系统 embedder**(硬约束,见方案风险 C)。
 
-### Postgres(eval 自持元数据/结果)
+### MySQL(eval 自持元数据/结果,独立库)
 
-- `EvalBase` 六表迁 PG:`eval_dataset` / `eval_corpus_chunk` / `eval_query` / `eval_qrel` / `eval_run` / `eval_metric_result`。
-- `_AutoPK` 改纯 `BigInteger`;枚举字段保持 `String + 注释`(改值不需 migration)。
+- **同生产 MySQL 服务器、独立库 `tolink_rag_eval_db`**(库级隔离,类比 Qdrant 前缀隔离);复用生产服务器/账号、只换库名,`EVAL_DB_*` 配置(`mysql+aiomysql`)。**只建 eval 库的表,绝不碰生产 `tolink_rag_db`。**
+- 建库(utf8mb4):`CREATE DATABASE IF NOT EXISTS tolink_rag_eval_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+- `EvalBase` 六表:`eval_dataset` / `eval_corpus_chunk` / `eval_query` / `eval_qrel` / `eval_run` / `eval_metric_result`。
+- `_AutoPK` 改纯 `BigInteger`(MySQL AUTO_INCREMENT);枚举字段保持 `String + 注释`(改值不需 migration);模型 dialect 无关(单测仍用 SQLite)。
 - 字段变更:`eval_corpus_chunk.es_indexed` → `bm25_indexed`;`eval_run` 增 `computer_fingerprint`。
 - Schema 演进唯一入口是 `alembic/`(eval 自己的迁移链,与生产 alembic 完全隔离)。
 
@@ -137,7 +139,7 @@ class ProductComputer(Protocol):
 
 - 所有运行时配置经 `linkrag_eval/config.py` 加载,**不 import `src.config`**。
 - 环境变量样例放 `.env.eval.example`;真值放 `.env.eval`(gitignored)。
-- 关键变量:`EVAL_QDRANT_HOST/PREFIX/BUCKET_COUNT`、`EVAL_PG_DSN`、`EVAL_JUDGE_BASE_URL/API_KEY/MODEL`、系统 embedder 端点。
+- 关键变量:`EVAL_QDRANT_HOST/PREFIX/BUCKET_COUNT`、`EVAL_DB_*`(MySQL 独立库)、`EVAL_SPARSE_*`、`EVAL_JUDGE_BASE_URL/API_KEY/MODEL`、系统 embedder 端点。
 - **`EVAL_USER_ID=990001` 是 routing/partition 常量,不是真实用户**;只用于 bucket 路由,不得据此查 `llm_user_config`。
 
 ---
@@ -167,7 +169,7 @@ class ProductComputer(Protocol):
 ## 九、安全与隔离纪律(不可妥协)
 
 - `api_key` 只写入本地 `.env.eval`(gitignored),**绝不打印到终端、绝不进版本库**。
-- 评测**只读**生产 DB(若需);**绝不写共享 MySQL**。索引状态记在 eval 自己的 Postgres。
+- 评测与生产同一 MySQL 服务器,但**只写 eval 独立库 `tolink_rag_eval_db`**;**绝不写生产库 `tolink_rag_db` 的任何表**(若需读生产数据,只读)。索引状态记在 eval 库。
 - `.env.eval`、`golden/`、`.specs/` 等含数据/密钥的产物 gitignored。
 - Qdrant 前缀护栏(第五节)是写串生产的最后一道防线,不得删除或绕过。
 

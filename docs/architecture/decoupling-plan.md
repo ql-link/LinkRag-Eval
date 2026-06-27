@@ -11,9 +11,9 @@
 - 评测与生产共享 Qdrant collection,**生产清库(剔 ES、迁 Qdrant named-dense、清 chunk)会波及评测数据**;
 - 评测被 per-user 模型配置(`llm_user_config`)拽回共享 MySQL。
 
-目标:质检独立成单独 git repo(`LinkRag-Eval`),只通过"产物级纯函数"复用生产计算能力,自己负责入库/检索/算分,使用独立 Postgres 库 + eval 独立 collection 前缀的 Qdrant。
+目标:质检独立成单独 git repo(`LinkRag-Eval`),只通过"产物级纯函数"复用生产计算能力,自己负责入库/检索/算分,使用独立 MySQL 库 `tolink_rag_eval_db` + eval 独立 collection 前缀的 Qdrant。
 
-**已确认决策**:① 对齐目标态 Qdrant 统一、无 ES;② 独立 repo + 把 toLink-Rag 作为库依赖 import;③ Qdrant 同 host、eval 独立 collection 前缀;④ 自持元数据/结果用独立 Postgres 实例。
+**已确认决策**:① 对齐目标态 Qdrant 统一、无 ES;② 独立 repo + 把 toLink-Rag 作为库依赖 import;③ Qdrant 同 host、eval 独立 collection 前缀;④ 自持元数据/结果用 **MySQL 同生产服务器、独立库 `tolink_rag_eval_db`**(库级隔离,复用账号只换库名;原定独立 Postgres 已改为 MySQL)。
 
 ## 生产已有的纯计算函数(eval 唯一应依赖的计算面)
 
@@ -50,7 +50,7 @@ linkrag_eval/
 
 **`EvalVectorStore`**:复用 `QdrantIndexStore`+`BucketRouter`(named dense/sparse/[bm25] schema 一致),用 eval 独立前缀实例化,绕开所有写 pipeline,自己用 `point_factory` 构点 upsert。**启动护栏**:前缀必须含 `eval`,否则抛错。chunk_id 沿用 uuid5 确定性。
 
-**`EvalCorpusRepo`(Postgres)**:`EvalBase` 6 表迁 PG,`_AutoPK` 改纯 `BigInteger`,枚举字段保持 `String`。`eval_corpus_chunk.es_indexed` 改名 `bm25_indexed`;`eval_run` 新增 `computer_fingerprint`。
+**`EvalCorpusRepo`(MySQL 独立库)**:`EvalBase` 6 表落 `tolink_rag_eval_db`(同生产服务器),`_AutoPK` 改纯 `BigInteger`,枚举字段保持 `String`。`eval_corpus_chunk.es_indexed` 改名 `bm25_indexed`;`eval_run` 新增 `computer_fingerprint`。
 
 **召回:复用生产 `RecallPipeline` 指向 eval collection**(融合/排序 RRF+rerank 正是被测对象,自持会排序漂移)。`build_eval_recall_pipeline` 用 `compose_vector_storage_facade` 注入 eval 前缀 store + **系统 embedder**(query 侧 resolver 也走系统,绕开 per-user→共享库)。
 
@@ -59,7 +59,7 @@ linkrag_eval/
 ## 分步迁移路径(每步可验证,基线 recall@10 ≈ 0.901)
 
 - **Step 0(承重墙,先做)**:`LiveEvalChunkIndexer` 换 `EvalVectorIndexer`(走 `EvalVectorStore`,不再 import 三个写 pipeline),仍用 SQLite。验证:固定数据集重灌→`recall@10` 仍 ≈0.901(±0.005)。
-- **Step 1**:SQLite→独立 Postgres,落 `EvalCorpusRepo`。验证:重灌进 PG,`recall@10` 不变,PG 行数==旧 SQLite。
+- **Step 1**:SQLite→MySQL 独立库 `tolink_rag_eval_db`,落 `EvalCorpusRepo`。验证:重灌进 MySQL,`recall@10` 不变,行数==旧 SQLite。
 - **Step 2**:抽 `ProductComputer` Protocol + `RagProductComputer`,收口散落 rag 直调,加契约测试。验证:`grep` 确认除 `rag_adapter.py`/`recall_factory.py` 外无 rag import;`recall@10` 不变。
 - **Step 3**:`build_eval_recall_pipeline` 系统 embedder + eval 前缀替换对 `get_recall_pipeline()` 单例的直接复用。验证:日志确认不再查 `llm_user_config`,`recall@10` 仍 ≈0.901。
 - **Step 4**:bm25 可插拔落地,P1 设 STUB。验证:三路重叠率符合 mode 预期。

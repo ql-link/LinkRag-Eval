@@ -1,12 +1,15 @@
-"""评测自持存储 ORM(独立 ``EvalBase``,Postgres)。
+"""评测自持存储 ORM(独立 ``EvalBase``,MySQL)。
 
 搬迁自源仓库 ``src/evaluation/store/models.py``,改动:
-- 后端定为 Postgres:自增代理键用纯 ``BigInteger``(PG identity),去掉 SQLite variant。
+- 后端定为 MySQL(同生产服务器、独立库 ``tolink_rag_eval_db``):自增代理键用纯
+  ``BigInteger``(MySQL AUTO_INCREMENT),去掉 SQLite variant。
 - ``eval_corpus_chunk.es_indexed`` → ``bm25_indexed``(对齐目标态无 ES、bm25 走 Qdrant)。
 - ``eval_run`` 新增 ``computer_fingerprint``(dense 模型 / sparse encoder / bm25 mode 指纹)。
 
-硬约束:独立 ``EvalBase``,不 import ``src.*``,零生产依赖。枚举值以 ``String`` + 注释承载
-(改值不需 migration),取值约束交给写入侧。schema 演进唯一入口是 alembic/。
+硬约束:独立 ``EvalBase``,不 import ``src.*``,零生产依赖;只建 eval 库的表,绝不碰生产
+``tolink_rag_db``。枚举值以 ``String`` + 注释承载(改值不需 migration)。模型 dialect 无关
+(单测仍用 SQLite 建表);MySQL 侧 utf8mb4 由库默认字符集 + 连接 ``charset=utf8mb4`` 保证。
+schema 演进唯一入口是 alembic/。
 """
 
 from __future__ import annotations

@@ -1,7 +1,14 @@
-"""评测自持库的异步引擎与建表入口(Postgres)。
+"""评测自持库的异步引擎与建表入口(MySQL)。
 
-后端:独立 Postgres 实例,DSN 取自 ``EVAL_PG_DSN``(经 :func:`linkrag_eval.config.get_settings`)。
-与生产解耦:独立引擎,不复用 ``src.database``,不读生产 ``Settings``。
+后端:MySQL,**与生产同一服务器、独立库 ``tolink_rag_eval_db``**(库级隔离,类比 Qdrant
+前缀隔离)。连接参数由 ``EVAL_DB_*`` 配置构建(``mysql+aiomysql``),复用生产服务器/账号、
+只换库名。与生产解耦:独立引擎,不复用 ``src.database``,不读生产 ``Settings``;只写 eval 库,
+**绝不碰生产 ``tolink_rag_db`` 的表**。
+
+库需先建好(utf8mb4)::
+
+    CREATE DATABASE IF NOT EXISTS tolink_rag_eval_db
+      DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 schema 演进权威入口是 alembic/(``EvalBase.metadata``)。:func:`init_eval_schema` 的
 ``create_all`` 仅供单测 / 本地快速起库——生产环境用 alembic upgrade。
@@ -22,18 +29,12 @@ from linkrag_eval.store.models import EvalBase
 
 
 def eval_database_url(url: str | None = None) -> str:
-    """评测库 URL:显式入参优先,否则取 ``EVAL_PG_DSN``。"""
+    """评测库 URL:显式入参优先(测试常传 sqlite),否则由 ``EVAL_DB_*`` 构建 MySQL DSN。"""
     if url:
         return url
     from linkrag_eval.config import get_settings
 
-    dsn = get_settings().pg_dsn
-    if not dsn:
-        raise RuntimeError(
-            "EVAL_PG_DSN 未配置;请在 .env.eval 设独立 Postgres DSN"
-            "(如 postgresql+asyncpg://user:pass@host:5432/linkrag_eval)。"
-        )
-    return dsn
+    return get_settings().mysql_dsn()
 
 
 @lru_cache(maxsize=4)

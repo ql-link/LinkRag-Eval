@@ -1,6 +1,6 @@
 """校验 EvalBase ORM 自洽:在内存 SQLite 上建表成功,关键字段到位。
 
-只验 ORM 定义合法(dialect 无关),不连真 Postgres。
+只验 ORM 定义合法(dialect 无关),不连真 MySQL。
 """
 
 from __future__ import annotations

@@ -26,7 +26,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"qdrant_host     = {s.qdrant_host}")
         print(f"qdrant_prefix   = {s.qdrant_prefix}")
         print(f"qdrant_buckets  = {s.qdrant_bucket_count}")
-        print(f"pg_dsn          = {'(已配置)' if s.pg_dsn else '(空)'}")
+        print(f"mysql           = {s.db_host}:{s.db_port}/{s.db_name}")
         print(f"judge_model     = {s.judge_model or '(空)'}  api_key={masked}")
         print(f"embed_model     = {s.embed_model}  dim={s.embed_dim}")
         print(f"bm25_mode       = {s.bm25_mode}")

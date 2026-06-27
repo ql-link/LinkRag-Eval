@@ -37,11 +37,13 @@ class EvalSettings(BaseSettings):
     judge_api_key: str = Field(default="")
     judge_model: str = Field(default="")
 
-    # —— 系统 embedder(dense 写入与召回 query 编码必须同一份)——
-    embed_base_url: str = Field(default="")
+    # —— dense embedder(eval 自带 llm 模块,模型可选;写入与召回 query 必用同一份)——
+    embed_base_url: str = Field(default="")  # OpenAI 兼容 base,自动补 /embeddings
     embed_api_key: str = Field(default="")
     embed_model: str = Field(default="text-embedding-v4")
     embed_dim: int = Field(default=1024)
+    embed_batch_size: int = Field(default=10)  # text-embedding-v4 单批上限 10
+    embed_timeout_ms: int = Field(default=60000)
 
     # —— sparse 编码器(eval 自带 llm 模块,模型可选;生产无系统工厂故 eval 自持)——
     sparse_provider: str = Field(default="ark")  # ark(doubao-vision/volcengine)| ...

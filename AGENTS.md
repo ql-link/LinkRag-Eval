@@ -68,7 +68,7 @@ LinkRag-Eval/
 
 | 类别 | 模块 |
 | --- | --- |
-| 纯计算 | `ChunkingEngine.aprocess`、`create_chunk_embedding_pipeline`/`aembed_chunks`、`SparseVectorService.vectorize_texts`、`RagFlowTokenizer.tokenize` |
+| 纯计算 | `ChunkingEngine.aprocess`(chunk 切分)、`RagFlowTokenizer.tokenize`(bm25 分词)。**dense/sparse 已移到 eval `llm/` 模块,不再经 rag** |
 | Qdrant 原语 | `QdrantIndexStore`、`BucketRouter`、`point_factory`、`qdrant.models`(复用 schema,自己装配 writer) |
 | 被测对象 | `RecallPipeline`、`Retriever`、`compose_vector_storage_facade`、`DenseRetriever`、`SparseRetriever`、`ParserFactory` |
 | 纯 dataclass | `recall.models.*`、`preprocessor.models.*`(ChunkWithTokens 等) |
@@ -85,7 +85,7 @@ LinkRag-Eval/
 ### 收口原则
 
 - **rag 的 import 只允许出现在三个 adapter 文件**,按关注点各一:
-  - `compute/rag_adapter.py` —— 纯计算(chunk/dense/bm25)
+  - `compute/rag_adapter.py` —— 纯计算(chunk 切分 + bm25 分词;dense/sparse 走 eval llm)
   - `retrieval/recall_factory.py` —— 召回真链路(被测对象)
   - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/`BucketRouter`/point 模型)
   其余模块依赖 `compute/protocol.py` 的抽象。
@@ -122,7 +122,7 @@ class ProductComputer(Protocol):
 - **护栏(强制)**:`EvalVectorStore` 构造时断言 collection 前缀含 `eval`,否则抛 `RuntimeError` 拒跑。防写串生产。
 - 复用 rag 的 `QdrantIndexStore` + `BucketRouter`,named vectors:`dense` / `sparse` /(预留)`bm25`。
 - **`chunk_id` 用 uuid5 确定性**:`uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{ordinal}")`。同输入恒等 → 冻结语料 re-ingest 不变 → qrels 不失效;dense/sparse/bm25 三路与 qrels 共用同一 id。
-- 写入侧 `compute_dense` 与召回侧 query embedding resolver **必须用同一系统 embedder**(硬约束,见方案风险 C)。
+- **dense/sparse 均由 eval `llm/` 模块承载**(config 驱动,`EVAL_EMBED_*` / `EVAL_SPARSE_*`,模型可选),不经 rag。写入侧 `compute_dense` 与召回侧 query 编码 **必须用同一 eval dense 编码器口径**(硬约束,见方案风险 C);否则 eval 内部向量空间不一致。
 
 ### MySQL(eval 自持元数据/结果,独立库)
 

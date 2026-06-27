@@ -57,6 +57,24 @@ class SparseEncoder(Protocol):
 
 
 @runtime_checkable
+class DenseEncoder(Protocol):
+    """稠密编码缝:文本 → 向量。dense 并入 eval llm 模块(与 sparse 统一),由 EVAL_EMBED_* 注入。
+
+    写入侧(compute_dense)与召回 query 侧共用本编码器同一口径,保证向量空间一致。
+    """
+
+    async def aembed(self, texts: Sequence[str]) -> list[list[float]]: ...
+
+    async def aembed_query(self, text: str) -> list[float]: ...
+
+    @property
+    def dim(self) -> int: ...
+
+    @property
+    def model_name(self) -> str: ...
+
+
+@runtime_checkable
 class ProductComputer(Protocol):
     """eval 唯一依赖的产物计算契约。默认实现 = RagProductComputer。"""
 

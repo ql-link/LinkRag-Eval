@@ -32,10 +32,13 @@ class EvalSettings(BaseSettings):
     db_name: str = Field(default="tolink_rag_eval_db")
     db_url: str = Field(default="")  # 完整 DSN 覆盖;否则由上面字段构建(mysql+aiomysql)
 
-    # —— judge LLM(解耦,纯环境变量)——
+    # —— judge LLM(测量仪器,解耦于生产解析链;base_url 为完整 chat completions 端点)——
     judge_base_url: str = Field(default="")
     judge_api_key: str = Field(default="")
     judge_model: str = Field(default="")
+    judge_timeout_s: float = Field(default=90.0)  # 推理模型偏慢
+    judge_max_retries: int = Field(default=6)  # 瞬时错误(429/5xx)退避重试
+    judge_concurrency: int = Field(default=6)  # mimo 端点限流偏低
 
     # —— dense embedder(eval 自带 llm 模块,模型可选;写入与召回 query 必用同一份)——
     embed_base_url: str = Field(default="")  # OpenAI 兼容 base,自动补 /embeddings

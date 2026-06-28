@@ -15,6 +15,22 @@
 | [docs/design/](docs/design/) | 历史设计(monorepo 时期,部分被解耦方案取代) |
 | [docs/reports/](docs/reports/) | 历史评测实证(语料规模、稀疏模型对比、标注可靠性等) |
 
+## 数据库初始化
+
+评测库 `tolink_rag_eval_db` 的 schema 演进唯一入口是 `alembic/`（`EvalBase.metadata`，与生产隔离）：
+
+```bash
+# 1. 建库(utf8mb4),复用生产服务器/账号、只换库名
+CREATE DATABASE IF NOT EXISTS tolink_rag_eval_db
+  DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+# 2. 建表(6 张 eval_* 表 + alembic_version)
+set -a; source .env.eval; set +a     # 提供 EVAL_DB_*
+alembic upgrade head                  # URL 由 env.py 从 EVAL_DB_* 构建(aiomysql→pymysql)
+```
+
+`init_eval_schema()`（`create_all`）仅供单测 / 本地快速起库。`0001` baseline 由 `EvalBase.metadata` 建全表，`alembic check` 保证 baseline 与 ORM 零 diff；后续字段变更走 `alembic revision --autogenerate`。
+
 ## 当前阶段
 
 仓库已初始化(master 分支),承载文档与约定。代码按 [迁移路径](docs/architecture/decoupling-plan.md#分步迁移路径每步可验证基线-recall10--0901) 推进:Step 0–4 先在源仓库 `src/evaluation/` 内解耦,Step 5 用 `git filter-repo` 物理迁入本 repo。

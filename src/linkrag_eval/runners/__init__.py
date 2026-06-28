@@ -2,12 +2,18 @@
 
 from linkrag_eval.runners.context import RunContext
 from linkrag_eval.runners.gen_runner import GenRunReport, run_golden_gen
+from linkrag_eval.runners.opensource_runner import (
+    OpensourceRunReport,
+    run_opensource_golden,
+)
 from linkrag_eval.runners.stage_runner import aggregate, run_stage
 
 __all__ = [
     "GenRunReport",
+    "OpensourceRunReport",
     "RunContext",
     "aggregate",
     "run_golden_gen",
+    "run_opensource_golden",
     "run_stage",
 ]

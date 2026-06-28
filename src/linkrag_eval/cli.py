@@ -56,6 +56,29 @@ def _add_run(sub: argparse._SubParsersAction) -> None:
     p.add_argument("--precheck", action="store_true", help="跑前校验 golden chunk reference 在库")
 
 
+def _add_golden_opensource(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser(
+        "golden-opensource",
+        help="开源数据集端到端:段落灌 eval 库 → 标注转 GoldenSample(doc 粒度)",
+    )
+    p.add_argument("--dataset", choices=["dureader", "t2ranking"], required=True)
+    p.add_argument("--collection", required=True, help="passage collection tsv(pid\\ttext)")
+    p.add_argument("--queries", required=True, help="queries tsv(qid\\tquery)")
+    p.add_argument("--qrels", required=True, help="qrels(TREC tsv 或 json)")
+    p.add_argument("--dataset-id", type=int, required=True, help="本次灌库 dataset_id")
+    p.add_argument("--doc-id-base", type=int, required=True, help="doc_id 起始号段(避免与其他集重叠)")
+    p.add_argument("--name", required=True, help="数据集编目名(golden id 前缀)")
+    p.add_argument("--golden-out", required=True, help="golden jsonl 输出路径")
+    p.add_argument("--manifest", required=True, help="灌库 manifest jsonl 输出/读取路径")
+    p.add_argument("--user-id", type=int, default=None, help="路由租户(默认 EVAL_USER_ID)")
+    p.add_argument("--batch", type=int, default=25)
+    p.add_argument("--limit", type=int, default=None, help="只灌前 N 段(试点)")
+    p.add_argument("--max-samples", type=int, default=None, help="只转前 N 条 query")
+    p.add_argument("--skip-ingest", action="store_true",
+                   help="语料已灌过,仅读 --manifest 转换(不连活栈)")
+    p.add_argument("--init-schema", action="store_true", help="先 create_all 建表")
+
+
 def _add_cleaning(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("cleaning", help="清洗质检:对应关系表 → 解析回 md → 分桶比对 → 报告")
     p.add_argument("--registry", required=True,
@@ -192,6 +215,48 @@ async def _do_run(args) -> int:
     return 0
 
 
+async def _do_golden_opensource(args) -> int:
+    from linkrag_eval.config import get_settings
+    from linkrag_eval.golden.opensource.datasets import (
+        load_dureader_retrieval,
+        load_t2ranking,
+    )
+    from linkrag_eval.runners import run_opensource_golden
+
+    settings = get_settings()
+    user_id = args.user_id if args.user_id is not None else settings.user_id
+    graded = args.dataset == "t2ranking"
+    loader = load_t2ranking if graded else load_dureader_retrieval
+    corpus, judgments = loader(args.collection, args.queries, args.qrels)
+
+    indexer = None
+    if not args.skip_ingest:
+        from linkrag_eval.compute.rag_adapter import RagProductComputer
+        from linkrag_eval.store.corpus_repo import EvalCorpusRepo
+        from linkrag_eval.store.indexer import EvalVectorIndexer
+        from linkrag_eval.store.vector_store import build_eval_vector_store
+
+        repo = EvalCorpusRepo()
+        if args.init_schema:
+            await repo.init_schema()
+        indexer = EvalVectorIndexer(
+            computer=RagProductComputer(),
+            vector_store=build_eval_vector_store(),
+            corpus_repo=repo,
+        )
+
+    report = await run_opensource_golden(
+        corpus, judgments,
+        dataset_id=args.dataset_id, user_id=user_id, dataset_name=args.name,
+        indexer=indexer, manifest_path=args.manifest, golden_out=args.golden_out,
+        doc_id_base=args.doc_id_base, graded=graded, limit=args.limit,
+        max_samples=args.max_samples, batch=args.batch,
+        skip_ingest=args.skip_ingest, progress=print,
+    )
+    print("\n" + report.summary())
+    return 0
+
+
 async def _do_cleaning(args) -> int:
     from linkrag_eval.cleaning.adapter import CleaningEvaluable
     from linkrag_eval.golden.cleaning_dataset.registry import CleaningRegistry
@@ -227,6 +292,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("config", help="打印已解析配置(脱敏)做自检")
     _add_ingest(sub)
     _add_golden_gen(sub)
+    _add_golden_opensource(sub)
     _add_cleaning(sub)
     _add_run(sub)
 
@@ -251,6 +317,8 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(_do_ingest(args))
     if args.command == "golden-gen":
         return asyncio.run(_do_golden_gen(args))
+    if args.command == "golden-opensource":
+        return asyncio.run(_do_golden_opensource(args))
     if args.command == "cleaning":
         return asyncio.run(_do_cleaning(args))
     if args.command == "run":

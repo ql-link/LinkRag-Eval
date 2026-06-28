@@ -53,6 +53,8 @@ def _add_run(sub: argparse._SubParsersAction) -> None:
     p.add_argument("--top-k", type=int, default=10)
     p.add_argument("--out-dir", default="runs", help="快照/报告输出目录")
     p.add_argument("--dataset", default="default", help="报告台账的数据集名(趋势分组用)")
+    p.add_argument("--baseline", default=None,
+                   help="基线 run_id(读 results/<id>.json 出回归 diff;须先以该 id 跑过)")
     p.add_argument("--precheck", action="store_true", help="跑前校验 golden chunk reference 在库")
 
 
@@ -182,8 +184,9 @@ async def _do_run(args) -> int:
     from linkrag_eval.app import format_retrieval_summary, run_eval
     from linkrag_eval.config import get_settings
     from linkrag_eval.metrics.retrieval import default_retrieval_metrics
+    from linkrag_eval.reporters import write_retrieval_reports
     from linkrag_eval.retrieval import build_eval_recall_evaluable
-    from linkrag_eval.store.result_store import JsonResultStore
+    from linkrag_eval.store.filesystem import FilesystemResultStore
 
     settings = get_settings()
     run_id = f"{args.run_label}-top{args.top_k}"
@@ -193,24 +196,34 @@ async def _do_run(args) -> int:
 
         fetch_status = EvalCorpusRepo().fetch_status
 
+    store = FilesystemResultStore(args.out_dir, dataset=args.dataset)
     result = await run_eval(
         args.golden,
         top_k=args.top_k,
         run_id=run_id,
         evaluable=build_eval_recall_evaluable(args.top_k, settings=settings),
         metrics=default_retrieval_metrics(),
-        store=JsonResultStore(args.out_dir),
+        store=store,
         settings=settings,
         fetch_status=fetch_status,
         progress=print,
     )
     print("\n" + format_retrieval_summary(result))
 
-    from linkrag_eval.reporters import write_retrieval_reports
+    # 落快照 + 结构化结果(后者是后续 --baseline 对比的可 reload 源)
+    store.save_snapshot(result.snapshot)
+    result_path = store.save_result(result)
+
+    baseline = None
+    if args.baseline:
+        baseline = store.load_baseline(args.baseline)
+        if baseline is None:
+            print(f"提示:未找到基线 {args.baseline}(需先以该 run_id 跑过并落 results/)")
 
     paths = write_retrieval_reports(
-        result, args.out_dir, run_id=run_id, dataset=args.dataset
+        result, args.out_dir, run_id=run_id, dataset=args.dataset, baseline=baseline,
     )
+    print(f"结果: {result_path}")
     print(f"报告: {paths['html']}\n      {paths['json']}")
     return 0
 

@@ -52,7 +52,21 @@ def _add_run(sub: argparse._SubParsersAction) -> None:
     p.add_argument("--run-label", default="run", help="run_id 后缀标签")
     p.add_argument("--top-k", type=int, default=10)
     p.add_argument("--out-dir", default="runs", help="快照/报告输出目录")
+    p.add_argument("--dataset", default="default", help="报告台账的数据集名(趋势分组用)")
     p.add_argument("--precheck", action="store_true", help="跑前校验 golden chunk reference 在库")
+
+
+def _add_cleaning(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser("cleaning", help="清洗质检:对应关系表 → 解析回 md → 分桶比对 → 报告")
+    p.add_argument("--registry", required=True,
+                   help="对应关系表目录(docs.jsonl + rendered.jsonl)")
+    p.add_argument("--run-label", default="clean", help="run_id 后缀标签")
+    p.add_argument("--out-dir", default="runs", help="报告输出目录")
+    p.add_argument("--dataset", default="default", help="报告台账的数据集名")
+    p.add_argument("--pdf-backends", default=None,
+                   help="PDF 清洗后端枚举(逗号分隔,默认 auto)")
+    p.add_argument("--stability-runs", type=int, default=1,
+                   help="非确定后端重复清洗次数(算一致率;确定后端设 1)")
 
 
 async def _do_ingest(args) -> int:
@@ -168,6 +182,42 @@ async def _do_run(args) -> int:
         progress=print,
     )
     print("\n" + format_retrieval_summary(result))
+
+    from linkrag_eval.reporters import write_retrieval_reports
+
+    paths = write_retrieval_reports(
+        result, args.out_dir, run_id=run_id, dataset=args.dataset
+    )
+    print(f"报告: {paths['html']}\n      {paths['json']}")
+    return 0
+
+
+async def _do_cleaning(args) -> int:
+    from linkrag_eval.cleaning.adapter import CleaningEvaluable
+    from linkrag_eval.golden.cleaning_dataset.registry import CleaningRegistry
+    from linkrag_eval.reporters import write_cleaning_reports
+    from linkrag_eval.runners.cleaning_runner import run_cleaning
+
+    registry = CleaningRegistry.load(args.registry)
+    pdf_backends = (
+        [b for b in args.pdf_backends.split(",") if b.strip()]
+        if args.pdf_backends else None
+    )
+    refs = list(registry.iter_rendered_refs(pdf_backends=pdf_backends))
+    if not refs:
+        print("错误:对应关系表无渲染件(检查 registry 目录)", file=sys.stderr)
+        return 2
+    print(f"清洗质检 {len(refs)} 个渲染件(stability_runs={args.stability_runs})...")
+
+    evaluable = CleaningEvaluable(stability_runs=args.stability_runs)
+    run_id = f"{args.run_label}"
+    report, items = await run_cleaning(refs, evaluable, run_id=run_id)
+
+    paths = write_cleaning_reports(
+        report, items, args.out_dir, run_id=run_id, dataset=args.dataset
+    )
+    print(f"\n清洗质检完成:{len(items)} 个渲染件分 {len(report.buckets)} 桶")
+    print(f"报告: {paths['html']}\n      {paths['detail']}")
     return 0
 
 
@@ -177,6 +227,7 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("config", help="打印已解析配置(脱敏)做自检")
     _add_ingest(sub)
     _add_golden_gen(sub)
+    _add_cleaning(sub)
     _add_run(sub)
 
     args = parser.parse_args(argv)
@@ -200,6 +251,8 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(_do_ingest(args))
     if args.command == "golden-gen":
         return asyncio.run(_do_golden_gen(args))
+    if args.command == "cleaning":
+        return asyncio.run(_do_cleaning(args))
     if args.command == "run":
         return asyncio.run(_do_run(args))
 

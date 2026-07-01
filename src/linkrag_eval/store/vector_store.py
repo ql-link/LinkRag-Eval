@@ -5,7 +5,7 @@
 直接 upsert。写读口径与生产一致——因为召回侧(recall_factory)复用同一 ``QdrantIndexStore``。
 
 不经 ``ChunkRecordDB``:payload 只需 ``chunk_id/user_id/set_id/doc_id``,直接构点(见 point_factory._payload)。
-dense 是 unnamed 向量、sparse 是 named(名取自生产 ``SPARSE_VECTOR_QDRANT_VECTOR_NAME``,与召回一致)。
+dense 是 unnamed 向量、sparse 是 named(名取自 ``EVAL_SPARSE_VECTOR_NAME``,默认 ``sparse_text``)。
 
 护栏:前缀必须含 ``eval``,否则构造期拒跑——防写串生产 collection。
 本文件是允许 import toLink-Rag 的三个 adapter 之一(Qdrant 原语)。rag import 全部惰性,
@@ -52,7 +52,7 @@ class EvalVectorStore:
         self._user_id = user_id
         self._bucket_id = _route_bucket(prefix, bucket_count, user_id)
         self._store = index_store or _build_index_store(prefix, bucket_count, qdrant_host, api_key)
-        self._sparse_name = sparse_vector_name or _default_sparse_vector_name()
+        self._sparse_name = sparse_vector_name or "sparse_text"
 
     @property
     def bucket_id(self) -> int:
@@ -149,12 +149,6 @@ def _build_index_store(prefix: str, bucket_count: int, qdrant_host: str | None, 
     )
 
 
-def _default_sparse_vector_name() -> str:
-    from src.config import settings
-
-    return getattr(settings, "SPARSE_VECTOR_QDRANT_VECTOR_NAME", "sparse_text")
-
-
 def build_eval_vector_store(settings=None) -> EvalVectorStore:
     """按 EVAL_* 配置装配 EvalVectorStore。"""
     if settings is None:
@@ -166,4 +160,5 @@ def build_eval_vector_store(settings=None) -> EvalVectorStore:
         bucket_count=settings.qdrant_bucket_count,
         user_id=settings.user_id,
         qdrant_host=settings.qdrant_host,
+        sparse_vector_name=settings.sparse_vector_name,
     )

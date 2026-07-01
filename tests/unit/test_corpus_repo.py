@@ -1,4 +1,4 @@
-"""EvalCorpusRepo:对临时 SQLite 验证建表 / 编目 / 落库 / 幂等(不需 rag、不连 PG)。"""
+"""EvalCorpusRepo:对临时 SQLite 验证建表 / 编目 / 落库 / 幂等(不需 rag、不连 MySQL)。"""
 
 from __future__ import annotations
 

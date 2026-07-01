@@ -34,7 +34,7 @@
 src/linkrag_eval/
 ├── compute/        protocol.py(新) rag_adapter.py(新,唯一碰 rag) bm25_stub.py(新)
 ├── store/          vector_store.py(新 EvalVectorStore) indexer.py(替换 live_indexer)
-│                   corpus_repo.py(新 PG) ingestor.py(改写去 ORM) models.py/engine.py(搬迁→PG)
+│                   corpus_repo.py(新 MySQL) ingestor.py(改写去 ORM) models.py/engine.py(搬迁→MySQL)
 │                   result_store.py catalog.py(搬迁)
 ├── retrieval/      recall_factory.py(新,注入 eval 前缀) recall_adapter.py(搬迁)
 ├── metrics/        retrieval.py cleaning.py registry.py(搬迁)
@@ -56,6 +56,20 @@ src/linkrag_eval/
 
 **bm25 可插拔**:`Bm25Mode = {STUB(P1 默认,只跑 dense+sparse 两路), SPARSE_PROXY, QDRANT_BM25(待生产)}`。`EvalVectorStore.upsert(bm25=...)`/`search_bm25` 预留 named-vector 槽位;生产落地 `compute_bm25_sparse` 后注入,不改调用面。mode 写进 `EvalRun.snapshot_json`。
 
+## 当前实现状态
+
+本 repo 已完成物理迁入,并落地 Step 0–5 的主体代码。当前实现状态:
+
+- Step 0:已落地。`LiveEvalChunkIndexer` 已由 `EvalVectorIndexer` 替代,写入经 `EvalVectorStore`,不再依赖三个生产写 pipeline。
+- Step 1:已落地。`EvalCorpusRepo`、独立 `EvalBase` ORM、Alembic `0001` baseline 均指向 eval 自持 MySQL 库。
+- Step 2:已落地。`ProductComputer` / `RagProductComputer` 已收口产物计算;dense/sparse 已迁至 eval `llm/` 模块。
+- Step 3:已落地。`build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 侧编码器由 eval 配置注入。
+- Step 4:部分落地。bm25 mode 配置与索引状态字段已存在,P1 默认仍为 `stub`,实际召回只装 dense+sparse 两路。
+- Step 5:主体落地。代码、测试、CLI、报告、golden/cleaning 相关模块已迁入本 repo;仍需补齐活栈基线复验与 CI 中的 import-lint 执行。
+- Step 6:未落地。等待生产侧 Qdrant BM25 compute/search 后接入 `qdrant_bm25`。
+
+文档中的迁移路径保留为验收清单;每步最终仍需用固定数据集验证 `recall@10 ≈ 0.901`(±0.005)。
+
 ## 分步迁移路径(每步可验证,基线 recall@10 ≈ 0.901)
 
 - **Step 0(承重墙,先做)**:`LiveEvalChunkIndexer` 换 `EvalVectorIndexer`(走 `EvalVectorStore`,不再 import 三个写 pipeline),仍用 SQLite。验证:固定数据集重灌→`recall@10` 仍 ≈0.901(±0.005)。
@@ -75,7 +89,7 @@ src/linkrag_eval/
 ## 采纳的默认决策
 
 1. bm25 P1 = **STUB**(只跑两路,不用 sparse 假装 bm25)。
-2. PG 枚举字段 = **String + 注释**(改值不需 migration)。
+2. MySQL 枚举字段 = **String + 注释**(改值不需 migration)。
 3. **先在源 repo 内完成 Step 0–4 解耦,再 Step 5 物理拆 repo**(承重墙验证在源 repo 做,基线对比最干净)。
 
-> 注:Step 5 之前,实现先在 toLink-Rag 的 `src/evaluation/` 内迭代;本 repo 当前阶段承载文档与约定,代码随 Step 5 迁入。
+> 注:本段是迁移计划的原始执行路径。当前仓库已完成 Step 5 的主体迁入,后续以"当前实现状态"与 AGENTS.md 为准推进验收和收尾。

@@ -23,6 +23,7 @@ class EvalSettings(BaseSettings):
     qdrant_host: str = Field(default="http://localhost:36333")
     qdrant_prefix: str = Field(default="eval_kb_bucket")
     qdrant_bucket_count: int = Field(default=16)
+    sparse_vector_name: str = Field(default="sparse_text")
 
     # —— eval 自持元数据/结果库(MySQL:同生产服务器、独立库 tolink_rag_eval_db)——
     db_host: str = Field(default="127.0.0.1")

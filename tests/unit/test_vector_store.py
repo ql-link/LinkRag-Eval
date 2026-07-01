@@ -11,7 +11,9 @@ import pytest
 pytest.importorskip("src", reason="需安装 toLink-Rag(pip install -e <path>)")
 
 from linkrag_eval.compute.protocol import SparseVec  # noqa: E402
+from linkrag_eval.config import EvalSettings  # noqa: E402
 from linkrag_eval.store.vector_store import EvalPoint, EvalVectorStore  # noqa: E402
+from linkrag_eval.store.vector_store import build_eval_vector_store  # noqa: E402
 
 
 class _FakeIndexStore:
@@ -89,3 +91,22 @@ async def test_dense_only_skips_sparse() -> None:
         dataset_id=1, points=[EvalPoint(chunk_id="a", doc_id=1, dense=[0.1, 0.2])]
     )
     assert [c[0] for c in fake.calls] == ["ensure_collection", "upsert_points"]
+
+
+def test_build_eval_vector_store_uses_eval_sparse_vector_name() -> None:
+    fake = _FakeIndexStore()
+    settings = EvalSettings(
+        qdrant_prefix="eval_kb_bucket",
+        sparse_vector_name="eval_sparse_text",
+    )
+    store = build_eval_vector_store(settings=settings)
+    # build_eval_vector_store 不暴露 index_store 注入;这里直测配置字段到构造参数的默认口径。
+    configured = EvalVectorStore(
+        prefix=settings.qdrant_prefix,
+        bucket_count=settings.qdrant_bucket_count,
+        user_id=settings.user_id,
+        index_store=fake,
+        sparse_vector_name=settings.sparse_vector_name,
+    )
+    assert configured._sparse_name == "eval_sparse_text"
+    assert store._sparse_name == "eval_sparse_text"

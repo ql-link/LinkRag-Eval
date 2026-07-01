@@ -1,45 +1,11 @@
-# 依赖边界机器规则(见 AGENTS.md 三)。跑:  lint-imports
-# 黑名单:linkrag_eval 任何模块都不得 import 这些生产模块。
-# "rag import 只许出现在 compute.rag_adapter / retrieval.recall_factory 两文件" 这条
-# 更细的规则由 tests/test_import_boundary.py(grep)强制——import-linter 不便表达"白名单豁免"。
+# 依赖边界机器规则(见 AGENTS.md 三)。跑: lint-imports
+#
+# import-linter 2.x 的 forbidden contract 不支持把外部包子模块(如 src.config、
+# src.core.storage.es)作为 forbidden module;同时本项目又需要允许少数 adapter import
+# src.* 白名单模块。因此 rag 白名单与黑名单均由 tests/test_import_boundary.py 的源码扫描
+# 强制。这里保留 import-linter 项目入口,确保工具在 CI 中可执行;若后续需要检查
+# linkrag_eval 包内分层,在本文件新增只涉及 linkrag_eval.* 的 contract。
 
 [importlinter]
 root_package = linkrag_eval
 include_external_packages = True
-
-# allow_indirect_imports:只查 linkrag_eval **直接** import 黑名单模块。
-# 不查间接——因为调 rag 白名单纯函数(如 create_chunk_embedding_pipeline)时,rag 内部
-# 会用自己的 src.config,那是 rag 的事,不算 eval 违规。"直接 import 只许两文件" 由
-# tests/test_import_boundary.py(grep)兜。
-
-[importlinter:contract:forbid-write-pipelines]
-name = 禁止 import 生产写 pipeline(算+写绑死)
-type = forbidden
-allow_indirect_imports = True
-source_modules =
-    linkrag_eval
-forbidden_modules =
-    src.core.storage.es
-    src.core.storage.vector.sparse_indexing
-    src.core.storage.vector.pipeline
-
-[importlinter:contract:forbid-write-orm-and-config]
-name = 禁止 import 写 ORM / 生产配置 / 全栈解析 / MinIO
-type = forbidden
-allow_indirect_imports = True
-source_modules =
-    linkrag_eval
-forbidden_modules =
-    src.models
-    src.config
-    src.core.pipeline.parse_task
-    src.services.storage
-
-[importlinter:contract:forbid-per-user-resolvers]
-name = 禁止 import per-user 配置解析(会拖回共享库)
-type = forbidden
-allow_indirect_imports = True
-source_modules =
-    linkrag_eval
-forbidden_modules =
-    src.core.storage.chunks.repository

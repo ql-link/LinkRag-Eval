@@ -1,6 +1,6 @@
 """EvalVectorIndexer 编排:注入 fake computer/store/repo,验证产物→点/行映射、id 确定性、bm25 mode。
 
-不需 rag、不连 Qdrant/PG。
+不需 rag、不连 Qdrant/MySQL。
 """
 
 from __future__ import annotations

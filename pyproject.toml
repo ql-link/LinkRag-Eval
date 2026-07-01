@@ -33,6 +33,7 @@ dependencies = [
 dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
+    "aiosqlite>=0.20.0",
     "import-linter>=2.0",
     "ruff>=0.4.0",
 ]
@@ -51,6 +52,6 @@ target-version = "py311"
 asyncio_mode = "auto"
 testpaths = ["tests"]
 markers = [
-    "integration: 需要真实 Qdrant/PG/embedder 的活栈测试(默认 CI 跳过)",
+    "integration: 需要真实 Qdrant/MySQL/embedder 的活栈测试(默认 CI 跳过)",
     "contract: rag 纯函数契约测试(防签名漂移)",
 ]

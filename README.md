@@ -33,7 +33,15 @@ alembic upgrade head                  # URL 由 env.py 从 EVAL_DB_* 构建(aiom
 
 ## 当前阶段
 
-仓库已初始化(master 分支),承载文档与约定。代码按 [迁移路径](docs/architecture/decoupling-plan.md#分步迁移路径每步可验证基线-recall10--0901) 推进:Step 0–4 先在源仓库 `src/evaluation/` 内解耦,Step 5 用 `git filter-repo` 物理迁入本 repo。
+代码已物理迁入本 repo,并按 [迁移路径](docs/architecture/decoupling-plan.md#分步迁移路径每步可验证基线-recall10--0901) 完成 Step 0–5 的主体实现:
+
+- `EvalVectorIndexer` / `EvalVectorStore` / `EvalCorpusRepo` 已取代旧的生产写 pipeline 依赖。
+- `ProductComputer` 已收口产物计算;dense/sparse 由 eval 自带 `llm/` 编码器承载,chunk 与 bm25 分词经 adapter 复用 rag 纯函数。
+- 召回侧通过 `build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 编码走 eval 编码器。
+- MySQL eval 自持库 ORM 与 Alembic `0001` baseline 已落地。
+- CLI 已覆盖 `ingest` / `golden-gen` / `golden-opensource` / `cleaning` / `run`。
+
+剩余关键工作:跑真实活栈复验 `recall@10 ≈ 0.901` 等价门槛;将结果库后端接入 `eval_run` / `eval_metric_result`;等待生产 Qdrant BM25 compute/search 落地后再切 `EVAL_BM25_MODE=qdrant_bm25`。当前 P1 默认仍是 `stub`,即只跑 dense+sparse 两路。
 
 ## 基线
 

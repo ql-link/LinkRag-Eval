@@ -4,7 +4,7 @@
 
 本文件是 Agent / 开发者的**强制规范**。总方案见 [docs/architecture/decoupling-plan.md](docs/architecture/decoupling-plan.md);历史设计见 [docs/design/](docs/design/);实证报告见 [docs/reports/](docs/reports/)。
 
-> 当前阶段:仓库承载文档与约定。代码按 [迁移路径](docs/architecture/decoupling-plan.md#分步迁移路径每步可验证基线-recall10--0901) 的 Step 0–4 先在源仓库 `src/evaluation/` 内迭代,Step 5 用 `git filter-repo` 物理迁入本 repo。
+> 当前阶段:代码已物理迁入本 repo,Step 0–5 主体实现已落地。后续重点是活栈复验 `recall@10 ≈ 0.901`、补齐 CI/import-lint 验收、接入 MySQL 结果后端,以及等待生产 Qdrant BM25 compute/search 后完成 Step 6。
 
 ---
 
@@ -159,7 +159,7 @@ class ProductComputer(Protocol):
 | --- | --- | --- | --- |
 | 单元 | `tests/unit/` | 注入 fake,零活栈 | 默认 CI |
 | 契约 | `tests/contract/` | 真 rag 包,无远端 | rag 升级 / 默认 CI |
-| 集成 | `tests/integration/` | 真 Qdrant/PG/embedder | 手动 / nightly,需 `.env.eval` |
+| 集成 | `tests/integration/` | 真 Qdrant/MySQL/embedder | 手动 / nightly,需 `.env.eval` |
 | import-lint | `tests/` | — | 断言黑名单零命中 |
 
 - 每个迁移步骤(Step 0–6)以 `recall@10 ≈ 0.901`(±0.005)为**等价门槛**,固定数据集重灌后对比。

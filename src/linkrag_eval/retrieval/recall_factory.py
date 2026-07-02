@@ -45,8 +45,8 @@ def build_eval_recall_pipeline(
     settings: Any | None = None,
     dense_encoder: Any | None = None,
     sparse_encoder: Any | None = None,
-    dense_score_threshold: float = 0.0,
-    sparse_score_threshold: float = 0.0,
+    dense_score_threshold: float | None = None,
+    sparse_score_threshold: float | None = None,
     strict: bool = False,
 ):
     """装配指向 eval 前缀、用 eval 编码器的 RecallPipeline(dense+sparse 两路,bm25 P1 stub)。"""
@@ -66,6 +66,10 @@ def build_eval_recall_pipeline(
         from linkrag_eval.llm.sparse_client import build_sparse_encoder
 
         sparse_encoder = build_sparse_encoder(settings)
+    if dense_score_threshold is None:
+        dense_score_threshold = getattr(settings, "recall_dense_score_threshold", 0.0)
+    if sparse_score_threshold is None:
+        sparse_score_threshold = getattr(settings, "recall_sparse_score_threshold", 0.30)
 
     from qdrant_client import AsyncQdrantClient
 

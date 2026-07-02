@@ -42,8 +42,20 @@
   - `ecom-200056`:dense-only 期望 doc `990400752` 排第 1;sparse-only 未命中;dense+sparse 后 top10 全为 dense 与 sparse 双路命中的非期望商品。
 - 结论:0.8919 不是活栈故障或写错库导致,而是完整启用 sparse 后暴露的融合口径差异。当前生产 RRF 对“双路弱相关候选”加分较强,可能把 dense 第 1 但 sparse 未命中的正确项挤出 top10。
 
+## sparse 阈值 A/B
+
+同一正式 eval 前缀、同一 394 条 golden,只调整 query 侧 `sparse_score_threshold`:
+
+| sparse 阈值 | recall@10 | hit_rate@10 | map | mrr | 备注 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 0.00 | 0.8919 | 0.9340 | 0.8030 | 0.8555 | 2026-07-02 干净复跑 |
+| 0.25 | 0.9246 | 0.9543 | 0.8014 | 0.8544 | 过滤部分 sparse 噪声,`ecom-200045` 修回 |
+| 0.30 | 0.9571 | 0.9772 | 0.8196 | 0.8614 | `ecom-200045` / `ecom-200056` 均修回 |
+
+因此 eval 默认配置切为 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.30`。该值只影响召回侧 sparse 分路结果过滤,不改变 Qdrant collection 和写入向量。
+
 ## 后续检查点
 
-- 决策是否把“dense-only 第 1、sparse 未命中、融合后丢失”作为融合策略待优化问题,还是把 dense+sparse 当前行为作为新的真实基线。
+- 用正式 CLI `run --precheck` 基于 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.30` 再跑一轮,生成标准文件结果 + `eval_run` / `eval_metric_result` 台账。
 - 确认 golden 仍是 doc 粒度样本,`precheck` 只能校验样本数量,无法校验 chunk reference。
 - 固定依赖与模型 fingerprint 后再复跑,避免嵌入服务版本或参数漂移影响结论。

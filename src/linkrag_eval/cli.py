@@ -337,6 +337,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"judge_model     = {s.judge_model or '(空)'}  api_key={masked}")
         print(f"embed_model     = {s.embed_model}  dim={s.embed_dim}")
         print(f"sparse          = {s.sparse_provider}:{s.sparse_model or '(空)'}")
+        print(
+            "recall_threshold= "
+            f"dense:{s.recall_dense_score_threshold} sparse:{s.recall_sparse_score_threshold}"
+        )
         print(f"bm25_mode       = {s.bm25_mode}")
         print(f"user_id(route)  = {s.user_id}")
         return 0

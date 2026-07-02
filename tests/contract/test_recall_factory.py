@@ -34,7 +34,12 @@ class _FakeSparse:
 
 
 def _settings(prefix="eval_kb_bucket") -> EvalSettings:
-    return EvalSettings(qdrant_prefix=prefix, qdrant_host="http://localhost:36333")
+    return EvalSettings(
+        qdrant_prefix=prefix,
+        qdrant_host="http://localhost:36333",
+        recall_dense_score_threshold=0.11,
+        recall_sparse_score_threshold=0.30,
+    )
 
 
 def test_assembles_two_route_pipeline() -> None:
@@ -46,6 +51,8 @@ def test_assembles_two_route_pipeline() -> None:
     assert isinstance(pipe, RecallPipeline)
     # dense + sparse 两路(bm25 P1 stub)
     assert len(pipe._retrievers) == 2
+    assert pipe._retrievers[0]._score_threshold == 0.11
+    assert pipe._retrievers[1]._score_threshold == 0.30
 
 
 def test_prefix_guard_rejects_non_eval() -> None:

@@ -86,11 +86,13 @@ async def run_ingest(
 def _minimal_snapshot(run_id: str, top_k: int, *, settings: Any | None = None) -> Snapshot:
     """据 eval 配置构最小快照(检索层用;生成层字段留空)。"""
     sparse_provider = "unknown"
+    sparse_threshold = 0.0
     if settings is not None:
         sparse_provider = f"{getattr(settings, 'sparse_provider', '')}:{getattr(settings, 'sparse_model', '')}"
+        sparse_threshold = getattr(settings, "recall_sparse_score_threshold", 0.0)
     return Snapshot(
         run_id=run_id, git_sha="", sparse_vector_provider=sparse_provider, top_k=top_k,
-        score_threshold=0.0, enabled_sources=["dense", "sparse"], rrf_k=60, rerank_top_n=None,
+        score_threshold=sparse_threshold, enabled_sources=["dense", "sparse"], rrf_k=60, rerank_top_n=None,
         chat_model="", judge_model="", generator_model="", token_budget=0, prompt_version="v1",
     )
 

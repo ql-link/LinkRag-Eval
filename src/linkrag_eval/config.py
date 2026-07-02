@@ -58,6 +58,10 @@ class EvalSettings(BaseSettings):
     sparse_min_weight: float = Field(default=0.0)
     sparse_timeout_ms: int = Field(default=60000)
 
+    # —— 召回装配阈值(过滤低质量分路命中;默认来自 2026-07-02 活栈 A/B)——
+    recall_dense_score_threshold: float = Field(default=0.0)
+    recall_sparse_score_threshold: float = Field(default=0.30)
+
     # —— 路由常量(非真实用户,仅 bucket 分区)——
     user_id: int = Field(default=990001)
 

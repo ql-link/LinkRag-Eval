@@ -33,8 +33,17 @@
 - 变差样本均来自 ecom:`ecom-200045`(`暖气进水管滤网`)和 `ecom-200056`(`名著导读配套阅读`)从 1.0 变为 0.0。
 - 变好样本为 `dureader-02293e32393b1db39080ad78b534eaf9`(`怎么找到bt种子`)从 0.8333 变为 1.0。
 
+## 分路诊断
+
+- `ecom-200045` 和 `ecom-200056` 在 2026-07-01 run 中均为 `failed_sources=["sparse"]`,实际按 dense-only 召回,期望 doc 排名均为第 1。
+- 2026-07-02 复跑中两条样本均无失败源,`per_source_counts={"dense":100,"sparse":50}`,但 dense+sparse RRF 后期望 doc 均跌出 top10。
+- 单路复查结果:
+  - `ecom-200045`:dense-only 期望 doc `990400739` 排第 1;sparse-only 未命中;dense+sparse 后 top10 全为 dense 与 sparse 双路命中的非期望商品。
+  - `ecom-200056`:dense-only 期望 doc `990400752` 排第 1;sparse-only 未命中;dense+sparse 后 top10 全为 dense 与 sparse 双路命中的非期望商品。
+- 结论:0.8919 不是活栈故障或写错库导致,而是完整启用 sparse 后暴露的融合口径差异。当前生产 RRF 对“双路弱相关候选”加分较强,可能把 dense 第 1 但 sparse 未命中的正确项挤出 top10。
+
 ## 后续检查点
 
-- 深查 `ecom-200045` / `ecom-200056` 的 top10 结果、expected doc 文本与 dense/sparse 分路排名,确认是召回波动、doc 粒度标注问题,还是语料/ID 映射问题。
+- 决策是否把“dense-only 第 1、sparse 未命中、融合后丢失”作为融合策略待优化问题,还是把 dense+sparse 当前行为作为新的真实基线。
 - 确认 golden 仍是 doc 粒度样本,`precheck` 只能校验样本数量,无法校验 chunk reference。
 - 固定依赖与模型 fingerprint 后再复跑,避免嵌入服务版本或参数漂移影响结论。

@@ -186,6 +186,7 @@ async def _do_run(args) -> int:
     from linkrag_eval.metrics.retrieval import default_retrieval_metrics
     from linkrag_eval.reporters import write_retrieval_reports
     from linkrag_eval.retrieval import build_eval_recall_evaluable
+    from linkrag_eval.store.db_result_store import EvalDbResultStore
     from linkrag_eval.store.filesystem import FilesystemResultStore
 
     settings = get_settings()
@@ -213,6 +214,9 @@ async def _do_run(args) -> int:
     # 落快照 + 结构化结果(后者是后续 --baseline 对比的可 reload 源)
     store.save_snapshot(result.snapshot)
     result_path = store.save_result(result)
+    await EvalDbResultStore().save_result(
+        result, dataset=args.dataset, baseline_run_id=args.baseline
+    )
 
     baseline = None
     if args.baseline:
@@ -224,6 +228,7 @@ async def _do_run(args) -> int:
         result, args.out_dir, run_id=run_id, dataset=args.dataset, baseline=baseline,
     )
     print(f"结果: {result_path}")
+    print("DB台账: eval_run / eval_metric_result")
     print(f"报告: {paths['html']}\n      {paths['json']}")
     return 0
 

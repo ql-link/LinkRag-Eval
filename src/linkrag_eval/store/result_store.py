@@ -1,6 +1,7 @@
-"""结果存储(文件后端,实现 contracts.ResultStore)。
+"""结果存储(简版文件后端,实现 contracts.ResultStore)。
 
-零基建:快照 / 报告落 ``out_dir``。DB 后端(MySQL eval_run/eval_metric_result)留作后续。
+完整文件结果后端见 :mod:`linkrag_eval.store.filesystem`;DB 台账后端见
+:mod:`linkrag_eval.store.db_result_store`。本模块保留给只需快照/报告的轻量调用面。
 """
 
 from __future__ import annotations
@@ -29,4 +30,4 @@ class JsonResultStore:
         (self._dir / f"{run_id}.report").write_text(content, encoding="utf-8")
 
     def load_baseline(self, run_id: str) -> EvalResult | None:
-        return None  # 简化:基线对比留后续(DB 后端落地时接)
+        return None  # 简化后端不支持基线读取;完整文件/DB 后端支持。

@@ -299,6 +299,15 @@ async def _do_cleaning(args) -> int:
     return 0
 
 
+async def _run_with_cleanup(coro) -> int:
+    try:
+        return await coro
+    finally:
+        from linkrag_eval.store.engine import close_eval_engines
+
+        await close_eval_engines()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="linkrag-eval", description="toLink-Rag 独立评测/质检")
     sub = parser.add_subparsers(dest="command")
@@ -327,15 +336,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"user_id(route)  = {s.user_id}")
         return 0
     if args.command == "ingest":
-        return asyncio.run(_do_ingest(args))
+        return asyncio.run(_run_with_cleanup(_do_ingest(args)))
     if args.command == "golden-gen":
-        return asyncio.run(_do_golden_gen(args))
+        return asyncio.run(_run_with_cleanup(_do_golden_gen(args)))
     if args.command == "golden-opensource":
-        return asyncio.run(_do_golden_opensource(args))
+        return asyncio.run(_run_with_cleanup(_do_golden_opensource(args)))
     if args.command == "cleaning":
-        return asyncio.run(_do_cleaning(args))
+        return asyncio.run(_run_with_cleanup(_do_cleaning(args)))
     if args.command == "run":
-        return asyncio.run(_do_run(args))
+        return asyncio.run(_run_with_cleanup(_do_run(args)))
 
     parser.print_help()
     return 0

@@ -16,6 +16,8 @@ authors = [{ name = "JiXu" }]
 # 装好 rag 后再 `pip install -e .` 装本项目。CI/复现场景把 rag 钉到 git sha(见 AGENTS.md 七)。
 # 这里不把 tolink-rag 写进 dependencies,避免构建期解析失败;由安装步骤显式接入。
 dependencies = [
+    # toLink-Rag 的 torch 依赖要求 setuptools<82;固定上限避免 editable 安装后环境漂移。
+    "setuptools<82",
     "qdrant-client>=1.9.0",
     "SQLAlchemy[asyncio]>=2.0.0",
     "aiomysql>=0.2.0",

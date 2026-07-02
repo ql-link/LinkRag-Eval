@@ -27,6 +27,8 @@ from sqlalchemy.ext.asyncio import (
 
 from linkrag_eval.store.models import EvalBase
 
+_ENGINES: set[AsyncEngine] = set()
+
 
 def eval_database_url(url: str | None = None) -> str:
     """评测库 URL:显式入参优先(测试常传 sqlite),否则由 ``EVAL_DB_*`` 构建 MySQL DSN。"""
@@ -40,7 +42,9 @@ def eval_database_url(url: str | None = None) -> str:
 @lru_cache(maxsize=4)
 def get_eval_engine(url: str | None = None) -> AsyncEngine:
     """进程内缓存的评测异步引擎(按 url 缓存,便于测试传内存库)。"""
-    return create_async_engine(eval_database_url(url), future=True)
+    engine = create_async_engine(eval_database_url(url), future=True)
+    _ENGINES.add(engine)
+    return engine
 
 
 @lru_cache(maxsize=4)
@@ -55,3 +59,13 @@ async def init_eval_schema(url: str | None = None) -> None:
     engine = get_eval_engine(url)
     async with engine.begin() as conn:
         await conn.run_sync(EvalBase.metadata.create_all)
+
+
+async def close_eval_engines() -> None:
+    """释放进程内缓存的 eval DB 引擎,避免 aiomysql 在 event loop 关闭后析构连接。"""
+    engines = list(_ENGINES)
+    _ENGINES.clear()
+    for engine in engines:
+        await engine.dispose()
+    get_eval_sessionmaker.cache_clear()
+    get_eval_engine.cache_clear()

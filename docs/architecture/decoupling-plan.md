@@ -65,7 +65,7 @@ src/linkrag_eval/
 - Step 2:已落地。`ProductComputer` / `RagProductComputer` 已收口产物计算;dense/sparse 已迁至 eval `llm/` 模块。
 - Step 3:已落地。`build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 侧编码器由 eval 配置注入。
 - Step 4:部分落地。bm25 mode 配置与索引状态字段已存在,P1 默认仍为 `stub`,实际召回只装 dense+sparse 两路。
-- Step 5:主体落地。代码、测试、CLI、报告、golden/cleaning 相关模块已迁入本 repo;仍需补齐活栈基线复验与 CI 中的 import-lint 执行。
+- Step 5:主体落地。代码、测试、CLI、报告、golden/cleaning 相关模块已迁入本 repo;import-lint 已可本地执行通过。2026-07-01/02 已用真实 `.env.eval` 跑通 eval MySQL/Qdrant 活栈,但最新复跑 `recall@10=0.8919` 低于 `0.901±0.005` 等价门槛,需继续分析指标偏差。
 - Step 6:未落地。等待生产侧 Qdrant BM25 compute/search 后接入 `qdrant_bm25`。
 
 文档中的迁移路径保留为验收清单;每步最终仍需用固定数据集验证 `recall@10 ≈ 0.901`(±0.005)。

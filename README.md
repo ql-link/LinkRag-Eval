@@ -41,8 +41,10 @@ alembic upgrade head                  # URL 由 env.py 从 EVAL_DB_* 构建(aiom
 - MySQL eval 自持库 ORM 与 Alembic `0001` baseline 已落地。
 - CLI 已覆盖 `ingest` / `golden-gen` / `golden-opensource` / `cleaning` / `run`。
 
-剩余关键工作:跑真实活栈复验 `recall@10 ≈ 0.901` 等价门槛;将结果库后端接入 `eval_run` / `eval_metric_result`;等待生产 Qdrant BM25 compute/search 落地后再切 `EVAL_BM25_MODE=qdrant_bm25`。当前 P1 默认仍是 `stub`,即只跑 dense+sparse 两路。
+真实活栈已用正式 eval 前缀跑通 `alembic upgrade head`、小规模 ingest、四域 800 chunk/domain 重灌和 `run --precheck`;实证记录见 [docs/reports/live_smoke_2026_07_02.md](docs/reports/live_smoke_2026_07_02.md)。
+
+剩余关键工作:将结果库后端接入 `eval_run` / `eval_metric_result`;分析 2026-07-02 复跑 `recall@10=0.8919` 低于等价门槛的原因;等待生产 Qdrant BM25 compute/search 落地后再切 `EVAL_BM25_MODE=qdrant_bm25`。当前 P1 默认仍是 `stub`,即只跑 dense+sparse 两路。
 
 ## 基线
 
-召回基线 `recall@10 ≈ 0.901`(8000 篇语料,四域)。每个迁移步骤以此为等价门槛(±0.005)。
+召回历史基线 `recall@10 ≈ 0.901`(四域语料)。每个迁移步骤以此为等价门槛(±0.005)。2026-07-01 首次正式 run 为 `0.8966`(在门槛内,但日志有少量 Qdrant 单路失败);2026-07-02 复跑为 `0.8919`(日志干净,但低于门槛),因此当前状态是"活栈可跑通,指标需分析/修正后再确认为等价"。

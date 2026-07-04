@@ -33,12 +33,22 @@ class _FakeSparse:
         return [SparseVec([1], [0.5]) for _ in texts]
 
 
+class _FakeTokenized:
+    coarse_tokens = "短 query"
+
+
+class _FakeTokenizer:
+    def tokenize(self, text):
+        return _FakeTokenized()
+
+
 def _settings(prefix="eval_kb_bucket") -> EvalSettings:
     return EvalSettings(
         qdrant_prefix=prefix,
         qdrant_host="http://localhost:36333",
         recall_dense_score_threshold=0.11,
         recall_sparse_score_threshold=0.30,
+        qdrant_bm25_collection="eval_bm25",
     )
 
 
@@ -53,6 +63,19 @@ def test_assembles_two_route_pipeline() -> None:
     assert len(pipe._retrievers) == 2
     assert pipe._retrievers[0]._score_threshold == 0.11
     assert pipe._retrievers[1]._score_threshold == 0.30
+
+
+def test_assembles_qdrant_bm25_route_when_enabled() -> None:
+    settings = _settings()
+    settings.bm25_mode = "qdrant_bm25"
+    pipe = build_eval_recall_pipeline(
+        settings=settings,
+        dense_encoder=_FakeDense(),
+        sparse_encoder=_FakeSparse(),
+        bm25_tokenizer=_FakeTokenizer(),
+    )
+
+    assert [r.source for r in pipe._retrievers] == ["bm25", "dense", "sparse"]
 
 
 def test_prefix_guard_rejects_non_eval() -> None:

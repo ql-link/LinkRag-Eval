@@ -91,6 +91,7 @@ def _minimal_snapshot(run_id: str, top_k: int, *, settings: Any | None = None) -
     sparse_threshold = 0.0
     dense_top_k = top_k
     sparse_top_k = top_k
+    bm25_top_k = top_k
     fusion_strategy = "rrf"
     fusion_weights: dict[str, float] = {}
     if settings is not None:
@@ -99,18 +100,22 @@ def _minimal_snapshot(run_id: str, top_k: int, *, settings: Any | None = None) -
         sparse_threshold = getattr(settings, "recall_sparse_score_threshold", 0.0)
         dense_top_k = getattr(settings, "recall_dense_top_k", top_k)
         sparse_top_k = getattr(settings, "recall_sparse_top_k", top_k)
+        bm25_top_k = getattr(settings, "recall_bm25_top_k", top_k)
         fusion_strategy = getattr(settings, "recall_fusion_strategy", "rrf")
         fusion_weights = {
             "dense": getattr(settings, "recall_dense_weight", 0.5),
             "sparse": getattr(settings, "recall_sparse_weight", 0.3),
             "bm25": getattr(settings, "recall_bm25_weight", 0.0),
         }
+    enabled_sources = ["dense", "sparse"]
+    if getattr(settings, "bm25_mode", "stub") == "qdrant_bm25":
+        enabled_sources = ["bm25", "dense", "sparse"]
     return Snapshot(
         run_id=run_id, git_sha="", sparse_vector_provider=sparse_provider, top_k=top_k,
-        score_threshold=sparse_threshold, enabled_sources=["dense", "sparse"], rrf_k=60, rerank_top_n=None,
+        score_threshold=sparse_threshold, enabled_sources=enabled_sources, rrf_k=60, rerank_top_n=None,
         chat_model="", judge_model="", generator_model="", token_budget=0, prompt_version="v1",
         route_score_thresholds={"dense": dense_threshold, "sparse": sparse_threshold},
-        route_top_ks={"dense": dense_top_k, "sparse": sparse_top_k},
+        route_top_ks={"bm25": bm25_top_k, "dense": dense_top_k, "sparse": sparse_top_k},
         fusion_strategy=fusion_strategy,
         fusion_weights=fusion_weights,
     )

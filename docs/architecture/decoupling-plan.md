@@ -56,7 +56,7 @@ src/linkrag_eval/
 
 **召回:复用生产 `RecallPipeline` 指向 eval collection**(融合/排序 RRF+rerank 正是被测对象,自持会排序漂移)。`build_eval_recall_pipeline` 用 `compose_vector_storage_facade` 注入 eval 前缀 store + **系统 embedder**(query 侧 resolver 也走系统,绕开 per-user→共享库)。query 侧默认 `EVAL_RECALL_DENSE_SCORE_THRESHOLD=0.20`、`EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.40`,用于过滤低质量分路候选。
 
-**bm25 可插拔**:`Bm25Mode = {STUB(P1 默认,只跑 dense+sparse 两路), SPARSE_PROXY, QDRANT_BM25(待生产)}`。`EvalVectorStore.upsert(bm25=...)`/`search_bm25` 预留 named-vector 槽位;生产落地 `compute_bm25_sparse` 后注入,不改调用面。mode 写进 `EvalRun.snapshot_json`。
+**bm25 可插拔**:`Bm25Mode = {STUB(默认,只跑 dense+sparse 两路), QDRANT_BM25}`。`qdrant_bm25` 复用生产 `Bm25SparseEncoder` / `QdrantBm25Store` / `QdrantBm25Retriever`,但 collection 指向 eval 独立 `EVAL_QDRANT_BM25_COLLECTION`。mode 写进 `EvalRun.snapshot_json`。
 
 ## 当前实现状态
 
@@ -66,9 +66,9 @@ src/linkrag_eval/
 - Step 1:已落地。`EvalCorpusRepo`、独立 `EvalBase` ORM、Alembic `0001` baseline 均指向 eval 自持 MySQL 库。
 - Step 2:已落地。`ProductComputer` / `RagProductComputer` 已收口产物计算;dense/sparse 已迁至 eval `llm/` 模块。
 - Step 3:已落地。`build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 侧编码器由 eval 配置注入。
-- Step 4:部分落地。bm25 mode 配置与索引状态字段已存在,P1 默认仍为 `stub`,实际召回只装 dense+sparse 两路。
+- Step 4:已落地。bm25 mode 配置与索引状态字段已存在;`stub` 只装 dense+sparse,`qdrant_bm25` 会写 eval 独立 BM25 collection 并在召回侧装入 BM25 路。
 - Step 5:主体落地。代码、测试、CLI、报告、golden/cleaning 相关模块已迁入本 repo;import 边界已由 CI 与 `tests/test_import_boundary.py` 强制。2026-07-01/02 已用真实 `.env.eval` 跑通 eval MySQL/Qdrant 活栈,并接入 `eval_run` / `eval_metric_result` 结果台账。最新复跑 `recall@10=0.8919` 的偏差已定位为低分 sparse 噪声影响 RRF;正式 `run` 路径已支持分路 topK、阈值和 `weighted_score` 参数下发。后续需要拿到 `failed_sources=0` 且 `zero_ranked=0` 的 clean run 后固化标准结果。
-- Step 6:未落地。等待生产侧 Qdrant BM25 compute/search 后接入 `qdrant_bm25`。
+- Step 6:代码侧已落地。生产侧 Qdrant BM25 backend 已可复用;eval 侧通过 `EVAL_BM25_MODE=qdrant_bm25` 接入。剩余验收是重灌 BM25 collection 并跑三路 clean run,记录 bm25 接入 delta。
 
 文档中的迁移路径保留为验收清单;每步最终仍需用固定数据集验证 `recall@10 ≈ 0.901`(±0.005)。
 

@@ -29,6 +29,7 @@ class RecallEvaluable:
         pipeline: "RecallPipeline",
         top_k: int,
         *,
+        bm25_top_k: int | None = None,
         dense_top_k: int | None = None,
         sparse_top_k: int | None = None,
         dense_score_threshold: float | None = None,
@@ -39,14 +40,16 @@ class RecallEvaluable:
     ):
         self.pipeline = pipeline
         self.top_k = top_k
+        self.bm25_top_k = bm25_top_k or top_k
         self.dense_top_k = dense_top_k or top_k
         self.sparse_top_k = sparse_top_k or top_k
         self.dense_score_threshold = dense_score_threshold
         self.sparse_score_threshold = sparse_score_threshold
         self.fusion_strategy = fusion_strategy
         self.fusion_weights = dict(fusion_weights or {})
-        # per-query 重试:远端 Qdrant/embedding 网关偶发 502,某条 query 两路同时挂会抛
-        # RecallError;召回只读、幂等,退避重试即可,避免一条抖动毁掉整轮评测。
+        # per-query 重试:远端 Qdrant/embedding 网关偶发 502,严格模式下会抛 RecallError;
+        # 宽松模式下单路失败会进入 failed_sources。召回只读、幂等,退避重试即可,
+        # 避免一条抖动污染整轮 clean run。
         self.retries = retries
 
     async def run(
@@ -59,6 +62,7 @@ class RecallEvaluable:
             user_id=sample.user_id,
             dataset_ids=sample.dataset_ids,
             top_k=self.top_k,
+            bm25_top_k=self.bm25_top_k,
             dense_top_k=self.dense_top_k,
             sparse_top_k=self.sparse_top_k,
             dense_score_threshold_override=self.dense_score_threshold,
@@ -69,16 +73,24 @@ class RecallEvaluable:
             fusion_bm25_weight_override=self.fusion_weights.get("bm25"),
         )
         started = time.monotonic()
+        resp = None
         for attempt in range(1, self.retries + 1):
             try:
                 resp = await self.pipeline.execute(req)
-                break
+                if not self._needs_retry(resp) or attempt == self.retries:
+                    break
             except Exception:
                 if attempt == self.retries:
                     raise
-                await asyncio.sleep(2 * attempt)
+            await asyncio.sleep(2 * attempt)
         wall_ms = int((time.monotonic() - started) * 1000)
+        assert resp is not None
         return self._to_stage_output(sample.query, resp, wall_ms)
+
+    @staticmethod
+    def _needs_retry(resp: "RecallResponse") -> bool:
+        """宽松模式下 failed_sources/零结果不抛错,这里把它们视为可重试的不完整响应。"""
+        return bool(resp.failed_sources) or not bool(resp.hits)
 
     def _to_stage_output(self, query: str, resp: "RecallResponse", wall_ms: int) -> StageOutput:
         ordered = sorted(resp.hits, key=lambda h: h.fused_score, reverse=True)
@@ -108,7 +120,11 @@ class RecallEvaluable:
         """返回正式 run 使用的召回参数,供 snapshot/report 记录。"""
         return {
             "top_k": self.top_k,
-            "route_top_ks": {"dense": self.dense_top_k, "sparse": self.sparse_top_k},
+            "route_top_ks": {
+                "bm25": self.bm25_top_k,
+                "dense": self.dense_top_k,
+                "sparse": self.sparse_top_k,
+            },
             "route_score_thresholds": {
                 "dense": self.dense_score_threshold,
                 "sparse": self.sparse_score_threshold,

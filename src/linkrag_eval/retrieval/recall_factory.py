@@ -8,14 +8,16 @@
   ``aembed_query_detailed``),sparse 注入 :class:`_EvalSparseQueryService`(把 eval sparse 输出
   转成 rag ``SparseVector``)。写入侧(EvalVectorStore)与召回侧共用同一 eval 编码器口径。
 
-融合/排序由生产 RecallPipeline 按请求级参数执行(RRF/weighted_score 均可)。bm25 路 P1 ``stub``:
-只装 dense+sparse 两路(生产 Qdrant BM25 未落地,见 decoupling-plan bm25 待定项)。
+融合/排序由生产 RecallPipeline 按请求级参数执行(RRF/weighted_score 均可)。bm25 路在
+``EVAL_BM25_MODE=qdrant_bm25`` 时装配生产 Qdrant BM25 retriever,指向 eval 独立
+BM25 collection;``stub`` 时只装 dense+sparse 两路。
 
 护栏:Qdrant 前缀必须含 ``eval``,否则拒绝装配——防打到生产 collection。
 """
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 
 
@@ -40,6 +42,61 @@ class _EvalSparseQueryService:
         return SparseVector(indices=list(sv.indices), values=list(sv.values))
 
 
+class _EvalBm25Retriever:
+    """把生产 Qdrant BM25 backend 适配成 RecallPipeline Retriever,避开 ES adapter 路径。"""
+
+    source = "bm25"
+
+    def __init__(self, *, backend: Any, tokenizer: Any) -> None:
+        self._backend = backend
+        self._tokenizer = tokenizer
+
+    async def recall(
+        self,
+        query: str,
+        dataset_ids: list[int],
+        doc_ids: list[int] | None = None,
+        *,
+        user_id: int,
+        top_k: int,
+        score_threshold_override: float | None = None,
+    ) -> list[Any]:
+        from src.core.pipeline.recall.models import RetrieverHit
+
+        tokens = self._tokenize(query)
+        if not tokens or not dataset_ids:
+            return []
+        doc_iter: list[int | None] = list(doc_ids) if doc_ids else [None]
+        hits: list[Any] = []
+        for dataset_id in dataset_ids:
+            for doc_id in doc_iter:
+                got = await self._backend.recall_topk_chunks(
+                    SimpleNamespace(
+                        user_id=user_id,
+                        dataset_id=dataset_id,
+                        tokens=tokens,
+                        top_k=top_k,
+                        doc_id=doc_id,
+                    )
+                )
+                hits.extend(
+                    RetrieverHit(
+                        chunk_id=h.chunk_id,
+                        doc_id=h.doc_id,
+                        dataset_id=dataset_id,
+                        score=h.score,
+                        source=self.source,
+                    )
+                    for h in got
+                )
+        hits.sort(key=lambda h: h.score, reverse=True)
+        return hits[:top_k]
+
+    def _tokenize(self, query: str) -> list[str]:
+        tokenized = self._tokenizer.tokenize(query)
+        return [tok for tok in tokenized.coarse_tokens.split() if tok]
+
+
 def build_eval_recall_pipeline(
     *,
     settings: Any | None = None,
@@ -47,9 +104,10 @@ def build_eval_recall_pipeline(
     sparse_encoder: Any | None = None,
     dense_score_threshold: float | None = None,
     sparse_score_threshold: float | None = None,
+    bm25_tokenizer: Any | None = None,
     strict: bool = False,
 ):
-    """装配指向 eval 前缀、用 eval 编码器的 RecallPipeline(dense+sparse 两路,bm25 P1 stub)。"""
+    """装配指向 eval 前缀、用 eval 编码器的 RecallPipeline。"""
     if settings is None:
         from linkrag_eval.config import get_settings
 
@@ -104,7 +162,49 @@ def build_eval_recall_pipeline(
         ),
         score_threshold=sparse_score_threshold,
     )
-    return RecallPipeline([dense, sparse], RecallPipelineConfig(strict=strict))
+    retrievers = []
+    if getattr(settings, "bm25_mode", "stub") == "qdrant_bm25":
+        retrievers.append(_build_qdrant_bm25_retriever(settings, tokenizer=bm25_tokenizer))
+    elif getattr(settings, "bm25_mode", "stub") == "sparse_proxy":
+        raise NotImplementedError("EVAL_BM25_MODE=sparse_proxy 未实现;请使用 stub 或 qdrant_bm25。")
+    retrievers.extend([dense, sparse])
+    return RecallPipeline([*retrievers], RecallPipelineConfig(strict=strict))
+
+
+def _build_qdrant_bm25_retriever(settings: Any, *, tokenizer: Any | None = None):
+    if "eval" not in settings.qdrant_bm25_collection:
+        raise RuntimeError(
+            f"Qdrant BM25 collection {settings.qdrant_bm25_collection!r} 不含 'eval';拒绝装配。"
+        )
+    from qdrant_client import AsyncQdrantClient
+
+    from src.core.storage.qdrant_bm25 import (
+        Bm25SparseEncoder,
+        QdrantBm25Retriever,
+        QdrantBm25Store,
+    )
+
+    client = AsyncQdrantClient(url=settings.qdrant_host, api_key=None)
+    store = QdrantBm25Store(
+        client=client,
+        collection_name=settings.qdrant_bm25_collection,
+        vector_name=settings.qdrant_bm25_vector_name,
+    )
+    encoder = Bm25SparseEncoder(
+        k1=settings.bm25_k1,
+        b=settings.bm25_b,
+        avgdl_coarse=settings.bm25_avgdl,
+        avgdl_fine=settings.bm25_avgdl_fine,
+        coarse_boost=settings.bm25_coarse_boost,
+    )
+    if tokenizer is None:
+        from src.core.preprocessor.ragflow_tokenizer import RagFlowTokenizer
+
+        tokenizer = RagFlowTokenizer()
+    return _EvalBm25Retriever(
+        backend=QdrantBm25Retriever(store=store, encoder=encoder),
+        tokenizer=tokenizer,
+    )
 
 
 def build_eval_recall_evaluable(top_k: int, **kwargs):
@@ -124,6 +224,7 @@ def build_eval_recall_evaluable(top_k: int, **kwargs):
     return RecallEvaluable(
         build_eval_recall_pipeline(**kwargs),
         top_k,
+        bm25_top_k=getattr(settings, "recall_bm25_top_k", top_k),
         dense_top_k=getattr(settings, "recall_dense_top_k", top_k),
         sparse_top_k=getattr(settings, "recall_sparse_top_k", top_k),
         dense_score_threshold=dense_threshold,

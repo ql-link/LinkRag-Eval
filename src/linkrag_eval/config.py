@@ -24,6 +24,8 @@ class EvalSettings(BaseSettings):
     qdrant_prefix: str = Field(default="eval_kb_bucket")
     qdrant_bucket_count: int = Field(default=16)
     sparse_vector_name: str = Field(default="sparse_text")
+    qdrant_bm25_collection: str = Field(default="eval_bm25")
+    qdrant_bm25_vector_name: str = Field(default="bm25_text")
 
     # —— eval 自持元数据/结果库(MySQL:同生产服务器、独立库 tolink_rag_eval_db)——
     db_host: str = Field(default="127.0.0.1")
@@ -63,6 +65,7 @@ class EvalSettings(BaseSettings):
     recall_sparse_score_threshold: float = Field(default=0.40)
     recall_dense_top_k: int = Field(default=150)
     recall_sparse_top_k: int = Field(default=50)
+    recall_bm25_top_k: int = Field(default=50)
     recall_fusion_strategy: str = Field(default="weighted_score")
     recall_dense_weight: float = Field(default=0.90)
     recall_sparse_weight: float = Field(default=0.10)
@@ -73,14 +76,19 @@ class EvalSettings(BaseSettings):
 
     # —— bm25 模式:stub | sparse_proxy | qdrant_bm25 ——
     bm25_mode: str = Field(default="stub")
+    bm25_k1: float = Field(default=1.2)
+    bm25_b: float = Field(default=0.75)
+    bm25_avgdl: float = Field(default=200.0)
+    bm25_avgdl_fine: float = Field(default=220.0)
+    bm25_coarse_boost: float = Field(default=2.0)
 
-    @field_validator("qdrant_prefix")
+    @field_validator("qdrant_prefix", "qdrant_bm25_collection")
     @classmethod
     def _prefix_must_be_eval(cls, v: str) -> str:
         """护栏:前缀必须含 'eval',否则拒绝——防写串生产。"""
         if "eval" not in v:
             raise ValueError(
-                f"EVAL_QDRANT_PREFIX={v!r} 不含 'eval';为防写串生产 collection,前缀必须含 'eval'。"
+                f"Qdrant eval 标识 {v!r} 不含 'eval';为防写串生产 collection,必须含 'eval'。"
             )
         return v
 

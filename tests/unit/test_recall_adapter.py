@@ -56,10 +56,33 @@ def test_elapsed_falls_back_to_wall_ms() -> None:
 class _Pipeline:
     def __init__(self):
         self.request = None
+        self.calls = 0
 
     async def execute(self, request):
         self.request = request
+        self.calls += 1
         return _Resp(hits=[], elapsed_ms=1, per_source_counts={"dense": 0, "sparse": 0})
+
+
+class _FlakyPipeline:
+    def __init__(self):
+        self.calls = 0
+
+    async def execute(self, request):
+        self.calls += 1
+        if self.calls == 1:
+            return _Resp(
+                hits=[_Hit("c1", 1, 990131, 0.3, {"dense": 0.3, "sparse": None})],
+                elapsed_ms=1,
+                per_source_counts={"dense": 1, "sparse": 0},
+                failed_sources=["sparse"],
+            )
+        return _Resp(
+            hits=[_Hit("c2", 2, 990131, 0.9, {"dense": 0.5, "sparse": 0.4})],
+            elapsed_ms=1,
+            per_source_counts={"dense": 1, "sparse": 1},
+            failed_sources=[],
+        )
 
 
 @dataclass
@@ -74,18 +97,21 @@ async def test_run_passes_route_topk_thresholds_and_fusion_overrides() -> None:
     ev = RecallEvaluable(
         pipeline=pipeline,
         top_k=10,
+        bm25_top_k=40,
         dense_top_k=150,
         sparse_top_k=50,
         dense_score_threshold=0.2,
         sparse_score_threshold=0.4,
         fusion_strategy="weighted_score",
         fusion_weights={"dense": 0.9, "sparse": 0.1, "bm25": 0.0},
+        retries=1,
     )
 
     await ev.run(_Sample())
 
     req = pipeline.request
     assert req.top_k == 10
+    assert req.bm25_top_k == 40
     assert req.dense_top_k == 150
     assert req.sparse_top_k == 50
     assert req.dense_score_threshold_override == 0.2
@@ -94,3 +120,14 @@ async def test_run_passes_route_topk_thresholds_and_fusion_overrides() -> None:
     assert req.fusion_dense_weight_override == 0.9
     assert req.fusion_sparse_weight_override == 0.1
     assert req.fusion_bm25_weight_override == 0.0
+
+
+async def test_run_retries_failed_sources_before_returning() -> None:
+    pipeline = _FlakyPipeline()
+    ev = RecallEvaluable(pipeline=pipeline, top_k=10, retries=2)
+
+    out = await ev.run(_Sample())
+
+    assert pipeline.calls == 2
+    assert out.failed_sources == []
+    assert [h.chunk_id for h in out.ranked] == ["c2"]

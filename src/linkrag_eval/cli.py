@@ -57,7 +57,8 @@ def _add_run(sub: argparse._SubParsersAction) -> None:
                    help="融合算法(默认 EVAL_RECALL_FUSION_STRATEGY)")
     p.add_argument("--dense-weight", type=float, default=None, help="weighted_score dense 权重")
     p.add_argument("--sparse-weight", type=float, default=None, help="weighted_score sparse 权重")
-    p.add_argument("--bm25-weight", type=float, default=None, help="weighted_score bm25 权重(当前 bm25 stub)")
+    p.add_argument("--bm25-top-k", type=int, default=None, help="BM25 分路召回 topK(默认 EVAL_RECALL_BM25_TOP_K)")
+    p.add_argument("--bm25-weight", type=float, default=None, help="weighted_score bm25 权重")
     p.add_argument("--out-dir", default="runs", help="快照/报告输出目录")
     p.add_argument("--dataset", default="default", help="报告台账的数据集名(趋势分组用)")
     p.add_argument("--baseline", default=None,
@@ -119,17 +120,20 @@ def _add_cleaning(sub: argparse._SubParsersAction) -> None:
 async def _do_ingest(args) -> int:
     from linkrag_eval.app import run_ingest
     from linkrag_eval.compute.rag_adapter import RagProductComputer
+    from linkrag_eval.config import get_settings
     from linkrag_eval.store.corpus_repo import EvalCorpusRepo
     from linkrag_eval.store.indexer import EvalVectorIndexer
     from linkrag_eval.store.vector_store import build_eval_vector_store
 
+    settings = get_settings()
     repo = EvalCorpusRepo()
     if args.init_schema:
         await repo.init_schema()
     indexer = EvalVectorIndexer(
         computer=RagProductComputer(),
-        vector_store=build_eval_vector_store(),
+        vector_store=build_eval_vector_store(settings=settings),
         corpus_repo=repo,
+        bm25_mode=settings.bm25_mode,
     )
     catalog = {
         "name": args.name, "source_type": args.source_type,
@@ -216,6 +220,8 @@ async def _do_run(args) -> int:
         settings.recall_dense_top_k = args.dense_top_k
     if args.sparse_top_k is not None:
         settings.recall_sparse_top_k = args.sparse_top_k
+    if args.bm25_top_k is not None:
+        settings.recall_bm25_top_k = args.bm25_top_k
     if args.fusion_strategy is not None:
         settings.recall_fusion_strategy = args.fusion_strategy
     if args.dense_weight is not None:
@@ -368,8 +374,9 @@ async def _do_golden_opensource(args) -> int:
             await repo.init_schema()
         indexer = EvalVectorIndexer(
             computer=RagProductComputer(),
-            vector_store=build_eval_vector_store(),
+            vector_store=build_eval_vector_store(settings=settings),
             corpus_repo=repo,
+            bm25_mode=settings.bm25_mode,
         )
 
     report = await run_opensource_golden(
@@ -443,6 +450,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"qdrant_host     = {s.qdrant_host}")
         print(f"qdrant_prefix   = {s.qdrant_prefix}")
         print(f"qdrant_buckets  = {s.qdrant_bucket_count}")
+        print(f"qdrant_bm25     = {s.qdrant_bm25_collection}/{s.qdrant_bm25_vector_name}")
         print(f"mysql           = {s.db_host}:{s.db_port}/{s.db_name}")
         print(f"judge_model     = {s.judge_model or '(空)'}  api_key={masked}")
         print(f"embed_model     = {s.embed_model}  dim={s.embed_dim}")
@@ -450,6 +458,10 @@ def main(argv: list[str] | None = None) -> int:
         print(
             "recall_threshold= "
             f"dense:{s.recall_dense_score_threshold} sparse:{s.recall_sparse_score_threshold}"
+        )
+        print(
+            "recall_top_k    = "
+            f"bm25:{s.recall_bm25_top_k} dense:{s.recall_dense_top_k} sparse:{s.recall_sparse_top_k}"
         )
         print(f"bm25_mode       = {s.bm25_mode}")
         print(f"user_id(route)  = {s.user_id}")

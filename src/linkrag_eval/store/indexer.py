@@ -5,7 +5,8 @@ eval 前缀 Qdrant → ``EvalCorpusRepo`` 落 MySQL 独立库。**不 import 任
 全部经 compute/store 抽象;rag 仅在 rag_adapter / vector_store 两个 adapter 内被触碰。
 
 passage 语义:一个 passage 即一个 chunk(``ordinal`` 为 doc 内序号);需切分的 corpus 走另一条
-路径(compute_chunks,后续接)。bm25 路按 mode 可插拔:P1 ``stub`` 只跑 dense+sparse 两路。
+路径(compute_chunks,后续接)。bm25 路按 mode 可插拔:``stub`` 只跑 dense+sparse;
+``qdrant_bm25`` 额外写 eval 独立 BM25 collection。
 """
 
 from __future__ import annotations
@@ -69,7 +70,11 @@ class EvalVectorIndexer:
             if len(sparse) != len(items):
                 raise ValueError(f"sparse 数量不符:{len(sparse)} != {len(items)}")
 
-        bm25_on = self._bm25_mode != "stub"  # P1 stub:不写 bm25 路
+        bm25_tokens = None
+        if self._bm25_mode == "qdrant_bm25":
+            bm25_tokens = [self._computer.compute_bm25_tokens(c) for c in contents]
+        elif self._bm25_mode == "sparse_proxy":
+            raise NotImplementedError("EVAL_BM25_MODE=sparse_proxy 未实现;请使用 stub 或 qdrant_bm25。")
 
         points: list[EvalPoint] = []
         rows: list[CorpusChunkRow] = []
@@ -81,6 +86,7 @@ class EvalVectorIndexer:
                     doc_id=p.doc_id,
                     dense=dense[i].values,
                     sparse=(sparse[i] if sparse is not None else None),
+                    bm25_tokens=(bm25_tokens[i] if bm25_tokens is not None else None),
                 )
             )
             rows.append(
@@ -95,7 +101,7 @@ class EvalVectorIndexer:
                     char_len=len(p.content),
                     dense_indexed=True,
                     sparse_indexed=sparse is not None,
-                    bm25_indexed=bm25_on,
+                    bm25_indexed=bm25_tokens is not None,
                     ingest_run_id=self._run_id,
                 )
             )

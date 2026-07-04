@@ -11,6 +11,7 @@ import pytest
 pytest.importorskip("src", reason="需安装 toLink-Rag(pip install -e <path>)")
 
 from linkrag_eval.compute.protocol import SparseVec  # noqa: E402
+from linkrag_eval.compute.protocol import Bm25Tokens  # noqa: E402
 from linkrag_eval.config import EvalSettings  # noqa: E402
 from linkrag_eval.store.vector_store import EvalPoint, EvalVectorStore  # noqa: E402
 from linkrag_eval.store.vector_store import build_eval_vector_store  # noqa: E402
@@ -36,6 +37,24 @@ class _FakeIndexStore:
         self.calls.append(("delete", bucket_id, list(chunk_ids)))
 
 
+class _FakeBm25Encoder:
+    def encode_document(self, coarse_tokens, fine_tokens):
+        from types import SimpleNamespace
+
+        return SimpleNamespace(indices=[7], values=[1.5])
+
+
+class _FakeBm25Store:
+    def __init__(self) -> None:
+        self.calls: list[tuple] = []
+
+    async def ensure_collection(self):
+        self.calls.append(("ensure_bm25_collection",))
+
+    async def upsert_chunks(self, points):
+        self.calls.append(("upsert_bm25", list(points)))
+
+
 def _store(fake) -> EvalVectorStore:
     return EvalVectorStore(
         prefix="eval_kb_bucket",
@@ -43,6 +62,19 @@ def _store(fake) -> EvalVectorStore:
         user_id=990001,
         index_store=fake,
         sparse_vector_name="sparse_text",
+    )
+
+
+def _store_with_bm25(fake, bm25_store) -> EvalVectorStore:
+    return EvalVectorStore(
+        prefix="eval_kb_bucket",
+        bucket_count=16,
+        user_id=990001,
+        index_store=fake,
+        sparse_vector_name="sparse_text",
+        qdrant_bm25_store=bm25_store,
+        bm25_encoder=_FakeBm25Encoder(),
+        bm25_collection="eval_bm25",
     )
 
 
@@ -91,6 +123,39 @@ async def test_dense_only_skips_sparse() -> None:
         dataset_id=1, points=[EvalPoint(chunk_id="a", doc_id=1, dense=[0.1, 0.2])]
     )
     assert [c[0] for c in fake.calls] == ["ensure_collection", "upsert_points"]
+
+
+async def test_upsert_writes_qdrant_bm25_when_tokens_present() -> None:
+    fake = _FakeIndexStore()
+    bm25 = _FakeBm25Store()
+    await _store_with_bm25(fake, bm25).upsert(
+        dataset_id=990131,
+        points=[
+            EvalPoint(
+                chunk_id="a",
+                doc_id=1,
+                dense=[0.1, 0.2],
+                bm25_tokens=Bm25Tokens(coarse="暖气 滤网", fine="暖气 滤网"),
+            )
+        ],
+    )
+    assert [c[0] for c in bm25.calls] == ["ensure_bm25_collection", "upsert_bm25"]
+    point = bm25.calls[1][1][0]
+    assert point.chunk_id == "a"
+    assert point.dataset_id == 990131
+    assert point.user_id == 990001
+    assert point.sparse_vector.indices == [7]
+
+
+def test_bm25_collection_guard_rejects_non_eval() -> None:
+    with pytest.raises(RuntimeError):
+        EvalVectorStore(
+            prefix="eval_kb_bucket",
+            bucket_count=16,
+            user_id=990001,
+            index_store=_FakeIndexStore(),
+            bm25_collection="prod_bm25",
+        )
 
 
 def test_build_eval_vector_store_uses_eval_sparse_vector_name() -> None:

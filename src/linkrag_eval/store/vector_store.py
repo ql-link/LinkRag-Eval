@@ -17,7 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Sequence
 
-from linkrag_eval.compute.protocol import SparseVec
+from linkrag_eval.compute.protocol import Bm25Tokens, SparseVec
 
 
 @dataclass(frozen=True)
@@ -28,6 +28,8 @@ class EvalPoint:
     doc_id: int
     dense: list[float]
     sparse: SparseVec | None = None
+    bm25_tokens: Bm25Tokens | None = None
+    chunk_type: str = "text"
 
 
 class EvalVectorStore:
@@ -43,6 +45,15 @@ class EvalVectorStore:
         api_key: str | None = None,
         index_store: Any | None = None,
         sparse_vector_name: str | None = None,
+        qdrant_bm25_store: Any | None = None,
+        bm25_encoder: Any | None = None,
+        bm25_collection: str | None = None,
+        bm25_vector_name: str | None = None,
+        bm25_k1: float = 1.2,
+        bm25_b: float = 0.75,
+        bm25_avgdl: float = 200.0,
+        bm25_avgdl_fine: float = 220.0,
+        bm25_coarse_boost: float = 2.0,
     ) -> None:
         if "eval" not in prefix:
             raise RuntimeError(
@@ -53,6 +64,21 @@ class EvalVectorStore:
         self._bucket_id = _route_bucket(prefix, bucket_count, user_id)
         self._store = index_store or _build_index_store(prefix, bucket_count, qdrant_host, api_key)
         self._sparse_name = sparse_vector_name or "sparse_text"
+        if bm25_collection is not None and "eval" not in bm25_collection:
+            raise RuntimeError(
+                f"Qdrant BM25 collection {bm25_collection!r} 不含 'eval';为防写串生产,拒绝构造。"
+            )
+        self._bm25_store = qdrant_bm25_store
+        self._bm25_encoder = bm25_encoder
+        self._bm25_collection = bm25_collection
+        self._bm25_vector_name = bm25_vector_name or "bm25_text"
+        self._bm25_k1 = bm25_k1
+        self._bm25_b = bm25_b
+        self._bm25_avgdl = bm25_avgdl
+        self._bm25_avgdl_fine = bm25_avgdl_fine
+        self._bm25_coarse_boost = bm25_coarse_boost
+        self._qdrant_host = qdrant_host
+        self._api_key = api_key
 
     @property
     def bucket_id(self) -> int:
@@ -86,6 +112,12 @@ class EvalVectorStore:
                 bucket_id=self._bucket_id,
                 points=[self._sparse_point(p, dataset_id) for p in sparse_pts],
             )
+
+        bm25_points = self._bm25_points(dataset_id, pts)
+        if bm25_points:
+            bm25_store = self._ensure_bm25_store()
+            await bm25_store.ensure_collection()
+            await bm25_store.upsert_chunks(bm25_points)
 
     async def delete(self, *, chunk_ids: Sequence[str]) -> None:
         """按 chunk_id 删点(定向清理;幂等重灌通常无需调用)。"""
@@ -127,6 +159,52 @@ class EvalVectorStore:
             payload=self._payload(p, dataset_id),
         )
 
+    def _bm25_points(self, dataset_id: int, points: Sequence[EvalPoint]) -> list[Any]:
+        bm25_items = [p for p in points if p.bm25_tokens is not None]
+        if not bm25_items:
+            return []
+        encoder = self._ensure_bm25_encoder()
+        out: list[Any] = []
+        for p in bm25_items:
+            assert p.bm25_tokens is not None
+            vector = encoder.encode_document(
+                p.bm25_tokens.coarse.split(), p.bm25_tokens.fine.split()
+            )
+            if not vector.indices:
+                continue
+            out.append(_bm25_point_cls()(
+                chunk_id=p.chunk_id,
+                doc_id=p.doc_id,
+                user_id=self._user_id,
+                dataset_id=dataset_id,
+                chunk_type=p.chunk_type,
+                sparse_vector=vector,
+            ))
+        return out
+
+    def _ensure_bm25_encoder(self):
+        if self._bm25_encoder is None:
+            self._bm25_encoder = _build_bm25_encoder(
+                k1=self._bm25_k1,
+                b=self._bm25_b,
+                avgdl_coarse=self._bm25_avgdl,
+                avgdl_fine=self._bm25_avgdl_fine,
+                coarse_boost=self._bm25_coarse_boost,
+            )
+        return self._bm25_encoder
+
+    def _ensure_bm25_store(self):
+        if self._bm25_collection is None and self._bm25_store is None:
+            raise RuntimeError("启用 qdrant_bm25 写入需配置 EVAL_QDRANT_BM25_COLLECTION。")
+        if self._bm25_store is None:
+            self._bm25_store = _build_bm25_store(
+                qdrant_host=self._qdrant_host,
+                api_key=self._api_key,
+                collection_name=self._bm25_collection,
+                vector_name=self._bm25_vector_name,
+            )
+        return self._bm25_store
+
 
 # —— 默认装配:此处(允许的 adapter 文件)惰性触碰 rag / qdrant-client ——
 def _route_bucket(prefix: str, bucket_count: int, user_id: int) -> int:
@@ -149,6 +227,50 @@ def _build_index_store(prefix: str, bucket_count: int, qdrant_host: str | None, 
     )
 
 
+def _build_bm25_store(
+    *,
+    qdrant_host: str | None,
+    api_key: str | None,
+    collection_name: str | None,
+    vector_name: str,
+):
+    from qdrant_client import AsyncQdrantClient
+
+    from src.core.storage.qdrant_bm25 import QdrantBm25Store
+
+    client = AsyncQdrantClient(url=qdrant_host, api_key=(api_key or None))
+    return QdrantBm25Store(
+        client=client,
+        collection_name=collection_name,
+        vector_name=vector_name,
+    )
+
+
+def _build_bm25_encoder(
+    *,
+    k1: float,
+    b: float,
+    avgdl_coarse: float,
+    avgdl_fine: float,
+    coarse_boost: float,
+):
+    from src.core.storage.qdrant_bm25 import Bm25SparseEncoder
+
+    return Bm25SparseEncoder(
+        k1=k1,
+        b=b,
+        avgdl_coarse=avgdl_coarse,
+        avgdl_fine=avgdl_fine,
+        coarse_boost=coarse_boost,
+    )
+
+
+def _bm25_point_cls():
+    from src.core.storage.qdrant_bm25 import Bm25Point
+
+    return Bm25Point
+
+
 def build_eval_vector_store(settings=None) -> EvalVectorStore:
     """按 EVAL_* 配置装配 EvalVectorStore。"""
     if settings is None:
@@ -161,4 +283,11 @@ def build_eval_vector_store(settings=None) -> EvalVectorStore:
         user_id=settings.user_id,
         qdrant_host=settings.qdrant_host,
         sparse_vector_name=settings.sparse_vector_name,
+        bm25_collection=settings.qdrant_bm25_collection,
+        bm25_vector_name=settings.qdrant_bm25_vector_name,
+        bm25_k1=settings.bm25_k1,
+        bm25_b=settings.bm25_b,
+        bm25_avgdl=settings.bm25_avgdl,
+        bm25_avgdl_fine=settings.bm25_avgdl_fine,
+        bm25_coarse_boost=settings.bm25_coarse_boost,
     )

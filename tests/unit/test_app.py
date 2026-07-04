@@ -99,7 +99,7 @@ async def test_run_eval_snapshot_records_recall_fusion_config(tmp_path) -> None:
         settings=settings,
     )
 
-    assert result.snapshot.route_top_ks == {"dense": 150, "sparse": 50}
+    assert result.snapshot.route_top_ks == {"bm25": 50, "dense": 150, "sparse": 50}
     assert result.snapshot.route_score_thresholds == {"dense": 0.20, "sparse": 0.40}
     assert result.snapshot.fusion_strategy == "weighted_score"
     assert result.snapshot.fusion_weights == {"dense": 0.90, "sparse": 0.10, "bm25": 0.0}

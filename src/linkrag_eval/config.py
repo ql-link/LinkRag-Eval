@@ -58,9 +58,15 @@ class EvalSettings(BaseSettings):
     sparse_min_weight: float = Field(default=0.0)
     sparse_timeout_ms: int = Field(default=60000)
 
-    # —— 召回装配阈值(过滤低质量分路命中;默认来自 2026-07-02 活栈 A/B)——
-    recall_dense_score_threshold: float = Field(default=0.0)
-    recall_sparse_score_threshold: float = Field(default=0.30)
+    # —— 召回装配阈值(过滤低质量分路命中;默认来自 2026-07-02 活栈网格搜索)——
+    recall_dense_score_threshold: float = Field(default=0.20)
+    recall_sparse_score_threshold: float = Field(default=0.40)
+    recall_dense_top_k: int = Field(default=150)
+    recall_sparse_top_k: int = Field(default=50)
+    recall_fusion_strategy: str = Field(default="weighted_score")
+    recall_dense_weight: float = Field(default=0.90)
+    recall_sparse_weight: float = Field(default=0.10)
+    recall_bm25_weight: float = Field(default=0.0)
 
     # —— 路由常量(非真实用户,仅 bucket 分区)——
     user_id: int = Field(default=990001)
@@ -85,6 +91,17 @@ class EvalSettings(BaseSettings):
         if v not in allowed:
             raise ValueError(f"EVAL_BM25_MODE={v!r} 非法;应为 {sorted(allowed)} 之一。")
         return v
+
+    @field_validator("recall_fusion_strategy")
+    @classmethod
+    def _fusion_strategy_known(cls, v: str) -> str:
+        normalized = v.strip().lower()
+        allowed = {"rrf", "weighted_score"}
+        if normalized not in allowed:
+            raise ValueError(
+                f"EVAL_RECALL_FUSION_STRATEGY={v!r} 非法;应为 {sorted(allowed)} 之一。"
+            )
+        return normalized
 
     def mysql_dsn(self) -> str:
         """eval 库异步 DSN(mysql+aiomysql)。``EVAL_DB_URL`` 覆盖优先,否则由字段构建。"""

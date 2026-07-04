@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 from linkrag_eval.app import format_retrieval_summary, run_eval, run_ingest
+from linkrag_eval.config import EvalSettings
 from linkrag_eval.metrics.retrieval import RecallAtK
 from linkrag_eval.models import Layer, RankedHit, StageOutput
 
@@ -82,3 +83,23 @@ async def test_run_eval_end_to_end(tmp_path) -> None:
     assert recall[("recall", 1)] == 1.0
     summary = format_retrieval_summary(result)
     assert "recall@1" in summary and "1.0000" in summary
+
+
+async def test_run_eval_snapshot_records_recall_fusion_config(tmp_path) -> None:
+    golden = tmp_path / "g.jsonl"
+    golden.write_text(json.dumps(
+        {"id": "q1", "query": "问", "user_id": 1, "dataset_ids": [990131], "expected_doc_ids": [1]}
+    ), encoding="utf-8")
+    settings = EvalSettings(_env_file=None)
+    store = _Store()
+
+    result = await run_eval(
+        str(golden), top_k=10, run_id="r1",
+        evaluable=_FakeRecall(), metrics=[RecallAtK([10])], store=store,
+        settings=settings,
+    )
+
+    assert result.snapshot.route_top_ks == {"dense": 150, "sparse": 50}
+    assert result.snapshot.route_score_thresholds == {"dense": 0.20, "sparse": 0.40}
+    assert result.snapshot.fusion_strategy == "weighted_score"
+    assert result.snapshot.fusion_weights == {"dense": 0.90, "sparse": 0.10, "bm25": 0.0}

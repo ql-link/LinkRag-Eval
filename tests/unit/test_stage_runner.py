@@ -5,6 +5,7 @@ from __future__ import annotations
 import pytest
 
 from linkrag_eval.golden.schema import GoldenSample
+from linkrag_eval.app import format_retrieval_summary
 from linkrag_eval.metrics.retrieval import RecallAtK
 from linkrag_eval.models import Layer, QuestionType, RankedHit, Snapshot, StageOutput
 from linkrag_eval.runners import RunContext, run_stage
@@ -57,6 +58,7 @@ async def test_run_stage_aggregates_recall() -> None:
     # per_sample 诊断
     assert len(result.per_sample) == 2
     assert result.run_id == "r1"
+    assert "run_quality = clean" in format_retrieval_summary(result)
 
 
 async def test_domain_bucketing() -> None:

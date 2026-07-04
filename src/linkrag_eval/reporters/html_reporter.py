@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import html
 import statistics
+from collections import Counter
 from datetime import datetime
 
 from linkrag_eval.models import EvalResult, Layer, MetricResult
@@ -113,6 +114,26 @@ def _fmt(value: float) -> str:
     return f"{value:.3f}"
 
 
+def _run_quality(result: EvalResult) -> dict[str, object]:
+    failed_counter: Counter[str] = Counter()
+    failed_samples = 0
+    zero_ranked = 0
+    for row in result.per_sample:
+        failed = list(row.get("failed_sources") or [])
+        if failed:
+            failed_samples += 1
+            failed_counter.update(failed)
+        if row.get("n_ranked") == 0:
+            zero_ranked += 1
+    return {
+        "total": len(result.per_sample),
+        "failed_samples": failed_samples,
+        "failed_sources": dict(failed_counter),
+        "zero_ranked": zero_ranked,
+        "clean": failed_samples == 0 and zero_ranked == 0,
+    }
+
+
 def _delta_cell(delta: float | None) -> str:
     if delta is None:
         return '<td class="delta flat">—</td>'
@@ -149,6 +170,16 @@ class HtmlReporter:
             for label, value in [
                 ("sparse provider", snap.sparse_vector_provider),
                 ("top_k", snap.top_k),
+                ("thresholds", ",".join(
+                    f"{k}:{v:g}" for k, v in sorted(snap.route_score_thresholds.items())
+                ) or snap.score_threshold),
+                ("route top_k", ",".join(
+                    f"{k}:{v}" for k, v in sorted(snap.route_top_ks.items())
+                ) or "—"),
+                ("fusion", snap.fusion_strategy),
+                ("weights", ",".join(
+                    f"{k}:{v:g}" for k, v in sorted(snap.fusion_weights.items())
+                ) or "—"),
                 ("enabled", ",".join(snap.enabled_sources)),
                 ("rrf_k", snap.rrf_k),
                 ("rerank top_n", snap.rerank_top_n),
@@ -178,6 +209,7 @@ class HtmlReporter:
         retrieval = [m for m in result.metrics if m.layer == Layer.RETRIEVAL]
         headline = self._headline_cards(retrieval, delta_by_key)
         retrieval_section = self._retrieval_section(retrieval, delta_by_key)
+        quality_section = self._run_quality_section(result)
         overlap_note = self._overlap_latency_note(result, retrieval)
         bucket_section = self._bucket_section(retrieval)
         domain_section = self._domain_section(retrieval)
@@ -206,6 +238,7 @@ class HtmlReporter:
   {"".join(banners)}
   <div class="cards">{headline}</div>
   {retrieval_section}
+  {quality_section}
   {overlap_note}
   {bucket_section}
   {domain_section}
@@ -303,6 +336,36 @@ class HtmlReporter:
         if not parts:
             return ""
         return f'<section><h2>三路重叠与延迟</h2><p class="h-note">{" · ".join(parts)}（重叠率读归一化 sources，延迟为诊断信息不进指标）</p></section>'
+
+    def _run_quality_section(self, result: EvalResult) -> str:
+        quality = _run_quality(result)
+        if not quality["total"]:
+            return ""
+        failed_sources = quality["failed_sources"]
+        failed_text = (
+            "、".join(f"{_esc(k)}={v}" for k, v in sorted(failed_sources.items()))
+            if failed_sources else "无"
+        )
+        badge = "clean run" if quality["clean"] else "non-clean run"
+        note = (
+            "无单路失败且无零结果样本,可作为稳定基线候选。"
+            if quality["clean"]
+            else "存在远端或分路检索失败,本轮指标会受活栈波动影响,不宜直接作为稳定基线。"
+        )
+        return f"""
+  <section>
+    <h2>运行质量 <span class="badge">{badge}</span></h2>
+    <p class="h-note">{_esc(note)}</p>
+    <table>
+      <thead><tr><th>样本数</th><th>failed source 样本</th><th>失败来源</th><th>零结果样本</th></tr></thead>
+      <tbody><tr>
+        <td>{quality["total"]}</td>
+        <td>{quality["failed_samples"]}</td>
+        <td>{failed_text}</td>
+        <td>{quality["zero_ranked"]}</td>
+      </tr></tbody>
+    </table>
+  </section>"""
 
     def _glossary_section(self, metrics: list[MetricResult]) -> str:
         """报告内"指标含义"区块：只列本次实际出现的指标，避免无关条目。"""

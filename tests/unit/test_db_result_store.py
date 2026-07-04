@@ -43,6 +43,10 @@ def _result(run_id: str, value: float) -> EvalResult:
                 by_type_n={QuestionType.KEYWORD: 2},
             )
         ],
+        per_sample=[
+            {"sample_id": "ok", "n_ranked": 10, "failed_sources": []},
+            {"sample_id": "bad", "n_ranked": 0, "failed_sources": ["dense", "sparse"]},
+        ],
     )
 
 
@@ -67,6 +71,10 @@ async def test_db_result_store_saves_and_loads_baseline() -> None:
         assert run.status == "done"
         assert run.top_k == 10
         assert run.sparse_provider == "ark:bge-m3"
+        assert run.run_quality == "non-clean"
+        assert run.failed_samples == 1
+        assert run.failed_sources_json == '{"dense": 1, "sparse": 1}'
+        assert run.zero_ranked == 1
         assert len(metrics) == 2
         assert sorted(m.type_bucket for m in metrics) == ["__all__", "keyword"]
 

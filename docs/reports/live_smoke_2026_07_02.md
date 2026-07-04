@@ -9,7 +9,7 @@
 
 ## 已验证
 
-- `alembic upgrade head` 成功,`alembic_version=0001`。
+- `alembic upgrade head` 成功,`alembic_version=0002`。`0002` 将 `eval_run.sparse_provider` 放宽到 128,避免较长 provider/model 指纹落库失败。
 - 小规模 ingest + `run --precheck` 跑通。
 - 四域正式重灌完成:MySQL `eval_corpus_chunk` 中四个 dataset 均为 800 行,`dense_indexed=800`,`sparse_indexed=800`,`bm25_indexed=0`。
 - Qdrant collection schema 为 named dense vector `dense`(1024, cosine) + sparse vector `sparse_text`;点数为 3201(含 1 条小 smoke)。
@@ -21,6 +21,8 @@
 | --- | --- | ---: | ---: | ---: | ---: | --- |
 | 2026-07-01 | `doubao-v2-4domain-clean-top10` | 0.8966 | 0.9391 | 0.8069 | 0.8606 | 在 `0.901±0.005` 内,但日志有少量 Qdrant 502/单路失败 |
 | 2026-07-02 | `doubao-v2-4domain-clean-rerun-top10` | 0.8919 | 0.9340 | 0.8030 | 0.8555 | 日志未见单路失败,但低于等价门槛 |
+| 2026-07-02 | `weighted-score-best-top10` | 0.9624 | 0.9797 | 0.8905 | 0.9127 | 正式 CLI 跑 weighted_score 最佳参数;non-clean run,11 条样本有 failed_sources |
+| 2026-07-02 | `weighted-score-best-rerun-top10` | 0.9669 | 0.9822 | 0.8909 | 0.9137 | 同参数复跑;non-clean run,29 条样本有 failed_sources |
 
 ## 结论
 
@@ -52,10 +54,78 @@
 | 0.25 | 0.9246 | 0.9543 | 0.8014 | 0.8544 | 过滤部分 sparse 噪声,`ecom-200045` 修回 |
 | 0.30 | 0.9571 | 0.9772 | 0.8196 | 0.8614 | `ecom-200045` / `ecom-200056` 均修回 |
 
-因此 eval 默认配置切为 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.30`。该值只影响召回侧 sparse 分路结果过滤,不改变 Qdrant collection 和写入向量。
+这轮 A/B 先把 eval 默认配置切为 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.30`。该值只影响召回侧 sparse 分路结果过滤,不改变 Qdrant collection 和写入向量。后续完整网格搜索继续把推荐值更新为 0.40,见下节。
+
+## dense/sparse topK + 阈值网格搜索
+
+同一正式 eval 前缀、同一 394 条 golden,先分别缓存 dense/sparse 最大候选池,再在本地按生产 RRF 公式复算 720 组配置:
+
+| 搜索维度 | 取值 |
+| --- | --- |
+| dense_top_k | 20, 50, 100, 200 |
+| sparse_top_k | 5, 10, 20, 50, 100 |
+| dense_threshold | 0.0, 0.1, 0.2, 0.3, 0.4, 0.5 |
+| sparse_threshold | 0.0, 0.2, 0.25, 0.3, 0.35, 0.4 |
+| final_top_k / rrf_k | 10 / 60 |
+
+最优配置:
+
+| dense_top_k | sparse_top_k | dense_threshold | sparse_threshold | recall@10 | hit_rate@10 | map | mrr | 分路失败样本 |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 20 | 5 | 0.30 | 0.40 | 0.9715 | 0.9873 | 0.8782 | 0.9045 | 0 |
+
+敏感性观察:
+
+- sparse_threshold 从 0.30 提高到 0.40 后,在 `dense_top_k=20`、`sparse_top_k=5` 下 recall@10 从 0.9665 升到 0.9715,MAP 从 0.8430 升到 0.8782。
+- dense_threshold 在 0.0–0.3 区间指标几乎相同;0.4 以后 recall 开始下降。因此推荐 dense_threshold=0.30 是同分下偏向更严格过滤的选择,不是主要增益来源。
+- sparse_top_k=5 优于更大的 sparse 候选池,说明低分 sparse 候选参与 RRF 是本轮偏差的主要来源。
+
+结论:RRF 口径推荐值为 `EVAL_RECALL_DENSE_SCORE_THRESHOLD=0.30`、`EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.40`、`dense_top_k=20`、`sparse_top_k=5`。后续对比 weighted_score 后,正式默认值已切到 weighted_score 口径,见下节。
+
+## weighted_score 正式 CLI 复验
+
+同一正式 eval 前缀、同一 394 条 golden,把调参得到的 weighted_score 最佳参数接入正式 `linkrag-eval run` 路径后复验:
+
+```text
+fusion_strategy = weighted_score
+dense_top_k = 150
+sparse_top_k = 50
+dense_threshold = 0.20
+sparse_threshold = 0.40
+dense_weight = 0.90
+sparse_weight = 0.10
+bm25_weight = 0.0
+final_top_k = 10
+rerank = none
+```
+
+正式命令已确认下发到生产 `RecallPipeline`:
+
+- `route_top_k={'dense': 150, 'sparse': 50}`
+- `fusion=weighted_score`
+- `sources=['dense', 'sparse']`
+- 写入 collection 为 `eval_doubao_v2_kb_bucket_9`
+
+结果:
+
+| run_id | recall@10 | hit_rate@10 | map | mrr | failed source 样本 | 失败来源 | 零结果样本 |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+| `weighted-score-best-top10` | 0.9624 | 0.9797 | 0.8905 | 0.9127 | 11 | dense=8,sparse=3 | 3 |
+| `weighted-score-best-rerun-top10` | 0.9669 | 0.9822 | 0.8909 | 0.9137 | 29 | dense=9,sparse=20 | 3 |
+
+产物:
+
+- 结果文件:`runs/results/weighted-score-best-top10.json`
+- 快照:`runs/snapshots/weighted-score-best-top10.json`
+- HTML 报告:`runs/weighted-score-best-top10.html`
+- DB 台账:`eval_run.status=done`,写入 `eval_metric_result` 42 行
+- 同参数复跑产物:`runs/results/weighted-score-best-rerun-top10.json`、`runs/weighted-score-best-rerun-top10.html`,DB 台账同样写入成功
+
+说明:两轮正式活栈结果均低于离线调参报告中的 `recall@10=0.9745`,且均为 non-clean run。该结果可证明正式 CLI 参数接入、报告输出与台账落库已经闭环,但不应替代无远端失败的离线最佳值。HTML 报告已增加“运行质量”区块,显式标注 failed source 样本数、失败来源和零结果样本数。
 
 ## 后续检查点
 
-- 用正式 CLI `run --precheck` 基于 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.30` 再跑一轮,生成标准文件结果 + `eval_run` / `eval_metric_result` 台账。
+- 继续做无远端失败的稳定性复跑:目标是拿到 `failed_sources=0` 且 `zero_ranked=0` 的 clean run,再判断正式指标是否接近离线调参结果。
+- 活栈波动治理:当前 Qdrant 远端偶发 502/exists check 失败会污染指标,后续可考虑对 failed source 样本自动二次复跑或把 clean/non-clean 状态写入 DB 可索引列。
 - 确认 golden 仍是 doc 粒度样本,`precheck` 只能校验样本数量,无法校验 chunk reference。
 - 固定依赖与模型 fingerprint 后再复跑,避免嵌入服务版本或参数漂移影响结论。

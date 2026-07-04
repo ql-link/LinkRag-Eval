@@ -48,7 +48,16 @@ class DiffReport:
         return not self.incomparable_reasons
 
 
-_COMPARABLE_DIMS = ["sparse_vector_provider", "top_k", "enabled_sources", "rrf_k"]
+_COMPARABLE_DIMS = [
+    "sparse_vector_provider",
+    "top_k",
+    "enabled_sources",
+    "rrf_k",
+    "route_score_thresholds",
+    "route_top_ks",
+    "fusion_strategy",
+    "fusion_weights",
+]
 
 
 def diff_metrics(

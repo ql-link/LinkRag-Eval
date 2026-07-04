@@ -131,7 +131,7 @@ class EvalRunDB(EvalBase):
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="running")  # running|done|failed
     snapshot_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     # 打平的可索引维度(与 snapshot_json 同源,供台账过滤)
-    sparse_provider: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    sparse_provider: Mapped[str | None] = mapped_column(String(128), nullable=True)
     top_k: Mapped[int | None] = mapped_column(Integer, nullable=True)
     enabled_sources: Mapped[str | None] = mapped_column(String(64), nullable=True)
     rrf_k: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -141,6 +141,11 @@ class EvalRunDB(EvalBase):
     generator_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
     # 产物计算指纹:dense 模型 / sparse encoder / bm25 mode,供偏差归因(decoupling-plan 风险 C)
     computer_fingerprint: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # 运行质量:用于筛选可固化基线。clean = failed_samples=0 且 zero_ranked=0。
+    run_quality: Mapped[str | None] = mapped_column(String(16), nullable=True)  # clean|non-clean
+    failed_samples: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    failed_sources_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    zero_ranked: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, server_default=func.now())
     finished_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 

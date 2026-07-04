@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from linkrag_eval.contracts.dataset import Sample
 from linkrag_eval.models import Layer, RankedHit, StageOutput
@@ -24,9 +24,27 @@ if TYPE_CHECKING:
 class RecallEvaluable:
     layer = Layer.RETRIEVAL
 
-    def __init__(self, pipeline: "RecallPipeline", top_k: int, *, retries: int = 5):
+    def __init__(
+        self,
+        pipeline: "RecallPipeline",
+        top_k: int,
+        *,
+        dense_top_k: int | None = None,
+        sparse_top_k: int | None = None,
+        dense_score_threshold: float | None = None,
+        sparse_score_threshold: float | None = None,
+        fusion_strategy: str = "rrf",
+        fusion_weights: dict[str, float] | None = None,
+        retries: int = 5,
+    ):
         self.pipeline = pipeline
         self.top_k = top_k
+        self.dense_top_k = dense_top_k or top_k
+        self.sparse_top_k = sparse_top_k or top_k
+        self.dense_score_threshold = dense_score_threshold
+        self.sparse_score_threshold = sparse_score_threshold
+        self.fusion_strategy = fusion_strategy
+        self.fusion_weights = dict(fusion_weights or {})
         # per-query 重试:远端 Qdrant/embedding 网关偶发 502,某条 query 两路同时挂会抛
         # RecallError;召回只读、幂等,退避重试即可,避免一条抖动毁掉整轮评测。
         self.retries = retries
@@ -41,6 +59,14 @@ class RecallEvaluable:
             user_id=sample.user_id,
             dataset_ids=sample.dataset_ids,
             top_k=self.top_k,
+            dense_top_k=self.dense_top_k,
+            sparse_top_k=self.sparse_top_k,
+            dense_score_threshold_override=self.dense_score_threshold,
+            sparse_score_threshold_override=self.sparse_score_threshold,
+            fusion_strategy_override=self.fusion_strategy,
+            fusion_dense_weight_override=self.fusion_weights.get("dense"),
+            fusion_sparse_weight_override=self.fusion_weights.get("sparse"),
+            fusion_bm25_weight_override=self.fusion_weights.get("bm25"),
         )
         started = time.monotonic()
         for attempt in range(1, self.retries + 1):
@@ -54,9 +80,7 @@ class RecallEvaluable:
         wall_ms = int((time.monotonic() - started) * 1000)
         return self._to_stage_output(sample.query, resp, wall_ms)
 
-    def _to_stage_output(
-        self, query: str, resp: "RecallResponse", wall_ms: int
-    ) -> StageOutput:
+    def _to_stage_output(self, query: str, resp: "RecallResponse", wall_ms: int) -> StageOutput:
         ordered = sorted(resp.hits, key=lambda h: h.fused_score, reverse=True)
         ranked = [
             RankedHit(
@@ -79,3 +103,16 @@ class RecallEvaluable:
             failed_sources=list(resp.failed_sources),
             raw=resp,
         )
+
+    def config_snapshot(self) -> dict[str, Any]:
+        """返回正式 run 使用的召回参数,供 snapshot/report 记录。"""
+        return {
+            "top_k": self.top_k,
+            "route_top_ks": {"dense": self.dense_top_k, "sparse": self.sparse_top_k},
+            "route_score_thresholds": {
+                "dense": self.dense_score_threshold,
+                "sparse": self.sparse_score_threshold,
+            },
+            "fusion_strategy": self.fusion_strategy,
+            "fusion_weights": dict(self.fusion_weights),
+        }

@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any, Awaitable, Callable
 
 from linkrag_eval.golden.corpus_io import load_manifest, read_tsv_collection
@@ -86,14 +87,32 @@ async def run_ingest(
 def _minimal_snapshot(run_id: str, top_k: int, *, settings: Any | None = None) -> Snapshot:
     """据 eval 配置构最小快照(检索层用;生成层字段留空)。"""
     sparse_provider = "unknown"
+    dense_threshold = 0.0
     sparse_threshold = 0.0
+    dense_top_k = top_k
+    sparse_top_k = top_k
+    fusion_strategy = "rrf"
+    fusion_weights: dict[str, float] = {}
     if settings is not None:
         sparse_provider = f"{getattr(settings, 'sparse_provider', '')}:{getattr(settings, 'sparse_model', '')}"
+        dense_threshold = getattr(settings, "recall_dense_score_threshold", 0.0)
         sparse_threshold = getattr(settings, "recall_sparse_score_threshold", 0.0)
+        dense_top_k = getattr(settings, "recall_dense_top_k", top_k)
+        sparse_top_k = getattr(settings, "recall_sparse_top_k", top_k)
+        fusion_strategy = getattr(settings, "recall_fusion_strategy", "rrf")
+        fusion_weights = {
+            "dense": getattr(settings, "recall_dense_weight", 0.5),
+            "sparse": getattr(settings, "recall_sparse_weight", 0.3),
+            "bm25": getattr(settings, "recall_bm25_weight", 0.0),
+        }
     return Snapshot(
         run_id=run_id, git_sha="", sparse_vector_provider=sparse_provider, top_k=top_k,
         score_threshold=sparse_threshold, enabled_sources=["dense", "sparse"], rrf_k=60, rerank_top_n=None,
         chat_model="", judge_model="", generator_model="", token_budget=0, prompt_version="v1",
+        route_score_thresholds={"dense": dense_threshold, "sparse": sparse_threshold},
+        route_top_ks={"dense": dense_top_k, "sparse": sparse_top_k},
+        fusion_strategy=fusion_strategy,
+        fusion_weights=fusion_weights,
     )
 
 
@@ -133,6 +152,21 @@ async def run_eval(
 def format_retrieval_summary(result: EvalResult) -> str:
     """把检索层聚合指标拍成可读文本(主看 recall@k)。"""
     lines = [f"run_id={result.run_id}  样本={len(result.per_sample)}"]
+    failed_counter: Counter[str] = Counter()
+    failed_samples = 0
+    zero_ranked = 0
+    for row in result.per_sample:
+        failed = list(row.get("failed_sources") or [])
+        if failed:
+            failed_samples += 1
+            failed_counter.update(failed)
+        if row.get("n_ranked") == 0:
+            zero_ranked += 1
+    quality = "clean" if failed_samples == 0 and zero_ranked == 0 else "non-clean"
+    lines.append(
+        f"  run_quality = {quality}  "
+        f"(failed_samples={failed_samples}, failed_sources={dict(failed_counter)}, zero_ranked={zero_ranked})"
+    )
     retr = [m for m in result.metrics if m.layer == Layer.RETRIEVAL]
     for m in sorted(retr, key=lambda x: (x.name, x.k if x.k is not None else -1)):
         k = f"@{m.k}" if m.k is not None else ""

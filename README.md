@@ -29,7 +29,7 @@ set -a; source .env.eval; set +a     # 提供 EVAL_DB_*
 alembic upgrade head                  # URL 由 env.py 从 EVAL_DB_* 构建(aiomysql→pymysql)
 ```
 
-`init_eval_schema()`（`create_all`）仅供单测 / 本地快速起库。`0001` baseline 由 `EvalBase.metadata` 建全表，`alembic check` 保证 baseline 与 ORM 零 diff；后续字段变更走 `alembic revision --autogenerate`。
+`init_eval_schema()`（`create_all`）仅供单测 / 本地快速起库。`0001` baseline 由 `EvalBase.metadata` 建全表；后续字段变更走显式 Alembic revision。当前 head 为 `0003`，新增 `eval_run` 运行质量摘要列，用于筛选 clean run。
 
 ## 当前阶段
 
@@ -40,13 +40,30 @@ alembic upgrade head                  # URL 由 env.py 从 EVAL_DB_* 构建(aiom
 - 召回侧通过 `build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 编码走 eval 编码器。
 - MySQL eval 自持库 ORM 与 Alembic `0001` baseline 已落地。
 - `run` 命令已在文件结果之外同步写入 `eval_run` / `eval_metric_result` 台账。
-- 召回侧 sparse 分路默认 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.30`,用于过滤低分 sparse 噪声。
+- 召回侧分路默认 `EVAL_RECALL_DENSE_SCORE_THRESHOLD=0.20`、`EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.40`,用于过滤低分 sparse 噪声并约束 dense 候选池。
 - CLI 已覆盖 `ingest` / `golden-gen` / `golden-opensource` / `cleaning` / `run`。
 
 真实活栈已用正式 eval 前缀跑通 `alembic upgrade head`、小规模 ingest、四域 800 chunk/domain 重灌和 `run --precheck`;实证记录见 [docs/reports/live_smoke_2026_07_02.md](docs/reports/live_smoke_2026_07_02.md)。
 
-剩余关键工作:基于 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.30` 用正式 CLI 再跑一轮 `run --precheck` 固化标准结果;等待生产 Qdrant BM25 compute/search 落地后再切 `EVAL_BM25_MODE=qdrant_bm25`。当前 P1 默认仍是 `stub`,即只跑 dense+sparse 两路。
+剩余关键工作:继续做无远端失败的稳定性复跑,拿到 `failed_sources=0` 且 `zero_ranked=0` 的 clean run 后固化标准结果;等待生产 Qdrant BM25 compute/search 落地后再切 `EVAL_BM25_MODE=qdrant_bm25`。当前 P1 默认仍是 `stub`,即只跑 dense+sparse 两路。
+
+## 验收
+
+默认 CI / 本地检查不连接真实活栈:
+
+```bash
+python3 -m pytest -m "not integration" -q
+lint-imports
+```
+
+真实 Qdrant/MySQL smoke 需要本地 `.env.eval` 且显式开启:
+
+```bash
+set -a; source .env.eval; set +a
+alembic upgrade head
+RUN_EVAL_INTEGRATION=1 python3 -m pytest tests/integration -q
+```
 
 ## 基线
 
-召回历史基线 `recall@10 ≈ 0.901`(四域语料)。每个迁移步骤以此为等价门槛(±0.005)。2026-07-01 首次正式 run 为 `0.8966`(在门槛内,但日志有少量 Qdrant 单路失败);2026-07-02 复跑为 `0.8919`(日志干净,但低于门槛)。分路诊断显示两条 ecom 回退样本 dense-only 均排第 1,启用 sparse 后被 RRF 融合挤出 top10;活栈 A/B 显示 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.30` 时 `recall@10=0.9571`,两条回退样本均修回。
+召回历史基线 `recall@10 ≈ 0.901`(四域语料)。每个迁移步骤以此为等价门槛(±0.005)。2026-07-01 首次正式 run 为 `0.8966`(在门槛内,但日志有少量 Qdrant 单路失败);2026-07-02 复跑为 `0.8919`(日志干净,但低于门槛)。分路诊断显示两条 ecom 回退样本 dense-only 均排第 1,启用 sparse 后被 RRF 融合挤出 top10;活栈 A/B 显示 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.30` 时 `recall@10=0.9571`,两条回退样本均修回。随后完整网格搜索(394 条、720 组)推荐 dense=0.30、sparse=0.40、dense_top_k=20、sparse_top_k=5,本地 RRF 复算 `recall@10=0.9715`。

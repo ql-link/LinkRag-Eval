@@ -124,6 +124,20 @@ class TestHtmlReporter:
         html = HtmlReporter().render(result)
         assert "<script>x" not in html
 
+    def test_render_run_quality_from_per_sample(self):
+        result = make_result("cur", [mr("recall", 0.8)])
+        result.per_sample = [
+            {"sample_id": "q1", "failed_sources": [], "n_ranked": 10, "elapsed_ms": 10},
+            {"sample_id": "q2", "failed_sources": ["dense"], "n_ranked": 0, "elapsed_ms": 20},
+            {"sample_id": "q3", "failed_sources": ["sparse"], "n_ranked": 10, "elapsed_ms": 30},
+        ]
+        html = HtmlReporter().render(result)
+        assert "运行质量" in html
+        assert "non-clean run" in html
+        assert "dense=1" in html
+        assert "sparse=1" in html
+        assert "零结果样本" in html
+
 
 class TestJsonReporterAndLedger:
     def test_ledger_rows_schema(self):
@@ -135,7 +149,8 @@ class TestJsonReporterAndLedger:
             "run_id", "ts", "git_sha", "dataset", "layer", "metric", "k",
             "relevance_scale", "type_bucket", "value", "n",
             "sparse_provider", "top_k", "score_threshold", "enabled_sources",
-            "rrf_k", "rerank_top_n", "chat_model", "judge_model", "generator_model",
+            "rrf_k", "route_top_ks", "fusion_strategy", "fusion_weights",
+            "rerank_top_n", "chat_model", "judge_model", "generator_model",
         ]:
             assert col in row, f"缺列 {col}"
         assert row["type_bucket"] == "__all__"
@@ -155,4 +170,3 @@ class TestJsonReporterAndLedger:
         assert payload["comparable"] is True
         assert payload["deltas"][0]["is_regression"] is True
         assert payload["rows"]
-

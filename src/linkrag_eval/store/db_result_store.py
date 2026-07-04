@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from dataclasses import asdict
 from datetime import datetime
 from typing import Any
@@ -37,6 +38,7 @@ def _run_record(
 ) -> EvalRunDB:
     snap = result.snapshot
     layers = sorted({m.layer.value for m in result.metrics})
+    quality = _run_quality(result) if status in {"done", "failed"} else {}
     return EvalRunDB(
         run_id=result.run_id,
         git_sha=snap.git_sha or None,
@@ -54,8 +56,34 @@ def _run_record(
         judge_model=snap.judge_model or None,
         generator_model=snap.generator_model or None,
         computer_fingerprint=None,
+        run_quality=quality.get("run_quality"),
+        failed_samples=quality.get("failed_samples"),
+        failed_sources_json=(
+            _json_dumps(quality["failed_sources"]) if "failed_sources" in quality else None
+        ),
+        zero_ranked=quality.get("zero_ranked"),
         finished_at=datetime.now() if status in {"done", "failed"} else None,
     )
+
+
+def _run_quality(result: EvalResult) -> dict[str, Any]:
+    """从逐样本明细汇总运行质量,便于 DB 直接筛 clean run。"""
+    failed_counter: Counter[str] = Counter()
+    failed_samples = 0
+    zero_ranked = 0
+    for row in result.per_sample:
+        failed = list(row.get("failed_sources") or [])
+        if failed:
+            failed_samples += 1
+            failed_counter.update(failed)
+        if row.get("n_ranked") == 0:
+            zero_ranked += 1
+    return {
+        "run_quality": "clean" if failed_samples == 0 and zero_ranked == 0 else "non-clean",
+        "failed_samples": failed_samples,
+        "failed_sources": dict(failed_counter),
+        "zero_ranked": zero_ranked,
+    }
 
 
 def _metric_records(result: EvalResult) -> list[EvalMetricResultDB]:

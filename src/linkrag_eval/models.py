@@ -117,7 +117,7 @@ class Snapshot:
     # 检索层
     sparse_vector_provider: str  # bge_m3 / bge_m3_http / remote_bge_m3 / ark 等
     top_k: int                   # 融合口径
-    score_threshold: float | None
+    score_threshold: float | None  # 历史兼容字段;当前等同 sparse 阈值
     enabled_sources: list[str]   # dense/sparse/bm25
     rrf_k: int
     rerank_top_n: int | None
@@ -127,6 +127,10 @@ class Snapshot:
     generator_model: str         # 黄金集生成器模型
     token_budget: int
     prompt_version: str
+    route_score_thresholds: dict[str, float] = field(default_factory=dict)
+    route_top_ks: dict[str, int] = field(default_factory=dict)
+    fusion_strategy: str = "rrf"
+    fusion_weights: dict[str, float] = field(default_factory=dict)
 
     def validate_model_distinctness(self) -> list[str]:
         """三模型(被测 CHAT / 判官 / 生成器)任意同名即告警,防自评偏置。"""

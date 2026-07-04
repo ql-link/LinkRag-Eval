@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>融合策略对比 · RRF vs weighted_score</title>
+<style>
+  :root{
+    --bg:#f7f8fa; --card:#fff; --ink:#1f2328; --muted:#656d76; --line:#e4e7eb;
+    --accent:#2f6feb; --up:#1a7f37; --down:#cf222e; --warn:#9a6700; --warnbg:#fff8c5;
+    --chipbg:#eef1f4; --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 56px}
+  .head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .title{font-size:20px;font-weight:650;letter-spacing:.2px}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  .verdict{font-size:13px;font-weight:650;padding:6px 14px;border-radius:999px;white-space:nowrap}
+  .v-pass{background:#dafbe1;color:var(--up)}
+  .v-regress{background:#ffebe9;color:var(--down)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 24px}
+  .chip{background:var(--chipbg);color:#3a424a;border-radius:6px;padding:4px 10px;font-size:12px}
+  .chip b{color:var(--ink);font-weight:600}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .card .k{color:var(--muted);font-size:12px}
+  .card .v{font-size:24px;font-weight:680;margin-top:6px;letter-spacing:.3px}
+  .card .d{font-size:12px;font-weight:600;margin-top:4px}
+  .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--muted)}
+  section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px 18px 6px;margin-bottom:20px}
+  h2{font-size:15px;font-weight:650;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+  .h-note{color:var(--muted);font-size:12px;font-weight:400;margin:0 0 14px}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:12px}
+  th,td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  thead th{color:var(--muted);font-weight:600;font-size:12px;border-bottom:1px solid var(--line)}
+  tbody tr:hover{background:#fafbfc}
+  .delta{font-weight:600}
+  .badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:5px;background:var(--chipbg);color:#444}
+  .regress-row{background:#fff5f5}
+  .n{color:var(--muted);font-size:12px}
+  .banner{border-radius:var(--radius);padding:12px 16px;margin-bottom:20px;font-size:13px}
+  .banner.warn{background:var(--warnbg);color:var(--warn);border:1px solid #eedc82}
+  .foot{color:var(--muted);font-size:12px;line-height:1.7;border-top:1px solid var(--line);padding-top:16px;margin-top:8px}
+  .foot b{color:#3a424a}
+  .gloss-desc{text-align:left;color:#3a424a;font-size:12.5px;line-height:1.6}
+  abbr[title]{text-decoration:underline dotted;text-underline-offset:2px;cursor:help}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <div class="title">融合策略对比: RRF vs weighted_score</div>
+      <div class="sub">数据集 <b>combined_4domain_clean</b> · 同候选离线复算 · 无 rerank</div>
+    </div>
+    <div class="verdict v-pass">weighted_score 更优</div>
+  </div>
+  <div class="chips"><span class="chip">dataset <b>combined_4domain_clean</b></span><span class="chip">samples <b>394</b></span><span class="chip">chunks <b>3200</b></span><span class="chip">rerank <b>none</b></span><span class="chip">dense_top_k <b>20</b></span><span class="chip">sparse_top_k <b>5</b></span><span class="chip">dense_th <b>0.3</b></span><span class="chip">sparse_th <b>0.4</b></span></div>
+  <div class="banner warn">本报告使用同一批 dense/sparse 分路候选做本地融合复算: RRF(rrf_k=60) vs weighted_score。未启用 rerank;样本量 394 条 golden query;语料规模 3200 chunks。</div>
+  <div class="cards"><div class="card"><div class="k">Recall@10 提升</div><div class="v">+0.0030</div><div class="d up">weighted_score vs RRF</div></div><div class="card"><div class="k">MAP 提升</div><div class="v">+0.0112</div><div class="d up">排序质量改善</div></div><div class="card"><div class="k">MRR 提升</div><div class="v">+0.0078</div><div class="d up">首个正确结果更靠前</div></div><div class="card"><div class="k">最优策略</div><div class="v">weighted</div><div class="d flat">同候选离线复算</div></div></div>
+  <section>
+    <h2>指标对比 <span class="badge">same candidates</span></h2>
+    <p class="h-note">同一参数:dense_top_k=20, sparse_top_k=5, dense_threshold=0.3, sparse_threshold=0.4, final_top_k=10。</p>
+    <table>
+      <thead><tr><th>fusion</th><th>recall@10</th><th>hit_rate@10</th><th>MAP</th><th>MRR</th><th>failed</th></tr></thead>
+      <tbody><tr><td>RRF</td><td>0.9715</td><td>0.9873</td><td>0.8782</td><td>0.9045</td><td>0</td></tr><tr><td>weighted_score</td><td>0.9745</td><td>0.9898</td><td>0.8894</td><td>0.9123</td><td>0</td></tr><tr><td>weighted - RRF</td><td>+0.0030</td><td>+0.0025</td><td>+0.0112</td><td>+0.0078</td><td>0</td></tr></tbody>
+    </table>
+  </section>
+  <section>
+    <h2>weighted_score 口径 <span class="badge">production formula</span></h2>
+    <p class="h-note">生产实现中 BM25/sparse 先 log1p,dense 直用;每路 min-max 归一化;权重按 active sources 归一。</p>
+    <table>
+      <thead><tr><th>项</th><th>值</th></tr></thead>
+      <tbody>
+        <tr><td>原始权重</td><td class="gloss-desc">dense=0.5, sparse=0.3, bm25=0.2</td></tr>
+        <tr><td>本轮 active 权重</td><td class="gloss-desc">dense=0.625, sparse=0.375；eval 当前未启用 BM25</td></tr>
+        <tr><td>产物</td><td class="gloss-desc">runs/tuning/fusion_compare_combined_4domain_clean_20260702.json</td></tr>
+      </tbody>
+    </table>
+  </section>
+  <div class="foot"><b>结论:</b>在当前 394 条样本 / 3200 chunks / 无 rerank / 同候选输入下,weighted_score 的 recall@10、hit_rate@10、MAP、MRR 均高于 RRF。该结果尚未写入正式 eval_run 台账;正式固化需要把 fusion_strategy 和分路 topK 接入 linkrag-eval run。</div>
+</div>
+</body>
+</html>

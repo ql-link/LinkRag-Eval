@@ -51,3 +51,46 @@ def test_elapsed_falls_back_to_wall_ms() -> None:
     ev = RecallEvaluable(pipeline=None, top_k=5)
     out = ev._to_stage_output("q", _Resp(hits=[], elapsed_ms=0), wall_ms=77)
     assert out.elapsed_ms == 77 and out.ranked == []
+
+
+class _Pipeline:
+    def __init__(self):
+        self.request = None
+
+    async def execute(self, request):
+        self.request = request
+        return _Resp(hits=[], elapsed_ms=1, per_source_counts={"dense": 0, "sparse": 0})
+
+
+@dataclass
+class _Sample:
+    query: str = "短 query"
+    user_id: int = 990001
+    dataset_ids: list[int] = field(default_factory=lambda: [990123])
+
+
+async def test_run_passes_route_topk_thresholds_and_fusion_overrides() -> None:
+    pipeline = _Pipeline()
+    ev = RecallEvaluable(
+        pipeline=pipeline,
+        top_k=10,
+        dense_top_k=150,
+        sparse_top_k=50,
+        dense_score_threshold=0.2,
+        sparse_score_threshold=0.4,
+        fusion_strategy="weighted_score",
+        fusion_weights={"dense": 0.9, "sparse": 0.1, "bm25": 0.0},
+    )
+
+    await ev.run(_Sample())
+
+    req = pipeline.request
+    assert req.top_k == 10
+    assert req.dense_top_k == 150
+    assert req.sparse_top_k == 50
+    assert req.dense_score_threshold_override == 0.2
+    assert req.sparse_score_threshold_override == 0.4
+    assert req.fusion_strategy_override == "weighted_score"
+    assert req.fusion_dense_weight_override == 0.9
+    assert req.fusion_sparse_weight_override == 0.1
+    assert req.fusion_bm25_weight_override == 0.0

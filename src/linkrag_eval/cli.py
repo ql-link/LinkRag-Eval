@@ -51,11 +51,33 @@ def _add_run(sub: argparse._SubParsersAction) -> None:
     p.add_argument("--golden", required=True, help="golden jsonl")
     p.add_argument("--run-label", default="run", help="run_id 后缀标签")
     p.add_argument("--top-k", type=int, default=10)
+    p.add_argument("--dense-top-k", type=int, default=None, help="dense 分路召回 topK(默认 EVAL_RECALL_DENSE_TOP_K)")
+    p.add_argument("--sparse-top-k", type=int, default=None, help="sparse 分路召回 topK(默认 EVAL_RECALL_SPARSE_TOP_K)")
+    p.add_argument("--fusion-strategy", choices=["rrf", "weighted_score"], default=None,
+                   help="融合算法(默认 EVAL_RECALL_FUSION_STRATEGY)")
+    p.add_argument("--dense-weight", type=float, default=None, help="weighted_score dense 权重")
+    p.add_argument("--sparse-weight", type=float, default=None, help="weighted_score sparse 权重")
+    p.add_argument("--bm25-weight", type=float, default=None, help="weighted_score bm25 权重(当前 bm25 stub)")
     p.add_argument("--out-dir", default="runs", help="快照/报告输出目录")
     p.add_argument("--dataset", default="default", help="报告台账的数据集名(趋势分组用)")
     p.add_argument("--baseline", default=None,
                    help="基线 run_id(读 results/<id>.json 出回归 diff;须先以该 id 跑过)")
     p.add_argument("--precheck", action="store_true", help="跑前校验 golden chunk reference 在库")
+
+
+def _add_tune_recall(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser("tune-recall", help="参数搜索:dense/sparse topK + score threshold")
+    p.add_argument("--golden", required=True, help="golden jsonl")
+    p.add_argument("--dataset", default="default", help="报告数据集名")
+    p.add_argument("--out-dir", default="runs/tuning", help="CSV/JSON/Markdown 输出目录")
+    p.add_argument("--corpus-chunks", type=int, default=None, help="报告展示用语料 chunk 数")
+    p.add_argument("--final-top-k", type=int, default=10, help="最终 RRF 融合截断 topK")
+    p.add_argument("--rrf-k", type=int, default=60, help="RRF 平滑常数")
+    p.add_argument("--dense-top-ks", default="20,50,100,200")
+    p.add_argument("--sparse-top-ks", default="5,10,20,50,100")
+    p.add_argument("--dense-thresholds", default="0,0.1,0.2,0.3,0.4,0.5")
+    p.add_argument("--sparse-thresholds", default="0,0.2,0.25,0.3,0.35,0.4")
+    p.add_argument("--concurrency", type=int, default=4, help="远端分路召回缓存并发")
 
 
 def _add_golden_opensource(sub: argparse._SubParsersAction) -> None:
@@ -190,6 +212,18 @@ async def _do_run(args) -> int:
     from linkrag_eval.store.filesystem import FilesystemResultStore
 
     settings = get_settings()
+    if args.dense_top_k is not None:
+        settings.recall_dense_top_k = args.dense_top_k
+    if args.sparse_top_k is not None:
+        settings.recall_sparse_top_k = args.sparse_top_k
+    if args.fusion_strategy is not None:
+        settings.recall_fusion_strategy = args.fusion_strategy
+    if args.dense_weight is not None:
+        settings.recall_dense_weight = args.dense_weight
+    if args.sparse_weight is not None:
+        settings.recall_sparse_weight = args.sparse_weight
+    if args.bm25_weight is not None:
+        settings.recall_bm25_weight = args.bm25_weight
     run_id = f"{args.run_label}-top{args.top_k}"
     fetch_status = None
     if args.precheck:
@@ -230,6 +264,81 @@ async def _do_run(args) -> int:
     print(f"结果: {result_path}")
     print("DB台账: eval_run / eval_metric_result")
     print(f"报告: {paths['html']}\n      {paths['json']}")
+    return 0
+
+
+async def _do_tune_recall(args) -> int:
+    from dataclasses import asdict
+    import logging
+
+    from linkrag_eval.config import get_settings
+    from linkrag_eval.golden.loader import load_golden
+    from linkrag_eval.retrieval.tuning import (
+        cache_route_hits,
+        iter_configs,
+        parse_number_list,
+        run_grid,
+        write_tuning_outputs,
+    )
+
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    dense_top_ks = parse_number_list(args.dense_top_ks, cast=int)
+    sparse_top_ks = parse_number_list(args.sparse_top_ks, cast=int)
+    dense_thresholds = parse_number_list(args.dense_thresholds, cast=float)
+    sparse_thresholds = parse_number_list(args.sparse_thresholds, cast=float)
+    settings = get_settings()
+    samples = load_golden(args.golden)
+    print(
+        "缓存分路候选: "
+        f"samples={len(samples)} max_dense_top_k={max(dense_top_ks)} "
+        f"max_sparse_top_k={max(sparse_top_ks)}"
+    )
+    cached = await cache_route_hits(
+        samples,
+        settings=settings,
+        max_dense_top_k=max(dense_top_ks),
+        max_sparse_top_k=max(sparse_top_ks),
+        concurrency=args.concurrency,
+        progress=print,
+    )
+    configs = list(
+        iter_configs(
+            dense_top_ks=dense_top_ks,
+            sparse_top_ks=sparse_top_ks,
+            dense_thresholds=dense_thresholds,
+            sparse_thresholds=sparse_thresholds,
+            final_top_k=args.final_top_k,
+            rrf_k=args.rrf_k,
+        )
+    )
+    print(f"本地评估参数组合:{len(configs)}")
+    results = run_grid(cached, configs)
+    best = results[0]
+    params = {
+        "dense_top_ks": dense_top_ks,
+        "sparse_top_ks": sparse_top_ks,
+        "dense_thresholds": dense_thresholds,
+        "sparse_thresholds": sparse_thresholds,
+        "final_top_k": args.final_top_k,
+        "rrf_k": args.rrf_k,
+        "concurrency": args.concurrency,
+        "golden": args.golden,
+        "corpus_chunks": args.corpus_chunks,
+        "fusion": "RRF",
+        "rerank": "none",
+    }
+    paths = write_tuning_outputs(
+        out_dir=args.out_dir,
+        dataset=args.dataset,
+        results=results,
+        cached=cached,
+        args=params,
+    )
+    print("\n最优配置:")
+    print(asdict(best))
+    print(f"报告: {paths['md']}")
+    print(f"HTML: {paths['html']}")
+    print(f"数据: {paths['csv']}\n      {paths['json']}")
     return 0
 
 
@@ -322,6 +431,7 @@ def main(argv: list[str] | None = None) -> int:
     _add_golden_opensource(sub)
     _add_cleaning(sub)
     _add_run(sub)
+    _add_tune_recall(sub)
 
     args = parser.parse_args(argv)
 
@@ -354,6 +464,8 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(_run_with_cleanup(_do_cleaning(args)))
     if args.command == "run":
         return asyncio.run(_run_with_cleanup(_do_run(args)))
+    if args.command == "tune-recall":
+        return asyncio.run(_run_with_cleanup(_do_tune_recall(args)))
 
     parser.print_help()
     return 0

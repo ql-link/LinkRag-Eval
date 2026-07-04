@@ -8,7 +8,7 @@
   ``aembed_query_detailed``),sparse 注入 :class:`_EvalSparseQueryService`(把 eval sparse 输出
   转成 rag ``SparseVector``)。写入侧(EvalVectorStore)与召回侧共用同一 eval 编码器口径。
 
-融合/排序(RRF)仍是生产 RecallPipeline 原物——那正是被测对象。bm25 路 P1 ``stub``:
+融合/排序由生产 RecallPipeline 按请求级参数执行(RRF/weighted_score 均可)。bm25 路 P1 ``stub``:
 只装 dense+sparse 两路(生产 Qdrant BM25 未落地,见 decoupling-plan bm25 待定项)。
 
 护栏:Qdrant 前缀必须含 ``eval``,否则拒绝装配——防打到生产 collection。
@@ -69,7 +69,7 @@ def build_eval_recall_pipeline(
     if dense_score_threshold is None:
         dense_score_threshold = getattr(settings, "recall_dense_score_threshold", 0.0)
     if sparse_score_threshold is None:
-        sparse_score_threshold = getattr(settings, "recall_sparse_score_threshold", 0.30)
+        sparse_score_threshold = getattr(settings, "recall_sparse_score_threshold", 0.40)
 
     from qdrant_client import AsyncQdrantClient
 
@@ -110,5 +110,28 @@ def build_eval_recall_pipeline(
 def build_eval_recall_evaluable(top_k: int, **kwargs):
     """装配 + 包成 RecallEvaluable(评测调用面)。"""
     from linkrag_eval.retrieval.recall_adapter import RecallEvaluable
+    settings = kwargs.get("settings")
+    if settings is None:
+        from linkrag_eval.config import get_settings
 
-    return RecallEvaluable(build_eval_recall_pipeline(**kwargs), top_k)
+        settings = get_settings()
+    dense_threshold = kwargs.get(
+        "dense_score_threshold", getattr(settings, "recall_dense_score_threshold", None)
+    )
+    sparse_threshold = kwargs.get(
+        "sparse_score_threshold", getattr(settings, "recall_sparse_score_threshold", None)
+    )
+    return RecallEvaluable(
+        build_eval_recall_pipeline(**kwargs),
+        top_k,
+        dense_top_k=getattr(settings, "recall_dense_top_k", top_k),
+        sparse_top_k=getattr(settings, "recall_sparse_top_k", top_k),
+        dense_score_threshold=dense_threshold,
+        sparse_score_threshold=sparse_threshold,
+        fusion_strategy=getattr(settings, "recall_fusion_strategy", "rrf"),
+        fusion_weights={
+            "dense": getattr(settings, "recall_dense_weight", 0.5),
+            "sparse": getattr(settings, "recall_sparse_weight", 0.3),
+            "bm25": getattr(settings, "recall_bm25_weight", 0.0),
+        },
+    )

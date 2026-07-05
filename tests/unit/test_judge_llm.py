@@ -19,7 +19,7 @@ def _client(handler) -> httpx.AsyncClient:
 
 def _chat(handler, **kw) -> EvalChatClient:
     return EvalChatClient(
-        base_url="https://x/v1/chat/completions", api_key="k", model="mimo",
+        base_url="https://x/v1/chat/completions", api_key="k", model="deepseek-chat",
         http_client=_client(handler), **kw,
     )
 
@@ -40,7 +40,7 @@ async def test_generate_parses_content() -> None:
     res = await _chat(handler).generate(prompt="hi", system_prompt="sys")
     assert res.content == "hello"
     assert seen["url"] == "https://x/v1/chat/completions"  # base_url 即完整端点,不拼后缀
-    assert seen["model"] == "mimo"
+    assert seen["model"] == "deepseek-chat"
 
 
 async def test_generate_json_strips_fence() -> None:

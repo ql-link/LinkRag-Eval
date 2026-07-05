@@ -41,7 +41,7 @@ class EvalSettings(BaseSettings):
     judge_model: str = Field(default="")
     judge_timeout_s: float = Field(default=90.0)  # 推理模型偏慢
     judge_max_retries: int = Field(default=6)  # 瞬时错误(429/5xx)退避重试
-    judge_concurrency: int = Field(default=6)  # mimo 端点限流偏低
+    judge_concurrency: int = Field(default=6)  # DeepSeek 端点并发保守默认值
 
     # —— dense embedder(eval 自带 llm 模块,模型可选;写入与召回 query 必用同一份)——
     embed_base_url: str = Field(default="")  # OpenAI 兼容 base,自动补 /embeddings

@@ -147,6 +147,35 @@ async def test_upsert_writes_qdrant_bm25_when_tokens_present() -> None:
     assert point.sparse_vector.indices == [7]
 
 
+async def test_upsert_writes_sqlite_bm25_when_tokens_present() -> None:
+    fake = _FakeIndexStore()
+    bm25 = _FakeBm25Store()
+    store = EvalVectorStore(
+        prefix="eval_kb_bucket",
+        bucket_count=16,
+        user_id=990001,
+        index_store=fake,
+        qdrant_bm25_store=bm25,
+        bm25_mode="sqlite_fts5",
+        bm25_sqlite_path="runs/test-bm25.sqlite3",
+    )
+    await store.upsert(
+        dataset_id=990131,
+        points=[
+            EvalPoint(
+                chunk_id="a",
+                doc_id=1,
+                dense=[0.1, 0.2],
+                bm25_tokens=Bm25Tokens(coarse="暖气 滤网", fine="暖气 滤网"),
+            )
+        ],
+    )
+    assert [c[0] for c in bm25.calls] == ["ensure_bm25_collection", "upsert_bm25"]
+    point = bm25.calls[1][1][0]
+    assert point.chunk_id == "a"
+    assert point.tokens == Bm25Tokens(coarse="暖气 滤网", fine="暖气 滤网")
+
+
 def test_bm25_collection_guard_rejects_non_eval() -> None:
     with pytest.raises(RuntimeError):
         EvalVectorStore(

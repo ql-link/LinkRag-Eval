@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import argparse
+
 import pytest
 
+from linkrag_eval.cli import _add_tune_recall
 from linkrag_eval.golden.schema import GoldenSample
 from linkrag_eval.retrieval.tuning import (
     CachedSample,
@@ -23,6 +26,16 @@ def _sample() -> GoldenSample:
         dataset_ids=[990001],
         expected_doc_ids=[10],
     )
+
+
+def test_tune_cli_defaults_include_all_three_weighted_sources() -> None:
+    parser = argparse.ArgumentParser()
+    sub = parser.add_subparsers(dest="command")
+    _add_tune_recall(sub)
+
+    args = parser.parse_args(["tune-recall", "--golden", "golden.jsonl"])
+
+    assert (args.dense_weight, args.sparse_weight, args.bm25_weight) == (0.70, 0.15, 0.15)
 
 
 def test_grid_prefers_sparse_threshold_that_removes_noise() -> None:

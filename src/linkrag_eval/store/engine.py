@@ -42,7 +42,12 @@ def eval_database_url(url: str | None = None) -> str:
 @lru_cache(maxsize=4)
 def get_eval_engine(url: str | None = None) -> AsyncEngine:
     """进程内缓存的评测异步引擎(按 url 缓存,便于测试传内存库)。"""
-    engine = create_async_engine(eval_database_url(url), future=True)
+    database_url = eval_database_url(url)
+    options = {"future": True}
+    # MySQL 长任务可能复用到服务端已断开的空闲连接；借连接前探活，避免一次瞬断中止整轮评测。
+    if not database_url.startswith("sqlite"):
+        options.update(pool_pre_ping=True, pool_recycle=1800)
+    engine = create_async_engine(database_url, **options)
     _ENGINES.add(engine)
     return engine
 

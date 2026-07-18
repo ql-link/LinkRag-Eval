@@ -1,7 +1,8 @@
 """单环节驱动:dataset × evaluable × metrics → EvalResult。
 
 precheck 已在入口完成(失效则不进此处)。聚合按 (name, k) 求 mean,
-并按 sample.type 分桶(每桶标样本量,小样本桶只作定性参考)。
+并按 sample.type 分桶(每桶标样本量,小样本桶只作定性参考)。检索层 reference
+粒度(chunk/doc)必须分开聚合,避免把严格 chunk 指标与宽松 doc 指标混成一个 headline。
 """
 
 from __future__ import annotations
@@ -22,6 +23,14 @@ from linkrag_eval.models import (
 from linkrag_eval.runners.context import RunContext
 
 
+def _metric_group_name(value: MetricValue) -> str:
+    """聚合指标名:检索 reference 粒度单独分名,例如 recall_chunk / recall_doc。"""
+    granularity = value.detail.get("granularity")
+    if value.layer.value == "retrieval" and granularity in {"chunk", "doc"}:
+        return f"{value.name}_{granularity}"
+    return value.name
+
+
 def aggregate(
     per_sample_values: list[tuple[GoldenSample, list[MetricValue]]],
     *,
@@ -36,7 +45,9 @@ def aggregate(
     for sample, values in per_sample_values:
         domain = (domain_of(sample) or "未编目") if domain_of else None
         for v in values:
-            groups[(v.name, v.layer, v.k)].append((sample.type, domain, v.value))
+            groups[(_metric_group_name(v), v.layer, v.k)].append(
+                (sample.type, domain, v.value)
+            )
 
     results: list[MetricResult] = []
     for (name, layer, k), entries in sorted(
@@ -103,7 +114,14 @@ async def run_stage(
                 "rerank_applied": output.rerank_applied,
                 "n_ranked": len(output.ranked),
                 "values": [
-                    {"name": v.name, "k": v.k, "value": v.value} for v in values
+                    {
+                        "name": _metric_group_name(v),
+                        "raw_name": v.name,
+                        "k": v.k,
+                        "value": v.value,
+                        "detail": dict(v.detail),
+                    }
+                    for v in values
                 ],
             }
         )

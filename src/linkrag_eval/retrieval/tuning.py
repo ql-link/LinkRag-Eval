@@ -22,8 +22,9 @@ from linkrag_eval.models import Layer, RankedHit, StageOutput
 
 SOURCE_DENSE = "dense"
 SOURCE_SPARSE = "sparse"
-ALL_SOURCES = [SOURCE_DENSE, SOURCE_SPARSE]
-DEFAULT_FUSION_WEIGHTS = {SOURCE_DENSE: 0.5, SOURCE_SPARSE: 0.3}
+SOURCE_BM25 = "bm25"
+ALL_SOURCES = [SOURCE_DENSE, SOURCE_SPARSE, SOURCE_BM25]
+DEFAULT_FUSION_WEIGHTS = {SOURCE_DENSE: 0.5, SOURCE_SPARSE: 0.3, SOURCE_BM25: 0.2}
 
 
 @dataclass(frozen=True)
@@ -40,7 +41,12 @@ class CachedSample:
     sample: GoldenSample
     dense_hits: list[RouteHit]
     sparse_hits: list[RouteHit]
+    bm25_hits: list[RouteHit] = None  # type: ignore[assignment]
     failed_sources: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        if self.bm25_hits is None:
+            object.__setattr__(self, "bm25_hits", [])
 
 
 @dataclass(frozen=True)
@@ -51,6 +57,8 @@ class TuneConfig:
     sparse_threshold: float
     final_top_k: int
     rrf_k: int
+    bm25_top_k: int = 0
+    bm25_threshold: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -67,6 +75,8 @@ class TuneResult:
     mrr: float
     n: int
     failed_source_samples: int
+    bm25_top_k: int = 0
+    bm25_threshold: float = 0.0
 
     @property
     def score_key(self) -> tuple[float, float, float, float, int, int, float, float]:
@@ -116,6 +126,7 @@ async def cache_route_hits(
     settings: Any,
     max_dense_top_k: int,
     max_sparse_top_k: int,
+    max_bm25_top_k: int = 0,
     concurrency: int = 4,
     progress: Any | None = None,
 ) -> list[CachedSample]:
@@ -135,24 +146,37 @@ async def cache_route_hits(
         nonlocal done
         async with sem:
             failed: list[str] = []
-            route_hits: dict[str, list[RouteHit]] = {SOURCE_DENSE: [], SOURCE_SPARSE: []}
+            route_hits: dict[str, list[RouteHit]] = {source: [] for source in ALL_SOURCES}
             for source, top_k in (
                 (SOURCE_DENSE, max_dense_top_k),
                 (SOURCE_SPARSE, max_sparse_top_k),
+                (SOURCE_BM25, max_bm25_top_k),
             ):
-                retriever = retrievers[source]
-                try:
-                    hits = await retriever.recall(
-                        sample.query,
-                        sample.dataset_ids,
-                        None,
-                        user_id=sample.user_id,
-                        top_k=top_k,
-                        score_threshold_override=0.0,
-                    )
-                except Exception:
+                retriever = retrievers.get(source)
+                if retriever is None:
+                    continue
+                hits = []
+                last_error: Exception | None = None
+                for attempt in range(3):
+                    try:
+                        hits = await retriever.recall(
+                            sample.query,
+                            sample.dataset_ids,
+                            None,
+                            user_id=sample.user_id,
+                            top_k=top_k,
+                            score_threshold_override=0.0,
+                        )
+                        last_error = None
+                        break
+                    except Exception as exc:  # transient remote route failures are retried locally
+                        last_error = exc
+                        if attempt < 2:
+                            await asyncio.sleep(0.25 * (attempt + 1))
+                if last_error is not None:
                     failed.append(source)
-                    hits = []
+                    if progress:
+                        progress(f"route failed sample={sample.id} source={source}: {last_error}")
                 route_hits[source] = [_to_route_hit(h, source) for h in hits]
             done += 1
             if progress and (done % 25 == 0 or done == len(samples)):
@@ -161,6 +185,7 @@ async def cache_route_hits(
                 sample=sample,
                 dense_hits=route_hits[SOURCE_DENSE],
                 sparse_hits=route_hits[SOURCE_SPARSE],
+                bm25_hits=route_hits[SOURCE_BM25],
                 failed_sources=tuple(failed),
             )
 
@@ -244,8 +269,7 @@ def _weighted_score_fuse(
         else:
             score_range = max_score - min_score
             normalized_by_source[source] = {
-                chunk_id: (score - min_score) / score_range
-                for chunk_id, score in transformed
+                chunk_id: (score - min_score) / score_range for chunk_id, score in transformed
             }
 
     entries: dict[str, dict[str, Any]] = {}
@@ -278,10 +302,24 @@ def _weighted_score_fuse(
     ]
 
 
+def weighted_score_fuse(
+    per_source_hits: dict[str, list[RouteHit]],
+    *,
+    final_top_k: int,
+    weights: dict[str, float] | None = None,
+) -> list[RankedHit]:
+    """Public production-compatible weighted-score fusion for eval experiments."""
+    return _weighted_score_fuse(
+        per_source_hits,
+        final_top_k=final_top_k,
+        weights=weights,
+    )
+
+
 def _transform_weighted_score(source: str, raw_score: float) -> float:
     if not math.isfinite(raw_score):
         raise ValueError(f"{source} score must be finite")
-    if source == SOURCE_SPARSE:
+    if source in {SOURCE_SPARSE, SOURCE_BM25}:
         if raw_score < 0:
             raise ValueError(f"{source} score must be >= 0 for weighted_score")
         return math.log1p(raw_score)
@@ -307,7 +345,10 @@ def stage_output_for_config(
         top_k=config.sparse_top_k,
         threshold=config.sparse_threshold,
     )
-    per_source = {SOURCE_DENSE: dense, SOURCE_SPARSE: sparse}
+    bm25 = _filter_route_hits(
+        cached.bm25_hits, top_k=config.bm25_top_k, threshold=config.bm25_threshold
+    )
+    per_source = {SOURCE_DENSE: dense, SOURCE_SPARSE: sparse, SOURCE_BM25: bm25}
     if fusion_strategy == "rrf":
         ranked = _rrf_fuse(
             per_source,
@@ -322,11 +363,14 @@ def stage_output_for_config(
         )
     else:
         raise ValueError(f"unsupported fusion_strategy={fusion_strategy!r}")
+    counts = {SOURCE_DENSE: len(dense), SOURCE_SPARSE: len(sparse)}
+    if config.bm25_top_k > 0:
+        counts[SOURCE_BM25] = len(bm25)
     return StageOutput(
         layer=Layer.RETRIEVAL,
         query=cached.sample.query,
         ranked=ranked,
-        per_source_counts={SOURCE_DENSE: len(dense), SOURCE_SPARSE: len(sparse)},
+        per_source_counts=counts,
         failed_sources=list(cached.failed_sources),
     )
 
@@ -392,6 +436,8 @@ def evaluate_config(
         mrr=sums["mrr"] / n,
         n=n,
         failed_source_samples=failed,
+        bm25_top_k=config.bm25_top_k,
+        bm25_threshold=config.bm25_threshold,
     )
 
 
@@ -403,23 +449,47 @@ def iter_configs(
     sparse_thresholds: Iterable[float],
     final_top_k: int,
     rrf_k: int,
+    bm25_top_ks: Iterable[int] = (0,),
+    bm25_thresholds: Iterable[float] = (0.0,),
 ) -> Iterable[TuneConfig]:
     for dense_top_k in dense_top_ks:
         for sparse_top_k in sparse_top_ks:
             for dense_threshold in dense_thresholds:
                 for sparse_threshold in sparse_thresholds:
-                    yield TuneConfig(
-                        dense_top_k=dense_top_k,
-                        sparse_top_k=sparse_top_k,
-                        dense_threshold=dense_threshold,
-                        sparse_threshold=sparse_threshold,
-                        final_top_k=final_top_k,
-                        rrf_k=rrf_k,
-                    )
+                    for bm25_top_k in bm25_top_ks:
+                        for bm25_threshold in bm25_thresholds:
+                            yield TuneConfig(
+                                dense_top_k=dense_top_k,
+                                sparse_top_k=sparse_top_k,
+                                dense_threshold=dense_threshold,
+                                sparse_threshold=sparse_threshold,
+                                final_top_k=final_top_k,
+                                rrf_k=rrf_k,
+                                bm25_top_k=bm25_top_k,
+                                bm25_threshold=bm25_threshold,
+                            )
 
 
-def run_grid(cached: list[CachedSample], configs: Iterable[TuneConfig]) -> list[TuneResult]:
-    return sorted((evaluate_config(cached, cfg) for cfg in configs), key=lambda r: r.score_key, reverse=True)
+def run_grid(
+    cached: list[CachedSample],
+    configs: Iterable[TuneConfig],
+    *,
+    fusion_strategy: str = "rrf",
+    fusion_weights: dict[str, float] | None = None,
+) -> list[TuneResult]:
+    return sorted(
+        (
+            evaluate_config(
+                cached,
+                cfg,
+                fusion_strategy=fusion_strategy,
+                fusion_weights=fusion_weights,
+            )
+            for cfg in configs
+        ),
+        key=lambda r: r.score_key,
+        reverse=True,
+    )
 
 
 def write_tuning_outputs(
@@ -439,7 +509,9 @@ def write_tuning_outputs(
     md_path = out / f"{stem}.md"
     html_path = out / f"{stem}.html"
 
-    fieldnames = list(asdict(results[0]).keys()) if results else list(TuneResult.__dataclass_fields__)
+    fieldnames = (
+        list(asdict(results[0]).keys()) if results else list(TuneResult.__dataclass_fields__)
+    )
     with csv_path.open("w", encoding="utf-8", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         writer.writeheader()
@@ -573,8 +645,7 @@ def _html_report(payload: dict[str, Any], top_results: list[TuneResult]) -> str:
         ("golden", args["golden"]),
     ]
     search_html = "".join(
-        f"<tr><td>{_esc(k)}</td><td class=\"gloss-desc\">{_esc(v)}</td></tr>"
-        for k, v in search_rows
+        f'<tr><td>{_esc(k)}</td><td class="gloss-desc">{_esc(v)}</td></tr>' for k, v in search_rows
     )
     timestamp = _esc(payload["created_at"])
     dataset = _esc(payload["dataset"])
@@ -610,10 +681,10 @@ def _html_report(payload: dict[str, Any], top_results: list[TuneResult]) -> str:
     <table>
       <thead><tr><th>参数</th><th>值</th></tr></thead>
       <tbody>
-        <tr><td>dense_top_k</td><td>{best.get('dense_top_k')}</td></tr>
-        <tr><td>sparse_top_k</td><td>{best.get('sparse_top_k')}</td></tr>
-        <tr><td>EVAL_RECALL_DENSE_SCORE_THRESHOLD</td><td>{best.get('dense_threshold')}</td></tr>
-        <tr><td>EVAL_RECALL_SPARSE_SCORE_THRESHOLD</td><td>{best.get('sparse_threshold')}</td></tr>
+        <tr><td>dense_top_k</td><td>{best.get("dense_top_k")}</td></tr>
+        <tr><td>sparse_top_k</td><td>{best.get("sparse_top_k")}</td></tr>
+        <tr><td>EVAL_RECALL_DENSE_SCORE_THRESHOLD</td><td>{best.get("dense_threshold")}</td></tr>
+        <tr><td>EVAL_RECALL_SPARSE_SCORE_THRESHOLD</td><td>{best.get("sparse_threshold")}</td></tr>
       </tbody>
     </table>
   </section>
@@ -623,7 +694,7 @@ def _html_report(payload: dict[str, Any], top_results: list[TuneResult]) -> str:
     <p class="h-note">所有指标均在 RRF 融合后 final_top_k=10 的结果上计算,无 rerank。</p>
     <table>
       <thead><tr><th>rank</th><th>dense_top_k</th><th>sparse_top_k</th><th>dense_th</th><th>sparse_th</th><th>recall@10</th><th>hit_rate@10</th><th>MAP</th><th>MRR</th></tr></thead>
-      <tbody>{''.join(top_rows)}</tbody>
+      <tbody>{"".join(top_rows)}</tbody>
     </table>
   </section>
 
@@ -637,9 +708,9 @@ def _html_report(payload: dict[str, Any], top_results: list[TuneResult]) -> str:
   </section>
 
   <div class="foot">
-    <b>口径与说明:</b>本报告不是 rerank 评测;融合算法为 RRF(rrf_k={_esc(args['rrf_k'])}),无 rerank;
-    final_top_k={_esc(args['final_top_k'])};样本量={payload['n_samples']} 条 golden query;语料规模={_esc(corpus_text)};
-    参数组合={config_count} 组;分路失败样本={payload['failed_source_samples']}。
+    <b>口径与说明:</b>本报告不是 rerank 评测;融合算法为 RRF(rrf_k={_esc(args["rrf_k"])}),无 rerank;
+    final_top_k={_esc(args["final_top_k"])};样本量={payload["n_samples"]} 条 golden query;语料规模={_esc(corpus_text)};
+    参数组合={config_count} 组;分路失败样本={payload["failed_source_samples"]}。
     最优配置为 <code>{_esc(best_config)}</code>。
   </div>
 </div>

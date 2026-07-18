@@ -97,17 +97,51 @@ _GLOSSARY: dict[str, tuple[str, str]] = {
 }
 
 
+def _split_granularity_metric(name: str) -> tuple[str, str | None]:
+    if name.endswith("_chunk"):
+        return name.removesuffix("_chunk"), "chunk"
+    if name.endswith("_doc"):
+        return name.removesuffix("_doc"), "doc"
+    return name, None
+
+
+def _metric_label(name: str) -> str:
+    base, gran = _split_granularity_metric(name)
+    suffix = {"chunk": "（chunk）", "doc": "（doc）"}.get(gran, "")
+    return f"{base}{suffix}"
+
+
+def _metric_sort_key(name: str) -> tuple[int, int, str]:
+    base, gran = _split_granularity_metric(name)
+    order = {
+        "recall": 0,
+        "precision": 1,
+        "hit_rate": 2,
+        "ndcg_binary": 3,
+        "ndcg_graded": 4,
+        "mrr": 5,
+        "map": 6,
+    }
+    gran_order = {"chunk": 0, None: 1, "doc": 2}
+    return (order.get(base, 99), gran_order.get(gran, 9), name)
+
+
 def _esc(value) -> str:
     return html.escape(str(value))
 
 
 def _metric_name_cell(name: str) -> str:
     """指标名单元格：命中术语表时加 title 悬停提示。"""
-    entry = _GLOSSARY.get(name)
+    base, gran = _split_granularity_metric(name)
+    entry = _GLOSSARY.get(base)
     if entry is None:
-        return _esc(name)
-    label, desc = entry
-    return f'<abbr title="{_esc(desc)}">{_esc(name)}</abbr>'
+        return _esc(_metric_label(name))
+    _, desc = entry
+    if gran == "chunk":
+        desc = f"{desc} 当前行为 chunk 粒度: 必须命中标准证据片段。"
+    elif gran == "doc":
+        desc = f"{desc} 当前行为 doc 粒度: 命中正确文档的任意 chunk 即算命中,口径更宽。"
+    return f'<abbr title="{_esc(desc)}">{_esc(_metric_label(name))}</abbr>'
 
 
 def _fmt(value: float) -> str:
@@ -257,13 +291,27 @@ class HtmlReporter:
 
     def _headline_cards(self, metrics: list[MetricResult], delta_by_key: dict) -> str:
         cards = []
-        for name, label in [("recall", "Recall"), ("ndcg_binary", "NDCG"), ("mrr", "MRR")]:
-            candidates = [m for m in metrics if m.name == name]
+        preferred = [
+            (["recall_chunk", "recall", "recall_doc"], "Recall"),
+            (["ndcg_binary_chunk", "ndcg_binary", "ndcg_binary_doc"], "NDCG"),
+            (["mrr_chunk", "mrr", "mrr_doc"], "MRR"),
+        ]
+        for names, label in preferred:
+            candidates = [m for m in metrics if m.name in names]
             if not candidates:
                 continue
-            m = max(candidates, key=lambda x: (x.k if x.k is not None else 0))
+            priority = {name: i for i, name in enumerate(names)}
+            m = min(
+                candidates,
+                key=lambda x: (
+                    priority.get(x.name, 99),
+                    -(x.k if x.k is not None else 0),
+                ),
+            )
             d = delta_by_key.get((m.name, m.k))
             suffix = f"@{m.k}" if m.k else ""
+            gran = _split_granularity_metric(m.name)[1]
+            gran_label = f" · {gran}" if gran else ""
             if d is None:
                 delta_html = '<div class="d flat">无基线</div>'
             elif abs(d.delta) < 0.0005:
@@ -273,7 +321,7 @@ class HtmlReporter:
                 arrow = "▲" if d.delta > 0 else "▼"
                 delta_html = f'<div class="d {cls}">{arrow} {abs(d.delta):.3f} vs 基线</div>'
             cards.append(
-                f'<div class="card"><div class="k">{label}{suffix}（召回）</div>'
+                f'<div class="card"><div class="k">{label}{suffix}{gran_label}</div>'
                 f'<div class="v">{_fmt(m.mean)}</div>{delta_html}</div>'
             )
         return "".join(cards)
@@ -281,10 +329,17 @@ class HtmlReporter:
     def _retrieval_section(self, metrics: list[MetricResult], delta_by_key: dict) -> str:
         if not metrics:
             return ""
-        k_metrics = ["recall", "precision", "hit_rate", "ndcg_binary", "ndcg_graded"]
-        scalar_metrics = ["mrr", "map"]
+        k_metric_bases = {"recall", "precision", "hit_rate", "ndcg_binary", "ndcg_graded"}
+        scalar_bases = {"mrr", "map"}
         ks = sorted({m.k for m in metrics if m.k is not None})
         rows = []
+        k_metrics = sorted(
+            {
+                m.name for m in metrics
+                if m.k is not None and _split_granularity_metric(m.name)[0] in k_metric_bases
+            },
+            key=_metric_sort_key,
+        )
         for name in k_metrics:
             per_k = {m.k: m for m in metrics if m.name == name}
             if not per_k:
@@ -300,6 +355,13 @@ class HtmlReporter:
                 f"<tr{regress}><td>{_metric_name_cell(name)}</td>{cells}"
                 f"{_delta_cell(d.delta if d else None)}<td class=\"n\">{n}</td></tr>"
             )
+        scalar_metrics = sorted(
+            {
+                m.name for m in metrics
+                if m.k is None and _split_granularity_metric(m.name)[0] in scalar_bases
+            },
+            key=_metric_sort_key,
+        )
         for name in scalar_metrics:
             ms = [m for m in metrics if m.name == name and m.k is None]
             if not ms:
@@ -369,7 +431,7 @@ class HtmlReporter:
 
     def _glossary_section(self, metrics: list[MetricResult]) -> str:
         """报告内"指标含义"区块：只列本次实际出现的指标，避免无关条目。"""
-        present = {m.name for m in metrics}
+        present = {_split_granularity_metric(m.name)[0] for m in metrics}
         rows = []
         for name, (label, desc) in _GLOSSARY.items():
             if name not in present:
@@ -400,7 +462,12 @@ class HtmlReporter:
         if not keyed:
             return ""
         show = [
-            m for m in keyed if (m.name, m.k) in {("recall", 10), ("ndcg_binary", 10), ("mrr", None)}
+            m for m in keyed
+            if (m.name, m.k) in {
+                ("recall_chunk", 10),
+                ("ndcg_binary_chunk", 10),
+                ("mrr_chunk", None),
+            }
         ] or keyed[:3]
         types = sorted(
             {t for m in show for t in m.by_type}, key=lambda t: t.value
@@ -433,7 +500,12 @@ class HtmlReporter:
         if not keyed:
             return ""
         show = [
-            m for m in keyed if (m.name, m.k) in {("recall", 10), ("ndcg_binary", 10), ("mrr", None)}
+            m for m in keyed
+            if (m.name, m.k) in {
+                ("recall_chunk", 10),
+                ("ndcg_binary_chunk", 10),
+                ("mrr_chunk", None),
+            }
         ] or keyed[:3]
         domains = sorted({d for m in show for d in m.by_domain})
         header = "".join(

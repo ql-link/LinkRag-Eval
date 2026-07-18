@@ -7,6 +7,7 @@ import json
 import pytest
 
 from linkrag_eval.golden import GoldenSample, load_golden, precheck
+from linkrag_eval.golden.loader import require_chunk_references
 from linkrag_eval.models import QuestionType
 
 
@@ -25,6 +26,24 @@ def test_load_doc_granularity(tmp_path) -> None:
     assert s.id == "q1" and s.expected_doc_ids == [991310000]
     assert s.type == QuestionType.PARAPHRASE
     assert s.expected_chunk_ids == []
+
+
+def test_require_chunk_references_rejects_doc_only(tmp_path) -> None:
+    path = _write(tmp_path, [
+        {"id": "q1", "query": "问题1", "user_id": 990001, "dataset_ids": [990131],
+         "expected_doc_ids": [991310000]},
+    ])
+    samples = load_golden(path)
+    with pytest.raises(ValueError, match="doc-only"):
+        require_chunk_references(samples)
+
+
+def test_require_chunk_references_accepts_chunk_refs(tmp_path) -> None:
+    path = _write(tmp_path, [
+        {"id": "q1", "query": "问题1", "user_id": 990001, "dataset_ids": [990131],
+         "expected_chunk_ids": ["c1"], "expected_doc_ids": [991310000]},
+    ])
+    require_chunk_references(load_golden(path))
 
 
 def test_reject_no_reference(tmp_path) -> None:

@@ -14,6 +14,14 @@
 | [docs/architecture/](docs/architecture/) | 权威架构(解耦方案、依赖边界、存储设计) |
 | [docs/design/](docs/design/) | 历史设计(monorepo 时期,部分被解耦方案取代) |
 | [docs/reports/](docs/reports/) | 历史评测实证(语料规模、稀疏模型对比、标注可靠性等) |
+| [测试报告索引](docs/reports/REPORT_INDEX.md) | 当前与历史各阶段报告、机器可读结果及其用途 |
+
+## 报告保留规则
+
+- 每个测试阶段的 HTML、Markdown、JSON、CSV 报告及配套结果必须保留原路径。
+- 新一轮测试必须使用新的 run/batch 目录或带时间戳文件名,禁止覆盖历史报告。
+- 每个阶段结束后运行 `python3 scripts/build_report_index.py`,更新统一报告索引。
+- 验收前运行 `python3 scripts/build_report_index.py --check`,确保没有未收录的新报告。
 
 ## 数据库初始化
 
@@ -40,8 +48,9 @@ alembic upgrade head                  # URL 由 env.py 从 EVAL_DB_* 构建(aiom
 - 召回侧通过 `build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 编码走 eval 编码器;`EVAL_BM25_MODE=qdrant_bm25` 时装配生产 Qdrant BM25 backend,指向 eval 独立 BM25 collection。
 - MySQL eval 自持库 ORM 与 Alembic `0001` baseline 已落地。
 - `run` 命令已在文件结果之外同步写入 `eval_run` / `eval_metric_result` 台账。
-- 召回侧分路默认 `EVAL_RECALL_DENSE_SCORE_THRESHOLD=0.20`、`EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.40`,用于过滤低分 sparse 噪声并约束 dense 候选池。
-- CLI 已覆盖 `ingest` / `golden-gen` / `golden-opensource` / `cleaning` / `run`。
+- 召回侧分路默认 `EVAL_RECALL_DENSE_SCORE_THRESHOLD=0.20`、`EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.10`。后者依据 Golden V2 realistic tune 调整,避免新 query 分布下 sparse 路由被全部过滤;历史四域基线需单独复验。
+- CLI 已覆盖 `ingest` / `golden-gen` / `golden-opensource` / `cleaning` / `run` /
+  `query-rewrite`。Query 重写使用独立 `EVAL_REWRITE_*`，只在 eval 内生成计划和做配对评测。
 
 真实活栈已用正式 eval 前缀跑通 `alembic upgrade head`、小规模 ingest、四域 800 chunk/domain 重灌和 `run --precheck`;实证记录见 [docs/reports/live_smoke_2026_07_02.md](docs/reports/live_smoke_2026_07_02.md)。2026-07-04 的 `weighted-score-clean-20260704-top10` 已固化为 dense+sparse 两路 clean 基线:`failed_sources=0`,`zero_ranked=0`,`recall@10=0.9745`。
 

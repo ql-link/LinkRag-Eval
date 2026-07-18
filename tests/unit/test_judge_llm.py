@@ -57,6 +57,23 @@ async def test_generate_json_returns_none_on_garbage() -> None:
     assert await _chat(handler).generate_json(prompt="q") is None
 
 
+async def test_generate_json_returns_none_on_provider_unavailable() -> None:
+    def handler(req: httpx.Request) -> httpx.Response:
+        return httpx.Response(500, text="boom")
+
+    import linkrag_eval.judge.eval_llm as mod
+    orig_sleep = mod.asyncio.sleep
+
+    async def _no_sleep(_):
+        return None
+
+    mod.asyncio.sleep = _no_sleep
+    try:
+        assert await _chat(handler, max_retries=1).generate_json(prompt="q") is None
+    finally:
+        mod.asyncio.sleep = orig_sleep
+
+
 async def test_5xx_retries_then_succeeds() -> None:
     calls = {"n": 0}
 

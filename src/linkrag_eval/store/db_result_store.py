@@ -26,7 +26,8 @@ def _json_dumps(value: Any) -> str:
 
 
 def _scale_of(metric_name: str) -> str:
-    return "graded" if metric_name.endswith("_graded") else "binary"
+    base = metric_name.removesuffix("_chunk").removesuffix("_doc")
+    return "graded" if base.endswith("_graded") else "binary"
 
 
 def _run_record(

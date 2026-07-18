@@ -10,7 +10,7 @@ from collections import Counter
 from typing import Any, Awaitable, Callable
 
 from linkrag_eval.golden.corpus_io import load_manifest, read_tsv_collection
-from linkrag_eval.golden.loader import load_golden, precheck
+from linkrag_eval.golden.loader import load_golden, precheck, require_chunk_references
 from linkrag_eval.metrics.retrieval import DEFAULT_K_VALUES
 from linkrag_eval.models import EvalResult, Layer, Snapshot
 from linkrag_eval.runners import RunContext, run_stage
@@ -46,7 +46,14 @@ async def run_ingest(
         if not text:
             missing += 1
             continue
-        passages.append(EvalPassage(source_passage_id=r.source_id, content=text, doc_id=r.doc_id))
+        passages.append(
+            EvalPassage(
+                source_passage_id=r.source_id,
+                content=text,
+                doc_id=r.doc_id,
+                ordinal=r.ordinal,
+            )
+        )
     if limit:
         passages = passages[:limit]
     if progress:
@@ -84,7 +91,13 @@ async def run_ingest(
     return total
 
 
-def _minimal_snapshot(run_id: str, top_k: int, *, settings: Any | None = None) -> Snapshot:
+def _minimal_snapshot(
+    run_id: str,
+    top_k: int,
+    *,
+    settings: Any | None = None,
+    enabled_sources: list[str] | None = None,
+) -> Snapshot:
     """据 eval 配置构最小快照(检索层用;生成层字段留空)。"""
     sparse_provider = "unknown"
     dense_threshold = 0.0
@@ -107,9 +120,10 @@ def _minimal_snapshot(run_id: str, top_k: int, *, settings: Any | None = None) -
             "sparse": getattr(settings, "recall_sparse_weight", 0.3),
             "bm25": getattr(settings, "recall_bm25_weight", 0.0),
         }
-    enabled_sources = ["dense", "sparse"]
-    if getattr(settings, "bm25_mode", "stub") == "qdrant_bm25":
-        enabled_sources = ["bm25", "dense", "sparse"]
+    if enabled_sources is None:
+        enabled_sources = ["dense", "sparse"]
+        if getattr(settings, "bm25_mode", "stub") in {"qdrant_bm25", "sqlite_fts5"}:
+            enabled_sources = ["bm25", "dense", "sparse"]
     return Snapshot(
         run_id=run_id, git_sha="", sparse_vector_provider=sparse_provider, top_k=top_k,
         score_threshold=sparse_threshold, enabled_sources=enabled_sources, rrf_k=60, rerank_top_n=None,
@@ -132,11 +146,15 @@ async def run_eval(
     settings: Any | None = None,
     domain_of: Callable[[Any], str | None] | None = None,
     fetch_status: Callable[[list[str]], Awaitable[dict[str, str]]] | None = None,
+    require_chunk_refs: bool = False,
     k_values: list[int] | None = None,
+    enabled_sources: list[str] | None = None,
     progress: Callable[[str], None] | None = None,
 ) -> EvalResult:
     """加载 golden →(可选 precheck)→ run_stage → 返回 EvalResult。"""
     golden = load_golden(golden_path)
+    if require_chunk_refs:
+        require_chunk_references(golden)
     if fetch_status is not None:
         report = await precheck(golden, fetch_status)
         if progress:
@@ -144,7 +162,9 @@ async def run_eval(
         if not report.ok:
             raise RuntimeError(f"golden precheck 失败:{len(report.invalid_sample_ids)} 条 reference 失效")
 
-    snapshot = _minimal_snapshot(run_id, top_k, settings=settings)
+    snapshot = _minimal_snapshot(
+        run_id, top_k, settings=settings, enabled_sources=enabled_sources
+    )
     ctx = RunContext(
         run_id=run_id, snapshot=snapshot, store=store, top_k=top_k,
         k_values=list(k_values or DEFAULT_K_VALUES),

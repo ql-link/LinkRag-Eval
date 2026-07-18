@@ -58,3 +58,29 @@ async def test_empty_upsert_noop(repo) -> None:
     r, _ = repo
     await r.init_schema()
     assert await r.upsert_chunks([]) == 0
+
+
+async def test_mark_bm25_indexed(repo) -> None:
+    r, _ = repo
+    await r.init_schema()
+    await r.upsert_chunks([
+        CorpusChunkRow(chunk_id="c1", dataset_id=990101, doc_id=1, content="正文一", content_hash="h1"),
+        CorpusChunkRow(chunk_id="c2", dataset_id=990101, doc_id=2, content="正文二", content_hash="h2"),
+    ])
+
+    assert await r.mark_bm25_indexed(["c1"]) == 1
+    rows = await r.fetch_chunks_for_datasets([990101])
+    by_id = {row.chunk_id: row for row in rows}
+    assert by_id["c1"].bm25_indexed is True
+    assert by_id["c2"].bm25_indexed is False
+
+
+async def test_fetch_contents_by_ids_reads_only_requested_chunks(repo) -> None:
+    r, _ = repo
+    await r.init_schema()
+    await r.upsert_chunks([
+        CorpusChunkRow(chunk_id="c1", dataset_id=1, doc_id=1, content="正文一", content_hash="h1"),
+        CorpusChunkRow(chunk_id="c2", dataset_id=1, doc_id=2, content="", content_hash="h2"),
+    ])
+
+    assert await r.fetch_contents_by_ids(["missing", "c2", "c1"]) == {"c1": "正文一"}

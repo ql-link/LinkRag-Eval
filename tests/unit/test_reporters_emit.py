@@ -46,7 +46,7 @@ def _result(run_id: str) -> EvalResult:
 
 class TestRetrievalReports:
     def test_writes_html_and_json(self, tmp_path):
-        paths = write_retrieval_reports(
+        write_retrieval_reports(
             _result("r1"), tmp_path, run_id="r1", dataset="dur"
         )
         assert (tmp_path / "r1.html").exists()
@@ -85,7 +85,7 @@ class TestCleaningReports:
             buckets=[CleaningBucket(format="html", pdf_backend=None, n=1,
                                     metrics={"text_similarity": 1.0})],
         )
-        paths = write_cleaning_reports(report, [item], tmp_path, run_id="c1")
+        write_cleaning_reports(report, [item], tmp_path, run_id="c1")
         assert (tmp_path / "c1.cleaning.html").exists()
         lines = (tmp_path / "c1.cleaning.jsonl").read_text(encoding="utf-8").splitlines()
         assert len(lines) == 1

@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>多路召回对比报告</title>
+  <style>
+    :root {
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5f6b7a;
+      --line: #d8dee6;
+      --accent: #0f766e;
+      --accent-soft: #e4f4f1;
+      --warn: #8a5a00;
+      --warn-soft: #fff4d6;
+      --good: #166534;
+      --good-soft: #e7f5e8;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 14px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .wrap {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+    }
+    header {
+      margin-bottom: 24px;
+      padding-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .subtitle {
+      color: var(--muted);
+      max-width: 900px;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+    .chip {
+      padding: 5px 9px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: var(--panel);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 20px 0 22px;
+    }
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: var(--shadow);
+    }
+    .card .label {
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+    .card .value {
+      font-size: 24px;
+      font-weight: 750;
+      line-height: 1.15;
+    }
+    .card .note {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      margin: 16px 0;
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+    p { margin: 8px 0; }
+    .callout {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin: 12px 0 0;
+      background: #fbfcfd;
+    }
+    .callout.good {
+      border-color: #b7dfbf;
+      background: var(--good-soft);
+      color: var(--good);
+    }
+    .callout.warn {
+      border-color: #ead18b;
+      background: var(--warn-soft);
+      color: var(--warn);
+    }
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 760px;
+      background: var(--panel);
+    }
+    th, td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 650;
+      background: #f1f4f7;
+      white-space: nowrap;
+    }
+    td.num, th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .best {
+      color: var(--accent);
+      font-weight: 750;
+    }
+    code {
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: #eef2f6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 12px;
+    }
+    ul {
+      margin: 8px 0 0 18px;
+      padding: 0;
+    }
+    li { margin: 5px 0; }
+    footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+    @media (max-width: 860px) {
+      .wrap { padding: 22px 14px 34px; }
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      h1 { font-size: 24px; }
+    }
+    @media (max-width: 520px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>多路召回对比报告</h1>
+      <div class="subtitle">稠密、稠密+BM25、稠密+稀疏+BM25 三组正式 clean run 对比。数据来自 2026-07-04 晚至 2026-07-05 00:07 的 LinkRag-Eval 活栈复验。</div>
+      <div class="chips">
+        <span class="chip">golden: 394 queries</span>
+        <span class="chip">corpus: 3200 chunks</span>
+        <span class="chip">top_k: 10</span>
+        <span class="chip">fusion: weighted_score</span>
+        <span class="chip">quality: clean</span>
+        <span class="chip">BM25: eval_bm25 / 3200 points</span>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">最佳 recall@10</div>
+        <div class="value">0.9750</div>
+        <div class="note">稠密+BM25</div>
+      </div>
+      <div class="card">
+        <div class="label">最佳 MAP</div>
+        <div class="value">0.8986</div>
+        <div class="note">稠密+BM25</div>
+      </div>
+      <div class="card">
+        <div class="label">最佳 MRR</div>
+        <div class="value">0.9216</div>
+        <div class="note">稠密+稀疏+BM25</div>
+      </div>
+      <div class="card">
+        <div class="label">运行质量</div>
+        <div class="value">clean</div>
+        <div class="note">三组 failed_sources=0, zero_ranked=0</div>
+      </div>
+    </div>
+
+    <section>
+      <h2>结论</h2>
+      <div class="callout good">
+        当前三组 clean run 中，<strong>稠密+BM25</strong> 是最稳的默认候选：保持 dense-only 的 hit_rate@10，并将 recall@10 从 0.9745 小幅提高到 0.9750，同时 MAP/MRR 均提升。
+      </div>
+      <div class="callout warn">
+        三路在当前未调参权重下不建议直接固化为新标准基线：MRR 最高，但 recall@10 低于稠密+BM25。后续应对 sparse_weight / bm25_weight 做网格搜索。
+      </div>
+    </section>
+
+    <section>
+      <h2>范围</h2>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr><th>数据集</th><td>四域 clean golden，394 条 doc 粒度 query</td></tr>
+            <tr><th>语料</th><td>四域各 800 chunk，共 3200 chunk</td></tr>
+            <tr><th>dense/sparse collection</th><td><code>eval_doubao_v2_kb_bucket_9</code></td></tr>
+            <tr><th>BM25 collection</th><td><code>eval_bm25</code>，3200 points</td></tr>
+            <tr><th>MySQL</th><td><code>tolink_rag_eval_db</code>，四域 <code>bm25_indexed=800/800</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>召回口径</h2>
+      <p>三组均走正式 <code>linkrag-eval run --precheck</code> 路径，融合算法为 <code>weighted_score</code>，<code>final_top_k=10</code>。本轮是路由对比，不是权重搜索。</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>组别</th>
+              <th>enabled_sources</th>
+              <th class="num">dense_top_k</th>
+              <th class="num">sparse_top_k</th>
+              <th class="num">bm25_top_k</th>
+              <th class="num">dense_weight</th>
+              <th class="num">sparse_weight</th>
+              <th class="num">bm25_weight</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>稠密</td><td><code>dense</code></td><td class="num">150</td><td class="num">50</td><td class="num">50</td><td class="num">1.0</td><td class="num">0.0</td><td class="num">0.0</td></tr>
+            <tr><td>稠密+BM25</td><td><code>dense,bm25</code></td><td class="num">150</td><td class="num">50</td><td class="num">50</td><td class="num">0.9</td><td class="num">0.0</td><td class="num">0.1</td></tr>
+            <tr><td>稠密+稀疏+BM25</td><td><code>dense,sparse,bm25</code></td><td class="num">150</td><td class="num">50</td><td class="num">50</td><td class="num">0.8</td><td class="num">0.1</td><td class="num">0.1</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>指标总览</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>组别</th>
+              <th>run_id</th>
+              <th>quality</th>
+              <th class="num">recall@10</th>
+              <th class="num">hit_rate@10</th>
+              <th class="num">MAP</th>
+              <th class="num">MRR</th>
+              <th class="num">nDCG@10</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>稠密</td><td><code>route-dense-only-20260704-top10</code></td><td>clean</td><td class="num">0.9745</td><td class="num">0.9898</td><td class="num">0.8954</td><td class="num">0.9178</td><td class="num">0.9224</td></tr>
+            <tr><td>稠密+BM25</td><td><code>route-dense-bm25-20260704-top10</code></td><td>clean</td><td class="num best">0.9750</td><td class="num">0.9898</td><td class="num best">0.8986</td><td class="num">0.9214</td><td class="num best">0.9249</td></tr>
+            <tr><td>稠密+稀疏+BM25</td><td><code>route-dense-sparse-bm25-20260704-top10</code></td><td>clean</td><td class="num">0.9725</td><td class="num">0.9873</td><td class="num">0.8984</td><td class="num best">0.9216</td><td class="num">0.9243</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>分段指标</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>组别</th>
+              <th class="num">recall@1</th>
+              <th class="num">recall@3</th>
+              <th class="num">recall@5</th>
+              <th class="num">recall@10</th>
+              <th class="num">precision@10</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>稠密</td><td class="num">0.6393</td><td class="num best">0.8448</td><td class="num best">0.9199</td><td class="num">0.9745</td><td class="num">0.2114</td></tr>
+            <tr><td>稠密+BM25</td><td class="num">0.6482</td><td class="num">0.8384</td><td class="num">0.9175</td><td class="num best">0.9750</td><td class="num best">0.2117</td></tr>
+            <tr><td>稠密+稀疏+BM25</td><td class="num best">0.6507</td><td class="num">0.8321</td><td class="num">0.9170</td><td class="num">0.9725</td><td class="num">0.2114</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>相对变化</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>对比</th>
+              <th class="num">Δ recall@10</th>
+              <th class="num">Δ MAP</th>
+              <th class="num">Δ MRR</th>
+              <th>观察</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>稠密+BM25 vs 稠密</td><td class="num">+0.0005</td><td class="num">+0.0032</td><td class="num">+0.0036</td><td>BM25 对 top10 查全增益很小，但对排序质量有稳定小幅提升。</td></tr>
+            <tr><td>三路 vs 稠密</td><td class="num">-0.0020</td><td class="num">+0.0030</td><td class="num">+0.0039</td><td>rank 1/MRR 更好，但 top10 查全略降。</td></tr>
+            <tr><td>三路 vs 稠密+BM25</td><td class="num">-0.0025</td><td class="num">-0.0002</td><td class="num">+0.0002</td><td>加 sparse 后 top10 查全下降，但首位排序略改善。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>来源重叠</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>组别</th>
+              <th class="num">all_sources</th>
+              <th class="num">dense_only</th>
+              <th class="num">sparse_only</th>
+              <th class="num">bm25_only</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>稠密</td><td class="num">-</td><td class="num">1.0000</td><td class="num">-</td><td class="num">-</td></tr>
+            <tr><td>稠密+BM25</td><td class="num">0.4530</td><td class="num">0.5497</td><td class="num">-</td><td class="num">0.0090</td></tr>
+            <tr><td>稠密+稀疏+BM25</td><td class="num">0.2624</td><td class="num">0.5330</td><td class="num">0.0070</td><td class="num">0.0066</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>BM25 与 dense 有较高重叠，纯 BM25-only 命中占比低，说明本轮 BM25 更像排序辅助信号，而不是显著增加候选覆盖的主召回信号。</p>
+    </section>
+
+    <section>
+      <h2>产物</h2>
+      <ul>
+        <li>稠密结果：<code>runs/results/route-dense-only-20260704-top10.json</code></li>
+        <li>稠密+BM25 结果：<code>runs/results/route-dense-bm25-20260704-top10.json</code></li>
+        <li>稠密+稀疏+BM25 结果：<code>runs/results/route-dense-sparse-bm25-20260704-top10.json</code></li>
+        <li>BM25 backfill：四域 3200 chunk 写入 <code>eval_bm25</code>，DB <code>bm25_indexed=True</code></li>
+      </ul>
+    </section>
+
+    <footer>
+      生成文件：<code>docs/reports/multi_route_recall_comparison_2026_07_05.html</code>
+    </footer>
+  </main>
+</body>
+</html>

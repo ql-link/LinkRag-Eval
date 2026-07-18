@@ -6,7 +6,7 @@ eval 前缀 Qdrant → ``EvalCorpusRepo`` 落 MySQL 独立库。**不 import 任
 
 passage 语义:一个 passage 即一个 chunk(``ordinal`` 为 doc 内序号);需切分的 corpus 走另一条
 路径(compute_chunks,后续接)。bm25 路按 mode 可插拔:``stub`` 只跑 dense+sparse;
-``qdrant_bm25`` 额外写 eval 独立 BM25 collection。
+``qdrant_bm25`` 写 eval 独立 Qdrant collection,``sqlite_fts5`` 写本地 SQLite FTS5。
 """
 
 from __future__ import annotations
@@ -73,8 +73,14 @@ class EvalVectorIndexer:
         bm25_tokens = None
         if self._bm25_mode == "qdrant_bm25":
             bm25_tokens = [self._computer.compute_bm25_tokens(c) for c in contents]
+        elif self._bm25_mode == "sqlite_fts5":
+            from linkrag_eval.store.sqlite_bm25 import local_bm25_tokens
+
+            bm25_tokens = [local_bm25_tokens(c) for c in contents]
         elif self._bm25_mode == "sparse_proxy":
-            raise NotImplementedError("EVAL_BM25_MODE=sparse_proxy 未实现;请使用 stub 或 qdrant_bm25。")
+            raise NotImplementedError(
+                "EVAL_BM25_MODE=sparse_proxy 未实现;请使用 stub、qdrant_bm25 或 sqlite_fts5。"
+            )
 
         points: list[EvalPoint] = []
         rows: list[CorpusChunkRow] = []

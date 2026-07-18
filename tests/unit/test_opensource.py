@@ -103,6 +103,27 @@ class TestConvert:
         assert s.relevance_grades is None
         assert s.user_id == 990001
 
+    def test_binary_conversion_chunk_granularity(self):
+        from linkrag_eval.golden.opensource.datasets import QueryJudgment
+
+        judgments = [QueryJudgment(qid="q1", query="问题一", judged={"p1": 1, "p2": 1})]
+        manifest = [make_record("p1", 990000010), make_record("p2", 990000012)]
+        samples, report = _convert(
+            judgments,
+            manifest,
+            dataset_name="dureader",
+            reference_granularity="chunk",
+            chunks_by_doc={
+                990000010: ["c10a", "c10b"],
+                990000012: ["c12a"],
+            },
+        )
+        assert report.converted == 1
+        assert report.reference_granularity == "chunk"
+        s = samples[0]
+        assert s.expected_doc_ids == [990000010, 990000012]
+        assert s.expected_chunk_ids == ["c10a", "c10b", "c12a"]
+
     def test_graded_conversion(self):
         from linkrag_eval.golden.opensource.datasets import QueryJudgment
 
@@ -110,6 +131,37 @@ class TestConvert:
         manifest = [make_record("p1", 990000010), make_record("p2", 990000012)]
         samples, _ = _convert(judgments, manifest, dataset_name="t2", graded=True)
         assert samples[0].relevance_grades == {"990000010": 3}
+
+    def test_graded_conversion_chunk_granularity(self):
+        from linkrag_eval.golden.opensource.datasets import QueryJudgment
+
+        judgments = [QueryJudgment(qid="q1", query="问", judged={"p1": 3, "p2": 0})]
+        manifest = [make_record("p1", 990000010), make_record("p2", 990000012)]
+        samples, _ = _convert(
+            judgments,
+            manifest,
+            dataset_name="t2",
+            graded=True,
+            reference_granularity="chunk",
+            chunks_by_doc={990000010: ["c10a", "c10b"], 990000012: ["c12a"]},
+        )
+        assert samples[0].expected_chunk_ids == ["c10a", "c10b"]
+        assert samples[0].relevance_grades == {"c10a": 3, "c10b": 3}
+
+    def test_chunk_conversion_skips_when_no_chunks(self):
+        from linkrag_eval.golden.opensource.datasets import QueryJudgment
+
+        judgments = [QueryJudgment(qid="q1", query="问", judged={"p1": 1})]
+        manifest = [make_record("p1", 990000010)]
+        samples, report = _convert(
+            judgments,
+            manifest,
+            dataset_name="d",
+            reference_granularity="chunk",
+            chunks_by_doc={990000010: []},
+        )
+        assert samples == []
+        assert report.skipped_no_chunks == 1
 
     def test_skip_when_no_positive_ingested(self):
         from linkrag_eval.golden.opensource.datasets import QueryJudgment

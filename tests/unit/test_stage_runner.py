@@ -48,13 +48,13 @@ async def test_run_stage_aggregates_recall() -> None:
     ev = _FakeRecall({"q1": [1, 9, 2], "q2": [3, 8]})  # q1 recall@1=.5 @3=1; q2 recall@1=1
     result = await run_stage(golden, ev, [RecallAtK([1, 3])], _ctx())
 
-    recall = {(r.name, r.k): r for r in result.metrics if r.name == "recall"}
-    assert recall[("recall", 1)].mean == pytest.approx(0.75)  # (.5 + 1)/2
-    assert recall[("recall", 3)].mean == pytest.approx(1.0)
-    assert recall[("recall", 1)].n == 2
+    recall = {(r.name, r.k): r for r in result.metrics if r.name == "recall_doc"}
+    assert recall[("recall_doc", 1)].mean == pytest.approx(0.75)  # (.5 + 1)/2
+    assert recall[("recall_doc", 3)].mean == pytest.approx(1.0)
+    assert recall[("recall_doc", 1)].n == 2
     # 按 QuestionType 分桶
-    assert recall[("recall", 1)].by_type[QuestionType.KEYWORD] == pytest.approx(0.5)
-    assert recall[("recall", 1)].by_type[QuestionType.PARAPHRASE] == pytest.approx(1.0)
+    assert recall[("recall_doc", 1)].by_type[QuestionType.KEYWORD] == pytest.approx(0.5)
+    assert recall[("recall_doc", 1)].by_type[QuestionType.PARAPHRASE] == pytest.approx(1.0)
     # per_sample 诊断
     assert len(result.per_sample) == 2
     assert result.run_id == "r1"
@@ -71,9 +71,30 @@ async def test_domain_bucketing() -> None:
         golden, ev, [RecallAtK([1])], _ctx(),
         domain_of=lambda s: "tech" if s.id == "q1" else "med",
     )
-    r = next(r for r in result.metrics if r.name == "recall" and r.k == 1)
+    r = next(r for r in result.metrics if r.name == "recall_doc" and r.k == 1)
     assert r.by_domain["tech"] == pytest.approx(1.0)
     assert r.by_domain["med"] == pytest.approx(0.0)
+
+
+async def test_chunk_and_doc_granularity_aggregate_separately() -> None:
+    golden = [
+        GoldenSample(id="doc", query="q", user_id=1, dataset_ids=[1], expected_doc_ids=[1]),
+        GoldenSample(
+            id="chunk",
+            query="q",
+            user_id=1,
+            dataset_ids=[1],
+            expected_chunk_ids=["c9"],
+            expected_doc_ids=[9],
+        ),
+    ]
+    ev = _FakeRecall({"doc": [1], "chunk": [9]})
+    result = await run_stage(golden, ev, [RecallAtK([1])], _ctx())
+    metrics = {(m.name, m.k): m for m in result.metrics}
+    assert metrics[("recall_doc", 1)].mean == pytest.approx(1.0)
+    assert metrics[("recall_chunk", 1)].mean == pytest.approx(1.0)
+    assert metrics[("recall_doc", 1)].n == 1
+    assert metrics[("recall_chunk", 1)].n == 1
 
 
 async def test_requires_judge_guard() -> None:

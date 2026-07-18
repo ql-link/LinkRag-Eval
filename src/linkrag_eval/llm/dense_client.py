@@ -154,6 +154,109 @@ class OpenAIDenseEmbedder:
             await self._client.aclose()
 
 
+class BgeM3HttpDenseEmbedder:
+    """BGE-M3 HTTP 服务 dense 编码器,用于 Golden V2 alt embedding。
+
+    ``POST {endpoint}`` body ``{"texts":[...],"return_dense":true,"return_sparse":false}``,
+    响应 ``{"dense":[[...], ...]}``。该服务无需 API key,只作为候选池独立 embedding 来源,
+    不写正式 Qdrant。
+    """
+
+    def __init__(
+        self,
+        *,
+        base_url: str,
+        model: str = "BAAI/bge-m3",
+        dim: int = 1024,
+        batch_size: int = 10,
+        timeout_ms: int = 60000,
+        max_retries: int = 3,
+        http_client: httpx.AsyncClient | None = None,
+    ) -> None:
+        if not (base_url or "").strip():
+            raise DenseEncodeError("EVAL_ALT_EMBED_BASE_URL 未配置(bge_m3_http 端点)。")
+        self._endpoint = base_url.rstrip("/")
+        self._model = model or "BAAI/bge-m3"
+        self._dim = dim
+        self._batch_size = max(1, batch_size)
+        self._timeout_ms = timeout_ms
+        self._max_retries = max_retries
+        self._client = http_client
+
+    @property
+    def model_name(self) -> str:
+        return self._model
+
+    @property
+    def dim(self) -> int:
+        return self._dim
+
+    async def aembed(self, texts: Sequence[str]) -> list[list[float]]:
+        items = list(texts)
+        if not items:
+            return []
+        out: list[list[float]] = []
+        for start in range(0, len(items), self._batch_size):
+            batch = items[start : start + self._batch_size]
+            out.extend(await self._embed_batch(batch))
+        return out
+
+    async def aembed_query(self, text: str) -> list[float]:
+        [vec] = await self.aembed([text])
+        return vec
+
+    async def _embed_batch(self, batch: list[str]) -> list[list[float]]:
+        data = await self._post(
+            {"texts": batch, "return_dense": True, "return_sparse": False}
+        )
+        dense = data.get("dense") if isinstance(data, dict) else None
+        if not isinstance(dense, list) or len(dense) != len(batch):
+            raise DenseEncodeError(
+                f"bge_m3_http 响应 dense 数量不符:got "
+                f"{len(dense) if isinstance(dense, list) else 'N/A'}, expected {len(batch)}。"
+            )
+        vecs: list[list[float]] = []
+        for item in dense:
+            if not isinstance(item, list) or not item:
+                raise DenseEncodeError(f"bge_m3_http dense 项格式异常:{item!r}。")
+            vecs.append([float(x) for x in item])
+        return vecs
+
+    async def _post(self, payload: dict, attempt: int = 0) -> dict:
+        client = await self._get_client()
+        try:
+            resp = await client.post(self._endpoint, json=payload)
+        except (httpx.TimeoutException, httpx.ConnectError) as exc:
+            if attempt < self._max_retries:
+                import asyncio
+
+                await asyncio.sleep(2 * (attempt + 1))
+                return await self._post(payload, attempt + 1)
+            raise DenseEncodeError(f"bge_m3_http 连接失败:{type(exc).__name__}。") from exc
+        if resp.status_code >= 500:
+            if attempt < self._max_retries:
+                import asyncio
+
+                await asyncio.sleep(2 * (attempt + 1))
+                return await self._post(payload, attempt + 1)
+            raise DenseEncodeError(f"bge_m3_http 服务端错误 {resp.status_code}。")
+        if 400 <= resp.status_code < 500:
+            raise DenseEncodeError(f"bge_m3_http 客户端错误 {resp.status_code}:{resp.text[:200]!r}。")
+        try:
+            return resp.json()
+        except ValueError as exc:
+            raise DenseEncodeError("bge_m3_http 返回非 JSON。") from exc
+
+    async def _get_client(self) -> httpx.AsyncClient:
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=httpx.Timeout(self._timeout_ms / 1000))
+        return self._client
+
+    async def aclose(self) -> None:
+        if self._client is not None and not self._client.is_closed:
+            await self._client.aclose()
+
+
 def build_dense_embedder(settings=None) -> OpenAIDenseEmbedder:
     """按 EVAL_EMBED_* 配置装配 dense 编码器。"""
     if settings is None:
@@ -167,4 +270,41 @@ def build_dense_embedder(settings=None) -> OpenAIDenseEmbedder:
         dim=settings.embed_dim,
         batch_size=settings.embed_batch_size,
         timeout_ms=settings.embed_timeout_ms,
+    )
+
+
+def build_alt_dense_embedder(settings=None):
+    """按 EVAL_ALT_EMBED_* 配置装配候选池 alt embedding 编码器。"""
+    if settings is None:
+        from linkrag_eval.config import get_settings
+
+        settings = get_settings()
+    provider = (getattr(settings, "alt_embed_provider", "openai") or "openai").lower()
+    if provider in {"bge_m3_http", "bge_m3", "bgem3"}:
+        if not (settings.alt_embed_model or "").strip():
+            raise DenseEncodeError("EVAL_ALT_EMBED_MODEL 未配置。")
+        if not (settings.alt_embed_base_url or "").strip():
+            raise DenseEncodeError("EVAL_ALT_EMBED_BASE_URL 未配置。")
+        return BgeM3HttpDenseEmbedder(
+            base_url=settings.alt_embed_base_url,
+            model=settings.alt_embed_model,
+            dim=settings.alt_embed_dim,
+            batch_size=settings.alt_embed_batch_size,
+            timeout_ms=settings.alt_embed_timeout_ms,
+        )
+    if provider != "openai":
+        raise DenseEncodeError(f"未知 alt embedding provider:{provider!r}。")
+    if not (settings.alt_embed_api_key or "").strip():
+        raise DenseEncodeError("EVAL_ALT_EMBED_API_KEY 未配置。")
+    if not (settings.alt_embed_model or "").strip():
+        raise DenseEncodeError("EVAL_ALT_EMBED_MODEL 未配置。")
+    if not (settings.alt_embed_base_url or "").strip():
+        raise DenseEncodeError("EVAL_ALT_EMBED_BASE_URL 未配置。")
+    return OpenAIDenseEmbedder(
+        api_key=settings.alt_embed_api_key,
+        model=settings.alt_embed_model,
+        base_url=settings.alt_embed_base_url,
+        dim=settings.alt_embed_dim,
+        batch_size=settings.alt_embed_batch_size,
+        timeout_ms=settings.alt_embed_timeout_ms,
     )

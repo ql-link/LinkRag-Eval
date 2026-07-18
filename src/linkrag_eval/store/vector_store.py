@@ -6,6 +6,7 @@
 
 不经 ``ChunkRecordDB``:payload 只需 ``chunk_id/user_id/set_id/doc_id``,直接构点(见 point_factory._payload)。
 dense 是 unnamed 向量、sparse 是 named(名取自 ``EVAL_SPARSE_VECTOR_NAME``,默认 ``sparse_text``)。
+BM25 可写旧 Qdrant sparse collection,也可写推荐的 SQLite FTS5 sidecar。
 
 护栏:前缀必须含 ``eval``,否则构造期拒跑——防写串生产 collection。
 本文件是允许 import toLink-Rag 的三个 adapter 之一(Qdrant 原语)。rag import 全部惰性,
@@ -47,8 +48,12 @@ class EvalVectorStore:
         sparse_vector_name: str | None = None,
         qdrant_bm25_store: Any | None = None,
         bm25_encoder: Any | None = None,
+        bm25_mode: str = "qdrant_bm25",
         bm25_collection: str | None = None,
         bm25_vector_name: str | None = None,
+        bm25_sqlite_path: str | None = None,
+        bm25_sqlite_coarse_weight: float = 2.0,
+        bm25_sqlite_fine_weight: float = 1.0,
         bm25_k1: float = 1.2,
         bm25_b: float = 0.75,
         bm25_avgdl: float = 200.0,
@@ -70,8 +75,12 @@ class EvalVectorStore:
             )
         self._bm25_store = qdrant_bm25_store
         self._bm25_encoder = bm25_encoder
+        self._bm25_mode = bm25_mode
         self._bm25_collection = bm25_collection
         self._bm25_vector_name = bm25_vector_name or "bm25_text"
+        self._bm25_sqlite_path = bm25_sqlite_path
+        self._bm25_sqlite_coarse_weight = bm25_sqlite_coarse_weight
+        self._bm25_sqlite_fine_weight = bm25_sqlite_fine_weight
         self._bm25_k1 = bm25_k1
         self._bm25_b = bm25_b
         self._bm25_avgdl = bm25_avgdl
@@ -163,6 +172,21 @@ class EvalVectorStore:
         bm25_items = [p for p in points if p.bm25_tokens is not None]
         if not bm25_items:
             return []
+        if self._bm25_mode == "sqlite_fts5":
+            from linkrag_eval.store.sqlite_bm25 import SQLiteBm25Point
+
+            return [
+                SQLiteBm25Point(
+                    chunk_id=p.chunk_id,
+                    doc_id=p.doc_id,
+                    user_id=self._user_id,
+                    dataset_id=dataset_id,
+                    chunk_type=p.chunk_type,
+                    tokens=p.bm25_tokens,
+                )
+                for p in bm25_items
+                if p.bm25_tokens is not None
+            ]
         encoder = self._ensure_bm25_encoder()
         out: list[Any] = []
         for p in bm25_items:
@@ -194,6 +218,16 @@ class EvalVectorStore:
         return self._bm25_encoder
 
     def _ensure_bm25_store(self):
+        if self._bm25_mode == "sqlite_fts5":
+            if self._bm25_sqlite_path is None and self._bm25_store is None:
+                raise RuntimeError("启用 sqlite_fts5 写入需配置 EVAL_BM25_SQLITE_PATH。")
+            if self._bm25_store is None:
+                self._bm25_store = _build_sqlite_bm25_store(
+                    path=self._bm25_sqlite_path,
+                    coarse_weight=self._bm25_sqlite_coarse_weight,
+                    fine_weight=self._bm25_sqlite_fine_weight,
+                )
+            return self._bm25_store
         if self._bm25_collection is None and self._bm25_store is None:
             raise RuntimeError("启用 qdrant_bm25 写入需配置 EVAL_QDRANT_BM25_COLLECTION。")
         if self._bm25_store is None:
@@ -246,6 +280,18 @@ def _build_bm25_store(
     )
 
 
+def _build_sqlite_bm25_store(*, path: str | None, coarse_weight: float, fine_weight: float):
+    from linkrag_eval.store.sqlite_bm25 import SQLiteBm25Store
+
+    if not path:
+        raise RuntimeError("EVAL_BM25_SQLITE_PATH 未配置。")
+    return SQLiteBm25Store(
+        path,
+        coarse_weight=coarse_weight,
+        fine_weight=fine_weight,
+    )
+
+
 def _build_bm25_encoder(
     *,
     k1: float,
@@ -283,8 +329,12 @@ def build_eval_vector_store(settings=None) -> EvalVectorStore:
         user_id=settings.user_id,
         qdrant_host=settings.qdrant_host,
         sparse_vector_name=settings.sparse_vector_name,
+        bm25_mode=settings.bm25_mode,
         bm25_collection=settings.qdrant_bm25_collection,
         bm25_vector_name=settings.qdrant_bm25_vector_name,
+        bm25_sqlite_path=settings.bm25_sqlite_path,
+        bm25_sqlite_coarse_weight=settings.bm25_sqlite_coarse_weight,
+        bm25_sqlite_fine_weight=settings.bm25_sqlite_fine_weight,
         bm25_k1=settings.bm25_k1,
         bm25_b=settings.bm25_b,
         bm25_avgdl=settings.bm25_avgdl,

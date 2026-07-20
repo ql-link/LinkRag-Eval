@@ -1,5 +1,7 @@
 # 阶段 1.5 · 黄金集合成器 — 设计文档
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored）
 > 上游：[framework_design.md](framework_design.md)（总架构）、[phase1_design.md](phase1_design.md)（黄金集 schema/loader）、[technical_design.md](technical_design.md) §四（黄金集来源与三条纪律）
 > 范围：黄金集来源设计——**以开源中文数据集为主、自有 chunk 反向合成为辅**，全程**无人工抽检**，产出符合阶段 1 `GoldenSample` schema 的评测条目。

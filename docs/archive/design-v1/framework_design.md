@@ -1,5 +1,7 @@
 # RAG 评估框架 — 架构设计与模块拆分
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored 临时交付物）
 > 范围：从零设计一套**评估框架**（engine），承载对 toLink-Rag 全链路的质量评估。
 > 约束：本设计**只参考已实现的生产模块**（recall / rerank / generation / llm / chunk repository），不沿用任何历史评估代码。

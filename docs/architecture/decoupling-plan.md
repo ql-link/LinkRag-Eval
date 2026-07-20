@@ -1,7 +1,7 @@
 # 解耦独立化方案(已批准基线)
 
 > 本文是 `LinkRag-Eval` 从生产 RAG 仓库(toLink-Rag)`src/evaluation/` 剥离、独立成项目的总方案。
-> 实现细节与硬规则见 [实现约定](../../AGENTS.md);历史设计见 [docs/design/](../design/)。
+> 实现细节与硬规则见 [实现约定](../../AGENTS.md);当前进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md);历史设计见 [archive/](../archive/)。
 
 ## Context
 

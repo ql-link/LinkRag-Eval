@@ -21,8 +21,8 @@
 - [08 Rerank 候选截断与效果评测](#08-rerank-候选截断与效果评测)：5 个产物
 - [09 Query 分桶与召回分流分析](#09-query-分桶与召回分流分析)：2 个产物
 - [10 平衡 Query 扩展与标注质检](#10-平衡-query-扩展与标注质检)：96 个产物
-- [11 其他阶段产物](#11-其他阶段产物)：9 个产物
 - [11 学习型融合实验](#11-学习型融合实验)：90 个产物
+- [12 其他阶段产物](#12-其他阶段产物)：9 个产物
 
 ## 00 历史实证与人工汇总
 
@@ -584,20 +584,6 @@
 | [runs/golden_v2/scale_100k_991004/scale_20k_overnight/balanced_query_expansion/top50_extension_v2/short_keyword/qc.json](<../../runs/golden_v2/scale_100k_991004/scale_20k_overnight/balanced_query_expansion/top50_extension_v2/short_keyword/qc.json>) | `json` | 黄金集或标注质量门禁，检查未解决率、随机负例误判率及结构完整性。 |
 | [runs/golden_v2/scale_100k_991004/scale_20k_overnight/balanced_query_expansion/top50_extension_v2/short_keyword/qc.md](<../../runs/golden_v2/scale_100k_991004/scale_20k_overnight/balanced_query_expansion/top50_extension_v2/short_keyword/qc.md>) | `md` | 黄金集或标注质量门禁，检查未解决率、随机负例误判率及结构完整性。 |
 
-## 11 其他阶段产物
-
-| 报告 | 格式 | 作用 |
-| --- | --- | --- |
-| [runs/golden_v2/pilot_plan_smoke/pilot_plan.json](<../../runs/golden_v2/pilot_plan_smoke/pilot_plan.json>) | `json` | 试运行计划及数据分批方案，用于控制正式评测前的范围。 |
-| [runs/golden_v2/pilot_plan_smoke/pilot_plan.md](<../../runs/golden_v2/pilot_plan_smoke/pilot_plan.md>) | `md` | 试运行计划及数据分批方案，用于控制正式评测前的范围。 |
-| [runs/golden_v2/pilot_plan_smoke/preflight.json](<../../runs/golden_v2/pilot_plan_smoke/preflight.json>) | `json` | 运行前置检查结果，确认数据、配置和依赖是否满足评测条件。 |
-| [runs/golden_v2/pilot_plan_smoke/preflight.md](<../../runs/golden_v2/pilot_plan_smoke/preflight.md>) | `md` | 运行前置检查结果，确认数据、配置和依赖是否满足评测条件。 |
-| [runs/golden_v2/seed_import_smoke/report.json](<../../runs/golden_v2/seed_import_smoke/report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
-| [runs/golden_v2/seeds/spark_import_report.json](<../../runs/golden_v2/seeds/spark_import_report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
-| [runs/golden_v2/spark_gap_bundle_991003/spark_gap_corpus_spec.json](<../../runs/golden_v2/spark_gap_bundle_991003/spark_gap_corpus_spec.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
-| [runs/golden_v2/spark_gap_bundle_991004/spark_gap_corpus_spec.json](<../../runs/golden_v2/spark_gap_bundle_991004/spark_gap_corpus_spec.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
-| [runs/golden_v2/spark_pregen/bundle_manifest.json](<../../runs/golden_v2/spark_pregen/bundle_manifest.json>) | `json` | 固定该阶段语料清单与来源，支持复现和审计。 |
-
 ## 11 学习型融合实验
 
 | 报告 | 格式 | 作用 |
@@ -692,3 +678,17 @@
 | [runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/unused_numeric_rewrite_round_5/prepare_report.json](<../../runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/unused_numeric_rewrite_round_5/prepare_report.json>) | `json` | 学习型融合的数据扩展、候选缓存、交叉验证结果与固定 Hybrid 对比。 |
 | [runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/unused_numeric_rewrite_round_5/validation/prepare_report.json](<../../runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/unused_numeric_rewrite_round_5/validation/prepare_report.json>) | `json` | 学习型融合的数据扩展、候选缓存、交叉验证结果与固定 Hybrid 对比。 |
 | [runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/validation/prepare_report.json](<../../runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/validation/prepare_report.json>) | `json` | 学习型融合的数据扩展、候选缓存、交叉验证结果与固定 Hybrid 对比。 |
+
+## 12 其他阶段产物
+
+| 报告 | 格式 | 作用 |
+| --- | --- | --- |
+| [runs/golden_v2/pilot_plan_smoke/pilot_plan.json](<../../runs/golden_v2/pilot_plan_smoke/pilot_plan.json>) | `json` | 试运行计划及数据分批方案，用于控制正式评测前的范围。 |
+| [runs/golden_v2/pilot_plan_smoke/pilot_plan.md](<../../runs/golden_v2/pilot_plan_smoke/pilot_plan.md>) | `md` | 试运行计划及数据分批方案，用于控制正式评测前的范围。 |
+| [runs/golden_v2/pilot_plan_smoke/preflight.json](<../../runs/golden_v2/pilot_plan_smoke/preflight.json>) | `json` | 运行前置检查结果，确认数据、配置和依赖是否满足评测条件。 |
+| [runs/golden_v2/pilot_plan_smoke/preflight.md](<../../runs/golden_v2/pilot_plan_smoke/preflight.md>) | `md` | 运行前置检查结果，确认数据、配置和依赖是否满足评测条件。 |
+| [runs/golden_v2/seed_import_smoke/report.json](<../../runs/golden_v2/seed_import_smoke/report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/seeds/spark_import_report.json](<../../runs/golden_v2/seeds/spark_import_report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/spark_gap_bundle_991003/spark_gap_corpus_spec.json](<../../runs/golden_v2/spark_gap_bundle_991003/spark_gap_corpus_spec.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/spark_gap_bundle_991004/spark_gap_corpus_spec.json](<../../runs/golden_v2/spark_gap_bundle_991004/spark_gap_corpus_spec.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/spark_pregen/bundle_manifest.json](<../../runs/golden_v2/spark_pregen/bundle_manifest.json>) | `json` | 固定该阶段语料清单与来源，支持复现和审计。 |

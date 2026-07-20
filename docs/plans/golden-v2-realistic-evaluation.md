@@ -1,8 +1,8 @@
 # Golden V2 真实召回评测改造方案
 
-> 状态:实施中,核心链路已落地
+> 状态:主链路已完成,候选覆盖和下一轮独立 Blind 验收待推进。项目级进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md)。
 > 适用范围:检索层黄金集、召回指标、调参/验收数据拆分。
-> 上游:当前 `phase1_5_golden_gen_design.md` 是历史方案,其中"开源数据集 doc 粒度主力"不再作为主评测口径。本文覆盖黄金集 v2 的当前目标态。
+> 上游:[phase1_5_golden_gen_design.md](../archive/design-v1/phase1_5_golden_gen_design.md) 是历史方案,其中"开源数据集 doc 粒度主力"不再作为主评测口径。本文覆盖黄金集 v2 的当前目标态。
 
 ## 一、结论
 
@@ -787,7 +787,7 @@ linkrag-eval run \
 
 ## 十五、当前代码状态
 
-截至本文新增时,仓库已具备部分前置能力:
+截至 2026-07-20,仓库已具备完整的 Golden V2 主链路能力:
 
 - `run --require-chunk-references` 可拒绝 doc-only golden。
 - `run --dense-score-threshold/--sparse-score-threshold` 可做活栈阈值复验;Ark sparse pilot 已确认 `0.40` 会过滤掉有效候选。
@@ -811,8 +811,10 @@ linkrag-eval run \
 - `golden-v2 scale-plan` 已支持为 medium/10w 背景库生成分批 Spark bundle、ingest、BM25 回填、alt embedding 回填命令草稿,并输出 judge/embedding 规模估算报告。
 - alt embedding 候选搜索已从 CLI 拆到独立模块,默认使用 NumPy 向量化 cosine topK;无 NumPy 时退回按 dataset 分组的纯 Python topK。
 
-待实现:
+待验收或增强:
 
-- alt embedding 更大规模性能优化:10w 先用 SQLite sidecar + NumPy 向量化扫描;若继续放大到数十万/百万级,再升级为嵌入式 ANN/HNSW sidecar。
-- 仲裁策略继续扩展:当前已有"复判覆盖"和"冲突进人工队列";后续可加第三判官自动裁决。
-- 10w 背景库实际执行:按 `scale-plan` 产出的 batch_specs 调 Spark 子 Agent 分批生成,再逐批 ingest / backfill / QC。
+- Blind v2 候选并集缺失 23 条,需先审计标注完整性并优化 `short_keyword`、`alias`、`number_time` 召回覆盖。
+- `exact_identifier` 需增加强门禁,确保 Query 实际包含编号、日期或版本号。
+- 参数冻结后创建未曝光 Blind v3;已揭盲的 Blind v2 只作为回归集。
+- 10w 背景库按当前决策暂缓;继续放大到数十万/百万级时,再将 alt embedding sidecar 升级为 ANN/HNSW。
+- 第三判官自动裁决属于可选增强,不阻塞当前 20k 验收。

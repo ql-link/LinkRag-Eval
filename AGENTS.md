@@ -2,9 +2,9 @@
 
 `LinkRag-Eval` 是从生产 RAG 仓库(toLink-Rag)剥离的**独立评测/质检项目**。它只通过"产物级纯函数"复用生产计算能力,自己负责入库、检索、算分,使用独立 MySQL 库 `tolink_rag_eval_db`(同生产服务器、库级隔离)+ eval 独立前缀的 Qdrant collection。
 
-本文件是 Agent / 开发者的**强制规范**。总方案见 [docs/architecture/decoupling-plan.md](docs/architecture/decoupling-plan.md);历史设计见 [docs/design/](docs/design/);实证报告见 [docs/reports/](docs/reports/)。
+本文件是 Agent / 开发者的**强制规范**。总方案见 [docs/architecture/decoupling-plan.md](docs/architecture/decoupling-plan.md);当前进度见 [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md);历史设计见 [docs/archive/](docs/archive/);实证报告见 [docs/reports/](docs/reports/)。
 
-> 当前阶段:代码已物理迁入本 repo,Step 0–5 主体实现已落地。后续重点是活栈复验 `recall@10 ≈ 0.901`、补齐 CI/import-lint 验收、接入 MySQL 结果后端,以及等待生产 Qdrant BM25 compute/search 后完成 Step 6。
+> 当前阶段以 [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md) 为唯一进度入口，避免在规则文档中重复维护易过期的实验状态。
 
 ---
 
@@ -38,8 +38,10 @@ LinkRag-Eval/
 ├── .gitignore
 ├── docs/
 │   ├── architecture/          # 权威架构(decoupling-plan / dependency-boundary / storage)
-│   ├── design/                # 迁移自源仓库的历史设计(monorepo 时期)
-│   └── reports/               # 历史评测实证发现
+│   ├── plans/                 # 当前实施方案与验收标准
+│   ├── experiments/           # 已验证实验和候选方案
+│   ├── reports/               # 当前与历史评测实证
+│   └── archive/               # 已被替代的历史设计
 ├── src/linkrag_eval/          # ← src-layout:包在此,import 仍 `from linkrag_eval.x`
 │   ├── compute/               # 产物计算封装(rag_adapter 是唯一允许 import rag 的地方)
 │   ├── store/                 # 独立存储(EvalVectorStore + MySQL repo,独立库)
@@ -180,7 +182,7 @@ class ProductComputer(Protocol):
 
 - 主分支 `master`。功能分支从 `master` 切,`feat/` `fix/` `docs/` `refactor/` 前缀。
 - 提交信息中文为主,首行 `type(scope): 摘要`(沿用源仓库惯例)。
-- 改动后同步受影响文档;`docs/architecture/` 是权威,`docs/design/` 是历史(monorepo 时期,存储/灌库部分已被 decoupling-plan 取代,引用时注明)。
+- 改动后同步受影响文档;`docs/architecture/` 是权威,项目级进度只更新 `docs/CURRENT_STATUS.md`,`docs/archive/` 仅作历史追溯。
 - 不主动 commit/push,除非用户明确要求。
 
 ---

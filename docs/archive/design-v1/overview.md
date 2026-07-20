@@ -1,5 +1,7 @@
 # RAG 评估框架 — 设计文档总览
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿集合（`.specs/rag-quality-eval/`，git-ignored 临时交付物）
 > 目的：把一套对 toLink-Rag 全 RAG 链路的质量评估框架，从总架构拆到可逐个落地的模块设计。
 > 一句话定位：**评估引擎（代码）进 `src/evaluation/`，可复用 / 可测 / 进 CI；评测产物（黄金集 / 快照 / 报告 / 台账）留 `.specs/` 或 MinIO，git-ignored。依赖单向 `evaluation → core`。**
@@ -33,8 +35,8 @@
 | [trend_dashboard_design.md](trend_dashboard_design.md) | 多轮趋势/回归看板：指标台账（→ `eval_metric_result` 表）+ 同口径分组 + trend.html | M4 旁路 | 设计稿 |
 | [eval_storage_design.md](eval_storage_design.md) | **存储权威稿**：数据持久化 + 存储隔离 + 解耦灌库（评测自持 `EvalBase`/`eval_corpus_chunk`、不走 ParseTaskPipeline、足迹隔离、user_id 路由常量）。已合并 eval_ingest_decoupled / eval_data_schema / eval_storage_isolation 三份 | 横切（存储） | 设计稿 |
 | [minio_eval_bucket_design.md](minio_eval_bucket_design.md) | 评测产物 MinIO 桶：桶/键布局/清单对象/双后端 | 横切（存储） | 设计稿 |
-| [templates/eval_report_template.html](templates/eval_report_template.html) | HTML 报告模版（检索/重排/生成，简洁美观、自包含、涨绿跌红、口径脚注） | M1 产物 | 模版 |
-| [templates/cleaning_report_template.html](templates/cleaning_report_template.html) | 数据清洗质检 HTML 报告模版（标题/表格/图片/清洗时间，逐 格式×PDF后端） | CLEANING 产物 | 模版 |
+| `templates/eval_report_template.html`（历史规格未迁入） | HTML 报告模版（检索/重排/生成，简洁美观、自包含、涨绿跌红、口径脚注） | M1 产物 | 模版 |
+| `templates/cleaning_report_template.html`（历史规格未迁入） | 数据清洗质检 HTML 报告模版（标题/表格/图片/清洗时间，逐 格式×PDF后端） | CLEANING 产物 | 模版 |
 
 ---
 

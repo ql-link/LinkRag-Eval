@@ -1,5 +1,7 @@
 # RAG 质量评估模块 — 技术设计（指标口径权威源）
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored 临时交付物）
 > 范围：对 toLink-Rag(LinkRag) 完整 RAG 链路（检索 → 重排 → 生成 → 含标准答案的正确性）提供可量化、可复跑的质量评估。
 > 定位：本文是**指标定义与口径的权威源**；架构落地见 [framework_design.md](framework_design.md)，分阶段见 phase0–3，黄金集来源见 phase1.5 / Track B，存储见 eval_storage / minio，看板见 trend_dashboard。

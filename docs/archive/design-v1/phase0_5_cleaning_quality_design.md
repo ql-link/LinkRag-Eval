@@ -1,5 +1,7 @@
 # 数据清洗质量检测模块 — 评测设计（md round-trip，零人工）
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored）
 > 上游：[framework_design.md](framework_design.md)（总架构）、[phase0_design.md](phase0_design.md)（Layer/contracts）、[phase1_5_trackB_llm_corpus_design.md](phase1_5_trackB_llm_corpus_design.md)（复用其 render 链路）、[technical_design.md](technical_design.md)
 > 范围：作为质检模块中**独立的"数据清洗质量检测"子模块**，把 **数据清洗质量** 本身纳入评测点——链路最上游的一层。补足原 B9"该环节只能间接观测"的缺口。
@@ -284,7 +286,7 @@ class CleaningEvaluable:
 }
 ```
 
-聚合层每个 metric 即一条 `eval_metric_result` 行（layer=cleaning，`format`/`backend` 进维度）。结果用**专用 HTML 模版** [templates/cleaning_report_template.html](templates/cleaning_report_template.html) 渲染（沿用 eval_report_template 风格：自包含、涨绿跌红、口径脚注；分标题/表格/图片/清洗时间四区，逐 (格式×后端) 出表），`html_reporter` 注入 `CleaningQcReport` 数据。
+聚合层每个 metric 即一条 `eval_metric_result` 行（layer=cleaning，`format`/`backend` 进维度）。结果用历史规格中的专用 HTML 模版 `templates/cleaning_report_template.html` 渲染（该模版未迁入本仓库；沿用 eval_report_template 风格：自包含、涨绿跌红、口径脚注；分标题/表格/图片/清洗时间四区，逐 (格式×后端) 出表），`html_reporter` 注入 `CleaningQcReport` 数据。
 
 > 该模版是 phase0 `models.py` 的具体化：`CleaningQcItem` 进 `StageOutput.raw` / per-sample 明细，`CleaningQcReport.buckets[*].metrics` 即 `MetricResult` 集合。指标计算只读归一化字段，明细 `missed`/`misplaced` 仅供人看。
 

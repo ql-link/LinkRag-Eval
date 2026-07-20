@@ -1,9 +1,11 @@
 # 评测数据持久化、存储隔离与解耦灌库（权威合并稿）
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored）。**本文是评测存储的唯一权威文档**，
 > 合并并取代以下三份（均已转 supersede 桩）：
-> [eval_ingest_decoupled_design.md](eval_ingest_decoupled_design.md)（解耦灌库）、
-> [eval_data_schema.md](eval_data_schema.md)（关系模型）、
+> 已合并的 `eval_ingest_decoupled_design.md`（解耦灌库）、
+> `eval_data_schema.md`（关系模型）、
 > [eval_storage_isolation_design.md](eval_storage_isolation_design.md)（旧镜像方案/方案甲）。
 > 上游：[phase0_design.md](phase0_design.md)、[phase1_design.md](phase1_design.md)、
 > [trend_dashboard_design.md](trend_dashboard_design.md)、[minio_eval_bucket_design.md](minio_eval_bucket_design.md)。

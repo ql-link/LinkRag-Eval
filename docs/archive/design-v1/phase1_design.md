@@ -1,5 +1,7 @@
 # 阶段 1 · 检索层 — 设计文档
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored）
 > 上游：[framework_design.md](framework_design.md)（总架构）、[phase0_design.md](phase0_design.md)（地基层）、[technical_design.md](technical_design.md)（五层评估点口径）
 > 范围：评估框架第一个**自成闭环、可交付的可跑版本**——只评检索/召回层，跑通"黄金集 → 召回 → 指标 → 报告"全链路。
@@ -228,7 +230,7 @@ async def run_stage(
 
 ### 8.2 `reporters/html_reporter.py` — HTML 报告（结果表 + 基线 diff + 回归判据）
 
-人读报告为 **HTML**（非 markdown），用统一模版 [`templates/eval_report_template.html`](templates/eval_report_template.html)（自包含、零外部依赖、离线可开、涨绿跌红一眼可见）。`html_reporter` 把结构化结果注入模版渲染：
+人读报告为 **HTML**（非 markdown），使用历史规格中的统一模版 `templates/eval_report_template.html`（该模版未迁入本仓库；自包含、零外部依赖、离线可开、涨绿跌红一眼可见）。`html_reporter` 把结构化结果注入模版渲染：
 
 - **配置快照条 + verdict**：顶部 chips 展示 provider/top_k/enabled_sources/模型等同口径维度 + PASS/回归 徽标。
 - **headline 卡片 + 分层结果表**：逐指标 × 逐 k × 逐 type 桶（标 n），含三路重叠率与各路延迟；表头/脚注标注 top_k 口径与"二值 NDCG"。

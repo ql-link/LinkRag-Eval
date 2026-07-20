@@ -1,5 +1,7 @@
 # 评测产物 MinIO 桶 — 设计文档
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored）
 > 上游：[phase1_design.md](phase1_design.md)（产物来源）、[trend_dashboard_design.md](trend_dashboard_design.md)（台账/看板）、[framework_design.md](framework_design.md)
 > 范围：确认评测产物落 MinIO，并为其设计一个**专用桶**——桶名/配置、对象键布局、内容类型、清单对象（替代 list）、生命周期、访问与运维。

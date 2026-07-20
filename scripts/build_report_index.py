@@ -62,7 +62,7 @@ def _stage(path: Path) -> str:
         return "02 黄金集候选、标注与构建"
     if any(token in rel for token in ("synth_", "scale_100k", "spark_corpus")):
         return "01 语料生成、导出与规模扩展"
-    return "11 其他阶段产物"
+    return "12 其他阶段产物"
 
 
 def _purpose(path: Path) -> str:
@@ -144,7 +144,7 @@ def render_index(reports: list[Path], output: Path = DEFAULT_OUTPUT) -> str:
         "",
         f"当前共收录 **{len(reports)}** 个报告及机器可读配套产物：{summary}。",
         "",
-        "更新索引：`python3 scripts/build_report_index.py`  ",
+        "更新索引：`python3 scripts/build_report_index.py`",
         "校验索引：`python3 scripts/build_report_index.py --check`",
         "",
         "## 阶段导航",

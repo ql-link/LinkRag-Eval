@@ -1,5 +1,7 @@
 # 冻结评测语料 / 租户（R2）— id 与范围决议
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：已决议（阶段 0 DoD#5 交付物）
 > 上游：[phase0_design.md §六.4](phase0_design.md)、[technical_design.md §七.2](technical_design.md)、构建策略 [phase1_5_golden_gen_design.md §二](phase1_5_golden_gen_design.md)
 > 性质：非代码交付物。本文档定准号段与语料范围；实际灌数与阶段 1 并行执行。

@@ -1,5 +1,7 @@
 # 阶段 2 · 重排层 — 设计文档
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored）
 > 上游：[framework_design.md](framework_design.md)（总架构）、[phase0_design.md](phase0_design.md)（抽象/模型）、[phase1_design.md](phase1_design.md)（检索层，本层上游产出）、[technical_design.md](technical_design.md) §一/§六（rerank 口径）
 > 范围：在检索层闭环之上叠加**重排评估**——量化精排相对纯 RRF 顺序的真实增益，模块 16–17（`rerank_adapter` + `metrics/rerank`）。

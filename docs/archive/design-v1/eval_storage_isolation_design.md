@@ -1,5 +1,7 @@
 # 评测专用存储隔离设计（eval storage isolation）
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > ⚠️ **已废弃（方案甲）。权威设计见 [eval_storage_design.md](eval_storage_design.md)。**
 > 本文的「复用整条 `ParseTaskPipeline` + MySQL 镜像表 `eval_kb_document_chunk`」方案已被替换为
 > 「不走 ParseTaskPipeline、只调 core 组件 + 评测自持 `EvalBase`（默认 SQLite）」。本文仅作历史

@@ -76,5 +76,5 @@
 **相关文件**
 
 - 判定明细：`.specs/rag-quality-eval/relabel_{medical,ecom,video}_judgments.jsonl`
-- 重标脚本：[scripts/eval/relabel_pool.py](../../scripts/eval/relabel_pool.py)
+- 重标脚本：历史路径 `scripts/eval/relabel_pool.py`（未迁入当前独立仓库）
 - 三路召回基线：[recall_routes_2way_vs_3way.md](recall_routes_2way_vs_3way.md)

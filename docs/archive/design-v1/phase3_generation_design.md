@@ -1,5 +1,7 @@
 # 阶段 3 · 生成 + 正确性层 — 设计文档
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored）
 > 上游：[framework_design.md](framework_design.md)（总架构）、[phase0_design.md](phase0_design.md)（抽象/模型，含 `Judge`）、[phase2_rerank_design.md](phase2_rerank_design.md)（本层上游产出）、[phase1_5_golden_gen_design.md](phase1_5_golden_gen_design.md)（`golden_answer` 来源）、[technical_design.md](technical_design.md) §第2/3层
 > 范围：评估链路最后一层——生成答案的质量（RAG Triad）与端到端正确性（需标准答案），模块 18–21。

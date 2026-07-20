@@ -1,27 +1,44 @@
-# 文档导航
+# LinkRag-Eval 文档中心
 
-## 权威架构(docs/architecture/)
+本文档树按职责分类。判断当前实现进度时以 [CURRENT_STATUS.md](CURRENT_STATUS.md) 为准；
+判断实现约束时以 [AGENTS.md](../AGENTS.md) 和权威架构为准；实验报告只证明对应数据集和参数下的结果。
 
-随项目演进维护,是当前设计的唯一权威。
+## 阅读顺序
 
-- [decoupling-plan.md](architecture/decoupling-plan.md) — 解耦独立化总方案(已批准基线):依赖边界、组件、迁移路径、风险。
+1. [当前状态](CURRENT_STATUS.md)：完成度、验收缺口和下一步。
+2. [文档目录](DOCUMENT_CATALOG.md)：已有文档及其对应工作的完成状态。
+3. [实现约定](../AGENTS.md)：依赖边界、存储隔离、配置和测试纪律。
+4. [解耦架构](architecture/decoupling-plan.md)：项目边界和 Step 0-6 迁移基线。
+5. [Golden V2 计划](plans/golden-v2-realistic-evaluation.md)：黄金集、候选池、标注和 blind 纪律。
+6. [LambdaMART 实验](experiments/ltr-fusion-v1.md)：融合方案、对照实验和 Blind v2 结果。
 
-## 历史设计(docs/design/)
+## 目录职责
 
-迁移自源仓库 `.specs/rag-quality-eval/`,记录 monorepo 时期的设计。**存储/灌库部分已被 decoupling-plan 取代**,引用时以 architecture/ 为准。
+| 目录 | 性质 | 维护规则 |
+| --- | --- | --- |
+| `architecture/` | 当前权威架构 | 随代码演进维护；冲突时优先级最高 |
+| `plans/` | 当前实施方案 | 记录目标、模块、验收标准和未完成工作 |
+| `experiments/` | 可复现实验与候选方案 | 必须区分已验证结论和待验证假设 |
+| `reports/` | 阶段报告与统一索引 | 历史产物只追加、不覆盖、不删除 |
+| `archive/` | 已被替代的历史设计 | 仅用于追溯，不得作为当前实现依据 |
 
-- 总览:[overview.md](design/overview.md)、[framework_design.md](design/framework_design.md)、[technical_design.md](design/technical_design.md)
-- 存储/隔离:[eval_storage_design.md](design/eval_storage_design.md)、[eval_storage_isolation_design.md](design/eval_storage_isolation_design.md)、[eval_data_schema.md](design/eval_data_schema.md)、[eval_ingest_decoupled_design.md](design/eval_ingest_decoupled_design.md)、[minio_eval_bucket_design.md](design/minio_eval_bucket_design.md)、[frozen_corpus_tenant.md](design/frozen_corpus_tenant.md)
-- 阶段设计:[phase0_design.md](design/phase0_design.md)、[phase0_5_cleaning_quality_design.md](design/phase0_5_cleaning_quality_design.md)、[phase1_design.md](design/phase1_design.md)、[phase1_5_golden_gen_design.md](design/phase1_5_golden_gen_design.md)、[golden_v2_realistic_eval_design.md](design/golden_v2_realistic_eval_design.md)、[phase1_5_trackB_llm_corpus_design.md](design/phase1_5_trackB_llm_corpus_design.md)、[phase2_rerank_design.md](design/phase2_rerank_design.md)、[phase3_generation_design.md](design/phase3_generation_design.md)
-- 召回融合:[ltr-fusion-experiment-v1.md](design/ltr-fusion-experiment-v1.md) — Rerank、Query 重写与 LambdaMART 的真实测试对比、选型依据、训练验证和生产落地建议
-- 趋势看板:[trend_dashboard_design.md](design/trend_dashboard_design.md)
+## 当前专题
 
-## 历史实证报告(docs/reports/)
+- [Golden V2 真实召回评测](plans/golden-v2-realistic-evaluation.md)
+- [LambdaMART 三路融合](experiments/ltr-fusion-v1.md)
+- [Query 重写配对基准](experiments/query-rewrite-benchmark-v1.md)
+- [Query 软分流候选](experiments/query-soft-routing-candidates.md)
+- [质检模块总览](reports/LinkRag-Eval-质检模块全解.md)（沿用历史报告路径）
 
-- [REPORT_INDEX.md](reports/REPORT_INDEX.md) — 当前与历史所有阶段报告的统一索引及用途说明
+## 报告
 
-- [corpus_scale_800_vs_2000.md](reports/corpus_scale_800_vs_2000.md) — 语料规模对召回区分度的影响
-- [recall_routes_2way_vs_3way.md](reports/recall_routes_2way_vs_3way.md) — 两路 vs 三路召回
-- [sparse_model_comparison_bge_vs_doubao.md](reports/sparse_model_comparison_bge_vs_doubao.md) — 稀疏模型对比
-- [doubao_retrieval_eval_500.md](reports/doubao_retrieval_eval_500.md) — doubao 召回评测
-- [label_reliability_pooled_relabel.md](reports/label_reliability_pooled_relabel.md) — 池化重标的标注可靠性
+- [统一报告索引](reports/REPORT_INDEX.md)：收录 `docs/reports/` 和 `runs/` 下的阶段产物及用途。
+- 每轮测试使用独立目录或时间戳文件名，禁止覆盖历史报告。
+- 更新索引：`python3 scripts/build_report_index.py`。
+- 验收索引：`python3 scripts/build_report_index.py --check`。
+
+## 历史资料
+
+[archive/design-v1/](archive/design-v1/) 保存从 monorepo 迁入的早期设计。其存储、灌库、
+MinIO、阶段划分等内容可能已被当前架构替代，阅读前先看
+[归档说明](archive/README.md)。

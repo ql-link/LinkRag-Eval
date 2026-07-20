@@ -1,5 +1,7 @@
 # 阶段 0 · 地基层 — 设计文档
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored）
 > 上游：[framework_design.md](framework_design.md)（总架构）、[technical_design.md](technical_design.md)（五层评估点口径）
 > 范围：评估框架最底层——抽象端口 `contracts/`、数据模型 `models.py`、工程地基（`[eval]` extra / import-lint / 测试布局 / 冻结语料）。

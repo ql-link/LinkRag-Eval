@@ -1,5 +1,7 @@
 # 趋势 / 回归看板 — 设计文档
 
+> **归档文档：仅供追溯，不是当前权威依据。** 替代关系见 [归档说明](../README.md)。
+
 > 状态：设计稿（`.specs/rag-quality-eval/`，git-ignored）
 > 上游：[framework_design.md](framework_design.md)（总架构）、[phase1_design.md](phase1_design.md)（检索层，台账上游）、[technical_design.md](technical_design.md)（指标口径与回归判据）
 > 范围：在评估框架已有"单轮产出"之上，叠加**多轮趋势与回归看板**——把每轮指标沉淀为可跨轮查询的时序数据，并以可视化呈现涨跌与回归告警。

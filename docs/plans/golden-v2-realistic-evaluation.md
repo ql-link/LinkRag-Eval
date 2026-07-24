@@ -1,6 +1,6 @@
 # Golden V2 真实召回评测改造方案
 
-> 状态:主链路已完成,候选覆盖和下一轮独立 Blind 验收待推进。项目级进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md)。
+> 状态:主链路、候选覆盖、标注修正和未曝光 Blind v3 验收已完成;当前进入生产化准备。项目级进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md)。
 > 适用范围:检索层黄金集、召回指标、调参/验收数据拆分。
 > 上游:[phase1_5_golden_gen_design.md](../archive/design-v1/phase1_5_golden_gen_design.md) 是历史方案,其中"开源数据集 doc 粒度主力"不再作为主评测口径。本文覆盖黄金集 v2 的当前目标态。
 
@@ -787,7 +787,7 @@ linkrag-eval run \
 
 ## 十五、当前代码状态
 
-截至 2026-07-20,仓库已具备完整的 Golden V2 主链路能力:
+截至 2026-07-21,仓库已具备完整的 Golden V2 主链路能力:
 
 - `run --require-chunk-references` 可拒绝 doc-only golden。
 - `run --dense-score-threshold/--sparse-score-threshold` 可做活栈阈值复验;Ark sparse pilot 已确认 `0.40` 会过滤掉有效候选。
@@ -811,10 +811,28 @@ linkrag-eval run \
 - `golden-v2 scale-plan` 已支持为 medium/10w 背景库生成分批 Spark bundle、ingest、BM25 回填、alt embedding 回填命令草稿,并输出 judge/embedding 规模估算报告。
 - alt embedding 候选搜索已从 CLI 拆到独立模块,默认使用 NumPy 向量化 cosine topK;无 NumPy 时退回按 dataset 分组的纯 Python topK。
 
+2026-07-20 候选覆盖优化进展:
+
+- Blind v2 原 23 条候选缺失已完成逐条审计;扩大到 `dense=300/sparse=150/bm25=300` 后找回 22 条,1 条仍为三路召回缺失。
+- 审计确认 4 条 Query 引入“24 小时”但目标 Chunk 不支持该条件,另有大量 `exact_identifier` 标签实际无编号、日期或版本号;问题 Query 和场景标签均已修正。
+- 只使用 2,000 条 Tune 选择候选深度:基线 `150/50/100` 覆盖 95.25%,无分流回退 `200/50/200` 覆盖 98.25%,冻结 Query 分流覆盖 98.55%。
+- 冻结分流在已揭盲 Blind v2 上的回归覆盖为 98.10%;该结果不参与选参,也不替代新 Blind 验收。
+- 修复后的 2,000 Tune 已完成全量分流缓存和 5 折 OOF:Hybrid Recall@10 35.75%,LambdaMART 44.90%,提升 9.15pp。
+- 未曝光 Blind v3 已冻结五类各 30 条,Query/正证据历史重叠均为 0;一次性评测 Hybrid 22.67%,LambdaMART 30.67%,提升 8.00pp。
+- 当前 20k 语料没有可构造严格编号、日期、版本号题目的未曝光证据,Blind v3 未伪造这两个场景,已记录为语料缺口。
+- 直接 Rerank、Cross Encoder 特征和 qwen3-vl-rerank 批量对照均未证明稳定净收益;该路线已终止,LambdaMART 固定为不含重排分数的 `candidate_difference_v2`。
+- 结构化报告见 `runs/golden_v2/scale_100k_991004/scale_20k_overnight/candidate_coverage_optimization_20260720/`。
+- 最终验收报告见 `runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/candidate_routing_ltr_final_acceptance_report.html`。
+
 待验收或增强:
 
-- Blind v2 候选并集缺失 23 条,需先审计标注完整性并优化 `short_keyword`、`alias`、`number_time` 召回覆盖。
-- `exact_identifier` 需增加强门禁,确保 Query 实际包含编号、日期或版本号。
-- 参数冻结后创建未曝光 Blind v3;已揭盲的 Blind v2 只作为回归集。
+- 为短关键词增加 LambdaMART 低置信度回退 Hybrid 门禁,并使用新的 Tune 数据选参。
+- 补充真实编号、日期、版本号 eval-only 语料,再建立对应未曝光 Blind 子集。
+- 建立版本化、按业务域隔离的别名/同义词词表;原 Query 必须保留,扩展数量受限,歧义词默认不扩展;词表规则只能用 Tune 选择。
+- Blind v4 必须保存 `source/query_source/generator_model/canonical_query_id/scenario` 等来源元数据,优先纳入脱敏日志、客服/业务问题和开源 Query,并按来源报告指标;Spark 合成 Query 不得冒充真实 Query。
+- Blind v4 的 Top50 pooled 候选需做独立多正例复核,允许多个 `expected_chunk_ids`,并报告新增正例率、未解决率和随机负例误判率。
+- 增加保留 `doc_id + ordinal` 的多 Chunk 文档族、同主题 hard negatives 和 `cross_chunk`/跨段落 Query;单 Chunk与多 Chunk结果分开报告。
+- Blind v4 建议至少 500 条、主要场景至少 80 条,并报告置信区间和配对显著性,避免每场景 30 条造成结论不稳定。
+- 所有新增参数冻结后生成全新 Blind v4 一次性验收;Blind v3 已揭盲,只能用于回归观察。
 - 10w 背景库按当前决策暂缓;继续放大到数十万/百万级时,再将 alt embedding sidecar 升级为 ANN/HNSW。
 - 第三判官自动裁决属于可选增强,不阻塞当前 20k 验收。

@@ -68,7 +68,6 @@ FEATURE_NAMES = [
     "same_doc_max_bigram_similarity",
     "content_length_log",
 ]
-
 _IDENTIFIER_RE = re.compile(
     r"(?i)(?:v(?:ersion)?\s*)?\d+(?:\.\d+){1,3}|"
     r"\d{4}[-/.年]\d{1,2}(?:[-/.月]\d{1,2}日?)?|"
@@ -122,7 +121,9 @@ def _load_candidate_contents(path: Path | None) -> dict[str, str] | None:
     if path is None:
         return None
     payload = json.loads(path.read_text(encoding="utf-8"))
-    contents = payload.get("contents") if isinstance(payload, dict) and "contents" in payload else payload
+    contents = (
+        payload.get("contents") if isinstance(payload, dict) and "contents" in payload else payload
+    )
     if not isinstance(contents, dict):
         raise ValueError(f"candidate content sidecar must be a JSON object: {path}")
     return {
@@ -165,8 +166,7 @@ def _top12_margin(hits: list[RouteHit], source: str) -> float:
     if len(hits) < 2:
         return 0.0
     values = [
-        hit.score if source == "dense" else math.log1p(max(0.0, hit.score))
-        for hit in hits[:2]
+        hit.score if source == "dense" else math.log1p(max(0.0, hit.score)) for hit in hits[:2]
     ]
     return max(0.0, values[0] - values[1]) / max(abs(values[0]), 1e-9)
 
@@ -215,9 +215,7 @@ def _candidate_features(
     candidate_bigrams = {
         chunk_id: _ngrams(candidate_contents[chunk_id], 2) for chunk_id in chunk_ids
     }
-    bigram_frequency = Counter(
-        gram for grams in candidate_bigrams.values() for gram in grams
-    )
+    bigram_frequency = Counter(gram for grams in candidate_bigrams.values() for gram in grams)
     distinctive_limit = max(1, math.ceil(len(chunk_ids) * 0.10))
     doc_by_chunk: dict[str, int] = {}
     for source in ROUTES:
@@ -255,75 +253,70 @@ def _candidate_features(
             for gram in query_bigrams.intersection(candidate_bigrams[chunk_id])
             if bigram_frequency[gram] <= distinctive_limit
         }
-        features.append(
-            [
-                hits["dense"].score if hits["dense"] else 0.0,
-                math.log1p(max(0.0, hits["sparse"].score)) if hits["sparse"] else 0.0,
-                math.log1p(max(0.0, hits["bm25"].score)) if hits["bm25"] else 0.0,
-                norms["dense"].get(chunk_id, 0.0),
-                norms["sparse"].get(chunk_id, 0.0),
-                norms["bm25"].get(chunk_id, 0.0),
-                reciprocal_ranks["dense"],
-                reciprocal_ranks["sparse"],
-                reciprocal_ranks["bm25"],
-                0.0 if hits["dense"] else 1.0,
-                0.0 if hits["sparse"] else 1.0,
-                0.0 if hits["bm25"] else 1.0,
-                float(sum(hit is not None for hit in hits.values())),
-                float(all(hit is not None for hit in hits.values())),
-                float(hits["dense"] is not None and hits["sparse"] is not None),
-                float(hits["dense"] is not None and hits["bm25"] is not None),
-                float(hits["sparse"] is not None and hits["bm25"] is not None),
-                abs(reciprocal_ranks["dense"] - reciprocal_ranks["sparse"]),
-                abs(reciprocal_ranks["dense"] - reciprocal_ranks["bm25"]),
-                abs(reciprocal_ranks["sparse"] - reciprocal_ranks["bm25"]),
-                top12_margins["dense"],
-                top12_margins["sparse"],
-                top12_margins["bm25"],
-                baseline_hit.score if baseline_hit else 0.0,
-                1.0 / (baseline_hit.rank + 1) if baseline_hit else 0.0,
-                float(len(query)),
-                float(any(char.isdigit() for char in query)),
-                float(scenario == "short_keyword"),
-                float(scenario == "exact_identifier"),
-                float(scenario == "long_sparse"),
-                float(scenario == "dense_paraphrase"),
-                float(scenario == "similar_docs"),
-                float(scenario == "multi_constraint"),
-                float(scenario == "number_time"),
-                float(scenario == "alias"),
-                _coverage(query_identifiers, content),
-                _coverage(query_numbers, content),
-                (
-                    len(query_negations.intersection(content_negations)) / len(query_negations)
-                    if query_negations
-                    else 0.0
-                ),
-                float(
-                    bool(query_negations) != bool(content_negations)
-                    or (
-                        bool(query_negations)
-                        and not query_negations.intersection(content_negations)
-                    )
-                ),
-                (
-                    len(query_bigrams.intersection(candidate_bigrams[chunk_id]))
-                    / len(query_bigrams)
-                    if query_bigrams
-                    else 0.0
-                ),
-                (
-                    len(query_trigrams.intersection(_ngrams(content, 3))) / len(query_trigrams)
-                    if query_trigrams
-                    else 0.0
-                ),
-                _condition_coverage(query, content),
-                len(distinctive_query_grams) / len(query_bigrams) if query_bigrams else 0.0,
-                float(len(same_doc_chunks) - 1),
-                max(same_doc_similarities, default=0.0),
-                math.log1p(len(content)),
-            ]
-        )
+        values = [
+            hits["dense"].score if hits["dense"] else 0.0,
+            math.log1p(max(0.0, hits["sparse"].score)) if hits["sparse"] else 0.0,
+            math.log1p(max(0.0, hits["bm25"].score)) if hits["bm25"] else 0.0,
+            norms["dense"].get(chunk_id, 0.0),
+            norms["sparse"].get(chunk_id, 0.0),
+            norms["bm25"].get(chunk_id, 0.0),
+            reciprocal_ranks["dense"],
+            reciprocal_ranks["sparse"],
+            reciprocal_ranks["bm25"],
+            0.0 if hits["dense"] else 1.0,
+            0.0 if hits["sparse"] else 1.0,
+            0.0 if hits["bm25"] else 1.0,
+            float(sum(hit is not None for hit in hits.values())),
+            float(all(hit is not None for hit in hits.values())),
+            float(hits["dense"] is not None and hits["sparse"] is not None),
+            float(hits["dense"] is not None and hits["bm25"] is not None),
+            float(hits["sparse"] is not None and hits["bm25"] is not None),
+            abs(reciprocal_ranks["dense"] - reciprocal_ranks["sparse"]),
+            abs(reciprocal_ranks["dense"] - reciprocal_ranks["bm25"]),
+            abs(reciprocal_ranks["sparse"] - reciprocal_ranks["bm25"]),
+            top12_margins["dense"],
+            top12_margins["sparse"],
+            top12_margins["bm25"],
+            baseline_hit.score if baseline_hit else 0.0,
+            1.0 / (baseline_hit.rank + 1) if baseline_hit else 0.0,
+            float(len(query)),
+            float(any(char.isdigit() for char in query)),
+            float(scenario == "short_keyword"),
+            float(scenario == "exact_identifier"),
+            float(scenario == "long_sparse"),
+            float(scenario == "dense_paraphrase"),
+            float(scenario == "similar_docs"),
+            float(scenario == "multi_constraint"),
+            float(scenario == "number_time"),
+            float(scenario == "alias"),
+            _coverage(query_identifiers, content),
+            _coverage(query_numbers, content),
+            (
+                len(query_negations.intersection(content_negations)) / len(query_negations)
+                if query_negations
+                else 0.0
+            ),
+            float(
+                bool(query_negations) != bool(content_negations)
+                or (bool(query_negations) and not query_negations.intersection(content_negations))
+            ),
+            (
+                len(query_bigrams.intersection(candidate_bigrams[chunk_id])) / len(query_bigrams)
+                if query_bigrams
+                else 0.0
+            ),
+            (
+                len(query_trigrams.intersection(_ngrams(content, 3))) / len(query_trigrams)
+                if query_trigrams
+                else 0.0
+            ),
+            _condition_coverage(query, content),
+            len(distinctive_query_grams) / len(query_bigrams) if query_bigrams else 0.0,
+            float(len(same_doc_chunks) - 1),
+            max(same_doc_similarities, default=0.0),
+            math.log1p(len(content)),
+        ]
+        features.append(values)
         labels.append(1 if chunk_id in expected else 0)
     return chunk_ids, np.asarray(features, dtype=np.float32), np.asarray(labels, dtype=np.int32)
 
@@ -364,19 +357,14 @@ def rank_with_hybrid_protection(
     if protect_baseline_top_k < 0:
         raise ValueError("protect_baseline_top_k must be >= 0")
     if not (
-        len(chunk_ids)
-        == len(ltr_scores)
-        == len(baseline_scores)
-        == len(baseline_reciprocal_ranks)
+        len(chunk_ids) == len(ltr_scores) == len(baseline_scores) == len(baseline_reciprocal_ranks)
     ):
         raise ValueError("candidate postprocessing arrays must have equal length")
 
     ltr_normalized = _minmax([float(value) for value in ltr_scores])
     blended = {
         chunk_id: blend_alpha * ltr_score + (1.0 - blend_alpha) * float(baseline_score)
-        for chunk_id, ltr_score, baseline_score in zip(
-            chunk_ids, ltr_normalized, baseline_scores
-        )
+        for chunk_id, ltr_score, baseline_score in zip(chunk_ids, ltr_normalized, baseline_scores)
     }
     baseline_order = [
         chunk_id
@@ -419,9 +407,13 @@ def tune_hybrid_protection(
                 hit, mrr = _metrics(ranked, set(prediction["expected_chunk_ids"]))
                 baseline_hit = float(prediction["baseline_hit_at_10"])
                 transition = (
-                    "gained" if not baseline_hit and hit else
-                    "lost" if baseline_hit and not hit else
-                    "kept_hit" if baseline_hit else "kept_miss"
+                    "gained"
+                    if not baseline_hit and hit
+                    else "lost"
+                    if baseline_hit and not hit
+                    else "kept_hit"
+                    if baseline_hit
+                    else "kept_miss"
                 )
                 transitions[transition] += 1
                 hit_sum += hit
@@ -480,12 +472,11 @@ def run_ltr_cross_validation(
     if len(rows) < folds * 10:
         raise ValueError(f"clean LTR samples too few:{len(rows)}")
     candidate_contents = _load_candidate_contents(candidate_contents_path)
-    prepared = {
-        row["sample_id"]: _candidate_features(row, candidate_contents) for row in rows
-    }
+    feature_names = FEATURE_NAMES
+    prepared = {row["sample_id"]: _candidate_features(row, candidate_contents) for row in rows}
     fold_reports: list[dict[str, Any]] = []
     all_predictions: list[dict[str, Any]] = []
-    feature_importance = np.zeros(len(FEATURE_NAMES), dtype=np.float64)
+    feature_importance = np.zeros(len(feature_names), dtype=np.float64)
 
     for fold_index in range(folds):
         train_rows = [row for row in rows if _fold(row, folds) != fold_index]
@@ -565,12 +556,10 @@ def run_ltr_cross_validation(
                     "candidate_chunk_ids": chunk_ids,
                     "candidate_ltr_scores": [float(value) for value in scores],
                     "candidate_baseline_scores": [
-                        float(value)
-                        for value in features[:, FEATURE_NAMES.index("baseline_score")]
+                        float(value) for value in features[:, feature_names.index("baseline_score")]
                     ],
                     "candidate_baseline_rr": [
-                        float(value)
-                        for value in features[:, FEATURE_NAMES.index("baseline_rr")]
+                        float(value) for value in features[:, feature_names.index("baseline_rr")]
                     ],
                 }
             )
@@ -617,8 +606,7 @@ def run_ltr_cross_validation(
     scenario_overall = {
         scenario: {
             "n": len(values),
-            "baseline_hit_at_10": sum(row["baseline_hit_at_10"] for row in values)
-            / len(values),
+            "baseline_hit_at_10": sum(row["baseline_hit_at_10"] for row in values) / len(values),
             "ltr_hit_at_10": sum(row["ltr_hit_at_10"] for row in values) / len(values),
             "delta_hit_at_10": sum(
                 row["ltr_hit_at_10"] - row["baseline_hit_at_10"] for row in values
@@ -642,7 +630,7 @@ def run_ltr_cross_validation(
     importance = [
         {"feature": name, "importance": float(value)}
         for name, value in sorted(
-            zip(FEATURE_NAMES, feature_importance),
+            zip(feature_names, feature_importance),
             key=lambda item: -item[1],
         )
     ]
@@ -709,6 +697,7 @@ def run_ltr_external_evaluation(
     )
 
     candidate_contents = _load_candidate_contents(candidate_contents_path)
+    feature_names = FEATURE_NAMES
     train_prepared = {
         row["sample_id"]: _candidate_features(row, candidate_contents) for row in train_rows
     }
@@ -738,11 +727,8 @@ def run_ltr_external_evaluation(
         ltr_ranked = rank_with_hybrid_protection(
             chunk_ids,
             [float(value) for value in scores],
-            [
-                float(value)
-                for value in features[:, FEATURE_NAMES.index("baseline_score")]
-            ],
-            [float(value) for value in features[:, FEATURE_NAMES.index("baseline_rr")]],
+            [float(value) for value in features[:, feature_names.index("baseline_score")]],
+            [float(value) for value in features[:, feature_names.index("baseline_rr")]],
             blend_alpha=blend_alpha,
             protect_baseline_top_k=protect_baseline_top_k,
         )
@@ -767,6 +753,15 @@ def run_ltr_external_evaluation(
                 "ltr_hit_at_10": ltr_hit,
                 "ltr_mrr": ltr_mrr,
                 "candidate_union_hit": float(bool(expected.intersection(chunk_ids))),
+                "expected_chunk_ids": sorted(expected),
+                "candidate_chunk_ids": chunk_ids,
+                "candidate_ltr_scores": [float(value) for value in scores],
+                "candidate_baseline_scores": [
+                    float(value) for value in features[:, feature_names.index("baseline_score")]
+                ],
+                "candidate_baseline_rr": [
+                    float(value) for value in features[:, feature_names.index("baseline_rr")]
+                ],
             }
         )
 
@@ -787,16 +782,12 @@ def run_ltr_external_evaluation(
     strict_n = len(strict_predictions)
     strict_no_evidence_overlap = {
         "n": strict_n,
-        "baseline_hit_at_10": sum(
-            row["baseline_hit_at_10"] for row in strict_predictions
-        )
+        "baseline_hit_at_10": sum(row["baseline_hit_at_10"] for row in strict_predictions)
         / strict_n,
         "baseline_mrr": sum(row["baseline_mrr"] for row in strict_predictions) / strict_n,
         "ltr_hit_at_10": sum(row["ltr_hit_at_10"] for row in strict_predictions) / strict_n,
         "ltr_mrr": sum(row["ltr_mrr"] for row in strict_predictions) / strict_n,
-        "candidate_union_coverage": sum(
-            row["candidate_union_hit"] for row in strict_predictions
-        )
+        "candidate_union_coverage": sum(row["candidate_union_hit"] for row in strict_predictions)
         / strict_n,
     }
     strict_no_evidence_overlap["delta_hit_at_10"] = (
@@ -804,8 +795,7 @@ def run_ltr_external_evaluation(
         - strict_no_evidence_overlap["baseline_hit_at_10"]
     )
     strict_no_evidence_overlap["delta_mrr"] = (
-        strict_no_evidence_overlap["ltr_mrr"]
-        - strict_no_evidence_overlap["baseline_mrr"]
+        strict_no_evidence_overlap["ltr_mrr"] - strict_no_evidence_overlap["baseline_mrr"]
     )
     scenario_predictions: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for prediction in predictions:
@@ -813,8 +803,7 @@ def run_ltr_external_evaluation(
     scenario_overall = {
         scenario: {
             "n": len(values),
-            "baseline_hit_at_10": sum(row["baseline_hit_at_10"] for row in values)
-            / len(values),
+            "baseline_hit_at_10": sum(row["baseline_hit_at_10"] for row in values) / len(values),
             "ltr_hit_at_10": sum(row["ltr_hit_at_10"] for row in values) / len(values),
             "delta_hit_at_10": sum(
                 row["ltr_hit_at_10"] - row["baseline_hit_at_10"] for row in values
@@ -838,7 +827,7 @@ def run_ltr_external_evaluation(
     importance = [
         {"feature": name, "importance": float(value)}
         for name, value in sorted(
-            zip(FEATURE_NAMES, model.feature_importances_),
+            zip(feature_names, model.feature_importances_),
             key=lambda item: -item[1],
         )
     ]

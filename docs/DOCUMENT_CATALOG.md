@@ -1,6 +1,6 @@
 # 文档目录与完成状态
 
-> 更新时间：2026-07-20
+> 更新时间：2026-07-21
 > 本目录回答“有哪些文档”和“文档对应的工作是否完成”。项目实时进度仍以
 > [CURRENT_STATUS.md](CURRENT_STATUS.md) 为准。
 
@@ -20,6 +20,7 @@
 | --- | --- | --- | --- |
 | [项目 README](../README.md) | 完成 | 持续维护 | 项目介绍、启动方式和顶层导航 |
 | [实现约定](../AGENTS.md) | 完成 | 持续维护 | 依赖边界、存储隔离、配置、测试和安全规则 |
+| [下一对话交接](HANDOFF.md) | 完成 | 持续维护 | 冻结决策、关键缺口、执行顺序、必读文档和工作区注意事项 |
 | [文档中心](README.md) | 完成 | 持续维护 | 文档分类和推荐阅读顺序 |
 | [当前开发状态](CURRENT_STATUS.md) | 完成 | 持续维护 | 项目级完成度、验收缺口和下一步的唯一入口 |
 | 本文档 | 完成 | 持续维护 | 全部人工维护文档的目录和完成状态 |
@@ -28,21 +29,21 @@
 
 | 文档 | 文档状态 | 对应工作状态 | 未完成内容 |
 | --- | --- | --- | --- |
-| [解耦独立化方案](architecture/decoupling-plan.md) | 完成 | 部分完成 | Step 0-4 完成；Step 5-6 仍需 SQLite FTS5 三路 clean run、BM25 delta 和最终验收固化 |
+| [解耦独立化方案](architecture/decoupling-plan.md) | 完成 | 部分完成 | Step 0-4 完成；Step 5-6 仍需可识别 SQLite backend/fingerprint 的 A/B clean run、BM25 delta 和最终验收固化 |
 
 ## 三、当前实施方案
 
 | 文档 | 文档状态 | 对应工作状态 | 未完成内容 |
 | --- | --- | --- | --- |
-| [Golden V2 真实召回评测](plans/golden-v2-realistic-evaluation.md) | 完成 | 部分完成 | 审计 Blind v2 候选缺失 23 条、加强 exact identifier 门禁、优化候选覆盖并建立 Blind v3；10 万扩容暂缓 |
+| [Golden V2 真实召回评测](plans/golden-v2-realistic-evaluation.md) | 完成 | 完成当前 20k 验收 | 问题标注修正、exact identifier 门禁、2,000 Tune 重训和未曝光 Blind v3 已完成；编号类语料补充和 10 万扩容属于后续阶段 |
 
 ## 四、实验与候选方案
 
 | 文档 | 文档状态 | 实验状态 | 结论或剩余工作 |
 | --- | --- | --- | --- |
-| [LambdaMART 三路融合](experiments/ltr-fusion-v1.md) | 完成 | 部分完成 | 2000 条训练和 Blind v2 已完成，Recall@10 相对 Hybrid 提升 6.67pp；生产在线推理、降级、Shadow 和回滚未完成 |
+| [LambdaMART 三路融合](experiments/ltr-fusion-v1.md) | 完成 | 部分完成 | Blind v3 相对 Hybrid 提升 8.00pp；Rerank 和 Cross Encoder 特征路线已终止，LambdaMART 固定为不含重排分数的 v2；生产在线推理、短词回退、降级、Shadow 和回滚未完成 |
 | [Query 重写配对基准](experiments/query-rewrite-benchmark-v1.md) | 完成 | 完成 | 当前数据上 Recall 无提升、MRR 下降，不进入默认链路；保留作对照实验 |
-| [Query 软分流候选](experiments/query-soft-routing-candidates.md) | 完成 | 待验证 | 参数只是实验起点，尚未通过新的 Tune 和独立 Blind 验证 |
+| [Query 软分流候选](experiments/query-soft-routing-candidates.md) | 完成 | 完成离线验收 | 候选深度已在 2,000 条 Tune 冻结，完整 Top10 与 Blind v3 已验收；动态权重仍未成为默认方案 |
 
 ## 五、说明文档
 
@@ -56,7 +57,7 @@
 
 | 报告 | 状态 | 作用 |
 | --- | --- | --- |
-| [统一报告索引](reports/REPORT_INDEX.md) | 持续维护 | 收录 604 个 HTML、Markdown、JSON、CSV 阶段产物 |
+| [统一报告索引](reports/REPORT_INDEX.md) | 持续维护 | 收录全部保留的 HTML、Markdown、JSON、CSV 阶段产物 |
 | [800 vs 2000 语料规模对照](reports/corpus_scale_800_vs_2000.md) | 完成 | 说明背景语料规模对召回区分度的影响 |
 | [Doubao 稀疏检索 500 题评测](reports/doubao_retrieval_eval_500.md) | 完成 | 记录稀疏模型扩样本评测结果 |
 | [RRF 与 weighted score 对比](reports/fusion_strategy_comparison_2026_07_02.md) | 完成 | 对比两种融合策略；另有同名 HTML 版本 |
@@ -69,7 +70,7 @@
 | [BGE-M3 与 Doubao 稀疏模型](reports/sparse_model_comparison_bge_vs_doubao.md) | 完成 | 对比稀疏编码模型表现 |
 | [weighted score 参数搜索](reports/weighted_score_parameter_tuning_2026_07_02.md) | 完成 | 记录融合权重搜索；另有同名 HTML 版本 |
 
-运行目录下的 604 个阶段产物不在本文逐项重复，完整清单、格式和用途见
+运行目录下的阶段产物不在本文逐项重复，完整清单、格式和用途见
 [REPORT_INDEX.md](reports/REPORT_INDEX.md)。历史报告只追加，不覆盖、不删除。
 
 ## 七、历史归档
@@ -97,12 +98,20 @@
 
 ## 八、未完成工作汇总
 
-当前真正未完成的工作来自三份文档：
+当前真正未完成的工作统一汇总如下：
 
-1. **解耦架构验收**：SQLite FTS5 三路 clean run、BM25 delta 和 Step 5-6 最终固化。
-2. **Golden V2 质量优化**：23 条候选缺失审计、场景门禁、候选覆盖优化和 Blind v3。
-3. **LambdaMART 生产化**：在线特征、模型版本、延迟、降级、Shadow 和回滚。
-4. **Query 软分流**：只完成候选方案，尚未进入正式 Tune/Blind 验证。
-5. **CI**：本地 workflow 尚未纳入远端分支。
+1. **解耦架构验收**：先补 `Snapshot`/DB 台账中的 BM25 backend、sidecar 和 computer fingerprint，再在同一冻结集完成 SQLite FTS5 关闭/启用 A/B clean run，输出 BM25 Recall/MRR/延迟 delta，关闭 Step 5-6。
+2. **CI**：本地 workflow 尚未跟踪，也没有安装固定 SHA 的 toLink-Rag；必须阻止契约测试因缺包静默跳过，再形成远端 pytest、contract、import-lint、Alembic heads 门禁证据。
+3. **Golden V2 后续扩展**：补充真实编号、日期、版本号 eval-only 语料，并建立相应 chunk 粒度 Tune/Blind 子集。
+4. **LambdaMART 短词门禁**：使用新的 Tune 数据定义低置信度回退 Hybrid 规则，不能用已揭盲 Blind v3 选参。
+5. **业务别名/同义词词表**：建立版本化、业务域隔离且带歧义保护的 canonical→aliases 词表，在 BM25/Sparse 前保留原 Query 做受限扩展，并把词表版本写入运行快照。
+6. **真实 Query 与来源元数据**：Blind v4 引入脱敏日志、客服/业务问题和开源 Query，保留来源、生成器、canonical query 和场景字段并分来源报告。
+7. **多正例 pooled qrels**：Top50 多路候选独立复核，允许多个 `expected_chunk_ids`，统计新增正例率、未解决率和随机负例误判率。
+8. **多 Chunk / 跨段落语料**：增加真实长文档结构、同文档 Chunk 和 `cross_chunk` Query，修复当前一文档一Chunk导致的评测缺口。
+9. **LambdaMART 生产化**：固定 `candidate_difference_v2`，实现模型产物、在线特征、版本校验、延迟、降级、Shadow、监控和回滚，不再引入 Rerank。
+10. **最终验收**：所有参数冻结后生成证据和 Query 均隔离的 Blind v4，建议至少 500 条并报告置信区间/配对显著性，只运行一次形成最终报告。
 
-第三判官、ANN/HNSW sidecar 和 10 万背景语料扩容属于非阻塞增强项。
+本轮黄金标注修正、Query 候选分流、2,000 Tune 全量缓存、Tune OOF 重训、未曝光 Blind v3
+和最终验收报告六步已经完成。
+
+第三判官、趋势看板、ANN/HNSW sidecar 和 10 万背景语料扩容属于非阻塞增强项。

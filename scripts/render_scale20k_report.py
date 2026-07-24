@@ -36,8 +36,7 @@ def main() -> None:
         f"<li>候选存在但本地融合未进 Top10（fusion_miss）: {coverage['diagnosis_counts'].get('fusion_miss', 0)} 条</li>"
         f"<li>正确证据未进入扩大候选池（candidate_miss）: {coverage['diagnosis_counts'].get('candidate_miss', 0)} 条</li>"
         "</ul><p><b>诊断结论：</b>当前主要瓶颈是候选截断和融合排序，而不是三路完全无法找到正确证据。"
-        "已实现 rerank 候选截断与 K 调优工具：先做 weighted_score 融合，再仅将融合 TopK 的正文送入 rerank。"
-        "待配置 eval 独立 rerank 端点后，只能在 tune 集搜索 K，再固定 K 对 blind 集执行一次验证。</p>"
+        "后续重排实验未获得稳定收益，当前已终止该路线，统一使用不含重排分数的 LambdaMART v2。</p>"
     )
     out = SCALE / "scale20k_acceptance_report.html"
     out.write_text(f"""<!doctype html><html lang='zh-CN'><meta charset='utf-8'>
@@ -47,7 +46,7 @@ body{{font:15px system-ui,sans-serif;color:#17212b;margin:0;background:#f6f8fa}}
 <div class='metric'><div class='card'><div>5k 基线 Recall@10</div><div class='value'>{baseline:.2%}</div><small>仅 992000 scope，不与 20k 直接比较</small></div><div class='card'><div>20k 默认 Hybrid</div><div class='value warn'>{default:.2%}</div><small>权重 0.90/0.10/0.00</small></div><div class='card'><div>20k 三路线调优 Hybrid</div><div class='value good'>{tuned:.2%}</div><small>权重 0.70/0.15/0.15</small></div></div>
 <h2>参数与结果</h2><table><tr><th>方案</th><th>Dense/Sparse/BM25</th><th>TopK</th><th>阈值</th><th>Recall@10</th><th>MRR</th></tr><tr><td>20k 默认</td><td>0.90 / 0.10 / 0.00</td><td>150 / 50 / 50</td><td>0.30 / 0.10 / -</td><td>{default:.2%}</td><td>{default_mrr:.2%}</td></tr><tr><td>20k 调优</td><td>0.70 / 0.15 / 0.15</td><td>150 / 50 / 100</td><td>0.30 / 0.20 / 0.00</td><td>{tuned:.2%}</td><td>{tuned_mrr:.2%}</td></tr></table>
 <h2>结论</h2><p>三路线权重融合相对 20k 默认配置提升 Recall@10 {(tuned-default):.2%}，说明 BM25 对精确条件类检索有增量价值。20k 相比 5k 下降的主要原因是同领域高相似干扰语料进入同一检索 scope，且评测要求命中指定证据 chunk。</p>
-<h2>候选覆盖诊断</h2>{coverage_html}<h2>Rerank 接入状态</h2><ul><li>实现：完成。使用 eval 自持标准 <code>POST /rerank</code> 客户端，不读取生产用户模型配置、不访问生产数据库。</li><li>输入：三路加权融合后按分数截断的 TopK；候选 K 将在 <code>20/40/60/80</code> 搜索，绝不将三路原始约 300 条候选直接送入模型。</li><li>调参纪律：仅使用 tune 集；每个 K 独立请求模型，选定 K 后 blind 集仅运行一次。</li><li>当前阻塞：本地 <code>.env.eval</code> 尚未配置 <code>EVAL_RERANK_BASE_URL</code>、<code>EVAL_RERANK_API_KEY</code>、<code>EVAL_RERANK_MODEL</code>，故真实 K 搜索尚未启动。</li></ul><h2>质量门禁</h2><ul><li>realistic Golden V2 QC：通过，420 queries、7,122 judgments、random relevant rate 0。</li><li>测试：286 passed, 3 skipped。</li><li>import-lint：通过。</li></ul></main></html>""", encoding="utf-8")
+<h2>候选覆盖诊断</h2>{coverage_html}<h2>Rerank 决策</h2><p>直接重排和作为 LambdaMART 附加特征的实验均未获得稳定 Blind 收益，2026-07-21 已终止该路线。历史报告继续保留，活动训练与推理固定使用不含重排分数的 <code>candidate_difference_v2</code>。</p><h2>质量门禁</h2><ul><li>realistic Golden V2 QC：通过，420 queries、7,122 judgments、random relevant rate 0。</li><li>测试：286 passed, 3 skipped。</li><li>import-lint：通过。</li></ul></main></html>""", encoding="utf-8")
     print(out)
 
 

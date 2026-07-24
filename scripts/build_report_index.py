@@ -20,11 +20,9 @@ def _stage(path: Path) -> str:
     rel = path.relative_to(ROOT).as_posix().lower()
     if rel.startswith("docs/reports/"):
         return "00 历史实证与人工汇总"
-    if (
-        "ltr_fusion" in rel
-        or "ltr_query_expansion" in rel
-        or "learning_to_rank" in rel
-    ):
+    if "acceptance" in rel:
+        return "06 阶段验收与最终对比"
+    if "ltr_fusion" in rel or "ltr_query_expansion" in rel or "learning_to_rank" in rel:
         return "11 学习型融合实验"
     if "balanced_query_expansion" in rel:
         return "10 平衡 Query 扩展与标注质检"
@@ -34,8 +32,6 @@ def _stage(path: Path) -> str:
         return "08 Rerank 候选截断与效果评测"
     if "tune" in rel or "hybrid_weight" in rel or "sparse_threshold" in rel:
         return "07 召回参数与融合策略调优"
-    if "acceptance" in rel:
-        return "06 阶段验收与最终对比"
     if "hard" in rel:
         return "05 Hard Set 构建、质检与评测"
     if "realistic" in rel:
@@ -70,14 +66,20 @@ def _purpose(path: Path) -> str:
     name = path.name.lower()
 
     rules = (
+        (("acceptance_report", "acceptance_summary"), "汇总阶段验收指标、结论、风险与待办。"),
         (
             ("ltr_cross_validation", "ltr_fusion", "ltr_query_expansion"),
             "学习型融合的数据扩展、候选缓存、交叉验证结果与固定 Hybrid 对比。",
         ),
-        (("routing_analysis", "route_segment"), "按 Query 类型/长度比较单路与 Hybrid，支撑分流规则设计。"),
+        (
+            ("routing_analysis", "route_segment"),
+            "按 Query 类型/长度比较单路与 Hybrid，支撑分流规则设计。",
+        ),
         (("rerank",), "记录 Rerank 候选截断、参数搜索或重排效果，用于判断是否启用重排。"),
-        (("recall_tuning", "weighted", "hybrid_weight", "sparse_threshold"), "记录召回阈值、TopK、权重或融合参数搜索结果。"),
-        (("acceptance_report", "acceptance_summary"), "汇总阶段验收指标、结论、风险与待办。"),
+        (
+            ("recall_tuning", "weighted", "hybrid_weight", "sparse_threshold"),
+            "记录召回阈值、TopK、权重或融合参数搜索结果。",
+        ),
         (("candidate_pool_report",), "统计候选池覆盖率、候选来源及未覆盖 Query，供后续标注使用。"),
         (("review_queue",), "记录需要复核的标注冲突或未解决样本。"),
         (("adjudication",), "记录争议样本裁决结果及裁决后的标注状态。"),
@@ -85,7 +87,10 @@ def _purpose(path: Path) -> str:
         (("qc",), "黄金集或标注质量门禁，检查未解决率、随机负例误判率及结构完整性。"),
         (("build_report",), "记录黄金集构建输入、有效样本数、拆分结果及丢弃原因。"),
         (("diff_report",), "比较预期语料与实际语料差异，定位缺失或重复数据。"),
-        (("export_report", "corpus_export_report"), "记录语料导出的数量、范围和异常，供规模扩展验收。"),
+        (
+            ("export_report", "corpus_export_report"),
+            "记录语料导出的数量、范围和异常，供规模扩展验收。",
+        ),
         (("synth_report",), "记录合成干扰语料的生成规模、分布和质量统计。"),
         (("synth_manifest", "manifest"), "固定该阶段语料清单与来源，支持复现和审计。"),
         (("preflight",), "运行前置检查结果，确认数据、配置和依赖是否满足评测条件。"),

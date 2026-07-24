@@ -67,8 +67,8 @@ src/linkrag_eval/
 - Step 2:已落地。`ProductComputer` / `RagProductComputer` 已收口产物计算;dense/sparse 已迁至 eval `llm/` 模块。
 - Step 3:已落地。`build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 侧编码器由 eval 配置注入。
 - Step 4:已落地。bm25 mode 配置与索引状态字段已存在;`stub` 只装 dense+sparse,`sqlite_fts5` 写本地 SQLite FTS5 并在召回侧装入 BM25 路;`qdrant_bm25` 保留为旧兼容模式。
-- Step 5:主体落地。代码、测试、CLI、报告、golden/cleaning 相关模块已迁入本 repo;import 边界已由 CI 与 `tests/test_import_boundary.py` 强制。2026-07-01/02 已用真实 `.env.eval` 跑通 eval MySQL/Qdrant 活栈,并接入 `eval_run` / `eval_metric_result` 结果台账。最新复跑 `recall@10=0.8919` 的偏差已定位为低分 sparse 噪声影响 RRF;正式 `run` 路径已支持分路 topK、阈值和 `weighted_score` 参数下发。后续需要拿到 `failed_sources=0` 且 `zero_ranked=0` 的 clean run 后固化标准结果。
-- Step 6:代码侧已落地并调整方向。原 Qdrant BM25 backend 已接入但性能不理想;eval 侧新增 `EVAL_BM25_MODE=sqlite_fts5`,后续验收以重建 SQLite BM25 sidecar 并跑三路 clean run 为准,记录 BM25 接入 delta。
+- Step 5:主体落地。代码、测试、CLI、报告、golden/cleaning 相关模块已迁入本 repo;import 边界已由 `tests/test_import_boundary.py` 和 import-lint 强制。2026-07-01/02 已用真实 `.env.eval` 跑通 eval MySQL/Qdrant 活栈,并接入 `eval_run` / `eval_metric_result` 结果台账。2026-07-14 的 116 条三路运行已达到 `failed_sources=0`、`zero_ranked=0`,但 BM25 权重为 `0.0`;当前 `Snapshot` 契约没有 BM25 backend/sidecar/computer fingerprint 字段,DB 结果仓储也固定写 `computer_fingerprint=None`,因此仍不能作为最终可复现基线。CI workflow 当前只存在于本地未跟踪文件,且没有安装固定 SHA 的 toLink-Rag;契约测试在依赖缺失时会跳过,还未形成有效远端门禁证据。
+- Step 6:代码侧已落地并调整方向。原 Qdrant BM25 backend 已接入但性能不理想;eval 侧新增 `EVAL_BM25_MODE=sqlite_fts5`。最终验收必须在同一冻结集上完成 BM25 关闭/启用 A/B clean run,在快照中明确记录 SQLite backend、sidecar/fingerprint、参数和 git SHA,并输出 Recall/MRR/延迟 delta。
 
 文档中的迁移路径保留为验收清单;每步最终仍需用固定数据集验证 `recall@10 ≈ 0.901`(±0.005)。
 

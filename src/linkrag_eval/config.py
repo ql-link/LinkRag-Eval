@@ -53,15 +53,6 @@ class EvalSettings(BaseSettings):
     rewrite_max_tokens: int = Field(default=900)
     rewrite_prompt_version: str = Field(default="query-rewrite-v1")
 
-    # —— rerank(eval 自持 HTTP 客户端;绝不解析生产用户模型配置)——
-    rerank_provider: str = Field(default="dashscope")  # dashscope | standard
-    rerank_base_url: str = Field(default="")  # 完整 provider rerank 端点
-    rerank_api_key: str = Field(default="")
-    rerank_model: str = Field(default="")
-    rerank_timeout_ms: int = Field(default=60000)
-    rerank_max_candidates: int = Field(default=80)
-    rerank_max_document_chars: int = Field(default=1200)
-
     # —— dense embedder(eval 自带 llm 模块,模型可选;写入与召回 query 必用同一份)——
     embed_base_url: str = Field(default="")  # OpenAI 兼容 base,自动补 /embeddings
     embed_api_key: str = Field(default="")
@@ -140,14 +131,6 @@ class EvalSettings(BaseSettings):
             raise ValueError(
                 f"EVAL_RECALL_FUSION_STRATEGY={v!r} 非法;应为 {sorted(allowed)} 之一。"
             )
-        return normalized
-
-    @field_validator("rerank_provider")
-    @classmethod
-    def _rerank_provider_known(cls, v: str) -> str:
-        normalized = v.strip().lower()
-        if normalized not in {"dashscope", "standard"}:
-            raise ValueError("EVAL_RERANK_PROVIDER 仅支持 'dashscope' 或 'standard'。")
         return normalized
 
     @field_validator("alt_embed_provider")

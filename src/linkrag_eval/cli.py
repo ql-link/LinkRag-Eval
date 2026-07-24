@@ -200,6 +200,11 @@ def _add_ltr(sub: argparse._SubParsersAction) -> None:
     cache.add_argument("--limit", type=int, default=None)
     cache.add_argument("--concurrency", type=int, default=4)
     cache.add_argument("--retries", type=int, default=5)
+    cache.add_argument(
+        "--query-routing",
+        action="store_true",
+        help="按冻结 Query 文本分类选择每路候选 TopK",
+    )
 
     cv = commands.add_parser("cross-validate", help="按证据文档做LambdaMART交叉验证")
     cv.add_argument("--cache", required=True)
@@ -219,6 +224,8 @@ def _add_ltr(sub: argparse._SubParsersAction) -> None:
     external.add_argument("--n-estimators", type=int, default=24)
     external.add_argument("--seed", type=int, default=20260716)
     external.add_argument("--historical-baseline", type=float, default=None)
+    external.add_argument("--blend-alpha", type=float, default=1.0)
+    external.add_argument("--protect-baseline-top-k", type=int, default=0)
 
 
 def _add_golden_opensource(sub: argparse._SubParsersAction) -> None:
@@ -1003,6 +1010,7 @@ async def _do_ltr(args) -> int:
             out=Path(args.out),
             concurrency=args.concurrency,
             retries=args.retries,
+            use_query_routing=args.query_routing,
             progress=print,
         )
         print(json.dumps(report, ensure_ascii=False, indent=2))
@@ -1040,6 +1048,8 @@ async def _do_ltr(args) -> int:
             n_estimators=args.n_estimators,
             seed=args.seed,
             historical_baseline_hit_at_10=args.historical_baseline,
+            blend_alpha=args.blend_alpha,
+            protect_baseline_top_k=args.protect_baseline_top_k,
         )
         overall = report["overall"]
         print(
@@ -1052,7 +1062,10 @@ async def _do_ltr(args) -> int:
         print(f"报告: {Path(args.out_dir) / 'ltr_external_evaluation.html'}")
         return 0
 
-    print("错误:ltr 需要 cache、cross-validate 或 train-evaluate 子命令", file=sys.stderr)
+    print(
+        "错误:ltr 需要 cache、cross-validate 或 train-evaluate 子命令",
+        file=sys.stderr,
+    )
     return 2
 
 

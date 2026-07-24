@@ -1,6 +1,6 @@
 # LambdaMART 三路召回融合方案与实验分析（v1）
 
-> 状态：2000 条训练和独立 Blind v2 首轮验证已完成；尚未接入生产默认链路。项目级进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md)。
+> 状态：2000 条训练、候选分流重训和未曝光 Blind v3 一次性验证已完成；Rerank/Cross Encoder 路线已终止，LambdaMART 固定为不含重排分数的 `candidate_difference_v2`；尚未接入生产默认链路。项目级进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md)。
 
 ## 0. 结论摘要
 
@@ -14,7 +14,7 @@ LambdaMART 学习融合。核心诊断是——**正确 Chunk 绝大多数已被
 | --- | --- | --- | --- |
 | qwen3-rerank 文本重排 | 重判文本相关性、覆盖原排序 | Tune Top60 Clean 复测 Recall@10 **-13.99pp**；Blind Top20 Recall 无增益、MRR 下降 | 否 |
 | 按通道 Query 重写 | 改写查询文本 | 40 条无失败成对：Recall 持平、MRR **-1.65pp**；消融出现 Recall 退化 | 否 |
-| **LambdaMART 学习融合** | 学习三路候选相对顺序 | 420 / 116 / 1050 均正增长；Blind v2 相对 Hybrid **+6.67pp** | **完成实验验证，暂不替换生产 Hybrid** |
+| **LambdaMART 学习融合** | 学习三路候选相对顺序 | Blind v3 相对同候选 Hybrid **+8.00pp** | **完成独立实验验证，暂不替换生产 Hybrid** |
 
 LambdaMART 在三套口径上的一致提升：
 
@@ -23,9 +23,11 @@ LambdaMART 在三套口径上的一致提升：
 | Balanced Tune | 按证据文档分组 5 折样本外预测 | 420 | 63.33% | 71.90% | **+8.57pp** | +8.73pp |
 | 旧 realistic Blind | 420 条模型跨分布一次性评测 | 116 | 44.83% | 50.86% | **+6.03pp** | -2.50pp |
 | 扩展严格集 | 5 折样本外预测 | 1050 | 42.57% | 48.38% | **+5.81pp** | +4.03pp |
+| 候选分流扩展 Tune | 按证据文档分组 5 折样本外预测 | 2000 | 35.75% | 44.90% | **+9.15pp** | +3.67pp |
+| 未曝光 Blind v3 | 冻结参数后一次性评测 | 150 | 22.67% | 30.67% | **+8.00pp** | +2.41pp |
 
 > 当前结论：**LambdaMART 对三路召回融合具有明确价值，但仍不能直接替代生产 Hybrid。**
-> Blind v2 已完成：固定 Hybrid Recall@10 为 20.95%，1050/2000 模型均为 27.62%。下一步应先优化候选覆盖，随后用未曝光 Blind v3 验收，并补齐在线推理、降级和 Shadow 测试。
+> 候选覆盖优化和未曝光 Blind v3 已完成；Blind v3 证明整体提升 8.00pp，但绝对 Recall@10 只有 30.67%，且短关键词下降 3.33pp。下一步是短词回退门禁和在线推理、降级、Shadow 测试。
 
 > **口径提示**：不同阶段使用的 Query 数量、数据分布和候选参数不完全一致，因此**不能**跨报告用绝对召回率判断模型优劣。
 > 所有"变化量"只在同一份报告、同一批 Query 内计算。
@@ -396,6 +398,11 @@ Hybrid 候选能够修复部分头部排序退化。外部集仍然新增 13 条
 仍低 6.25pp。当前 20k 语料是一文档一 Chunk，同文档差异特征恒为零，不能为模型提供
 有效监督。
 
+这里尚未实现业务别名/同义词归一化。当前 `scenario_alias` 只是场景标签，字符 n-gram 覆盖也不是
+可维护词表。后续候选方案是在 BM25/Sparse 查询前使用版本化、按业务域隔离的
+`canonical -> aliases` 词表做受限扩展，同时保留原 Query、限制扩展数量并拒绝歧义别名；词表规则只能
+在新的 Alias Tune 集上选择，冻结后再进入 Blind v4，不能根据 Blind v3 反推词条。
+
 另行测试的 v2.1 加入候选池稀有 Query 词权重和 Top30 近邻相似度，Tune Hit@10 升至
 50.86%，外部却降至 48.28%，Alias 降至 37.93%，属于过拟合，已拒绝进入最终实现。
 后续若继续解决 Similar docs，应补充真实主题/文档族元数据和相似文档成组训练样本，再用
@@ -536,6 +543,73 @@ Top10 总命中数。它证明两种 LambdaMART 均比固定 Hybrid 多命中 14
 - 2000 模型改善 Dense 改写、Alias、精确编号和短关键词，但在多约束、数字时间和相似文档上抵消收益；
 - 后续应优先优化候选覆盖、相似文档差异监督和场景保护，而不是继续只增加训练条数。
 
+### 8.3 候选分流重训与未曝光 Blind v3 最终验收
+
+Blind v2 审计后，先修正 4 条引入无证据“24 小时”条件的 Query，并将所有不满足严格文本门禁的
+`exact_identifier` 标签降级到实际运行时场景；Tune 共修正 185 条场景标签，Blind v2 共修正 33 条。
+构建脚本现在要求编号场景文本必须真实包含 ID、日期或版本号。
+
+随后只用修复后的 2,000 Tune 搜索并冻结 Query 候选深度，重建完整缓存。候选并集覆盖从原始
+95.25% 提升到 98.55%，实际去重候选数均值 278.56。五折 Tune OOF 冻结参数为
+`n_estimators=31`、`learning_rate=0.03`、`blend_alpha=1.0`、`protect_baseline_top_k=0`：
+
+| 指标 | 分流 Hybrid | LambdaMART | 变化 |
+| --- | ---: | ---: | ---: |
+| Tune OOF Recall@10 | 35.75% | 44.90% | **+9.15pp** |
+| Tune OOF MRR@10 | 15.86% | 19.52% | +3.67pp |
+
+Blind v3 在参数冻结后构建和评测。它扫描历史产物建立曝光清单，Query 与正证据历史重叠均为 0；
+四候选随机打乱后由 GPT-5.3-Codex-Spark 优先、GPT-5.4-Mini 降级做独立完整证据判定，最终冻结
+五个场景各 30 条，共 150 条。候选缓存 150/150 成功，只运行一次冻结模型：
+
+| 场景 | 候选覆盖 | Hybrid Recall@10 | LambdaMART Recall@10 | 变化 |
+| --- | ---: | ---: | ---: | ---: |
+| 全部 | 92.67% | 22.67% | 30.67% | **+8.00pp** |
+| 相似文档 | 100.00% | 30.00% | 53.33% | **+23.33pp** |
+| 多条件 | 93.33% | 46.67% | 60.00% | **+13.33pp** |
+| 别名 | 96.67% | 10.00% | 16.67% | +6.67pp |
+| 自然语言改写 | 93.33% | 20.00% | 20.00% | 0.00pp |
+| 短关键词 | 80.00% | 6.67% | 3.33% | **-3.33pp** |
+
+新增命中 16 条、丢失 4 条，净增 12 条。该结果证明 LambdaMART 收益可以跨到未曝光 Query 和证据，
+但也明确拒绝“已经生产达标”的结论：绝对 Recall@10 仍低，短关键词需要回退 Hybrid。当前 20k 语料
+没有可构造严格编号、日期、版本号题目的未曝光证据，Blind v3 没有伪造这两个场景；后续必须先补
+eval-only 语料，再建立独立子集验证。
+
+### 8.4 Cross Encoder 作为 LambdaMART 特征（历史失败实验）
+
+为避免重现 qwen3-rerank 直接覆盖三路排序的负增长，本轮只把 `qwen3-rerank` 分数作为附加特征：
+
+```text
+旧 LambdaMART 无泄漏初排 TopK
+  -> qwen3-rerank 为 TopK 候选打分
+  -> 原始分 / query 内归一化分 / 倒数排名 / 未打分标记
+  -> 新 LambdaMART 与原三路特征共同排序
+```
+
+Tune 的 shortlist 使用旧模型 OOF 分数生成，确保每条 Query 都由未训练过该题的基础模型选择 TopK；
+Cross Encoder 不读取标签。Blind v3 shortlist 使用全部 Tune 训练的旧模型生成，Blind 标签仍不参与选择。
+
+| 方案 | Tune OOF Recall@10 | 相对原 LTR | Blind v3 Recall@10 | 相对原 LTR | 决策 |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 原 `candidate_difference_v2` | 44.90% | - | 30.67% | - | 保持默认 |
+| Cross Encoder Top50 | 45.60% | +0.70pp | 30.00% | -0.67pp | 拒绝默认启用 |
+| Cross Encoder Top80 | 46.05% | +1.15pp | 未完成 | - | 已取消，不再验证 |
+
+Top50 的旧 LTR shortlist 对正确 Chunk 的覆盖率在 Tune 为 79.20%，Blind v3 只有 59.33%；其余候选没有
+Cross Encoder 分数。单独按 qwen3-rerank 分数取 Top10 时，Tune 仅 32.25%，Blind v3 仅 22.67%，
+说明通用文本相关度本身不强。作为特征后，Blind v3 的别名和短词提高，但自然语言改写与相似文档下降，
+总体净少 1 条命中。
+
+Top80 将基础 shortlist 目标覆盖提高到 Tune 86.85%，Tune OOF 达到 46.05%，但 Blind v3 请求阶段百炼返回
+`Arrearage`，150 条全部失败。此后又在相同固定 Top50 候选上完成 `qwen3-vl-rerank` 150 条批量对照：
+`qwen3-vl-rerank` Recall@10 为 24.00%，只比 `qwen3-rerank` 的 22.67% 多 2 条命中，配对检验
+`p=0.856`，且仍低于原 LambdaMART 的 30.67%。这不足以证明重排模型具有稳定净收益。
+
+2026-07-21 最终决策：**终止直接 Rerank 与 Cross Encoder 附加特征路线，不再补跑 Top80。**
+历史报告和结果继续保留用于解释失败原因；活动代码删除 Cross Encoder 分数缓存入口、LTR v3 特征和相关
+CLI 参数。LambdaMART 的训练与推理统一固定为 `candidate_difference_v2`，因此不依赖用户是否选择重排模型。
+
 ---
 
 ## 9. 相关实现与报告
@@ -561,6 +635,10 @@ Top10 总命中数。它证明两种 LambdaMART 均比固定 Hybrid 多命中 14
 - 2000 条最终训练数据：`ltr_query_expansion_2000/final_2000/expanded_tune_2000.jsonl`
 - 2000 条候选缓存与模型测试：`ltr_query_expansion_2000/final_2000/ltr_evaluation_v1/ltr_2000_evaluation_report.{html,json}`
 - 全新 Blind v2 冻结测试：`ltr_query_expansion_2000/final_2000/blind_v2_20260718/blind_v2_evaluation_report.{html,json}`
+- 候选分流与 Blind v3 最终验收：`ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/candidate_routing_ltr_final_acceptance_report.{html,json}`
+- Blind v3 单次外部评测：`ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/blind_v3/evaluation/model_frozen_once/ltr_external_evaluation.{html,json}`
+- Cross Encoder 特征实验：`ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/cross_encoder_feature_v1/cross_encoder_ltr_experiment_report.{html,json}`
+- qwen3-vl-rerank 150 条固定 Top50 对照：`ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/qwen3_vl_rerank_batch_150_20260721/batch_comparison.{html,json}`
 
 **对照方案报告**（同上目录前缀）
 

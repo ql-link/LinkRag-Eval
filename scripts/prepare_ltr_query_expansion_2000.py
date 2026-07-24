@@ -13,6 +13,8 @@ from typing import Any
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import linear_kernel
 
+from linkrag_eval.retrieval.candidate_routing import has_exact_identifier
+
 
 GENERATE_QUOTAS = {
     "number_time": 240,
@@ -100,9 +102,7 @@ def _select_targets(
         dataset_rows.sort(key=lambda row: _stable(f"{dataset_id}:{row['chunk_id']}"))
     numeric_by_dataset = {
         dataset_id: [
-            row
-            for row in dataset_rows
-            if any(char.isdigit() for char in str(row["content"]))
+            row for row in dataset_rows if any(char.isdigit() for char in str(row["content"]))
         ]
         for dataset_id, dataset_rows in by_dataset.items()
     }
@@ -125,10 +125,16 @@ def _select_targets(
                         chunk_id = str(target["chunk_id"])
                         if chunk_id in used:
                             continue
+                        if type_hint == "exact_identifier" and not has_exact_identifier(
+                            str(target["content"])
+                        ):
+                            continue
                         used.add(chunk_id)
                         picked += 1
                         progressed = True
-                        query_id = f"{id_prefix}-{type_hint.replace('_', '-')}-{len(selected) + 1:04d}"
+                        query_id = (
+                            f"{id_prefix}-{type_hint.replace('_', '-')}-{len(selected) + 1:04d}"
+                        )
                         selected.append(
                             {
                                 "query_id": query_id,
@@ -151,9 +157,7 @@ def _select_targets(
                                     for negative in nearest[chunk_id]
                                 ],
                                 "domain": (target.get("metadata") or {}).get("domain"),
-                                "source_scenario": (target.get("metadata") or {}).get(
-                                    "scenario"
-                                ),
+                                "source_scenario": (target.get("metadata") or {}).get("scenario"),
                             }
                         )
                         break

@@ -10,6 +10,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from linkrag_eval.retrieval.candidate_routing import has_exact_identifier
+
 
 FINAL_QUOTAS = {
     "similar_docs": 600,
@@ -80,7 +82,9 @@ def main() -> int:
     used_queries = set(existing_queries)
     used_chunks = set(existing_chunks)
     judge_models = Counter()
-    generator_models = Counter(str(row.get("generator_model") or "unknown") for row in queries.values())
+    generator_models = Counter(
+        str(row.get("generator_model") or "unknown") for row in queries.values()
+    )
 
     for query_id in sorted(decisions, key=_stable):
         decision = decisions[query_id]
@@ -90,11 +94,7 @@ def main() -> int:
             rejected["judge_null"] += 1
             continue
         candidate = next(
-            (
-                row
-                for row in pools[query_id]["candidates"]
-                if str(row["chunk_id"]) == str(selected)
-            ),
+            (row for row in pools[query_id]["candidates"] if str(row["chunk_id"]) == str(selected)),
             None,
         )
         if candidate is None:
@@ -102,6 +102,9 @@ def main() -> int:
         query = str(queries[query_id]["query"]).strip()
         chunk_id = str(candidate["chunk_id"])
         type_hint = str(targets[query_id]["type_hint"])
+        if type_hint == "exact_identifier" and not has_exact_identifier(query):
+            rejected["invalid_exact_identifier"] += 1
+            continue
         if query in used_queries:
             rejected["duplicate_query"] += 1
             continue

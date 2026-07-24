@@ -3,10 +3,10 @@
 是允许 import rag 的 adapter 之一(召回真链路=被测对象)。装配口径对齐生产
 ``recall_pipeline_provider``,但两处替换以解耦:
 - **Qdrant 指向 eval 前缀**:facade 注入 eval 前缀的 ``QdrantIndexStore``(eval client + router)。
-- **query 编码走 eval llm**:dense/sparse 的 per-user resolver(读 llm_user_config,黑名单内)
-  换成"无视 user_id、返回 eval 编码器"的 resolver——dense 注入 eval dense embedder(它有
+- **query 编码走 eval llm**:dense 直接注入 eval dense embedding pipeline(它有
   ``aembed_query_detailed``),sparse 注入 :class:`_EvalSparseQueryService`(把 eval sparse 输出
-  转成 rag ``SparseVector``)。写入侧(EvalVectorStore)与召回侧共用同一 eval 编码器口径。
+  转成 rag ``SparseVector``),不读取生产 Dataset/per-user 配置。写入侧(EvalVectorStore)
+  与召回侧共用同一 eval 编码器口径。
 
 融合/排序由生产 RecallPipeline 按请求级参数执行(RRF/weighted_score 均可)。bm25 路在
 ``EVAL_BM25_MODE=qdrant_bm25`` 时装配生产 Qdrant BM25 retriever;在 ``sqlite_fts5``
@@ -155,24 +155,21 @@ def build_eval_recall_pipeline(
     client = AsyncQdrantClient(url=settings.qdrant_host, api_key=None)
     store = QdrantIndexStore(client=client, bucket_router=router)
 
-    async def _dense_resolver(_user_id: int):
-        return dense_encoder
-
     _sparse_service = _EvalSparseQueryService(
         sparse_encoder, vector_name=getattr(settings, "sparse_vector_name", "sparse_text")
     )
 
-    async def _sparse_resolver(_user_id: int):
-        return _sparse_service
-
     dense = DenseRetriever(
         backend=compose_vector_storage_facade(
-            qdrant_store=store, bucket_router=router, query_embedding_resolver=_dense_resolver
+            qdrant_store=store,
+            bucket_router=router,
+            embedding_pipeline=dense_encoder,
         ),
         score_threshold=dense_score_threshold,
     )
     sparse_backend = compose_vector_storage_facade(
-        qdrant_store=store, bucket_router=router, query_sparse_resolver=_sparse_resolver
+        qdrant_store=store,
+        bucket_router=router,
     )
     # 生产 facade 在调用 resolver 前需要 vector_name。这里显式挂 eval service,
     # 避免回退读取生产 settings 中的 sparse vector name。

@@ -109,9 +109,7 @@ def test_tune_hybrid_protection_prefers_configuration_with_more_hits() -> None:
         "candidate_baseline_rr": [1.0, *([0.0] * 10)],
     }
 
-    tuned = tune_hybrid_protection(
-        [prediction], blend_alphas=(1.0,), protect_top_ks=(0, 1)
-    )
+    tuned = tune_hybrid_protection([prediction], blend_alphas=(1.0,), protect_top_ks=(0, 1))
 
     assert tuned["best"]["protect_baseline_top_k"] == 1
     assert tuned["best"]["hit_at_10"] == 1.0

@@ -66,6 +66,7 @@ def test_assembles_two_route_pipeline() -> None:
     assert len(pipe._retrievers) == 2
     assert pipe._readiness_gate.__class__.__name__ == "_EvalReadinessGate"
     assert pipe._retrievers[0]._score_threshold == 0.11
+    assert pipe._retrievers[0]._backend._embedding_pipeline.__class__ is _FakeDense
     assert pipe._retrievers[1]._score_threshold == 0.30
     assert pipe._retrievers[1]._backend._sparse_vector_service.vector_name == "eval_sparse_for_test"
 

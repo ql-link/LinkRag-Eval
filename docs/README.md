@@ -5,12 +5,13 @@
 
 ## 阅读顺序
 
-1. [当前状态](CURRENT_STATUS.md)：完成度、验收缺口和下一步。
-2. [文档目录](DOCUMENT_CATALOG.md)：已有文档及其对应工作的完成状态。
-3. [实现约定](../AGENTS.md)：依赖边界、存储隔离、配置和测试纪律。
-4. [解耦架构](architecture/decoupling-plan.md)：项目边界和 Step 0-6 迁移基线。
-5. [Golden V2 计划](plans/golden-v2-realistic-evaluation.md)：黄金集、候选池、标注和 blind 纪律。
-6. [LambdaMART 实验](experiments/ltr-fusion-v1.md)：融合方案、对照实验和 Blind v2 结果。
+1. [实现约定](../AGENTS.md)：依赖边界、存储隔离、配置和测试纪律。
+2. [下一对话交接](HANDOFF.md)：冻结决策、最新审计、执行顺序和必读材料。
+3. [当前状态](CURRENT_STATUS.md)：完成度、验收缺口和下一步。
+4. [文档目录](DOCUMENT_CATALOG.md)：已有文档及其对应工作的完成状态。
+5. [解耦架构](architecture/decoupling-plan.md)：项目边界和 Step 0-6 迁移基线。
+6. [Golden V2 计划](plans/golden-v2-realistic-evaluation.md)：黄金集、候选池、标注和 blind 纪律。
+7. [LambdaMART 实验](experiments/ltr-fusion-v1.md)：融合方案、对照实验和 Blind v3 结果。
 
 ## 目录职责
 

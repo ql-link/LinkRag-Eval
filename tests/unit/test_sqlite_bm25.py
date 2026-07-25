@@ -10,6 +10,7 @@ from linkrag_eval.store.sqlite_bm25 import (
     SQLiteBm25Store,
     SQLiteBm25Tokenizer,
     _fts_or_query,
+    inspect_sqlite_bm25_identity,
     local_bm25_tokens,
 )
 
@@ -100,3 +101,45 @@ async def test_sqlite_bm25_upsert_replaces_existing(tmp_path) -> None:
     )
     assert old_hits == []
     assert [h.chunk_id for h in new_hits] == ["c1"]
+
+
+async def test_sqlite_bm25_identity_is_logical_and_stable(tmp_path) -> None:
+    path = tmp_path / "bm25.sqlite3"
+    store = SQLiteBm25Store(path, coarse_weight=2.0, fine_weight=1.0)
+    await store.upsert_chunks(
+        [
+            SQLiteBm25Point(
+                chunk_id="c2",
+                doc_id=12,
+                user_id=990001,
+                dataset_id=992001,
+                chunk_type="text",
+                tokens=Bm25Tokens(coarse="二", fine="二"),
+            ),
+            SQLiteBm25Point(
+                chunk_id="c1",
+                doc_id=11,
+                user_id=990001,
+                dataset_id=992000,
+                chunk_type="text",
+                tokens=Bm25Tokens(coarse="一", fine="一"),
+            ),
+        ]
+    )
+
+    first = await store.identity()
+    second = inspect_sqlite_bm25_identity(path, coarse_weight=2.0, fine_weight=1.0)
+
+    assert first["backend"] == "sqlite_fts5"
+    assert first["schema_version"] == 1
+    assert first["chunk_count"] == 2
+    assert first["dataset_counts"] == {"992000": 1, "992001": 1}
+    assert len(str(first["content_sha256"])) == 64
+    assert first["content_sha256"] == second["content_sha256"]
+
+
+def test_sqlite_bm25_identity_reports_missing_sidecar(tmp_path) -> None:
+    identity = inspect_sqlite_bm25_identity(tmp_path / "missing.sqlite3")
+    assert identity["exists"] is False
+    assert identity["chunk_count"] == 0
+    assert identity["content_sha256"] == ""

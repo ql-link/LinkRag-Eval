@@ -57,6 +57,32 @@ async def test_batching() -> None:
     assert calls["n"] == 3  # 2+2+1
 
 
+async def test_batches_use_bounded_concurrency_and_keep_order() -> None:
+    active = 0
+    maximum = 0
+
+    async def handler(req: httpx.Request) -> httpx.Response:
+        nonlocal active, maximum
+        import asyncio
+        import json
+
+        active += 1
+        maximum = max(maximum, active)
+        values = json.loads(req.content)["input"]
+        await asyncio.sleep(0.01)
+        active -= 1
+        return httpx.Response(
+            200,
+            json={"data": [{"index": i, "embedding": [float(value)]} for i, value in enumerate(values)]},
+        )
+
+    emb = _emb(handler, batch_size=1, concurrency=2)
+    vectors = await emb.aembed(["1", "2", "3", "4"])
+
+    assert maximum == 2
+    assert vectors == [[1.0], [2.0], [3.0], [4.0]]
+
+
 async def test_query_helper() -> None:
     def handler(req: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"data": [{"index": 0, "embedding": [9.0]}]})

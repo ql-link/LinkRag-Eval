@@ -41,6 +41,34 @@ async def test_empty_input_returns_empty() -> None:
     assert await enc.aencode([]) == []
 
 
+async def test_ark_batch_runs_with_bounded_concurrency_and_keeps_order() -> None:
+    active = 0
+    maximum = 0
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal active, maximum
+        import asyncio
+        import json
+
+        active += 1
+        maximum = max(maximum, active)
+        payload = json.loads(request.content)
+        value = int(payload["input"][0]["text"])
+        await asyncio.sleep(0.01)
+        active -= 1
+        return httpx.Response(
+            200, json={"data": {"sparse_embedding": [{"index": value, "value": 1.0}]}}
+        )
+
+    enc = ArkSparseEncoder(
+        api_key="k", model="m", concurrency=2, http_client=_mock_client(handler)
+    )
+    vectors = await enc.aencode(["1", "2", "3", "4"])
+
+    assert maximum == 2
+    assert [vector.indices for vector in vectors] == [[1], [2], [3], [4]]
+
+
 async def test_4xx_raises() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(400, text="bad")

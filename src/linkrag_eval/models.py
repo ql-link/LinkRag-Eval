@@ -131,6 +131,13 @@ class Snapshot:
     route_top_ks: dict[str, int] = field(default_factory=dict)
     fusion_strategy: str = "rrf"
     fusion_weights: dict[str, float] = field(default_factory=dict)
+    # 可复现性扩展。旧结果文件缺少这些字段时由默认值保持可读。
+    bm25_mode: str = "stub"
+    bm25_sidecar_identity: dict[str, Any] = field(default_factory=dict)
+    computer_fingerprint: dict[str, Any] = field(default_factory=dict)
+    feature_version: str = ""
+    git_dirty: bool = False
+    git_worktree_sha256: str = ""
 
     def validate_model_distinctness(self) -> list[str]:
         """三模型(被测 CHAT / 判官 / 生成器)任意同名即告警,防自评偏置。"""

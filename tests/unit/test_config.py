@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from linkrag_eval.cli import _normalize_single_route_weight, _parse_enabled_sources
 from linkrag_eval.config import EvalSettings
 
@@ -9,6 +11,7 @@ from linkrag_eval.config import EvalSettings
 def test_recall_threshold_defaults() -> None:
     settings = EvalSettings(_env_file=None)
 
+    assert settings.database_url() == "sqlite+aiosqlite:///runs/linkrag_eval.sqlite3"
     assert settings.recall_dense_score_threshold == 0.30
     assert settings.recall_sparse_score_threshold == 0.20
     assert settings.recall_dense_top_k == 150
@@ -27,6 +30,13 @@ def test_recall_threshold_defaults() -> None:
     assert settings.alt_embed_model == ""
     assert settings.alt_embed_dim == 1024
     assert settings.alt_embed_sqlite_path == "runs/alt_embedding_eval.sqlite3"
+
+
+def test_runtime_database_rejects_remote_mysql() -> None:
+    settings = EvalSettings(db_url="mysql+aiomysql://example/eval", _env_file=None)
+
+    with pytest.raises(RuntimeError, match="必须指向本地"):
+        settings.database_url()
 
 
 def test_single_bm25_route_gets_a_valid_weight_for_weighted_score() -> None:

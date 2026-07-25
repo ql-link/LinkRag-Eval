@@ -2,7 +2,7 @@
 
 子命令:
 - ``config``      打印已解析配置(脱敏)做自检
-- ``ingest``      collection.tsv + manifest → eval Qdrant/MySQL(EvalVectorIndexer)
+- ``ingest``      collection.tsv + manifest → eval Qdrant/本地 SQLite(EvalVectorIndexer)
 - ``golden-gen``  eval 自有语料 → 采样 → LLM 生成 → 自动门禁 → golden jsonl
 - ``run``         golden → 召回(eval 前缀)→ 检索指标 → 出分
 
@@ -134,8 +134,14 @@ def _add_tune_recall(sub: argparse._SubParsersAction) -> None:
 
 
 def _add_bm25_backfill(sub: argparse._SubParsersAction) -> None:
-    p = sub.add_parser("bm25-backfill", help="从 eval MySQL 语料重建 SQLite FTS5 BM25 sidecar")
-    p.add_argument("--dataset-ids", required=True, help="dataset_id 逗号分隔")
+    p = sub.add_parser("bm25-backfill", help="从 eval SQLite 语料重建 FTS5 BM25 sidecar")
+    source = p.add_mutually_exclusive_group(required=True)
+    source.add_argument("--dataset-ids", help="从 eval SQLite 读取，dataset_id 逗号分隔")
+    source.add_argument(
+        "--chunks-jsonl",
+        action="append",
+        help="从冻结 chunk_records.jsonl 重建；可重复传入，且不会写元数据库",
+    )
     p.add_argument("--batch", type=int, default=500)
     p.add_argument("--sqlite-path", default=None, help="覆盖 EVAL_BM25_SQLITE_PATH")
     p.add_argument("--min-content-chars", type=int, default=0)
@@ -205,6 +211,11 @@ def _add_ltr(sub: argparse._SubParsersAction) -> None:
         action="store_true",
         help="按冻结 Query 文本分类选择每路候选 TopK",
     )
+    cache.add_argument(
+        "--alias-registry",
+        default=None,
+        help="冻结别名词表 JSON；仅扩展 BM25/Sparse，Dense 保留原 Query",
+    )
 
     cv = commands.add_parser("cross-validate", help="按证据文档做LambdaMART交叉验证")
     cv.add_argument("--cache", required=True)
@@ -226,6 +237,36 @@ def _add_ltr(sub: argparse._SubParsersAction) -> None:
     external.add_argument("--historical-baseline", type=float, default=None)
     external.add_argument("--blend-alpha", type=float, default=1.0)
     external.add_argument("--protect-baseline-top-k", type=int, default=0)
+
+    freeze = commands.add_parser("freeze", help="训练并冻结 candidate_difference_v2 在线模型")
+    freeze.add_argument("--cache", required=True, help="仅包含 Tune 的干净候选缓存 JSONL")
+    freeze.add_argument("--candidate-contents", required=True, help="chunk_id→content JSON")
+    freeze.add_argument("--registry-dir", required=True)
+    freeze.add_argument("--model-version", required=True)
+    freeze.add_argument("--alias-registry", required=True)
+    freeze.add_argument("--short-fallback-config", required=True)
+    freeze.add_argument("--n-estimators", type=int, default=24)
+    freeze.add_argument("--latency-budget-ms", type=int, default=25)
+    freeze.add_argument("--timeout-ms", type=int, default=40)
+    freeze.add_argument("--seed", type=int, default=20260724)
+
+    activate = commands.add_parser("activate", help="原子切换在线 LambdaMART 活跃版本")
+    activate.add_argument("--registry-dir", required=True)
+    activate.add_argument("--model-version", required=True)
+
+    rollback = commands.add_parser("rollback", help="回滚到上一在线 LambdaMART 版本")
+    rollback.add_argument("--registry-dir", required=True)
+
+    short_gate = commands.add_parser("tune-short-fallback", help="仅从 OOF Tune 预测冻结短词回退规则")
+    short_gate.add_argument("--cv-report", required=True)
+    short_gate.add_argument("--out", required=True)
+
+    frozen_eval = commands.add_parser("evaluate-frozen", help="用已冻结在线模型一次性评测 Blind cache")
+    frozen_eval.add_argument("--registry-dir", required=True)
+    frozen_eval.add_argument("--test-cache", required=True)
+    frozen_eval.add_argument("--candidate-contents", required=True)
+    frozen_eval.add_argument("--out", required=True)
+    frozen_eval.add_argument("--shadow-version", default=None)
 
 
 def _add_golden_opensource(sub: argparse._SubParsersAction) -> None:
@@ -311,6 +352,17 @@ def _add_golden_v2(sub: argparse._SubParsersAction) -> None:
     seed.add_argument("--input", required=True, help="原始 query 文件")
     seed.add_argument("--out", required=True, help="标准化 query_seeds.jsonl 输出")
     seed.add_argument("--source", required=True, help="来源标识,如 log/support/opensource")
+    seed.add_argument(
+        "--source-kind",
+        default=None,
+        choices=["production_log", "support", "business", "opensource", "synthetic"],
+    )
+    seed.add_argument("--scenario-field", default="scenario")
+    seed.add_argument("--canonical-query-field", default="canonical_query")
+    seed.add_argument("--collected-at-field", default="collected_at")
+    seed.add_argument("--dataset-version", default=None)
+    seed.add_argument("--license", dest="license_name", default=None)
+    seed.add_argument("--generator-model", default=None)
     seed.add_argument("--format", default="auto", choices=["auto", "jsonl", "tsv", "csv"])
     seed.add_argument("--query-field", default="query")
     seed.add_argument("--id-field", default=None)
@@ -370,6 +422,11 @@ def _add_golden_v2(sub: argparse._SubParsersAction) -> None:
     )
     live_cand.add_argument("--seeds", required=True, help="query_seeds/hard_case_seeds jsonl")
     live_cand.add_argument("--dataset-ids", required=True, help="eval dataset_id,逗号分隔")
+    live_cand.add_argument(
+        "--chunks-jsonl",
+        default=None,
+        help="可选冻结 chunk_records；避免为候选正文读取数据库",
+    )
     live_cand.add_argument("--out", required=True, help="candidate_pool.jsonl 输出")
     live_cand.add_argument("--report-out", default=None, help="候选池报告 JSON 输出")
     live_cand.add_argument("--route-top-n", type=int, default=50)
@@ -383,6 +440,7 @@ def _add_golden_v2(sub: argparse._SubParsersAction) -> None:
     live_cand.add_argument("--seed", type=int, default=13, help="random_neighbor 确定性种子")
     live_cand.add_argument("--min-content-chars", type=int, default=0)
     live_cand.add_argument("--limit-queries", type=int, default=None, help="试跑前 N 条 query")
+    live_cand.add_argument("--query-concurrency", type=int, default=4)
     live_cand.add_argument(
         "--global-dataset-scope",
         action="store_true",
@@ -505,6 +563,21 @@ def _add_golden_v2(sub: argparse._SubParsersAction) -> None:
         "--no-alt-embedding", action="store_true", help="计划中不包含 alt embedding 回填"
     )
     scale.add_argument("--no-markdown", action="store_true", help="只输出 JSON,不输出 Markdown")
+
+    blind_freeze = v2.add_parser("blind-freeze", help="冻结 Blind v4 与全部参数文件")
+    blind_freeze.add_argument("--samples", required=True)
+    blind_freeze.add_argument("--tune", action="append", required=True)
+    blind_freeze.add_argument("--config", action="append", required=True)
+    blind_freeze.add_argument("--out-dir", required=True)
+    blind_freeze.add_argument("--min-samples", type=int, default=500)
+
+    blind_claim = v2.add_parser("blind-claim", help="原子占用 Blind v4 唯一运行机会")
+    blind_claim.add_argument("--out-dir", required=True)
+    blind_claim.add_argument("--run-id", required=True)
+
+    blind_seal = v2.add_parser("blind-seal", help="封存 Blind v4 最终结果 hash")
+    blind_seal.add_argument("--out-dir", required=True)
+    blind_seal.add_argument("--result", required=True)
 
 
 def _add_cleaning(sub: argparse._SubParsersAction) -> None:
@@ -828,8 +901,11 @@ async def _do_tune_recall(args) -> int:
 
 
 async def _do_bm25_backfill(args) -> int:
+    import json
+    from pathlib import Path
+    from types import SimpleNamespace
+
     from linkrag_eval.config import get_settings
-    from linkrag_eval.store.corpus_repo import EvalCorpusRepo
     from linkrag_eval.store.sqlite_bm25 import (
         SQLiteBm25Point,
         SQLiteBm25Store,
@@ -837,11 +913,34 @@ async def _do_bm25_backfill(args) -> int:
     )
 
     settings = get_settings()
-    dataset_ids = [int(x) for x in args.dataset_ids.split(",") if x.strip()]
-    repo = EvalCorpusRepo()
-    rows = await repo.fetch_chunks_for_datasets(
-        dataset_ids, min_content_chars=args.min_content_chars
-    )
+    repo = None
+    if args.chunks_jsonl:
+        rows = []
+        for raw_path in args.chunks_jsonl:
+            source_path = Path(raw_path)
+            with source_path.open(encoding="utf-8") as handle:
+                for line_number, line in enumerate(handle, start=1):
+                    if not line.strip():
+                        continue
+                    row = json.loads(line)
+                    missing = {"chunk_id", "doc_id", "dataset_id", "content"} - set(row)
+                    if missing:
+                        raise ValueError(
+                            f"{source_path}:{line_number} 缺少字段:"
+                            f"{','.join(sorted(missing))}"
+                        )
+                    if len(str(row["content"])) < args.min_content_chars:
+                        continue
+                    rows.append(SimpleNamespace(**row))
+        rows.sort(key=lambda row: (int(row.dataset_id), str(row.chunk_id)))
+    else:
+        from linkrag_eval.store.corpus_repo import EvalCorpusRepo
+
+        dataset_ids = [int(x) for x in args.dataset_ids.split(",") if x.strip()]
+        repo = EvalCorpusRepo()
+        rows = await repo.fetch_chunks_for_datasets(
+            dataset_ids, min_content_chars=args.min_content_chars
+        )
     if not rows:
         print("无可回填 chunk。")
         return 0
@@ -869,11 +968,18 @@ async def _do_bm25_backfill(args) -> int:
             for row in batch
         ]
         await store.upsert_chunks(points)
-        await repo.mark_bm25_indexed([p.chunk_id for p in points], indexed=True)
+        if repo is not None:
+            await repo.mark_bm25_indexed([p.chunk_id for p in points], indexed=True)
         total += len(points)
         print(f"  bm25 backfill {total}/{len(rows)} → {path}")
 
+    identity = await store.identity()
     print(f"\nBM25 SQLite FTS5 回填完成:{total} chunks → {path}")
+    print(
+        "sidecar identity: "
+        f"datasets={identity['dataset_counts']} "
+        f"sha256={identity['content_sha256']}"
+    )
     return 0
 
 
@@ -992,6 +1098,7 @@ async def _do_query_rewrite(args) -> int:
 
 
 async def _do_ltr(args) -> int:
+    import hashlib
     import json
     from pathlib import Path
 
@@ -1011,6 +1118,7 @@ async def _do_ltr(args) -> int:
             concurrency=args.concurrency,
             retries=args.retries,
             use_query_routing=args.query_routing,
+            alias_registry_path=Path(args.alias_registry) if args.alias_registry else None,
             progress=print,
         )
         print(json.dumps(report, ensure_ascii=False, indent=2))
@@ -1062,8 +1170,96 @@ async def _do_ltr(args) -> int:
         print(f"报告: {Path(args.out_dir) / 'ltr_external_evaluation.html'}")
         return 0
 
+    if args.ltr_command == "freeze":
+        from linkrag_eval.retrieval.learning_to_rank.online import freeze_model
+        from linkrag_eval.retrieval.aliases import AliasRegistry
+
+        cache_path = Path(args.cache)
+        rows = [
+            json.loads(line)
+            for line in cache_path.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        failed = [row.get("sample_id") for row in rows if row.get("failed_sources")]
+        if failed:
+            raise ValueError(f"冻结模型拒绝包含 failed_sources 的 Tune cache:{failed[:3]}")
+        contents = json.loads(Path(args.candidate_contents).read_text(encoding="utf-8"))
+        alias_path = Path(args.alias_registry)
+        alias_registry = AliasRegistry.load(alias_path)
+        short_payload = json.loads(Path(args.short_fallback_config).read_text(encoding="utf-8"))
+        short_config = short_payload.get("config", short_payload)
+        manifest = freeze_model(
+            rows,
+            contents.get("contents", contents),
+            out_dir=Path(args.registry_dir) / args.model_version,
+            model_version=args.model_version,
+            training_data_sha256=hashlib.sha256(cache_path.read_bytes()).hexdigest(),
+            alias_registry_version=alias_registry.version,
+            alias_registry_payload=json.loads(alias_path.read_text(encoding="utf-8")),
+            short_fallback_config=short_config,
+            n_estimators=args.n_estimators,
+            latency_budget_ms=args.latency_budget_ms,
+            timeout_ms=args.timeout_ms,
+            seed=args.seed,
+        )
+        print(json.dumps(manifest.__dict__, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.ltr_command == "activate":
+        from linkrag_eval.retrieval.learning_to_rank.online import activate_model
+
+        activate_model(args.registry_dir, args.model_version)
+        print(f"active LambdaMART: {args.model_version}")
+        return 0
+
+    if args.ltr_command == "rollback":
+        from linkrag_eval.retrieval.learning_to_rank.online import rollback_model
+
+        print(f"rolled back LambdaMART: {rollback_model(args.registry_dir)}")
+        return 0
+
+    if args.ltr_command == "tune-short-fallback":
+        from linkrag_eval.retrieval.learning_to_rank.short_query_gate import (
+            tune_short_query_fallback,
+        )
+
+        report = json.loads(Path(args.cv_report).read_text(encoding="utf-8"))
+        result = tune_short_query_fallback(list(report.get("predictions") or []))
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps(result["config"], ensure_ascii=False, indent=2))
+        return 0
+
+    if args.ltr_command == "evaluate-frozen":
+        from linkrag_eval.retrieval.learning_to_rank.online import (
+            LambdaMartOnlineRanker,
+            evaluate_frozen_model,
+        )
+
+        ranker = LambdaMartOnlineRanker.from_registry(
+            args.registry_dir,
+            shadow_version=args.shadow_version,
+        )
+        rows = [
+            json.loads(line)
+            for line in Path(args.test_cache).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        contents_payload = json.loads(Path(args.candidate_contents).read_text(encoding="utf-8"))
+        report = await evaluate_frozen_model(
+            ranker,
+            rows,
+            contents_payload.get("contents", contents_payload),
+        )
+        out = Path(args.out)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({key: value for key, value in report.items() if key != "predictions"}, ensure_ascii=False, indent=2))
+        return 0
+
     print(
-        "错误:ltr 需要 cache、cross-validate 或 train-evaluate 子命令",
+        "错误:ltr 子命令无效",
         file=sys.stderr,
     )
     return 2
@@ -1131,6 +1327,8 @@ async def _do_golden_opensource(args) -> int:
 
 
 async def _do_golden_v2(args) -> int:
+    import json
+
     if args.golden_v2_command == "spark-import":
         from linkrag_eval.golden_v2 import import_spark_bundle
 
@@ -1198,6 +1396,13 @@ async def _do_golden_v2(args) -> int:
             domain_field=args.domain_field,
             type_field=args.type_field,
             dataset_ids_field=args.dataset_ids_field,
+            source_kind=args.source_kind,
+            scenario_field=args.scenario_field,
+            canonical_query_field=args.canonical_query_field,
+            collected_at_field=args.collected_at_field,
+            dataset_version=args.dataset_version,
+            license_name=args.license_name,
+            generator_model=args.generator_model,
             min_chars=args.min_chars,
             max_chars=args.max_chars,
             reject_pii=not args.allow_pii,
@@ -1247,6 +1452,7 @@ async def _do_golden_v2(args) -> int:
             random_n=args.random_n,
             max_candidates_per_query=args.max_candidates_per_query,
             limit_queries=args.limit_queries,
+            query_concurrency=args.query_concurrency,
             top_k=args.top_k,
             medium_dataset_id_start=args.medium_dataset_id_start,
             medium_target_chunks=args.medium_target_chunks,
@@ -1276,6 +1482,7 @@ async def _do_golden_v2(args) -> int:
             print(f"report: {report.report_path}")
         return 0
     if args.golden_v2_command == "candidate-pool-live":
+        from pathlib import Path
         from types import SimpleNamespace
 
         from linkrag_eval.config import get_settings
@@ -1305,10 +1512,26 @@ async def _do_golden_v2(args) -> int:
             print(f"错误:--sources 包含未知来源:{','.join(unknown_sources)}", file=sys.stderr)
             return 2
 
-        repo = EvalCorpusRepo()
-        chunks = await repo.fetch_chunks_for_datasets(
-            dataset_ids, min_content_chars=args.min_content_chars
-        )
+        if args.chunks_jsonl:
+            dataset_scope = set(dataset_ids)
+            chunks = [
+                SimpleNamespace(
+                    chunk_id=str(row["chunk_id"]),
+                    dataset_id=int(row["dataset_id"]),
+                    doc_id=int(row["doc_id"]),
+                    content=str(row["content"]),
+                )
+                for line in Path(args.chunks_jsonl).read_text(encoding="utf-8").splitlines()
+                if line.strip()
+                for row in [json.loads(line)]
+                if int(row["dataset_id"]) in dataset_scope
+                and len(str(row["content"]).strip()) >= args.min_content_chars
+            ]
+        else:
+            repo = EvalCorpusRepo()
+            chunks = await repo.fetch_chunks_for_datasets(
+                dataset_ids, min_content_chars=args.min_content_chars
+            )
         if not chunks:
             print("错误:指定 dataset 下没有可用 chunk", file=sys.stderr)
             return 2
@@ -1591,6 +1814,40 @@ async def _do_golden_v2(args) -> int:
             f"chunks={len(chunks)} → {cache.path}"
         )
         return 0
+    if args.golden_v2_command == "blind-freeze":
+        from linkrag_eval.golden_v2.blind_v4 import freeze_blind_v4
+
+        report = freeze_blind_v4(
+            args.samples,
+            tune_paths=args.tune,
+            frozen_config_paths=args.config,
+            out_dir=args.out_dir,
+            min_samples=args.min_samples,
+        )
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0
+    if args.golden_v2_command == "blind-claim":
+        from linkrag_eval.golden_v2.blind_v4 import claim_blind_v4_run
+
+        print(
+            json.dumps(
+                claim_blind_v4_run(args.out_dir, run_id=args.run_id),
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return 0
+    if args.golden_v2_command == "blind-seal":
+        from linkrag_eval.golden_v2.blind_v4 import seal_blind_v4_result
+
+        print(
+            json.dumps(
+                seal_blind_v4_result(args.out_dir, result_path=args.result),
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+        return 0
     print("错误:缺少 golden-v2 子命令", file=sys.stderr)
     return 2
 
@@ -1722,7 +1979,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"qdrant_buckets  = {s.qdrant_bucket_count}")
         print(f"qdrant_bm25     = {s.qdrant_bm25_collection}/{s.qdrant_bm25_vector_name}")
         print(f"sqlite_bm25     = {s.bm25_sqlite_path}")
-        print(f"mysql           = {s.db_host}:{s.db_port}/{s.db_name}")
+        print(f"database        = {s.database_url()}")
         print(f"judge_model     = {s.judge_model or '(空)'}  api_key={masked}")
         rewrite_masked = "***" if s.rewrite_api_key else "(空)"
         print(

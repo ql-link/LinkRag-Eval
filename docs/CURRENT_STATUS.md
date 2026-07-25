@@ -1,25 +1,27 @@
 # 当前开发状态
 
-> 更新时间：2026-07-21
+> 更新时间：2026-07-24
 > 本页是项目级进度的唯一维护入口。专题文档中的历史状态和实验结论不得覆盖本页。
 
 ## 总体结论
 
-评测研发主链路、20k 候选覆盖优化、黄金标注修正和独立 Blind v3 复验已经完成，当前处于
-**离线验收收口 + LambdaMART 生产化准备**阶段。LambdaMART 已在完全未曝光 Blind v3 上证明
-相对固定 Hybrid 有收益，但绝对 Recall@10 仍低，尚未接入生产默认链路。
+评测研发主链路、SQLite FTS5 BM25、真实来源元数据、多正例 qrels、结构化多 Chunk 语料、
+短词回退和 LambdaMART 在线化均已完成。750 条 Blind v4 已在全部参数冻结后只运行一次并封存。
+最终 Hit@10 `98.53%→98.93%`、MRR `90.41%→98.02%`；效果方向为正，但 Hit@10 的 95% CI 跨 0，
+不能宣称统计显著提升。当前只剩 CI 改动提交后的远端 Actions 证据，在线默认切换仍需上游生产项目另行决策。
 
 | 范围 | 状态 | 说明 |
 | --- | --- | --- |
-| 项目解耦 Step 0-4 | 完成 | 独立 MySQL、eval Qdrant、ProductComputer、SQLite FTS5 BM25 已落地 |
-| 项目解耦 Step 5 | 主体完成、证据待固化 | 代码、CLI、报告、结果台账和 import 边界已迁入；需用可识别 backend/fingerprint 的最终 clean run 固化 |
-| 项目解耦 Step 6 | 代码完成、验收未关闭 | 已从 Qdrant BM25 转向 SQLite FTS5；已有三路 clean run 不能证明 BM25 生效，仍缺同口径 BM25 delta |
+| 项目解耦 Step 0-4 | 完成 | 本地 SQLite、eval Qdrant、ProductComputer、SQLite FTS5 BM25 已落地 |
+| 项目解耦 Step 5 | 完成 | 代码、CLI、报告、结果台账和 import 边界已迁入；最终 A/B 快照已固化 backend、sidecar/computer fingerprint、Git SHA 与工作区指纹 |
+| 项目解耦 Step 6 | 完成 | SQLite FTS5 已在同一冻结 116 条、20k 语料上完成 OFF/ON clean A/B；Recall@10 提升 5.42pp |
 | Golden V2 | 主链路完成 | chunk 粒度、候选池、标注、QC、仲裁、tune/blind、20k 评测已落地 |
 | 2000 条 LTR 数据 | 完成 | 420 条基集加 1580 条严格新增样本 |
 | LambdaMART 实验 | 完成独立 Blind v3 验证 | Blind v3 Recall@10 从 22.67% 提升到 30.67%，净增 8.00pp |
 | 候选深度优化 | 完成 | 2,000 条 Tune 分流候选覆盖率 98.55%；Blind v3 候选覆盖率 92.67% |
 | Rerank / Cross Encoder | 已终止 | 直接重排低于 LambdaMART，作为附加特征的 Top50 Blind 下降；LambdaMART 固定使用不含重排分数的 `candidate_difference_v2` |
-| LambdaMART 生产化 | 未完成 | 缺在线特征、模型版本、延迟、降级、Shadow 和回滚验证 |
+| LambdaMART 在线化 | 完成 | 固定 v2 特征签名、模型版本、预算/超时降级、Shadow、监控和回滚均已验证 |
+| Blind v4 最终验收 | 完成一次性验收 | 750 条，Hit@10 +0.40pp、MRR +7.62pp；结果已 seal，禁止复用调参 |
 | 10 万背景语料 | 暂缓 | 当前先完善 20k；不属于本轮阻塞项 |
 
 ## 已固化结果
@@ -40,6 +42,17 @@
 - 2026-07-21 冻结决策：停止直接 Rerank 和 Cross Encoder 特征路线，不再继续 Top80；训练、评测和后续在线实现统一使用 `candidate_difference_v2`，不依赖用户是否配置重排模型。
 - 2026-07-14 的 `scale20k-scoped-final-top10` 已达到 116/116 无单路失败、无零结果，但其 BM25 权重为 `0.0`，且运行快照未记录 `bm25_mode`/`computer_fingerprint`；它只能证明三路调用 clean，不能作为 SQLite FTS5 或 BM25 增量验收证据。
 - 当前 20k 语料没有可用于严格编号/日期/版本号 Blind 题目的未曝光证据，因此 Blind v3 未伪造这两个场景，已作为语料缺口记录。
+- 2026-07-24 已从 eval MySQL 权威语料重建纯 20k SQLite FTS5 sidecar：992000–992003 各 5,000 chunks，逻辑 SHA-256 为 `aa475796be62bede59b11fc6d116d4edf19bd770c4f64eb9127397f14ac6114f`。
+- SQLite FTS5 最终 A/B 使用同一 116 条冻结集与同一工作区/sidecar 指纹：OFF/ON 均 `failed_sources=0`、`zero_ranked=0`；chunk Recall@10 `31.32%→36.74%`（`+5.42pp`），MRR `16.58%→17.03%`（`+0.45pp`）。延迟 delta 受外部编码冷启动与网络抖动影响，只作观测，不作 BM25 因果结论。
+- `Snapshot` 与 DB 台账现已记录 `bm25_mode`、sidecar identity、`computer_fingerprint`、feature version、Git SHA、dirty 状态和工作区内容指纹；两条 v2 run 已写入 `eval_run` / `eval_metric_result`。
+- Blind v4 数据包包含 450 Tune、750 Blind 和 10,300 chunks；Query 来源为 800 条开源 T2Retrieval 与 400 条明确标记的 eval-only 合成构造题，全部带来源、版本、业务域、canonical query 和场景元数据。
+- 300 条开源 Tune 的 pooled Top50 共 15,000 对完成独立复核：1,384 个分歧全部仲裁，未解决 0；正 qrels 从 1,385 增至 1,782，多正例 Query 为 270/300。
+- 新增 100 个三段文档、300 chunks，覆盖跨 Chunk、跨段落、编号、日期、版本号和同文档干扰；最终 Tune/Blind 多正例分别为 306/490。
+- Alias 词表冻结为 `general_web_search.2026-07-24.v1`，按业务域隔离并对歧义词拒绝扩展；只扩 BM25/Sparse，Dense 始终使用原 Query。
+- 短词门禁仅由 Tune 选择：长度 `<=10` 且 `ltr_top12_margin < 0.3` 时回退 Hybrid。
+- 在线模型冻结为 `candidate-difference-v2-20260724-final50`；特征签名校验、模型哈希、250ms 预算、350ms 超时、非阻塞 Shadow、监控、主动回滚与异常降级均已实现并测试。
+- Blind v4 唯一运行 `blind-v4-final-once-20260724`：750/750 clean；Hit@10 `98.5333%→98.9333%`（+0.4000pp），MRR `90.4054%→98.0213%`（+7.6158pp）；4 gained / 1 lost，95% CI `[-0.1333pp,+1.0667pp]`，McNemar `p=0.375`。
+- 2026-07-25 已从 `100.86.10.52` 停机前备份中的 `tolink_rag_eval_db` 只读迁移到本地 `runs/linkrag_eval.sqlite3`：20 datasets、39,474 chunks、51 runs、2,884 metric rows；源库的 query/qrel 均为 0。六表计数和内容摘要一致，正常运行不再依赖远端 MySQL。
 
 不同报告的数据分布、Query 数量和候选参数不同，只能在同一报告内比较变化量。
 历史四域 `recall@10 ~= 0.901` 等价门槛不能与 Hard Blind v2 的绝对值直接比较。
@@ -48,28 +61,19 @@
 
 | 优先级 | 工作 | 当前缺口 | 完成标准 |
 | --- | --- | --- | --- |
-| P0 | SQLite FTS5 / Step 5-6 最终验收 | 已有 clean run 的 BM25 权重为 0；`Snapshot` 尚无 BM25 backend/sidecar/computer fingerprint 字段，DB 结果仓储仍固定写 `computer_fingerprint=None` | 先补运行快照和台账写入；再重建 sidecar；同一冻结集分别跑 BM25 关闭/启用；两轮均 `failed_sources=0`、`zero_ranked=0`；快照记录 `bm25_mode=sqlite_fts5`、sidecar/fingerprint、参数和 git SHA；生成 BM25 Recall/MRR/延迟 delta 并写结果台账 |
-| P0 | CI 纳入远端 | `.github/workflows/ci.yml` 未被 Git 跟踪，也未安装固定 SHA 的 toLink-Rag；契约测试在缺少 `src` 包时会 `importorskip`，存在干净 Runner “跳过但通过”的风险 | workflow 安装固定 SHA 的 toLink-Rag；CI 模式下缺包必须失败而非跳过；纳入提交并推送；PR/push 上 pytest、真实 contract、import-lint、Alembic heads 全部通过 |
-| P1 | 短关键词回退门禁 | Blind v3 中 LambdaMART 比 Hybrid 低 3.33pp；尚无可冻结的置信度定义和阈值 | 新增独立 Tune 数据，仅在 Tune 选择低置信度判定和回退规则；冻结后使用全新 Blind v4 一次性验证，不能复用 Blind v3 调参 |
-| P1 | 编号/日期/版本号覆盖 | 当前 20k 没有足够未曝光真实证据，Blind v3 未覆盖 | 增加 eval-only 真实格式语料；构造 chunk 粒度 Tune/Blind；通过证据支持、场景门禁和零泄漏检查 |
-| P1 | 业务别名/同义词词表 | 当前只有 `scenario_alias` 和字符 n-gram 覆盖特征，没有可维护词典，也没有在 BM25/Sparse 前做确定性归一化 | 建立版本化、按业务域隔离的 canonical→aliases 词表；保留原 Query 并限制扩展数量；歧义词默认不扩展；词表版本写入运行快照；仅用 Alias Tune 选规则，冻结后在 Blind v4 验证 |
-| P1 | 真实 Query 来源与元数据 | 2,000 条训练数据中 1,850 条由 Spark 生成；Blind v3 最终 Golden 没有 `source/query_source/generator_model/scenario` 字段，无法报告真实日志/客服/开源占比 | Blind v4 优先引入脱敏日志、客服/业务问题和开源 Query；保留来源、生成器、canonical query 和场景元数据；报告分来源指标，合成 Query 不能冒充真实 Query |
-| P1 | 多正例 pooled qrels | Blind v3 的 150 条全部只有 1 个 `expected_chunk_id`，无法证明相似证据已完整标注 | 对冻结 Top50 多路 pooled 候选做独立相关性复核；允许一个 Query 对应多个相关 Chunk；统计新增正例率、未解决率和随机负例误判率；评测仍以 chunk 粒度为主 |
-| P1 | 多 Chunk / 跨段落语料 | 当前 20k 基本是一文档一 Chunk，同文档差异特征恒为 0，不能代表真实长文档、跨段落或多 Chunk 检索 | 增加保留 `doc_id + ordinal` 的多 Chunk 文档族和 hard negatives；补 `cross_chunk`/跨段落 Query；单独报告单 Chunk与多 Chunk场景，不混成一个总指标 |
-| P1 | LambdaMART 在线化 | 当前只支持离线训练/评测，没有可部署模型产物和在线排序器 | 固化 `candidate_difference_v2` 特征签名；实现模型序列化/加载、在线候选特征、版本校验、超时降级、延迟预算、Shadow、监控和回滚；不得重新引入 Rerank 特征 |
-| P1 | 最终未曝光验收 | Blind v3 已揭盲，且每场景只有 30 条；不能再用于任何选参后的最终结论 | 上述参数和代码全部冻结后，使用证据与 Query 均隔离的 Blind v4 只跑一次；建议总量至少 500 条、主要场景至少 80 条，并报告置信区间/配对显著性；形成最终验收报告 |
+| P0 | CI 远端证据 | 本地 workflow 已固定安装 toLink-Rag SHA `6bf3237941657f40fd48ce8c0edec5af127c8f0a`，并以 `LINKRAG_EVAL_REQUIRE_RAG=1` 禁止缺包假跳过；unit/import-lint、16 个真实 contract 与 Alembic heads 已拆成明确门禁。workflow 尚未提交推送，因此还没有远端 Actions 证据 | 将当前 workflow 纳入提交并推送；PR/push 上 pytest、16 个真实 contract、import-lint、Alembic heads 全部通过 |
+| P1 | Blind v4 后续统计增强 | 本轮方向为正但 Hit@10 置信区间跨 0；短关键词有 1 条净退化 | 若继续，必须建立全新版本的 Tune 与 Blind，不得复用 Blind v4 选参；优先增加真实业务脱敏 Query，而不是扩大合成题占比 |
 
 ### 推荐执行顺序
 
-1. 先完成 SQLite BM25 A/B clean run，关闭解耦 Step 5-6 的证据缺口。
-2. 将当前代码和 CI workflow 纳入版本控制，确保后续变更有自动门禁。
-3. 补真实 Query 来源、多正例 pooled qrels、多 Chunk 文档族、短关键词 Tune、业务别名词表与编号类语料。
-4. 只在 Tune 上冻结回退和词表扩展规则，实现不含 Rerank 的 LambdaMART 在线推理、降级和 Shadow。
-5. 最后生成样本量足够的 Blind v4，一次性验收；不得根据 Blind v4 结果继续调参。
+1. 将已补齐固定 SHA 依赖和 contract 强制门禁的 workflow 纳入版本控制，观察远端 Actions 全绿。
+2. 将 Blind v4 结果作为已封存的最终证据，不得据此调参或重跑。
+3. 若生产项目决定接入，先以 Shadow 方式观察业务延迟和回退率，再由生产项目完成默认切换；本仓库继续保持独立评测边界。
+4. 若需提高统计把握度，创建 Blind v5 和全新 Tune，优先补脱敏业务 Query，并预先写明最小效果与样本量。
 
 ## 非阻塞增强项
 
-- 第三判官自动仲裁。
+- 将第三判官自动仲裁扩展到后续新数据版本。
 - 数十万或百万规模时将 Alt Embedding sidecar 升级为 ANN/HNSW。
 - 10 万背景语料分批扩容。
 - 趋势看板和定时回归任务；不阻塞当前离线收口。
@@ -81,3 +85,4 @@
 - [LambdaMART 实验](experiments/ltr-fusion-v1.md)
 - [Query 候选分流](experiments/query-soft-routing-candidates.md)
 - [统一报告索引](reports/REPORT_INDEX.md)
+- [Blind v4 最终一次性验收](reports/blind_v4_final_acceptance_2026_07_24.md)

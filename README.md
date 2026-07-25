@@ -1,6 +1,6 @@
 # LinkRag-Eval
 
-`LinkRag-Eval` 是 toLink-Rag 的**独立评测/质检项目**:衡量三路召回(dense/sparse/bm25)、解析清洗(CLEANING)、生成等环节的质量。它从生产仓库 `src/evaluation/` 剥离独立,**只通过产物级纯函数复用生产计算能力**,自己负责入库、检索、算分,使用独立 MySQL 库 `tolink_rag_eval_db`(同生产服务器、库级隔离)+ eval 独立前缀的 Qdrant collection,与生产隔离。
+`LinkRag-Eval` 是 toLink-Rag 的**独立评测/质检项目**:衡量三路召回(dense/sparse/bm25)、解析清洗(CLEANING)、生成等环节的质量。它从生产仓库 `src/evaluation/` 剥离独立,**只通过产物级纯函数复用生产计算能力**,自己负责入库、检索、算分,使用本地 SQLite + eval 独立前缀的 Qdrant collection,与生产隔离。
 
 ## 为什么独立
 
@@ -30,16 +30,12 @@
 
 ## 数据库初始化
 
-评测库 `tolink_rag_eval_db` 的 schema 演进唯一入口是 `alembic/`（`EvalBase.metadata`，与生产隔离）：
+本地评测库 `runs/linkrag_eval.sqlite3` 的 schema 演进唯一入口是 `alembic/`（`EvalBase.metadata`，与生产隔离）：
 
 ```bash
-# 1. 建库(utf8mb4),复用生产服务器/账号、只换库名
-CREATE DATABASE IF NOT EXISTS tolink_rag_eval_db
-  DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-# 2. 建表(6 张 eval_* 表 + alembic_version)
-set -a; source .env.eval; set +a     # 提供 EVAL_DB_*
-alembic upgrade head                  # URL 由 env.py 从 EVAL_DB_* 构建(aiomysql→pymysql)
+# 建表(6 张 eval_* 表 + alembic_version)
+set -a; source .env.eval; set +a
+alembic upgrade head
 ```
 
 `init_eval_schema()`（`create_all`）仅供单测 / 本地快速起库。`0001` baseline 由 `EvalBase.metadata` 建全表；后续字段变更走显式 Alembic revision。当前 head 为 `0003`，新增 `eval_run` 运行质量摘要列，用于筛选 clean run。
@@ -51,7 +47,7 @@ alembic upgrade head                  # URL 由 env.py 从 EVAL_DB_* 构建(aiom
 - `EvalVectorIndexer` / `EvalVectorStore` / `EvalCorpusRepo` 已取代旧的生产写 pipeline 依赖。
 - `ProductComputer` 已收口产物计算;dense/sparse 由 eval 自带 `llm/` 编码器承载,chunk 与 bm25 分词经 adapter 复用 rag 纯函数。
 - 召回侧通过 `build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 编码走 eval 编码器;BM25 默认使用评测项目自持的 SQLite FTS5 sidecar,Qdrant BM25 仅保留兼容模式。
-- MySQL eval 自持库 ORM 与 Alembic `0001` baseline 已落地。
+- 本地 SQLite eval 自持库 ORM 与 Alembic `0001` baseline 已落地。
 - `run` 命令已在文件结果之外同步写入 `eval_run` / `eval_metric_result` 台账。
 - 召回侧分路默认 `EVAL_RECALL_DENSE_SCORE_THRESHOLD=0.20`、`EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.10`。后者依据 Golden V2 realistic tune 调整,避免新 query 分布下 sparse 路由被全部过滤;历史四域基线需单独复验。
 - CLI 已覆盖 `ingest` / `golden-gen` / `golden-opensource` / `cleaning` / `run` /
@@ -70,7 +66,7 @@ python3 -m pytest -m "not integration" -q
 lint-imports
 ```
 
-真实 Qdrant/MySQL smoke 需要本地 `.env.eval` 且显式开启:
+真实 Qdrant/embedder smoke 需要本地 `.env.eval` 且显式开启:
 
 ```bash
 set -a; source .env.eval; set +a

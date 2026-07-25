@@ -1,6 +1,6 @@
 """Golden V2 pilot 编排与本地预检。
 
-这里不直接连接 MySQL/Qdrant/LLM,只做本地文件、配置和命令计划生成。实际执行仍由
+这里不直接连接 SQLite/Qdrant/LLM,只做本地文件、配置和命令计划生成。实际执行仍由
 各子命令负责,以便每一步都能单独复验和回滚。
 """
 
@@ -33,7 +33,10 @@ class PilotPreflightReport:
         return data
 
     def summary(self) -> str:
-        counts = {status: sum(1 for c in self.checks if c.status == status) for status in ("pass", "warn", "fail")}
+        counts = {
+            status: sum(1 for c in self.checks if c.status == status)
+            for status in ("pass", "warn", "fail")
+        }
         return (
             f"Golden V2 pilot preflight: status={self.status} checks={counts} "
             f"next_actions={len(self.next_actions)}"
@@ -77,11 +80,17 @@ def run_pilot_preflight(
         f"{seeds_path} rows={seed_count}, min={min_seed_count}",
     )
     _add(checks, "dataset_ids", bool(dataset_ids), f"dataset_ids={list(dataset_ids)}")
+    database_url_attr = getattr(settings, "database_url", None)
+    database_url = (
+        str(database_url_attr())
+        if callable(database_url_attr)
+        else str(getattr(settings, "db_url", ""))
+    )
     _add(
         checks,
-        "eval_mysql_db",
-        getattr(settings, "db_name", "") != "tolink_rag_db",
-        f"db_name={getattr(settings, 'db_name', '')}",
+        "eval_sqlite_db",
+        database_url.startswith("sqlite+aiosqlite:///") and not database_url.endswith("/:memory:"),
+        f"database_url={database_url}",
     )
     _add(
         checks,
@@ -115,7 +124,9 @@ def run_pilot_preflight(
         if alt_provider == "openai":
             required_fields.append("alt_embed_api_key")
         alt_ready = all(str(getattr(settings, field, "")).strip() for field in required_fields)
-        different_model = getattr(settings, "alt_embed_model", "") != getattr(settings, "embed_model", "")
+        different_model = getattr(settings, "alt_embed_model", "") != getattr(
+            settings, "embed_model", ""
+        )
         alt_required_missing = not (alt_ready and different_model)
         _add(
             checks,
@@ -138,7 +149,11 @@ def run_pilot_preflight(
     else:
         checks.append(PreflightCheck("bm25_mode", "pass", "sqlite_fts5"))
 
-    status = "fail" if any(c.status == "fail" for c in checks) else ("warn" if any(c.status == "warn" for c in checks) else "pass")
+    status = (
+        "fail"
+        if any(c.status == "fail" for c in checks)
+        else ("warn" if any(c.status == "warn" for c in checks) else "pass")
+    )
     next_actions = _next_actions(
         status=status,
         seeds_path=seeds_path,
@@ -158,7 +173,9 @@ def run_pilot_preflight(
     if report_out:
         path = Path(report_out)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(report.to_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        path.write_text(
+            json.dumps(report.to_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
     if markdown_out:
         path = Path(markdown_out)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -299,7 +316,9 @@ def build_pilot_plan(
         script_path=str(out / "pilot_commands.sh"),
         markdown_path=str(out / "pilot_plan.md") if write_markdown else None,
     )
-    Path(report.plan_path).write_text(json.dumps(report.to_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    Path(report.plan_path).write_text(
+        json.dumps(report.to_dict(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     Path(report.script_path).write_text(_script(commands), encoding="utf-8")
     if report.markdown_path:
         Path(report.markdown_path).write_text(_plan_markdown(report), encoding="utf-8")
@@ -314,7 +333,9 @@ def _add(
     *,
     warn_on_false: bool = False,
 ) -> None:
-    checks.append(PreflightCheck(name, "pass" if ok else ("warn" if warn_on_false else "fail"), message))
+    checks.append(
+        PreflightCheck(name, "pass" if ok else ("warn" if warn_on_false else "fail"), message)
+    )
 
 
 def _next_actions(

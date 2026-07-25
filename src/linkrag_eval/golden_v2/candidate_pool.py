@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import math
@@ -115,6 +116,7 @@ def build_candidate_pool(
                 "source": raw_seed.get("source", "unknown"),
                 "type_hint": raw_seed.get("type_hint"),
                 "hard_reason": raw_seed.get("hard_reason"),
+                "provenance": raw_seed.get("provenance") or raw_seed.get("metadata"),
                 "dataset_ids": sorted({int(c["dataset_id"]) for c in candidates}),
                 "candidates": candidates,
             }
@@ -156,6 +158,7 @@ async def build_live_candidate_pool(
     score_thresholds: dict[str, float | None] | None = None,
     limit_queries: int | None = None,
     use_seed_dataset_ids: bool = True,
+    query_concurrency: int = 4,
 ) -> CandidatePoolReport:
     """构造活栈多源候选池。
 
@@ -178,13 +181,9 @@ async def build_live_candidate_pool(
     if not route_sources:
         raise ValueError("sources 不能为空")
 
-    rows: list[dict[str, Any]] = []
-    total_candidates = 0
-    missing_chunks = 0
-    source_candidate_counts: Counter[str] = Counter()
-    source_query_coverage: Counter[str] = Counter()
-    per_query_counts: list[int] = []
-    for raw_seed in seeds:
+    semaphore = asyncio.Semaphore(max(1, query_concurrency))
+
+    async def build_one(raw_seed: dict[str, Any]) -> tuple[dict[str, Any], int]:
         query_id = str(raw_seed.get("seed_id") or raw_seed.get("query_id") or "").strip()
         query = str(raw_seed.get("query") or "").strip()
         if not query_id or not query:
@@ -194,21 +193,23 @@ async def build_live_candidate_pool(
             if use_seed_dataset_ids
             else all_dataset_ids
         )
+        dataset_scope = set(dataset_ids)
         scoped_chunks = [
-            chunk for chunk in normalized_chunks if int(chunk["dataset_id"]) in set(dataset_ids)
-        ]
-        if not scoped_chunks:
-            scoped_chunks = normalized_chunks
+            chunk for chunk in normalized_chunks if int(chunk["dataset_id"]) in dataset_scope
+        ] or normalized_chunks
         by_chunk: dict[str, dict[str, Any]] = {}
-
-        for source in route_sources:
-            hits = await route_search(query, dataset_ids, source, route_top_n)
+        async with semaphore:
+            route_results = await asyncio.gather(
+                *(route_search(query, dataset_ids, source, route_top_n) for source in route_sources)
+            )
+        missing = 0
+        for source, hits in zip(route_sources, route_results):
             label = labels.get(source, f"{source}_live")
             for rank, hit in enumerate(hits, start=1):
                 chunk_id = str(getattr(hit, "chunk_id", ""))
                 chunk = chunk_by_id.get(chunk_id)
                 if chunk is None:
-                    missing_chunks += 1
+                    missing += 1
                     continue
                 _add_candidate(
                     by_chunk,
@@ -217,21 +218,12 @@ async def build_live_candidate_pool(
                     rank=rank,
                     score=float(getattr(hit, "score", 0.0) or 0.0),
                 )
-
         rng = random.Random(_stable_seed(seed, query_id))
         sample_n = min(random_n, len(scoped_chunks))
         for rank, chunk in enumerate(rng.sample(scoped_chunks, sample_n), start=1):
             _add_candidate(by_chunk, chunk, source="random_neighbor", rank=rank, score=0.0)
-
         candidates = _sort_candidates(by_chunk)
-        _accumulate_candidate_stats(
-            candidates,
-            source_candidate_counts=source_candidate_counts,
-            source_query_coverage=source_query_coverage,
-        )
-        per_query_counts.append(len(candidates))
-        total_candidates += len(candidates)
-        rows.append(
+        return (
             {
                 "query_id": query_id,
                 "query": query,
@@ -240,10 +232,29 @@ async def build_live_candidate_pool(
                 "source": raw_seed.get("source", "unknown"),
                 "type_hint": raw_seed.get("type_hint"),
                 "hard_reason": raw_seed.get("hard_reason"),
+                "provenance": raw_seed.get("provenance") or raw_seed.get("metadata"),
                 "dataset_ids": sorted({int(c["dataset_id"]) for c in candidates}),
                 "candidates": candidates,
-            }
+            },
+            missing,
         )
+
+    built = await asyncio.gather(*(build_one(raw_seed) for raw_seed in seeds))
+    rows = [item[0] for item in built]
+    total_candidates = 0
+    missing_chunks = sum(item[1] for item in built)
+    source_candidate_counts: Counter[str] = Counter()
+    source_query_coverage: Counter[str] = Counter()
+    per_query_counts: list[int] = []
+    for row in rows:
+        candidates = row["candidates"]
+        _accumulate_candidate_stats(
+            candidates,
+            source_candidate_counts=source_candidate_counts,
+            source_query_coverage=source_query_coverage,
+        )
+        per_query_counts.append(len(candidates))
+        total_candidates += len(candidates)
 
     out_path = Path(out)
     _write_jsonl(out_path, rows)

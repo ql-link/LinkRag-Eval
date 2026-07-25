@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      LINKRAG_EVAL_REQUIRE_RAG: "1"
+      TOLINK_RAG_SHA: 6bf3237941657f40fd48ce8c0edec5af127c8f0a
+    steps:
+      - name: Checkout LinkRag-Eval
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned toLink-Rag
+        uses: actions/checkout@v4
+        with:
+          repository: ql-link/LinkRag
+          ref: 6bf3237941657f40fd48ce8c0edec5af127c8f0a
+          path: vendor/toLink-Rag
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Verify and install pinned toLink-Rag
+        run: |
+          actual_sha="$(git -C vendor/toLink-Rag rev-parse HEAD)"
+          test "$actual_sha" = "$TOLINK_RAG_SHA"
+          python -m pip install --upgrade pip
+          python -m pip install "setuptools<82"
+          python -m pip install -e ./vendor/toLink-Rag
+
+      - name: Install LinkRag-Eval
+        run: |
+          python -m pip install -e ".[dev]"
+
+      - name: Verify production dependency is importable
+        run: |
+          python - <<'PY'
+          from inspect import getfile
+          from pathlib import Path
+
+          from src.core.pipeline.recall.pipeline import RecallPipeline
+          from src.core.preprocessor.ragflow_tokenizer import RagFlowTokenizer
+          from src.core.splitter.chunking_engine import ChunkingEngine
+
+          pinned_root = Path("vendor/toLink-Rag").resolve()
+          for dependency in (RecallPipeline, RagFlowTokenizer, ChunkingEngine):
+              dependency_path = Path(getfile(dependency)).resolve()
+              assert dependency_path.is_relative_to(pinned_root), (
+                  f"{dependency.__name__} loaded outside pinned checkout: {dependency_path}"
+              )
+          PY
+
+      - name: Unit tests and import boundary
+        run: |
+          python -m pytest -m "not integration and not contract" -q
+          lint-imports
+
+      - name: Production contract tests
+        run: python -m pytest -m contract -q
+
+      - name: Alembic heads sanity
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          versions = Path("alembic/versions").glob("*.py")
+          revisions = {}
+          down = {}
+          for path in versions:
+              text = path.read_text(encoding="utf-8")
+              rev = re.search(r'^revision: str = "([^"]+)"', text, re.M)
+              parent = re.search(r'^down_revision: .* = "([^"]+)"', text, re.M)
+              if rev:
+                  revisions[rev.group(1)] = path.name
+                  down[rev.group(1)] = parent.group(1) if parent else None
+          children = {p for p in down.values() if p}
+          heads = sorted(set(revisions) - children)
+          assert heads == ["0003"], f"unexpected alembic heads: {heads}"
+          PY

@@ -1,0 +1,56 @@
+{
+  "version": "general_web_search.2026-07-24.v1",
+  "derivation": {
+    "split": "T2Retrieval Tune only",
+    "tune_sha256": "ac920c1098d5e24e475b4f38c891ba01489a324ffdbfce8350ab5111e086e797",
+    "policy": "canonical equivalence only; brand and broad-category substitutions rejected"
+  },
+  "domains": {
+    "general_web_search": {
+      "ambiguous_aliases": [
+        "卡",
+        "单",
+        "码",
+        "号"
+      ],
+      "entries": [
+        {
+          "canonical": "居民身份证",
+          "aliases": ["身份证", "身份证件"]
+        },
+        {
+          "canonical": "移动电话",
+          "aliases": ["手机", "手机号码"]
+        },
+        {
+          "canonical": "快递",
+          "aliases": ["快件", "物流包裹"]
+        },
+        {
+          "canonical": "退款",
+          "aliases": ["退费", "款项退回"]
+        },
+        {
+          "canonical": "银行卡",
+          "aliases": ["储蓄卡", "卡"]
+        },
+        {
+          "canonical": "验证码",
+          "aliases": ["校验码", "码"]
+        },
+        {
+          "canonical": "社会保险",
+          "aliases": ["社保"]
+        },
+        {
+          "canonical": "妊娠",
+          "aliases": ["怀孕"]
+        },
+        {
+          "canonical": "医疗机构",
+          "aliases": ["医院"]
+        }
+      ]
+    }
+  }
+}

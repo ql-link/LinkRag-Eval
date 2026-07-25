@@ -187,7 +187,7 @@ runs/golden_v2/spark_pregen/
 1. Spark sub-agent 离线生成 `spark_pregen/*.jsonl`。
 2. 导入器校验 `bundle_manifest.json`、文件 hash、schema version 和 `generator.model`。
 3. `corpus_blueprints` / `chunk_records` 转成 collection/manifest 或自有导入格式。
-4. 通过 `linkrag-eval ingest` 导入 eval MySQL + Qdrant dense/sparse。
+4. 通过 `linkrag-eval ingest` 导入本地 eval SQLite + Qdrant dense/sparse。
 5. 通过 `linkrag-eval bm25-backfill` 重建 SQLite FTS5 BM25。
 6. `query_seeds` 和 `hard_case_seeds` 进入候选池模块。
 7. 候选池由 dense/BM25/alt/random 生成 topN。
@@ -341,7 +341,7 @@ runs/golden_v2/spark_pregen/
 实现分两档:
 
 - Pilot 文件模式:`golden-v2 candidate-pool --seeds --chunks` 使用 `bm25_local + random_neighbor`,用于验证 schema、去重、报告与后续标注闭环。
-- 活栈模式:`golden-v2 candidate-pool-live --seeds --dataset-ids` 从 eval MySQL 取 chunk 正文,调用被测召回链路分别获取 `current_dense`、`bm25_sqlite_fts5`、`current_sparse` 分路候选;如配置 `EVAL_ALT_EMBED_*` 并启用 `--sources alt_embedding`,会用独立 embedding 对 eval chunk 做本地 cosine 扫描;最后再加入 `random_neighbor`。它使用同一输出 schema,可直接进入 DeepSeek 标注。
+- 活栈模式:`golden-v2 candidate-pool-live --seeds --dataset-ids` 从本地 eval SQLite 取 chunk 正文,调用被测召回链路分别获取 `current_dense`、`bm25_sqlite_fts5`、`current_sparse` 分路候选;如配置 `EVAL_ALT_EMBED_*` 并启用 `--sources alt_embedding`,会用独立 embedding 对 eval chunk 做本地 cosine 扫描;最后再加入 `random_neighbor`。它使用同一输出 schema,可直接进入 DeepSeek 标注。
   - 候选池分路阈值与正式评测阈值解耦,默认 `--dense-score-threshold 0.0 --sparse-score-threshold 0.0`,目的是扩大标注池而不是模拟线上排序。`alt_embedding` 默认不设分数阈值,只按 `--route-top-n` 取 topN;若要在 pilot 计划中显式记录"不实质过滤",使用 `--alt-score-threshold -1.0`。
   - 正式评测阈值仍走运行时配置:代码默认 dense `0.20`、sparse `0.40`;当前本地 `.env.eval` 已覆盖为 dense `0.30`、sparse `0.40`。报告解读时必须记录实际 snapshot,不能只看代码默认值。
   - 2026-07-09 pilot 发现 Ark sparse 在 `dataset_id=990901` 上 top 分数约 `0.15-0.17`;沿用正式评测的 `EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.40` 会导致 sparse 分路稳定 0 命中。
@@ -538,7 +538,7 @@ runs/golden_v2/
 └── reports/build_report.md
 ```
 
-### 10.2 MySQL 映射
+### 10.2 SQLite 映射
 
 已有表可继续承载:
 
@@ -711,12 +711,12 @@ linkrag-eval run \
 
 - `golden-v2 spark-corpus-export` 将标准化 `chunk_records.jsonl` 导出为现有 `ingest` 可消费的 `collection.tsv` 与 `manifest.jsonl`。
 - `manifest.jsonl` 允许携带 `ordinal`,保证同一 doc 多 chunk 时 deterministic `chunk_id` 不漂移。
-- 后续仍走 `linkrag-eval ingest` 写 eval MySQL + Qdrant,不直接写生产库或 eval 表。
+- 后续仍走 `linkrag-eval ingest` 写本地 eval SQLite + Qdrant,不直接写生产库或手工写 eval 表。
 
 验收:
 
 - 导出的 collection pid 唯一,manifest doc_id/status/ordinal 完整。
-- `linkrag-eval ingest --dataset-id 990901 ...` 只写 `tolink_rag_eval_db` 与 eval Qdrant 前缀。
+- `linkrag-eval ingest --dataset-id 990901 ...` 只写本地 `runs/linkrag_eval.sqlite3` 与 eval Qdrant 前缀。
 - `bm25-backfill --dataset-ids 990901` 后 SQLite FTS5 可检索该批语料。
 
 ### Step 2:开源数据 chunk 化
@@ -731,7 +731,7 @@ linkrag-eval run \
 ### Step 3:SQLite FTS5 BM25 候选源
 
 - 使用 `EVAL_BM25_MODE=sqlite_fts5`。
-- `bm25-backfill` 从 eval MySQL 重建 BM25 sidecar。
+- `bm25-backfill` 从本地 eval SQLite 重建 BM25 sidecar。
 - 候选池模块读取 SQLite BM25 topN。
 
 验收:
@@ -797,7 +797,7 @@ linkrag-eval run \
 - `golden-v2 spark-import` 已支持 Spark 离线 bundle 的模型、hash、schema、chunk_id 和泄漏词校验,并输出标准化 seeds/report。
 - `golden-v2 spark-corpus-export` 已支持将 Spark chunk_records 导出现有 ingest 的 collection/manifest 输入。
 - `golden-v2 seed-import` 已支持将真实 query/客服/日志/开源 query 的 JSONL/TSV/CSV 清洗成标准 `query_seeds.jsonl`,默认过滤重复、过短/过长、手机号/邮箱/身份证号和密钥形态文本。
-- `golden-v2 pilot-preflight` 已支持 pilot 本地门禁:检查 query seed 数量、dataset_id、eval MySQL/Qdrant 隔离、judge 配置、第二判官差异、alt embedding 独立配置和 BM25 模式。
+- `golden-v2 pilot-preflight` 已支持 pilot 本地门禁:检查 query seed 数量、dataset_id、本地 SQLite/Qdrant eval 隔离、judge 配置、第二判官差异、alt embedding 独立配置和 BM25 模式。
 - `golden-v2 pilot-plan` 已支持生成从真实 query 导入、预检、BM25/alt 回填、候选池、DeepSeek 标注、QC、复核、仲裁、build、blind run 到 medium 2w scale-plan 的完整命令清单。
 - `golden-v2 candidate-pool` 已支持 pilot 文件模式(`bm25_local + random_neighbor`)并输出候选池/report。
 - `golden-v2 candidate-pool-live` 已支持活栈多源模式(`bm25_sqlite_fts5 + current_dense + current_sparse + alt_embedding + random_neighbor`),并用 RRF 单路口径与候选池专用阈值避免正式评测权重/阈值污染候选池;report 会记录 dense/sparse/alt embedding 各路阈值。

@@ -19,6 +19,9 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
+    # SQLite baseline 由当前 metadata 创建，字段已经是 String(128)。
+    if op.get_bind().dialect.name == "sqlite":
+        return
     op.alter_column(
         "eval_run",
         "sparse_provider",
@@ -29,6 +32,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    if op.get_bind().dialect.name == "sqlite":
+        return
     op.alter_column(
         "eval_run",
         "sparse_provider",

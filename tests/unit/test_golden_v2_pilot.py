@@ -20,7 +20,7 @@ def _write_jsonl(path, n: int) -> None:
 
 def _settings(**overrides):
     base = {
-        "db_name": "tolink_rag_eval_db",
+        "db_url": "sqlite+aiosqlite:///runs/linkrag_eval.sqlite3",
         "qdrant_prefix": "eval_kb_bucket",
         "judge_base_url": "https://judge/chat/completions",
         "judge_api_key": "secret",

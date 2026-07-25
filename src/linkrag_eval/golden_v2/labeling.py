@@ -83,6 +83,7 @@ async def label_candidate_pool(
                     "source": pool.get("source"),
                     "type_hint": pool.get("type_hint"),
                     "hard_reason": pool.get("hard_reason"),
+                    "provenance": pool.get("provenance"),
                     "candidate": {
                         "chunk_id": candidate["chunk_id"],
                         "doc_id": candidate["doc_id"],

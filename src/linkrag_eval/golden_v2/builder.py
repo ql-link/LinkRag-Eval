@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any, Iterable
 
 from linkrag_eval.golden.schema import GoldenSample
+from linkrag_eval.golden.provenance import QueryProvenance
 from linkrag_eval.models import QuestionType
 
 
@@ -79,6 +80,12 @@ def build_golden_from_judgments(
             type=_question_type(rows[0].get("type_hint"), role=role),
             note=note,
             relevance_grades=grades,
+            provenance=(
+                QueryProvenance.from_dict(rows[0]["provenance"])
+                if rows[0].get("provenance")
+                and "source_kind" in rows[0]["provenance"]
+                else None
+            ),
         )
         buckets[f"{role}_{split}"].append(sample)
 

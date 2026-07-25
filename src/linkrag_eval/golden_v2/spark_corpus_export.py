@@ -1,7 +1,7 @@
 """将 Spark 标准化 chunk_records 导出现有 ingest 输入格式。
 
 导出器只写 ``collection.tsv`` 与 ``manifest.jsonl``。真正入库仍走 ``linkrag-eval ingest``,
-从而复用 eval MySQL/Qdrant 护栏和索引流程。
+从而复用 eval SQLite/Qdrant 护栏和索引流程。
 """
 
 from __future__ import annotations

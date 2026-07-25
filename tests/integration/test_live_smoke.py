@@ -1,4 +1,4 @@
-"""活栈 smoke:显式开启后只读验证 eval MySQL/Qdrant 可达与隔离护栏。
+"""活栈 smoke:显式开启后只读验证本地 SQLite/Qdrant 可达与隔离护栏。
 
 默认 PR/本地单测跳过。运行:
 
@@ -16,7 +16,7 @@ pytestmark = [
     pytest.mark.integration,
     pytest.mark.skipif(
         os.getenv("RUN_EVAL_INTEGRATION") != "1",
-        reason="需显式 RUN_EVAL_INTEGRATION=1 才连接真实 Qdrant/MySQL/embedder",
+        reason="需显式 RUN_EVAL_INTEGRATION=1 才连接本地 SQLite 与真实 Qdrant/embedder",
     ),
 ]
 
@@ -26,27 +26,26 @@ def test_live_settings_keep_eval_isolation() -> None:
 
     settings = get_settings()
     assert "eval" in settings.qdrant_prefix
-    assert settings.db_name == "tolink_rag_eval_db"
-    assert settings.db_name != "tolink_rag_db"
+    assert settings.database_url().startswith("sqlite+aiosqlite:///")
 
 
-async def test_eval_mysql_schema_is_reachable_and_current() -> None:
+async def test_eval_sqlite_schema_is_reachable_and_current() -> None:
     from linkrag_eval.store.engine import close_eval_engines, get_eval_sessionmaker
 
     sessionmaker = get_eval_sessionmaker()
     try:
         async with sessionmaker() as session:
-            db_name = (await session.execute(text("SELECT DATABASE()"))).scalar_one()
-            assert db_name == "tolink_rag_eval_db"
-
             tables = (
-                await session.execute(
-                    text(
-                        "SELECT table_name FROM information_schema.tables "
-                        "WHERE table_schema = DATABASE() AND table_name LIKE 'eval_%'"
+                (
+                    await session.execute(
+                        text(
+                            "SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'eval_%'"
+                        )
                     )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
             assert {
                 "eval_dataset",
                 "eval_corpus_chunk",

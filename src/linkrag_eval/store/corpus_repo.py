@@ -1,7 +1,7 @@
-"""语料/编目落库(``EvalCorpusRepo``,MySQL 独立库)。
+"""语料/编目落库(``EvalCorpusRepo``,默认本地 SQLite)。
 
 搬迁自源仓库 ``EvalIngestor`` 的落库部分,去掉生产 ORM 依赖:只写 eval 自持的
-``eval_dataset`` / ``eval_corpus_chunk``(在 ``tolink_rag_eval_db``,绝不碰生产表)。索引动作
+``eval_dataset`` / ``eval_corpus_chunk``(本地独立库,绝不碰生产表)。索引动作
 不在此(由 EvalVectorIndexer 编排),本类只负责"把已索引的 chunk 元数据 + 编目落库"。
 
 幂等 ``merge``(按主键覆盖),便于重灌刷新。
@@ -38,7 +38,7 @@ class CorpusChunkRow:
 
 
 class EvalCorpusRepo:
-    """eval 语料 + 编目的 MySQL 仓储(独立库)。"""
+    """eval 语料 + 编目的本地仓储。"""
 
     def __init__(self, *, url: str | None = None, sessionmaker: Any | None = None) -> None:
         self._url = url
@@ -64,6 +64,24 @@ class EvalCorpusRepo:
                 )
             ).scalars().all()
         return {cid: "ACTIVE" for cid in rows}
+
+    async def fetch_ingested_positions(self, dataset_id: int) -> dict[tuple[int, int], str]:
+        """返回已完成 dense+sparse 写入的位置及正文 hash，供大批量幂等续灌跳过。"""
+        async with self._sm() as s:
+            rows = (
+                await s.execute(
+                    select(
+                        EvalCorpusChunkDB.doc_id,
+                        EvalCorpusChunkDB.ordinal,
+                        EvalCorpusChunkDB.content_hash,
+                    ).where(
+                        EvalCorpusChunkDB.dataset_id == dataset_id,
+                        EvalCorpusChunkDB.dense_indexed.is_(True),
+                        EvalCorpusChunkDB.sparse_indexed.is_(True),
+                    )
+                )
+            ).all()
+        return {(int(doc_id), int(ordinal)): str(digest) for doc_id, ordinal, digest in rows}
 
     async def fetch_chunks_for_datasets(
         self, dataset_ids: Sequence[int], *, min_content_chars: int = 0

@@ -8,6 +8,8 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import json
 import re
 import sqlite3
 from dataclasses import dataclass
@@ -68,6 +70,19 @@ class SQLiteBm25Store:
             dataset_id,
             int(doc_id) if doc_id is not None else None,
             top_k,
+        )
+
+    async def identity(self) -> dict[str, object]:
+        """返回 sidecar 的逻辑内容指纹，供运行快照与验收报告固化。
+
+        不使用 SQLite 文件字节哈希：WAL/checkpoint 等物理布局变化会让相同逻辑内容得到
+        不同哈希。这里按主键顺序哈希所有可检索字段，并记录 schema、数据集分布和权重。
+        """
+        return await asyncio.to_thread(
+            inspect_sqlite_bm25_identity,
+            self.path,
+            coarse_weight=self.coarse_weight,
+            fine_weight=self.fine_weight,
         )
 
     def _connect(self) -> sqlite3.Connection:
@@ -224,3 +239,67 @@ def _fts_or_query(tokens: Sequence[str]) -> str:
         if clean:
             parts.append(f'"{clean}"')
     return " OR ".join(parts)
+
+
+def inspect_sqlite_bm25_identity(
+    path: str | Path,
+    *,
+    coarse_weight: float = 2.0,
+    fine_weight: float = 1.0,
+) -> dict[str, object]:
+    """只读检查 SQLite BM25 sidecar，并计算稳定的逻辑内容 SHA-256。"""
+    resolved = Path(path).expanduser().resolve()
+    identity: dict[str, object] = {
+        "backend": "sqlite_fts5",
+        "path": str(resolved),
+        "exists": resolved.is_file(),
+        "schema_version": None,
+        "chunk_count": 0,
+        "dataset_counts": {},
+        "content_sha256": "",
+        "coarse_weight": float(coarse_weight),
+        "fine_weight": float(fine_weight),
+    }
+    if not resolved.is_file():
+        return identity
+
+    con = sqlite3.connect(f"file:{resolved}?mode=ro", uri=True)
+    try:
+        version_row = con.execute(
+            "SELECT version FROM bm25_meta ORDER BY rowid DESC LIMIT 1"
+        ).fetchone()
+        identity["schema_version"] = int(version_row[0]) if version_row else None
+        dataset_rows = con.execute(
+            """
+            SELECT dataset_id, COUNT(*)
+            FROM bm25_fts
+            GROUP BY dataset_id
+            ORDER BY CAST(dataset_id AS INTEGER)
+            """
+        ).fetchall()
+        identity["dataset_counts"] = {
+            str(dataset_id): int(count) for dataset_id, count in dataset_rows
+        }
+        identity["chunk_count"] = sum(int(count) for _, count in dataset_rows)
+
+        digest = hashlib.sha256()
+        rows = con.execute(
+            """
+            SELECT chunk_id, doc_id, user_id, dataset_id, chunk_type, coarse, fine
+            FROM bm25_fts
+            ORDER BY chunk_id
+            """
+        )
+        for row in rows:
+            encoded = json.dumps(
+                ["" if value is None else str(value) for value in row],
+                ensure_ascii=False,
+                separators=(",", ":"),
+            ).encode("utf-8")
+            digest.update(encoded)
+            digest.update(b"\n")
+        identity["content_sha256"] = digest.hexdigest()
+        identity["file_size"] = resolved.stat().st_size
+        return identity
+    finally:
+        con.close()

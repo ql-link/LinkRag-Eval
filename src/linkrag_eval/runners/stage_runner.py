@@ -108,6 +108,18 @@ async def run_stage(
             {
                 "sample_id": sample.id,
                 "type": sample.type.value,
+                "query_source": (
+                    sample.provenance.source_kind if sample.provenance is not None else "unknown"
+                ),
+                "query_source_name": (
+                    sample.provenance.source_name if sample.provenance is not None else None
+                ),
+                "query_domain": (
+                    sample.provenance.domain if sample.provenance is not None else None
+                ),
+                "query_scenario": (
+                    sample.provenance.scenario if sample.provenance is not None else None
+                ),
                 "elapsed_ms": output.elapsed_ms,
                 "per_source_counts": output.per_source_counts,
                 "failed_sources": output.failed_sources,

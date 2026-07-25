@@ -26,13 +26,14 @@ class EvalSettings(BaseSettings):
     qdrant_bm25_vector_name: str = Field(default="bm25_text")
     bm25_sqlite_path: str = Field(default="runs/bm25_eval.sqlite3")
 
-    # —— eval 自持元数据/结果库(MySQL:同生产服务器、独立库 tolink_rag_eval_db)——
+    # —— eval 自持元数据/结果库(默认本地 SQLite)——
+    db_url: str = Field(default="sqlite+aiosqlite:///runs/linkrag_eval.sqlite3")
+    # 旧 MySQL 字段仅供一次性只读迁移工具使用；正常评测不依赖远端数据库。
     db_host: str = Field(default="127.0.0.1")
     db_port: int = Field(default=3306)
     db_user: str = Field(default="root")
     db_password: str = Field(default="")
     db_name: str = Field(default="tolink_rag_eval_db")
-    db_url: str = Field(default="")  # 完整 DSN 覆盖;否则由上面字段构建(mysql+aiomysql)
 
     # —— judge LLM(测量仪器,解耦于生产解析链;base_url 为完整 chat completions 端点)——
     judge_base_url: str = Field(default="")
@@ -59,6 +60,7 @@ class EvalSettings(BaseSettings):
     embed_model: str = Field(default="text-embedding-v4")
     embed_dim: int = Field(default=1024)
     embed_batch_size: int = Field(default=10)  # text-embedding-v4 单批上限 10
+    embed_concurrency: int = Field(default=4)
     embed_timeout_ms: int = Field(default=60000)
 
     # —— 候选池专用 alt embedding(独立于当前被测 dense,不写正式 Qdrant)——
@@ -79,6 +81,7 @@ class EvalSettings(BaseSettings):
     sparse_top_k: int = Field(default=256)
     sparse_min_weight: float = Field(default=0.0)
     sparse_timeout_ms: int = Field(default=60000)
+    sparse_concurrency: int = Field(default=8)
 
     # —— 召回装配阈值(过滤低质量分路命中;默认来自 2026-07-02 活栈网格搜索)——
     recall_dense_score_threshold: float = Field(default=0.30)
@@ -142,10 +145,17 @@ class EvalSettings(BaseSettings):
             raise ValueError(f"EVAL_ALT_EMBED_PROVIDER={v!r} 非法;应为 {sorted(allowed)} 之一。")
         return "bge_m3_http" if normalized in {"bge_m3", "bgem3"} else normalized
 
-    def mysql_dsn(self) -> str:
-        """eval 库异步 DSN(mysql+aiomysql)。``EVAL_DB_URL`` 覆盖优先,否则由字段构建。"""
-        if self.db_url:
-            return self.db_url
+    def database_url(self) -> str:
+        """eval 本地数据库异步 URL。"""
+        if not self.db_url.startswith("sqlite+aiosqlite:///"):
+            raise RuntimeError(
+                "EVAL_DB_URL 必须指向本地 sqlite+aiosqlite:/// 数据库；"
+                "旧 MySQL 仅允许由迁移工具只读访问。"
+            )
+        return self.db_url
+
+    def mysql_source_dsn(self) -> str:
+        """旧 MySQL 只读迁移源 DSN；正常运行不得使用。"""
         from urllib.parse import quote_plus
 
         pwd = quote_plus(self.db_password)
@@ -153,6 +163,10 @@ class EvalSettings(BaseSettings):
             f"mysql+aiomysql://{self.db_user}:{pwd}@{self.db_host}:{self.db_port}"
             f"/{self.db_name}?charset=utf8mb4"
         )
+
+    def mysql_dsn(self) -> str:
+        """向后兼容旧调用；新代码应使用 :meth:`database_url`。"""
+        return self.database_url()
 
 
 @lru_cache

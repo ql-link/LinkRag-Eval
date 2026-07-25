@@ -73,9 +73,13 @@ class _EvalBm25Retriever:
         user_id: int,
         top_k: int,
         score_threshold_override: float | None = None,
+        dataset_contexts: dict[int, object] | None = None,
     ) -> list[Any]:
         from src.core.pipeline.recall.models import RetrieverHit
 
+        # 新版 RecallPipeline 对所有 retriever 统一透传数据集上下文。SQLite/Qdrant
+        # eval BM25 只使用显式 dataset_ids，不读取生产数据集配置，因此有意忽略。
+        del dataset_contexts, score_threshold_override
         tokens = self._tokenize(query)
         if not tokens or not dataset_ids:
             return []

@@ -47,10 +47,12 @@ async def cache_ltr_candidates(
     concurrency: int = 4,
     retries: int = 5,
     use_query_routing: bool = False,
+    alias_registry_path: Path | None = None,
     progress: Any | None = None,
 ) -> dict[str, Any]:
     """Fetch max route candidates and persist progress after every query."""
     from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline
+    from linkrag_eval.retrieval.aliases import AliasRegistry
 
     partial = out.with_suffix(out.suffix + ".partial")
     latest = _load_latest(out)
@@ -61,6 +63,7 @@ async def cache_ltr_candidates(
         sparse_score_threshold=0.0,
     )
     retrievers = {retriever.source: retriever for retriever in pipeline._retrievers}
+    alias_registry = AliasRegistry.load(alias_registry_path) if alias_registry_path else None
     fallback_depths = CandidateDepths(
         dense=settings.recall_dense_top_k,
         sparse=settings.recall_sparse_top_k,
@@ -72,6 +75,12 @@ async def cache_ltr_candidates(
 
     def reusable(sample: GoldenSample, row: dict[str, Any]) -> bool:
         if row.get("failed_sources"):
+            return False
+        row_alias = row.get("alias_registry")
+        if alias_registry is None:
+            if row_alias is not None:
+                return False
+        elif not row_alias or row_alias.get("fingerprint") != alias_registry.fingerprint:
             return False
         expected = sample_depths(sample).as_dict()
         actual = row.get("route_top_ks")
@@ -98,10 +107,14 @@ async def cache_ltr_candidates(
         retriever = retrievers.get(source)
         if retriever is None:
             return [], True
+        query = sample.query
+        if alias_registry is not None and source in {"sparse", "bm25"}:
+            domain = sample.provenance.domain if sample.provenance is not None else ""
+            query = alias_registry.expand(sample.query, domain=domain).expanded_query
         for attempt in range(max(1, retries)):
             try:
                 hits = await retriever.recall(
-                    sample.query,
+                    query,
                     sample.dataset_ids,
                     None,
                     user_id=sample.user_id,
@@ -143,6 +156,19 @@ async def cache_ltr_candidates(
             "expected_doc_ids": sample.expected_doc_ids,
             "routes": routes,
             "failed_sources": failed,
+            "alias_registry": (
+                {
+                    "version": alias_registry.version,
+                    "fingerprint": alias_registry.fingerprint,
+                    "domain": sample.provenance.domain if sample.provenance is not None else None,
+                    "expansion": alias_registry.expand(
+                        sample.query,
+                        domain=sample.provenance.domain if sample.provenance is not None else "",
+                    ).expanded_query,
+                }
+                if alias_registry is not None
+                else None
+            ),
         }
         async with write_lock:
             with partial.open("a", encoding="utf-8") as handle:
@@ -171,6 +197,10 @@ async def cache_ltr_candidates(
         "failed_samples": len(failed_rows),
         "failed_sample_ids": [row["sample_id"] for row in failed_rows],
         "query_routing": use_query_routing,
+        "alias_registry_version": alias_registry.version if alias_registry is not None else None,
+        "alias_registry_fingerprint": (
+            alias_registry.fingerprint if alias_registry is not None else None
+        ),
         "global_fallback_top_ks": fallback_depths.as_dict(),
         "routing_profiles": (
             {key: value.as_dict() for key, value in FROZEN_ROUTING_DEPTHS.items()}

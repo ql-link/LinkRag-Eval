@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import Sequence
 
 import httpx
@@ -30,6 +31,7 @@ class OpenAIDenseEmbedder:
         base_url: str,
         dim: int = 1024,
         batch_size: int = 10,
+        concurrency: int = 4,
         timeout_ms: int = 60000,
         max_retries: int = 3,
         http_client: httpx.AsyncClient | None = None,
@@ -47,6 +49,7 @@ class OpenAIDenseEmbedder:
         self._endpoint = b if b.endswith("/embeddings") else f"{b}/embeddings"
         self._dim = dim
         self._batch_size = max(1, batch_size)
+        self._concurrency = max(1, concurrency)
         self._timeout_ms = timeout_ms
         self._max_retries = max_retries
         self._client = http_client
@@ -75,11 +78,15 @@ class OpenAIDenseEmbedder:
         items = list(texts)
         if not items:
             return []
-        out: list[list[float]] = []
-        for start in range(0, len(items), self._batch_size):
-            batch = items[start : start + self._batch_size]
-            out.extend(await self._embed_batch(batch))
-        return out
+        batches = [items[start : start + self._batch_size] for start in range(0, len(items), self._batch_size)]
+        semaphore = asyncio.Semaphore(self._concurrency)
+
+        async def encode(batch: list[str]) -> list[list[float]]:
+            async with semaphore:
+                return await self._embed_batch(batch)
+
+        encoded = await asyncio.gather(*(encode(batch) for batch in batches))
+        return [vector for batch in encoded for vector in batch]
 
     async def aembed_query(self, text: str) -> list[float]:
         """单条 query 编码(召回侧用)。"""
@@ -130,7 +137,7 @@ class OpenAIDenseEmbedder:
                 return await self._post(payload, attempt + 1)
             raise DenseEncodeError(f"embeddings 连接失败:{type(exc).__name__}。") from exc
 
-        if resp.status_code >= 500:
+        if resp.status_code in {408, 429} or resp.status_code >= 500:
             if attempt < self._max_retries:
                 import asyncio
 
@@ -269,6 +276,7 @@ def build_dense_embedder(settings=None) -> OpenAIDenseEmbedder:
         base_url=settings.embed_base_url,
         dim=settings.embed_dim,
         batch_size=settings.embed_batch_size,
+        concurrency=getattr(settings, "embed_concurrency", 4),
         timeout_ms=settings.embed_timeout_ms,
     )
 

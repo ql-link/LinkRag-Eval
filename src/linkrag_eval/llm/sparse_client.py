@@ -39,6 +39,7 @@ class ArkSparseEncoder:
         min_weight: float = 0.0,
         timeout_ms: int = 60000,
         max_retries: int = 3,
+        concurrency: int = 8,
         http_client: httpx.AsyncClient | None = None,
     ) -> None:
         if not (api_key or "").strip():
@@ -52,6 +53,9 @@ class ArkSparseEncoder:
         self._min_weight = min_weight
         self._timeout_ms = timeout_ms
         self._max_retries = max_retries
+        if concurrency < 1:
+            raise SparseEncodeError("Ark concurrency 必须大于 0。")
+        self._concurrency = concurrency
         self._client = http_client
 
     @property
@@ -62,7 +66,13 @@ class ArkSparseEncoder:
         """逐条编码(多模态端点一次融合成单向量),返回与输入同序、等长的 SparseVec。"""
         if not texts:
             return []
-        return [await self._encode_one(t) for t in texts]
+        semaphore = asyncio.Semaphore(self._concurrency)
+
+        async def encode(text: str) -> SparseVec:
+            async with semaphore:
+                return await self._encode_one(text)
+
+        return list(await asyncio.gather(*(encode(text) for text in texts)))
 
     async def _encode_one(self, text: str) -> SparseVec:
         payload = {
@@ -105,7 +115,7 @@ class ArkSparseEncoder:
                 return await self._post(payload, attempt + 1)
             raise SparseEncodeError(f"Ark 连接失败:{type(exc).__name__}。") from exc
 
-        if resp.status_code >= 500:
+        if resp.status_code in {408, 429} or resp.status_code >= 500:
             if attempt < self._max_retries:
                 await asyncio.sleep(2 * (attempt + 1))
                 return await self._post(payload, attempt + 1)
@@ -224,6 +234,7 @@ def build_sparse_encoder(settings=None):
             top_k=settings.sparse_top_k,
             min_weight=settings.sparse_min_weight,
             timeout_ms=settings.sparse_timeout_ms,
+            concurrency=getattr(settings, "sparse_concurrency", 8),
         )
     if provider in ("bge_m3_http", "bge_m3", "bgem3"):
         return BgeM3HttpSparseEncoder(

@@ -6,8 +6,9 @@
 from __future__ import annotations
 
 from sqlalchemy import create_engine, inspect
+from sqlalchemy.orm import Session
 
-from linkrag_eval.store.models import EvalBase
+from linkrag_eval.store.models import EvalBase, EvalQrelDB
 
 
 def _build() -> "inspect":
@@ -35,3 +36,13 @@ def test_bm25_rename_and_fingerprint_present() -> None:
     assert "es_indexed" not in chunk_cols  # 已改名
     run_cols = {c["name"] for c in insp.get_columns("eval_run")}
     assert "computer_fingerprint" in run_cols
+
+
+def test_sqlite_auto_increment_primary_key() -> None:
+    engine = create_engine("sqlite://")
+    EvalBase.metadata.create_all(engine)
+    with Session(engine) as session:
+        row = EvalQrelDB(query_id="q1", reference_id="c1", reference_kind="chunk", grade=1)
+        session.add(row)
+        session.commit()
+        assert row.id == 1

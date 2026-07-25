@@ -455,6 +455,41 @@ def _matrix(
     )
 
 
+def _paired_acceptance(
+    predictions: list[dict[str, Any]], *, seed: int, bootstrap_samples: int = 10_000
+) -> dict[str, Any]:
+    differences = np.asarray(
+        [
+            float(row["ltr_hit_at_10"]) - float(row["baseline_hit_at_10"])
+            for row in predictions
+        ],
+        dtype=np.float64,
+    )
+    rng = np.random.default_rng(seed)
+    indices = rng.integers(0, len(differences), size=(bootstrap_samples, len(differences)))
+    bootstrap = differences[indices].mean(axis=1)
+    gained = int(np.sum(differences > 0))
+    lost = int(np.sum(differences < 0))
+    discordant = gained + lost
+    if discordant:
+        tail = sum(math.comb(discordant, value) for value in range(min(gained, lost) + 1))
+        exact_p = min(1.0, 2.0 * tail / (2**discordant))
+    else:
+        exact_p = 1.0
+    return {
+        "delta_hit_at_10": float(differences.mean()),
+        "bootstrap_samples": bootstrap_samples,
+        "bootstrap_95ci": [
+            float(np.quantile(bootstrap, 0.025)),
+            float(np.quantile(bootstrap, 0.975)),
+        ],
+        "gained": gained,
+        "lost": lost,
+        "discordant": discordant,
+        "mcnemar_exact_p": exact_p,
+    }
+
+
 def run_ltr_cross_validation(
     cache_path: Path,
     *,
@@ -546,6 +581,7 @@ def run_ltr_cross_validation(
                 {
                     "fold": fold_index,
                     "sample_id": row["sample_id"],
+                    "query": row["query"],
                     "scenario": row["scenario"],
                     "baseline_hit_at_10": bh,
                     "baseline_mrr": bm,
@@ -644,6 +680,7 @@ def run_ltr_cross_validation(
         "overall": overall,
         "scenario_overall": scenario_overall,
         "transitions": dict(transitions),
+        "paired_acceptance": _paired_acceptance(all_predictions, seed=seed + 4000),
         "fold_reports": fold_reports,
         "feature_importance": importance,
         "predictions": all_predictions,
@@ -747,6 +784,7 @@ def run_ltr_external_evaluation(
         predictions.append(
             {
                 "sample_id": row["sample_id"],
+                "query": row["query"],
                 "scenario": row["scenario"],
                 "baseline_hit_at_10": baseline_hit,
                 "baseline_mrr": baseline_mrr,
@@ -853,6 +891,7 @@ def run_ltr_external_evaluation(
         "strict_no_evidence_overlap": strict_no_evidence_overlap,
         "scenario_overall": scenario_overall,
         "transitions": dict(transitions),
+        "paired_acceptance": _paired_acceptance(predictions, seed=seed + 4000),
         "feature_importance": importance,
         "predictions": predictions,
     }
@@ -937,6 +976,11 @@ th,td{{border:1px solid #d0d7de;padding:8px;text-align:left}}th{{background:#eef
 def _render_external_html(report: dict[str, Any]) -> str:
     overall = report["overall"]
     strict = report["strict_no_evidence_overlap"]
+    paired = report.get("paired_acceptance") or {
+        "bootstrap_95ci": [overall["delta_hit_at_10"], overall["delta_hit_at_10"]],
+        "mcnemar_exact_p": 1.0,
+        "discordant": sum((report.get("transitions") or {}).get(key, 0) for key in ("gained", "lost")),
+    }
     scenario_rows = "".join(
         "<tr>"
         f"<td>{html.escape(scenario)}</td><td>{values['n']}</td>"
@@ -989,6 +1033,9 @@ th,td{{border:1px solid #d0d7de;padding:8px;text-align:left}}th{{background:#eef
 候选池覆盖率：{_pct(overall["candidate_union_coverage"])}；
 新增命中 {report["transitions"].get("gained", 0)}，丢失命中
 {report["transitions"].get("lost", 0)}。</p>
+<p>配对 Hit@10 差值 95% bootstrap CI：
+[{_pct(paired["bootstrap_95ci"][0])}, {_pct(paired["bootstrap_95ci"][1])}]；
+McNemar exact p={paired["mcnemar_exact_p"]:.4g}（discordant={paired["discordant"]}）。</p>
 {mrr_note}
 <h2>排除证据重叠后的严格结果</h2>
 <p>测试集中有 {report["evidence_overlap_test_samples"]} 条 Query 与训练集共享正确 Chunk。

@@ -1,6 +1,6 @@
 # LinkRag-Eval 实现约定
 
-`LinkRag-Eval` 是从生产 RAG 仓库(toLink-Rag)剥离的**独立评测/质检项目**。它只通过"产物级纯函数"复用生产计算能力,自己负责入库、检索、算分,使用独立 MySQL 库 `tolink_rag_eval_db`(同生产服务器、库级隔离)+ eval 独立前缀的 Qdrant collection。
+`LinkRag-Eval` 是从生产 RAG 仓库(toLink-Rag)剥离的**独立评测/质检项目**。它只通过"产物级纯函数"复用生产计算能力,自己负责入库、检索、算分,使用本地 SQLite `runs/linkrag_eval.sqlite3` + eval 独立前缀的 Qdrant collection。
 
 本文件是 Agent / 开发者的**强制规范**。总方案见 [docs/architecture/decoupling-plan.md](docs/architecture/decoupling-plan.md);当前进度见 [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md);历史设计见 [docs/archive/](docs/archive/);实证报告见 [docs/reports/](docs/reports/)。
 
@@ -19,7 +19,7 @@
 | 环境变量前缀 | `EVAL_`(judge 用 `EVAL_JUDGE_*`) |
 | 配置文件 | `.env.eval`(gitignored,绝不进版本库) |
 | Qdrant 前缀 | 必须含 `eval`(如 `eval_kb_bucket`) |
-| MySQL 库 | `tolink_rag_eval_db`(同生产服务器,`EVAL_DB_*` 配置,复用账号只换库名) |
+| 元数据/结果库 | 本地 SQLite `runs/linkrag_eval.sqlite3`(`EVAL_DB_URL`) |
 
 ---
 
@@ -44,7 +44,7 @@ LinkRag-Eval/
 │   └── archive/               # 已被替代的历史设计
 ├── src/linkrag_eval/          # ← src-layout:包在此,import 仍 `from linkrag_eval.x`
 │   ├── compute/               # 产物计算封装(rag_adapter 是唯一允许 import rag 的地方)
-│   ├── store/                 # 独立存储(EvalVectorStore + MySQL repo,独立库)
+│   ├── store/                 # 独立存储(EvalVectorStore + 本地 SQLite repo)
 │   ├── retrieval/             # 召回装配(recall_factory 注入 eval 前缀)
 │   ├── metrics/               # 指标(纯函数)
 │   ├── golden/                # golden 生成 / 编目
@@ -56,7 +56,7 @@ LinkRag-Eval/
 ├── tests/
 │   ├── unit/                  # 纯核心(注入 fake,零活栈)
 │   ├── contract/              # rag 纯函数契约测试(防签名漂移)
-│   └── integration/           # 真实活栈 smoke(连远端 Qdrant/MySQL)
+│   └── integration/           # 真实活栈 smoke(本地 SQLite + 远端 Qdrant/embedder)
 └── scripts/                   # ingest / run / report 驱动脚本
 ```
 
@@ -127,12 +127,12 @@ class ProductComputer(Protocol):
 - **`chunk_id` 用 uuid5 确定性**:`uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{ordinal}")`。同输入恒等 → 冻结语料 re-ingest 不变 → qrels 不失效;dense/sparse/bm25 三路与 qrels 共用同一 id。
 - **dense/sparse 均由 eval `llm/` 模块承载**(config 驱动,`EVAL_EMBED_*` / `EVAL_SPARSE_*`,模型可选),不经 rag。写入侧 `compute_dense` 与召回侧 query 编码 **必须用同一 eval dense 编码器口径**(硬约束,见方案风险 C);否则 eval 内部向量空间不一致。
 
-### MySQL(eval 自持元数据/结果,独立库)
+### SQLite(eval 自持元数据/结果,本地单文件)
 
-- **同生产 MySQL 服务器、独立库 `tolink_rag_eval_db`**(库级隔离,类比 Qdrant 前缀隔离);复用生产服务器/账号、只换库名,`EVAL_DB_*` 配置(`mysql+aiomysql`)。**只建 eval 库的表,绝不碰生产 `tolink_rag_db`。**
-- 建库(utf8mb4):`CREATE DATABASE IF NOT EXISTS tolink_rag_eval_db DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+- 默认 `EVAL_DB_URL=sqlite+aiosqlite:///runs/linkrag_eval.sqlite3`。正常评测禁止依赖远端 MySQL，数据库文件 gitignored。
+- 旧 `tolink_rag_eval_db` 只允许作为一次性只读迁移源；迁移工具必须校验库名并逐表核对计数与内容摘要，绝不读取或写入生产 `tolink_rag_db`。
 - `EvalBase` 六表:`eval_dataset` / `eval_corpus_chunk` / `eval_query` / `eval_qrel` / `eval_run` / `eval_metric_result`。
-- `_AutoPK` 改纯 `BigInteger`(MySQL AUTO_INCREMENT);枚举字段保持 `String + 注释`(改值不需 migration);模型 dialect 无关(单测仍用 SQLite)。
+- `_AutoPK` 在 SQLite 使用 `Integer` 自增、旧 MySQL 迁移源使用 `BigInteger`;枚举字段保持 `String + 注释`(改值不需 migration)。
 - 字段变更:`eval_corpus_chunk.es_indexed` → `bm25_indexed`;`eval_run` 增 `computer_fingerprint`。
 - Schema 演进唯一入口是 `alembic/`(eval 自己的迁移链,与生产 alembic 完全隔离)。
 
@@ -142,7 +142,7 @@ class ProductComputer(Protocol):
 
 - 所有运行时配置经 `linkrag_eval/config.py` 加载,**不 import `src.config`**。
 - 环境变量样例放 `.env.eval.example`;真值放 `.env.eval`(gitignored)。
-- 关键变量:`EVAL_QDRANT_HOST/PREFIX/BUCKET_COUNT`、`EVAL_DB_*`(MySQL 独立库)、`EVAL_SPARSE_*`、`EVAL_JUDGE_BASE_URL/API_KEY/MODEL`、系统 embedder 端点。
+- 关键变量:`EVAL_QDRANT_HOST/PREFIX/BUCKET_COUNT`、`EVAL_DB_URL`(本地 SQLite)、`EVAL_SPARSE_*`、`EVAL_JUDGE_BASE_URL/API_KEY/MODEL`、系统 embedder 端点。
 - **`EVAL_USER_ID=990001` 是 routing/partition 常量,不是真实用户**;只用于 bucket 路由,不得据此查 `llm_user_config`。
 
 ---
@@ -161,7 +161,7 @@ class ProductComputer(Protocol):
 | --- | --- | --- | --- |
 | 单元 | `tests/unit/` | 注入 fake,零活栈 | 默认 CI |
 | 契约 | `tests/contract/` | 真 rag 包,无远端 | rag 升级 / 默认 CI |
-| 集成 | `tests/integration/` | 真 Qdrant/MySQL/embedder | 手动 / nightly,需 `.env.eval` |
+| 集成 | `tests/integration/` | 本地 SQLite + 真 Qdrant/embedder | 手动 / nightly,需 `.env.eval` |
 | import-lint | `tests/` | — | 断言黑名单零命中 |
 
 - 每个迁移步骤(Step 0–6)以 `recall@10 ≈ 0.901`(±0.005)为**等价门槛**,固定数据集重灌后对比。
@@ -172,7 +172,7 @@ class ProductComputer(Protocol):
 ## 九、安全与隔离纪律(不可妥协)
 
 - `api_key` 只写入本地 `.env.eval`(gitignored),**绝不打印到终端、绝不进版本库**。
-- 评测与生产同一 MySQL 服务器,但**只写 eval 独立库 `tolink_rag_eval_db`**;**绝不写生产库 `tolink_rag_db` 的任何表**(若需读生产数据,只读)。索引状态记在 eval 库。
+- 元数据和结果只写本地 SQLite。**绝不写生产库 `tolink_rag_db` 的任何表**；旧 eval MySQL 也仅允许迁移工具只读访问。
 - `.env.eval`、`golden/`、`.specs/` 等含数据/密钥的产物 gitignored。
 - Qdrant 前缀护栏(第五节)是写串生产的最后一道防线,不得删除或绕过。
 

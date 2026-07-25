@@ -1,13 +1,16 @@
 """recall_factory 装配:注入 fake 编码器,验证能装出 eval 前缀的 RecallPipeline(不连网络)。
 
-需 toLink-Rag 可 import(facade/retriever/pipeline 是 rag),故标 contract;rag 不在则跳过。
+需 toLink-Rag 可 import(facade/retriever/pipeline 是 rag),故标 contract；普通本地环境缺依赖
+时跳过，CI 设置 ``LINKRAG_EVAL_REQUIRE_RAG=1`` 后会在收集前直接失败。
 """
 
 from __future__ import annotations
 
+import inspect
 import pytest
 
-pytest.importorskip("src", reason="需安装 toLink-Rag(pip install -e <path>)")
+pytest.importorskip("src.core", reason="需安装 toLink-Rag(pip install -e <path>)")
+pytestmark = pytest.mark.contract
 
 from linkrag_eval.config import EvalSettings  # noqa: E402
 from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline  # noqa: E402
@@ -96,6 +99,8 @@ def test_assembles_sqlite_bm25_route_when_enabled(tmp_path) -> None:
     )
 
     assert [r.source for r in pipe._retrievers] == ["bm25", "dense", "sparse"]
+    signature = inspect.signature(pipe._retrievers[0].recall)
+    assert "dataset_contexts" in signature.parameters
 
 
 def test_prefix_guard_rejects_non_eval() -> None:

@@ -1,12 +1,12 @@
 # LinkRag-Eval 下一对话交接
 
-> 更新时间：2026-07-21  
+> 更新时间：2026-07-24
 > 当前分支：`codex/ltr-eval-quality-suite`  
 > 目标：让新的对话在不重做历史实验、不破坏隔离边界的前提下继续完成剩余工作。
 
 ## 1. 开始前必须知道
 
-- 本仓库是独立评测项目，只写 `tolink_rag_eval_db` 和 `eval*` Qdrant collection，绝不写生产库。
+- 本仓库是独立评测项目，只写本地 `runs/linkrag_eval.sqlite3` 和 `eval*` Qdrant collection，绝不写生产库或旧 eval MySQL。
 - 当前工作区有大量未提交改动和未跟踪文件。先运行 `git status --short`，不得 reset、checkout 或删除不属于当前任务的文件。
 - `runs/` 被 Git 忽略，但所有阶段报告必须保留；新报告必须使用新目录或时间戳，禁止覆盖历史产物。
 - 当前没有提交或推送。`.github/workflows/ci.yml` 仍是未跟踪文件。
@@ -21,6 +21,7 @@
 5. 直接 Rerank、Cross Encoder 特征和 qwen3-vl-rerank 路线均已终止；不要重新启用或补跑 Top80。
 6. Query重写实验没有稳定收益，不进入默认链路。
 7. Blind v3 已揭盲，只能用于回归观察，不能再用于选参或最终验收。
+8. Blind v4 已按 `blind-v4-final-once-20260724` 唯一运行并封存，也不得再用于选参或重跑。
 
 ## 3. 已完成的主要结果
 
@@ -29,50 +30,44 @@
 - 未曝光 Blind v3 共150条；Hybrid Recall@10 22.67%，LambdaMART 30.67%，提升8.00pp。
 - 候选分流后 Tune候选覆盖98.55%，Blind v3候选覆盖92.67%。
 - Rerank直接排序和作为LambdaMART特征均未通过Blind门禁，相关报告保留但路线关闭。
-- 全量本地测试最近一次为 `321 passed, 3 skipped`，import-lint与import boundary通过。
+- 全量本地测试最近一次为 `328 passed, 3 skipped`，其中 16 个生产 contract 真实执行通过；import-lint 与 import boundary 通过。
+- SQLite FTS5 最终验收已完成：同一 116 条冻结集上 OFF/ON 均 clean，chunk Recall@10 `31.32%→36.74%`（`+5.42pp`），MRR `16.58%→17.03%`（`+0.45pp`）。
+- Blind v4 数据真实性与覆盖缺口已关闭：450 Tune、750 Blind、10,300 chunks；800 条开源 Query 与 400 条显式 synthetic Query 均保留 provenance；结构语料覆盖多 Chunk、跨段落、编号、日期和版本号。
+- 300 条 Tune pooled Top50 的 15,000 个候选已完成独立复核与第三方仲裁，未解决 0；最终 1,782 个正 qrels，270/300 为多正例。
+- Alias 词表、短词低置信度回退和固定 `candidate_difference_v2` 在线 LambdaMART 均已冻结；模型版本、特征签名、超时/预算降级、Shadow、监控与回滚已实现并验证。
+- Blind v4 唯一一次结果：Hit@10 `98.53%→98.93%`（+0.40pp），MRR `90.41%→98.02%`（+7.62pp）；95% CI 跨 0，因此只能判定工程门禁通过、效果方向为正，不能宣称 Hit@10 显著提升。
+- 旧 `tolink_rag_eval_db` 已从 `100.86.10.52` 停机前备份完整迁到本地 `runs/linkrag_eval.sqlite3`；六表计数和内容摘要校验通过，后续禁止恢复远端 MySQL 运行依赖。
 
 ## 4. 审查发现的关键缺口
 
-### P0：可复现快照与SQLite BM25验收
+### 已关闭：可复现快照与SQLite BM25验收
 
-- `Snapshot` 尚无 `bm25_mode`、sidecar identity和`computer_fingerprint`字段。
-- `EvalDbResultStore` 当前固定写入 `computer_fingerprint=None`。
-- 2026-07-14 的116条三路run虽然无失败、无零结果，但BM25权重为0，且快照无法证明使用SQLite FTS5。
-- 先补快照契约、文件/DB报告和测试，再在同一冻结集跑BM25关闭/启用A/B clean run，输出Recall/MRR/延迟delta。
+- `Snapshot`、文件报告和 DB 台账已记录 `bm25_mode`、sidecar identity、`computer_fingerprint`、feature version、Git SHA、dirty 状态与工作区内容指纹。
+- 20k sidecar 从 eval MySQL 权威语料重建，992000–992003 各 5,000 chunks。
+- 最终 v2 OFF/ON 两轮均 `failed_sources=0`、`zero_ranked=0`；验收报告位于 `runs/golden_v2/scale_100k_991004/scale_20k_overnight/bm25_sqlite_final_acceptance_20260724/`。
 
-### P0：CI可能假绿
+### P0：CI远端证据待形成
 
-- `.github/workflows/ci.yml` 没有安装固定SHA的toLink-Rag。
-- 契约测试使用 `pytest.importorskip("src")`；干净Runner缺依赖时可能跳过后仍通过。
-- CI必须checkout/安装固定SHA的toLink-Rag，并在CI模式下让缺包直接失败，然后再提交、推送并观察真实Actions结果。
+- `.github/workflows/ci.yml` 已 checkout/安装固定 SHA `6bf3237941657f40fd48ce8c0edec5af127c8f0a` 的公开 `ql-link/LinkRag`。
+- CI 设置 `LINKRAG_EVAL_REQUIRE_RAG=1`；缺少 `src.core` 会在测试收集前失败，不能再静默跳过。
+- contract 文件已统一标记，workflow 独立执行 16 个真实生产契约测试；本地等价门禁通过。
+- workflow 尚未提交、推送，因此还需形成真实 GitHub Actions 全绿证据。
 
-### P1：评测数据真实性
+### 已关闭：评测数据真实性与在线化
 
-- 2,000条训练数据中1,850条由`gpt-5.3-codex-spark`生成。
-- Blind v3最终Golden没有来源、生成器、canonical query和scenario字段，无法报告真实日志/客服/开源占比。
-- Blind v3的150条全部只有一个`expected_chunk_id`，需要Top50 pooled独立复核来发现多正例漏标。
-- 当前20k基本是一文档一Chunk，同文档差异特征恒为0，无法测试真实长文档、跨Chunk和跨段落问题。
-- Blind v4应优先使用脱敏日志、客服/业务问题和开源Query，保留来源元数据；增加多Chunk文档族和多正例qrels。
-
-### P1：召回与在线化
-
-- 短关键词需要基于新Tune数据定义低置信度回退Hybrid门禁。
-- 业务别名/同义词词表尚未实现；应版本化、按业务域隔离、保留原Query、限制扩展并拒绝歧义别名。
-- 编号、日期、版本号场景缺少未曝光eval-only证据语料。
-- LambdaMART尚无模型序列化、在线特征、特征签名校验、延迟预算、超时降级、Shadow、监控和回滚。
-- 所有参数冻结后再生成Blind v4；建议至少500条、主要场景至少80条，并报告置信区间/配对显著性。
+- Query provenance、多正例 qrels、多 Chunk/跨段落与编号类语料均已补齐。
+- 短词回退与 Alias 规则只在 Tune 上选择，随后与模型、特征代码一起哈希冻结。
+- 在线模型支持版本化加载、特征签名、预算/超时/错误降级、非阻塞 Shadow、监控和回滚。
+- Blind v4 750 条只运行一次并 seal；详细结果见 [Blind v4 最终一次性验收](reports/blind_v4_final_acceptance_2026_07_24.md)。
 
 完整清单与完成标准见 [CURRENT_STATUS.md](CURRENT_STATUS.md#尚未关闭的工作)。
 
 ## 5. 推荐执行顺序
 
-1. 扩展`Snapshot`和结果台账，真实记录BM25 backend、sidecar/computer fingerprint、git SHA和特征版本。
-2. 修复CI依赖安装和契约测试假跳过问题，将workflow纳入版本控制。
-3. 重建SQLite sidecar，在同一冻结集完成BM25关闭/启用A/B clean run并生成delta报告。
-4. 引入真实Query来源、多正例pooled标注、多Chunk文档族、编号类语料和Alias Tune。
-5. 只在Tune上冻结短词回退和同义词扩展规则。
-6. 实现固定`candidate_difference_v2`的LambdaMART在线推理、降级和Shadow。
-7. 最后生成Blind v4，一次性验收，不能根据Blind v4继续调参。
+1. 将已修复依赖安装和假跳过问题的 workflow 纳入版本控制，推送后确认 GitHub Actions 全绿。
+2. 保留 Blind v4 封存状态，禁止二次运行或根据其结果调整当前模型。
+3. 若上游生产项目决定采用，先以 Shadow 观察真实业务延迟、回退率和 Top10 变化，再在生产仓库完成切换。
+4. 下一次效果研究必须新建 Tune/Blind v5，优先增加脱敏真实业务 Query，并预注册验收标准。
 
 ## 6. 新对话必读文档
 
@@ -100,6 +95,8 @@
 - Blind v3冻结模型结果：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/blind_v3/evaluation/model_frozen_once/ltr_external_evaluation.html`
 - 2,000条训练集完成报告：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/final_2000/training_set_2000_completion_report.html`
 - 20k总体验收：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/scale20k_acceptance_report.html`
+- SQLite FTS5最终A/B验收：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/bm25_sqlite_final_acceptance_20260724/bm25_sqlite_fts5_ab_acceptance_report.html`
+- Blind v4 最终一次性验收：[blind_v4_final_acceptance_2026_07_24.md](reports/blind_v4_final_acceptance_2026_07_24.md)
 - Rerank失败历史：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/cross_encoder_feature_v1/cross_encoder_ltr_experiment_report.html`
 - qwen3-vl-rerank 150条对照：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/qwen3_vl_rerank_batch_150_20260721/batch_comparison.html`
 
@@ -110,6 +107,8 @@
 - SQLite BM25：`src/linkrag_eval/store/sqlite_bm25.py`
 - 召回装配：`src/linkrag_eval/retrieval/recall_factory.py`
 - LambdaMART：`src/linkrag_eval/retrieval/learning_to_rank/experiment.py`
+- LambdaMART 在线运行：`src/linkrag_eval/retrieval/learning_to_rank/online.py`
+- Alias 词表：`src/linkrag_eval/retrieval/aliases.py`、`configs/aliases/general_web_search.v1.json`
 - 候选分流：`src/linkrag_eval/retrieval/candidate_routing.py`
 - CI：`.github/workflows/ci.yml`、`tests/contract/`、`tests/test_import_boundary.py`
 

@@ -1,7 +1,7 @@
 """Alembic 运行环境(LinkRag-Eval 独立评测库)。
 
-DB URL 解析(同步 driver):``ALEMBIC_DATABASE_URL`` 环境变量优先,否则由 ``EVAL_DB_*``
-配置构建并把 ``mysql+aiomysql`` 换成 ``mysql+pymysql``(迁移用同步驱动)。``target_metadata``
+DB URL 解析(同步 driver):``ALEMBIC_DATABASE_URL`` 环境变量优先,否则读取 ``EVAL_DB_URL``，
+并把异步 driver 换成同步 driver。``target_metadata``
 取 ``EvalBase.metadata``——评测库 schema 演进的唯一权威源,绝不碰生产 ``tolink_rag_db``。
 
 只依赖 ``linkrag_eval.store.models``(纯 ORM,零 rag/零 src.* 依赖),与承重约定一致。
@@ -28,8 +28,10 @@ def _resolve_url() -> str | None:
     try:
         from linkrag_eval.config import get_settings
 
-        dsn = get_settings().mysql_dsn()
-        return dsn.replace("mysql+aiomysql://", "mysql+pymysql://")
+        dsn = get_settings().database_url()
+        return dsn.replace("mysql+aiomysql://", "mysql+pymysql://").replace(
+            "sqlite+aiosqlite://", "sqlite://"
+        )
     except Exception:  # noqa: BLE001
         return None
 

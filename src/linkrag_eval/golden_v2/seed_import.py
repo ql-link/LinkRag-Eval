@@ -15,6 +15,8 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
+from linkrag_eval.golden.provenance import QueryProvenance
+
 
 _SECRET_RE = re.compile(r"(sk-[A-Za-z0-9_-]{12,}|api[_-]?key\s*[:=])", re.IGNORECASE)
 _PHONE_RE = re.compile(r"(?<!\d)1[3-9]\d{9}(?!\d)")
@@ -59,6 +61,13 @@ def import_query_seeds(
     domain_field: str | None = "domain",
     type_field: str | None = "type_hint",
     dataset_ids_field: str | None = "dataset_ids",
+    source_kind: str | None = None,
+    scenario_field: str | None = "scenario",
+    canonical_query_field: str | None = "canonical_query",
+    collected_at_field: str | None = "collected_at",
+    dataset_version: str | None = None,
+    license_name: str | None = None,
+    generator_model: str | None = None,
     min_chars: int = 2,
     max_chars: int = 300,
     reject_pii: bool = True,
@@ -102,6 +111,23 @@ def import_query_seeds(
         metadata = _metadata(row, passthrough_fields=("source_channel", "difficulty", "notes"))
         metadata["import_source"] = source
         metadata["input_row"] = index
+        effective_source_kind = source_kind or _infer_source_kind(source)
+        provenance = QueryProvenance(
+            source_kind=effective_source_kind,  # type: ignore[arg-type]
+            source_name=source,
+            source_record_id=seed_id,
+            domain=_optional_string(row, domain_field) or "unknown",
+            scenario=_optional_string(row, scenario_field) or "unspecified",
+            canonical_query=_optional_string(row, canonical_query_field) or query,
+            collected_at=_optional_string(row, collected_at_field),
+            dataset_version=dataset_version,
+            license=license_name,
+            generator_model=(generator_model or "unspecified")
+            if effective_source_kind == "synthetic"
+            else None,
+            pii_redacted=reject_pii,
+        )
+        provenance.validate()
         out_rows.append(
             {
                 "seed_id": seed_id,
@@ -111,6 +137,7 @@ def import_query_seeds(
                 "type_hint": _optional_string(row, type_field),
                 "dataset_ids": _dataset_ids(row, dataset_ids_field),
                 "metadata": metadata,
+                "provenance": provenance.to_dict(),
             }
         )
 
@@ -140,6 +167,19 @@ def import_query_seeds(
             encoding="utf-8",
         )
     return report
+
+
+def _infer_source_kind(source: str) -> str:
+    normalized = source.strip().lower()
+    if normalized in {"log", "production_log", "chat_log"}:
+        return "production_log"
+    if normalized in {"support", "customer_support"}:
+        return "support"
+    if normalized in {"business", "manual"}:
+        return "business"
+    if "open" in normalized or normalized in {"t2retrieval", "duretrieval"}:
+        return "opensource"
+    return "synthetic"
 
 
 def _read_rows(path: Path, *, input_format: str) -> list[dict[str, Any]]:

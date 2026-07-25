@@ -88,6 +88,9 @@ class EvalVectorStore:
         self._bm25_coarse_boost = bm25_coarse_boost
         self._qdrant_host = qdrant_host
         self._api_key = api_key
+        self._collection_ready = False
+        self._sparse_ready = False
+        self._bm25_ready = False
 
     @property
     def bucket_id(self) -> int:
@@ -106,7 +109,9 @@ class EvalVectorStore:
         if vector_size <= 0:
             raise ValueError("dense 向量维度为 0,无法建 collection。")
 
-        await self._store.ensure_collection(bucket_id=self._bucket_id, vector_size=vector_size)
+        if not self._collection_ready:
+            await self._store.ensure_collection(bucket_id=self._bucket_id, vector_size=vector_size)
+            self._collection_ready = True
         await self._store.upsert_points(
             bucket_id=self._bucket_id,
             points=[self._dense_point(p, dataset_id) for p in pts],
@@ -114,9 +119,11 @@ class EvalVectorStore:
 
         sparse_pts = [p for p in pts if p.sparse is not None]
         if sparse_pts:
-            await self._store.ensure_sparse_vector_schema(
-                bucket_id=self._bucket_id, vector_name=self._sparse_name
-            )
+            if not self._sparse_ready:
+                await self._store.ensure_sparse_vector_schema(
+                    bucket_id=self._bucket_id, vector_name=self._sparse_name
+                )
+                self._sparse_ready = True
             await self._store.upsert_sparse_vectors(
                 bucket_id=self._bucket_id,
                 points=[self._sparse_point(p, dataset_id) for p in sparse_pts],
@@ -125,7 +132,9 @@ class EvalVectorStore:
         bm25_points = self._bm25_points(dataset_id, pts)
         if bm25_points:
             bm25_store = self._ensure_bm25_store()
-            await bm25_store.ensure_collection()
+            if not self._bm25_ready:
+                await bm25_store.ensure_collection()
+                self._bm25_ready = True
             await bm25_store.upsert_chunks(bm25_points)
 
     async def delete(self, *, chunk_ids: Sequence[str]) -> None:

@@ -215,6 +215,19 @@ class HtmlReporter:
                     f"{k}:{v:g}" for k, v in sorted(snap.fusion_weights.items())
                 ) or "—"),
                 ("enabled", ",".join(snap.enabled_sources)),
+                ("bm25 backend", snap.bm25_mode),
+                (
+                    "bm25 sidecar",
+                    (
+                        f"{snap.bm25_sidecar_identity.get('chunk_count', 0)} chunks / "
+                        f"{str(snap.bm25_sidecar_identity.get('content_sha256', ''))[:12]}"
+                    )
+                    if snap.bm25_sidecar_identity
+                    else "—"
+                ),
+                ("feature", snap.feature_version or "—"),
+                ("git dirty", snap.git_dirty),
+                ("worktree", snap.git_worktree_sha256[:12] or "clean"),
                 ("rrf_k", snap.rrf_k),
                 ("rerank top_n", snap.rerank_top_n),
                 ("chat", snap.chat_model),
@@ -244,6 +257,7 @@ class HtmlReporter:
         headline = self._headline_cards(retrieval, delta_by_key)
         retrieval_section = self._retrieval_section(retrieval, delta_by_key)
         quality_section = self._run_quality_section(result)
+        source_section = self._query_source_section(result)
         overlap_note = self._overlap_latency_note(result, retrieval)
         bucket_section = self._bucket_section(retrieval)
         domain_section = self._domain_section(retrieval)
@@ -273,6 +287,7 @@ class HtmlReporter:
   <div class="cards">{headline}</div>
   {retrieval_section}
   {quality_section}
+  {source_section}
   {overlap_note}
   {bucket_section}
   {domain_section}
@@ -426,6 +441,34 @@ class HtmlReporter:
         <td>{failed_text}</td>
         <td>{quality["zero_ranked"]}</td>
       </tr></tbody>
+    </table>
+  </section>"""
+
+    def _query_source_section(self, result: EvalResult) -> str:
+        source_counts: Counter[tuple[str, str]] = Counter()
+        domain_counts: Counter[str] = Counter()
+        for row in result.per_sample:
+            source_counts[
+                (
+                    str(row.get("query_source") or "unknown"),
+                    str(row.get("query_source_name") or "未标注"),
+                )
+            ] += 1
+            domain_counts[str(row.get("query_domain") or "未标注")] += 1
+        if not source_counts:
+            return ""
+        source_rows = "".join(
+            f"<tr><td>{_esc(kind)}</td><td>{_esc(name)}</td><td>{count}</td></tr>"
+            for (kind, name), count in sorted(source_counts.items())
+        )
+        domains = "、".join(f"{_esc(name)}={count}" for name, count in sorted(domain_counts.items()))
+        return f"""
+  <section>
+    <h2>Query 来源与元数据 <span class="badge">provenance</span></h2>
+    <p class="h-note">业务域：{domains}</p>
+    <table>
+      <thead><tr><th>来源类型</th><th>来源名称</th><th>样本数</th></tr></thead>
+      <tbody>{source_rows}</tbody>
     </table>
   </section>"""
 

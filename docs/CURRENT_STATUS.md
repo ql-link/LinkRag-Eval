@@ -1,6 +1,6 @@
 # 当前开发状态
 
-> 更新时间：2026-07-24
+> 更新时间：2026-07-26
 > 本页是项目级进度的唯一维护入口。专题文档中的历史状态和实验结论不得覆盖本页。
 
 ## 总体结论
@@ -8,7 +8,7 @@
 评测研发主链路、SQLite FTS5 BM25、真实来源元数据、多正例 qrels、结构化多 Chunk 语料、
 短词回退和 LambdaMART 在线化均已完成。750 条 Blind v4 已在全部参数冻结后只运行一次并封存。
 最终 Hit@10 `98.53%→98.93%`、MRR `90.41%→98.02%`；效果方向为正，但 Hit@10 的 95% CI 跨 0，
-不能宣称统计显著提升。当前只剩 CI 改动提交后的远端 Actions 证据，在线默认切换仍需上游生产项目另行决策。
+不能宣称统计显著提升。PR #1 的远端 Actions 已全绿，在线默认切换仍需上游生产项目另行决策。
 
 | 范围 | 状态 | 说明 |
 | --- | --- | --- |
@@ -53,6 +53,7 @@
 - 在线模型冻结为 `candidate-difference-v2-20260724-final50`；特征签名校验、模型哈希、250ms 预算、350ms 超时、非阻塞 Shadow、监控、主动回滚与异常降级均已实现并测试。
 - Blind v4 唯一运行 `blind-v4-final-once-20260724`：750/750 clean；Hit@10 `98.5333%→98.9333%`（+0.4000pp），MRR `90.4054%→98.0213%`（+7.6158pp）；4 gained / 1 lost，95% CI `[-0.1333pp,+1.0667pp]`，McNemar `p=0.375`。
 - 2026-07-25 已从 `100.86.10.52` 停机前备份中的 `tolink_rag_eval_db` 只读迁移到本地 `runs/linkrag_eval.sqlite3`：20 datasets、39,474 chunks、51 runs、2,884 metric rows；源库的 query/qrel 均为 0。六表计数和内容摘要一致，正常运行不再依赖远端 MySQL。
+- 2026-07-26 PR #1 的 GitHub Actions run `30191660556` 已全绿：330 项非集成测试、import-lint、16 项真实 contract 和 Alembic heads 门禁全部通过；同时修复了 `golden` 数据忽略规则误伤源码包的问题。
 
 不同报告的数据分布、Query 数量和候选参数不同，只能在同一报告内比较变化量。
 历史四域 `recall@10 ~= 0.901` 等价门槛不能与 Hard Blind v2 的绝对值直接比较。
@@ -61,12 +62,11 @@
 
 | 优先级 | 工作 | 当前缺口 | 完成标准 |
 | --- | --- | --- | --- |
-| P0 | CI 远端证据 | 本地 workflow 已固定安装 toLink-Rag SHA `6bf3237941657f40fd48ce8c0edec5af127c8f0a`，并以 `LINKRAG_EVAL_REQUIRE_RAG=1` 禁止缺包假跳过；unit/import-lint、16 个真实 contract 与 Alembic heads 已拆成明确门禁。workflow 尚未提交推送，因此还没有远端 Actions 证据 | 将当前 workflow 纳入提交并推送；PR/push 上 pytest、16 个真实 contract、import-lint、Alembic heads 全部通过 |
 | P1 | Blind v4 后续统计增强 | 本轮方向为正但 Hit@10 置信区间跨 0；短关键词有 1 条净退化 | 若继续，必须建立全新版本的 Tune 与 Blind，不得复用 Blind v4 选参；优先增加真实业务脱敏 Query，而不是扩大合成题占比 |
 
 ### 推荐执行顺序
 
-1. 将已补齐固定 SHA 依赖和 contract 强制门禁的 workflow 纳入版本控制，观察远端 Actions 全绿。
+1. 保持 PR #1 已全绿的固定 SHA 依赖、源码跟踪和 contract 强制门禁，后续变更不得绕过。
 2. 将 Blind v4 结果作为已封存的最终证据，不得据此调参或重跑。
 3. 若生产项目决定接入，先以 Shadow 方式观察业务延迟和回退率，再由生产项目完成默认切换；本仓库继续保持独立评测边界。
 4. 若需提高统计把握度，创建 Blind v5 和全新 Tune，优先补脱敏业务 Query，并预先写明最小效果与样本量。

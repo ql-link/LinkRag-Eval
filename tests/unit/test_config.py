@@ -17,7 +17,6 @@ def test_recall_threshold_defaults() -> None:
     assert settings.recall_dense_top_k == 150
     assert settings.recall_sparse_top_k == 50
     assert settings.recall_bm25_top_k == 100
-    assert settings.recall_fusion_strategy == "weighted_score"
     assert settings.recall_dense_weight == 0.70
     assert settings.recall_sparse_weight == 0.15
     assert settings.recall_bm25_weight == 0.15

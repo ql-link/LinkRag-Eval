@@ -35,7 +35,6 @@ class RecallEvaluable:
         dense_score_threshold: float | None = None,
         sparse_score_threshold: float | None = None,
         enabled_sources: list[str] | None = None,
-        fusion_strategy: str = "rrf",
         fusion_weights: dict[str, float] | None = None,
         retries: int = 5,
     ):
@@ -47,7 +46,6 @@ class RecallEvaluable:
         self.dense_score_threshold = dense_score_threshold
         self.sparse_score_threshold = sparse_score_threshold
         self.enabled_sources = list(enabled_sources) if enabled_sources is not None else None
-        self.fusion_strategy = fusion_strategy
         self.fusion_weights = dict(fusion_weights or {})
         # per-query 重试:远端 Qdrant/embedding 网关偶发 502,严格模式下会抛 RecallError;
         # 宽松模式下单路失败会进入 failed_sources。召回只读、幂等,退避重试即可,
@@ -70,7 +68,6 @@ class RecallEvaluable:
             dense_score_threshold_override=self.dense_score_threshold,
             sparse_score_threshold_override=self.sparse_score_threshold,
             enabled_sources=self.enabled_sources,
-            fusion_strategy_override=self.fusion_strategy,
             fusion_dense_weight_override=self.fusion_weights.get("dense"),
             fusion_sparse_weight_override=self.fusion_weights.get("sparse"),
             fusion_bm25_weight_override=self.fusion_weights.get("bm25"),
@@ -133,6 +130,6 @@ class RecallEvaluable:
                 "sparse": self.sparse_score_threshold,
             },
             "enabled_sources": list(self.enabled_sources) if self.enabled_sources is not None else None,
-            "fusion_strategy": self.fusion_strategy,
+            "fusion_strategy": "weighted_score",
             "fusion_weights": dict(self.fusion_weights),
         }

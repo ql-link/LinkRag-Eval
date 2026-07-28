@@ -89,7 +89,6 @@ class EvalSettings(BaseSettings):
     recall_dense_top_k: int = Field(default=150)
     recall_sparse_top_k: int = Field(default=50)
     recall_bm25_top_k: int = Field(default=100)
-    recall_fusion_strategy: str = Field(default="weighted_score")
     recall_dense_weight: float = Field(default=0.70)
     recall_sparse_weight: float = Field(default=0.15)
     recall_bm25_weight: float = Field(default=0.15)
@@ -124,17 +123,6 @@ class EvalSettings(BaseSettings):
         if v not in allowed:
             raise ValueError(f"EVAL_BM25_MODE={v!r} 非法;应为 {sorted(allowed)} 之一。")
         return v
-
-    @field_validator("recall_fusion_strategy")
-    @classmethod
-    def _fusion_strategy_known(cls, v: str) -> str:
-        normalized = v.strip().lower()
-        allowed = {"rrf", "weighted_score"}
-        if normalized not in allowed:
-            raise ValueError(
-                f"EVAL_RECALL_FUSION_STRATEGY={v!r} 非法;应为 {sorted(allowed)} 之一。"
-            )
-        return normalized
 
     @field_validator("alt_embed_provider")
     @classmethod

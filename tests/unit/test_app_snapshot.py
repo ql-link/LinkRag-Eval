@@ -37,7 +37,6 @@ async def test_minimal_snapshot_captures_sqlite_identity_and_fingerprint(
         recall_dense_top_k=150,
         recall_sparse_top_k=50,
         recall_bm25_top_k=100,
-        recall_fusion_strategy="weighted_score",
         recall_dense_weight=0.70,
         recall_sparse_weight=0.15,
         recall_bm25_weight=0.15,

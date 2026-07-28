@@ -72,12 +72,6 @@ def _add_run(sub: argparse._SubParsersAction) -> None:
     p.add_argument(
         "--sparse-score-threshold", type=float, default=None, help="sparse 分路分数阈值覆盖"
     )
-    p.add_argument(
-        "--fusion-strategy",
-        choices=["rrf", "weighted_score"],
-        default=None,
-        help="融合算法(默认 EVAL_RECALL_FUSION_STRATEGY)",
-    )
     p.add_argument("--dense-weight", type=float, default=None, help="weighted_score dense 权重")
     p.add_argument("--sparse-weight", type=float, default=None, help="weighted_score sparse 权重")
     p.add_argument(
@@ -720,8 +714,6 @@ async def _do_run(args) -> int:
         settings.recall_sparse_score_threshold = args.sparse_score_threshold
     if args.bm25_top_k is not None:
         settings.recall_bm25_top_k = args.bm25_top_k
-    if args.fusion_strategy is not None:
-        settings.recall_fusion_strategy = args.fusion_strategy
     if args.dense_weight is not None:
         settings.recall_dense_weight = args.dense_weight
     if args.sparse_weight is not None:
@@ -796,7 +788,7 @@ def _parse_enabled_sources(raw: str | None) -> list[str] | None:
 
 def _normalize_single_route_weight(settings, enabled_sources: list[str] | None) -> None:
     """Ensure a weighted-score single-route run cannot be disabled by a zero default."""
-    if settings.recall_fusion_strategy != "weighted_score" or not enabled_sources:
+    if not enabled_sources:
         return
     if len(enabled_sources) != 1:
         return
@@ -1539,7 +1531,6 @@ async def _do_golden_v2(args) -> int:
         if not chunks:
             print("错误:指定 dataset 下没有可用 chunk", file=sys.stderr)
             return 2
-        settings.recall_fusion_strategy = "rrf"
         settings.recall_dense_score_threshold = args.dense_score_threshold
         settings.recall_sparse_score_threshold = args.sparse_score_threshold
         recall_sources = [source for source in sources if source != "alt_embedding"]

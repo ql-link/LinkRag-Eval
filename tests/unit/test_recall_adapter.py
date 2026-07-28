@@ -103,7 +103,6 @@ async def test_run_passes_route_topk_thresholds_and_fusion_overrides() -> None:
         dense_score_threshold=0.2,
         sparse_score_threshold=0.4,
         enabled_sources=["dense", "bm25"],
-        fusion_strategy="weighted_score",
         fusion_weights={"dense": 0.9, "sparse": 0.1, "bm25": 0.0},
         retries=1,
     )
@@ -118,7 +117,6 @@ async def test_run_passes_route_topk_thresholds_and_fusion_overrides() -> None:
     assert req.dense_score_threshold_override == 0.2
     assert req.sparse_score_threshold_override == 0.4
     assert req.enabled_sources == ["dense", "bm25"]
-    assert req.fusion_strategy_override == "weighted_score"
     assert req.fusion_dense_weight_override == 0.9
     assert req.fusion_sparse_weight_override == 0.1
     assert req.fusion_bm25_weight_override == 0.0

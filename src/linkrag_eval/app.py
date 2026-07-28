@@ -121,7 +121,7 @@ def _minimal_snapshot(
     dense_top_k = top_k
     sparse_top_k = top_k
     bm25_top_k = top_k
-    fusion_strategy = "rrf"
+    fusion_strategy = "weighted_score"
     fusion_weights: dict[str, float] = {}
     bm25_mode = "stub"
     bm25_sidecar_identity: dict[str, Any] = {}
@@ -133,7 +133,6 @@ def _minimal_snapshot(
         dense_top_k = getattr(settings, "recall_dense_top_k", top_k)
         sparse_top_k = getattr(settings, "recall_sparse_top_k", top_k)
         bm25_top_k = getattr(settings, "recall_bm25_top_k", top_k)
-        fusion_strategy = getattr(settings, "recall_fusion_strategy", "rrf")
         fusion_weights = {
             "dense": getattr(settings, "recall_dense_weight", 0.5),
             "sparse": getattr(settings, "recall_sparse_weight", 0.3),

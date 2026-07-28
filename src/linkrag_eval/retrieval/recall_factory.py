@@ -8,7 +8,7 @@
   转成 rag ``SparseVector``),不读取生产 Dataset/per-user 配置。写入侧(EvalVectorStore)
   与召回侧共用同一 eval 编码器口径。
 
-融合/排序由生产 RecallPipeline 按请求级参数执行(RRF/weighted_score 均可)。bm25 路在
+融合/排序由生产 RecallPipeline 按固定 weighted score 与请求级权重执行。bm25 路在
 ``EVAL_BM25_MODE=qdrant_bm25`` 时装配生产 Qdrant BM25 retriever;在 ``sqlite_fts5``
 时装配 eval 自持 SQLite FTS5 BM25;``stub`` 时只装 dense+sparse 两路。
 
@@ -271,7 +271,6 @@ def build_eval_recall_evaluable(top_k: int, **kwargs):
         dense_score_threshold=dense_threshold,
         sparse_score_threshold=sparse_threshold,
         enabled_sources=enabled_sources,
-        fusion_strategy=getattr(settings, "recall_fusion_strategy", "rrf"),
         fusion_weights={
             "dense": getattr(settings, "recall_dense_weight", 0.5),
             "sparse": getattr(settings, "recall_sparse_weight", 0.3),

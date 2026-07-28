@@ -15,7 +15,6 @@ import pyarrow.parquet as pq
 from linkrag_eval.golden.provenance import QueryProvenance
 from linkrag_eval.store.ids import content_hash, eval_chunk_id
 
-
 DATASET_REVISION = "8731a845f1bf500a4f111cf1070785c793d10e64"
 QRELS_REVISION = "1c83b8d1544e529875e3f6930f3a1fcf749a8e97"
 
@@ -31,6 +30,14 @@ def main() -> int:
     parser.add_argument("--corpus-count", type=int, default=20000)
     parser.add_argument("--max-content-chars", type=int, default=2000)
     parser.add_argument("--seed", type=int, default=20260724)
+    parser.add_argument(
+        "--exclude-seeds",
+        action="append",
+        default=[],
+        help="此前已曝光的 query_seeds JSONL；可重复，按 source_record_id 排除",
+    )
+    parser.add_argument("--split-salt", default="blind-v4-split")
+    parser.add_argument("--blind-label", default="blind_v4")
     args = parser.parse_args()
     source = Path(args.source_dir)
     out = Path(args.out_dir)
@@ -59,7 +66,20 @@ def main() -> int:
         for qid, judged in qrels.items()
     }
     qrels = {qid: judged for qid, judged in qrels.items() if judged}
-    eligible = sorted(qrels, key=lambda qid: (_stable_hash(qid), qid))
+    excluded_qids: set[str] = set()
+    for excluded_path in args.exclude_seeds:
+        for line in Path(excluded_path).read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            row = json.loads(line)
+            provenance = row.get("provenance") or {}
+            source_record_id = provenance.get("source_record_id")
+            if source_record_id is not None:
+                excluded_qids.add(str(source_record_id))
+    eligible = sorted(
+        (qid for qid in qrels if qid not in excluded_qids),
+        key=lambda qid: (_stable_hash(qid, args.split_salt), qid),
+    )
     needed = args.tune_count + args.blind_count
     if len(eligible) < needed:
         raise ValueError(f"eligible queries {len(eligible)} < {needed}")
@@ -124,7 +144,7 @@ def main() -> int:
         }
 
     tune = [golden(qid, "tune") for qid in tune_qids]
-    blind = [golden(qid, "blind_v4") for qid in blind_qids]
+    blind = [golden(qid, args.blind_label) for qid in blind_qids]
     seeds = [
         {
             "seed_id": row["id"],
@@ -138,9 +158,12 @@ def main() -> int:
         for row in [*tune, *blind]
     ]
     _write_jsonl(out / "chunk_records.jsonl", chunks)
-    _write_jsonl(out / "tune_300.jsonl", tune)
-    _write_jsonl(out / "blind_v4_candidate_500.jsonl", blind)
-    _write_jsonl(out / "query_seeds_800.jsonl", seeds)
+    tune_name = f"tune_{args.tune_count}.jsonl"
+    blind_name = f"{args.blind_label}_candidate_{args.blind_count}.jsonl"
+    seeds_name = f"query_seeds_{len(seeds)}.jsonl"
+    _write_jsonl(out / tune_name, tune)
+    _write_jsonl(out / blind_name, blind)
+    _write_jsonl(out / seeds_name, seeds)
     (out / "candidate_contents.json").write_text(
         json.dumps({row["chunk_id"]: row["content"] for row in chunks}, ensure_ascii=False),
         encoding="utf-8",
@@ -155,15 +178,18 @@ def main() -> int:
         "max_content_chars": args.max_content_chars,
         "tune_count": len(tune),
         "blind_count": len(blind),
+        "blind_label": args.blind_label,
+        "split_salt": args.split_salt,
+        "excluded_query_count": len(excluded_qids),
         "positive_qrels": sum(len(row["expected_chunk_ids"]) for row in [*tune, *blind]),
         "multi_positive_queries": sum(len(row["expected_chunk_ids"]) > 1 for row in [*tune, *blind]),
         "artifacts": {
             name: hashlib.sha256((out / name).read_bytes()).hexdigest()
             for name in (
                 "chunk_records.jsonl",
-                "tune_300.jsonl",
-                "blind_v4_candidate_500.jsonl",
-                "query_seeds_800.jsonl",
+                tune_name,
+                blind_name,
+                seeds_name,
             )
         },
         "candidate_contents_sha256": hashlib.sha256(
@@ -177,8 +203,8 @@ def main() -> int:
     return 0
 
 
-def _stable_hash(value: str) -> str:
-    return hashlib.sha256(f"blind-v4-split\n{value}".encode("utf-8")).hexdigest()
+def _stable_hash(value: str, salt: str = "blind-v4-split") -> str:
+    return hashlib.sha256(f"{salt}\n{value}".encode("utf-8")).hexdigest()
 
 
 def _write_jsonl(path: Path, rows: list[dict]) -> None:

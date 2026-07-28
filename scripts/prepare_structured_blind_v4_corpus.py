@@ -30,11 +30,17 @@ def main() -> None:
     parser.add_argument("--dataset-id", type=int, default=993102)
     parser.add_argument("--documents", type=int, default=100)
     parser.add_argument("--seed", type=int, default=20260724)
+    parser.add_argument(
+        "--serial-offset",
+        type=int,
+        default=0,
+        help="为后续未曝光 Blind 生成不重复的服务、工单和 Query 编号",
+    )
     args = parser.parse_args()
     out = Path(args.out_dir)
     specs: list[dict] = []
     for index in range(args.documents):
-        serial = index + 1
+        serial = args.serial_offset + index + 1
         version = f"v{2 + serial % 4}.{serial % 10}.{(serial * 7) % 20}"
         date = f"2026-{1 + serial % 12:02d}-{1 + serial % 27:02d}"
         ticket = f"REL-{24000 + serial:05d}"
@@ -141,6 +147,7 @@ def main() -> None:
         "dataset_id": args.dataset_id,
         "generator": "deterministic_template_v1",
         "seed": args.seed,
+        "serial_offset": args.serial_offset,
         "report": report.to_dict(),
         "tune_queries": tune_size,
         "blind_queries": len(qrels) - tune_size,

@@ -3,26 +3,26 @@
 > 本索引覆盖 `runs/golden_v2/` 与 `docs/reports/` 下的阶段报告。
 > 历史报告必须保留原路径；新一轮测试使用新的 run/batch 目录或带时间戳文件名，禁止覆盖旧报告。
 
-当前共收录 **697** 个报告及机器可读配套产物：HTML 103，MD 63，JSON 524，CSV 7。
+当前共收录 **718** 个报告及机器可读配套产物：HTML 104，MD 64，JSON 543，CSV 7。
 
 更新索引：`python3 scripts/build_report_index.py`
 校验索引：`python3 scripts/build_report_index.py --check`
 
 ## 阶段导航
 
-- [00 历史实证与人工汇总](#00-历史实证与人工汇总)：17 个产物
-- [01 语料生成、导出与规模扩展](#01-语料生成、导出与规模扩展)：46 个产物
-- [02 黄金集候选、标注与构建](#02-黄金集候选、标注与构建)：109 个产物
+- [00 历史实证与人工汇总](#00-历史实证与人工汇总)：18 个产物
+- [01 语料生成、导出与规模扩展](#01-语料生成、导出与规模扩展)：48 个产物
+- [02 黄金集候选、标注与构建](#02-黄金集候选、标注与构建)：117 个产物
 - [03 检索运行、Blind 与规模对比](#03-检索运行、blind-与规模对比)：40 个产物
 - [04 Realistic Set 构建、质检与评测](#04-realistic-set-构建、质检与评测)：122 个产物
 - [05 Hard Set 构建、质检与评测](#05-hard-set-构建、质检与评测)：37 个产物
 - [06 阶段验收与最终对比](#06-阶段验收与最终对比)：49 个产物
-- [07 召回参数与融合策略调优](#07-召回参数与融合策略调优)：30 个产物
+- [07 召回参数与融合策略调优](#07-召回参数与融合策略调优)：34 个产物
 - [08 Rerank 候选截断与效果评测](#08-rerank-候选截断与效果评测)：5 个产物
 - [09 Query 分桶与召回分流分析](#09-query-分桶与召回分流分析)：2 个产物
 - [10 平衡 Query 扩展与标注质检](#10-平衡-query-扩展与标注质检)：96 个产物
 - [11 学习型融合实验](#11-学习型融合实验)：127 个产物
-- [12 其他阶段产物](#12-其他阶段产物)：17 个产物
+- [12 其他阶段产物](#12-其他阶段产物)：23 个产物
 
 ## 00 历史实证与人工汇总
 
@@ -30,6 +30,7 @@
 | --- | --- | --- |
 | [docs/reports/LinkRag-Eval-质检模块全解.md](<LinkRag-Eval-质检模块全解.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/blind_v4_final_acceptance_2026_07_24.md](<blind_v4_final_acceptance_2026_07_24.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
+| [docs/reports/blind_v5_production_contract_acceptance_2026_07_28.md](<blind_v5_production_contract_acceptance_2026_07_28.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/corpus_scale_800_vs_2000.md](<corpus_scale_800_vs_2000.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/doubao_retrieval_eval_500.md](<doubao_retrieval_eval_500.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/fusion_strategy_comparison_2026_07_02.html](<fusion_strategy_comparison_2026_07_02.html>) | `html` | 人读版测试报告，展示聚合指标、逐题诊断和阶段结论。 |
@@ -52,6 +53,8 @@
 | --- | --- | --- |
 | [runs/golden_v2/blind_v4_20260724/prepared/structured_v1/export_report.json](<../../runs/golden_v2/blind_v4_20260724/prepared/structured_v1/export_report.json>) | `json` | 记录语料导出的数量、范围和异常，供规模扩展验收。 |
 | [runs/golden_v2/blind_v4_20260724/prepared/t2retrieval/export_report.json](<../../runs/golden_v2/blind_v4_20260724/prepared/t2retrieval/export_report.json>) | `json` | 记录语料导出的数量、范围和异常，供规模扩展验收。 |
+| [runs/golden_v2/blind_v5_20260728/prepared/structured_v2/export_report.json](<../../runs/golden_v2/blind_v5_20260728/prepared/structured_v2/export_report.json>) | `json` | 记录语料导出的数量、范围和异常，供规模扩展验收。 |
+| [runs/golden_v2/blind_v5_20260728/prepared/t2retrieval/export_report.json](<../../runs/golden_v2/blind_v5_20260728/prepared/t2retrieval/export_report.json>) | `json` | 记录语料导出的数量、范围和异常，供规模扩展验收。 |
 | [runs/golden_v2/corpus/spark_corpus_export_report.json](<../../runs/golden_v2/corpus/spark_corpus_export_report.json>) | `json` | 记录语料导出的数量、范围和异常，供规模扩展验收。 |
 | [runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/corpus/export_report.json](<../../runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/corpus/export_report.json>) | `json` | 记录语料导出的数量、范围和异常，供规模扩展验收。 |
 | [runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/corpus_missing/diff_report.json](<../../runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/corpus_missing/diff_report.json>) | `json` | 比较预期语料与实际语料差异，定位缺失或重复数据。 |
@@ -113,6 +116,14 @@
 | [runs/golden_v2/blind_v4_20260724/prepared/structured_v1/candidate_contents.json](<../../runs/golden_v2/blind_v4_20260724/prepared/structured_v1/candidate_contents.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
 | [runs/golden_v2/blind_v4_20260724/prepared/t2retrieval/candidate_pool_top50_report.json](<../../runs/golden_v2/blind_v4_20260724/prepared/t2retrieval/candidate_pool_top50_report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
 | [runs/golden_v2/blind_v4_20260724/review/all_candidate_pool_top50_report.json](<../../runs/golden_v2/blind_v4_20260724/review/all_candidate_pool_top50_report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/blind/ltr_candidates_no_alias_report.json](<../../runs/golden_v2/blind_v5_20260728/blind/ltr_candidates_no_alias_report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/bundle/final/candidate_contents.json](<../../runs/golden_v2/blind_v5_20260728/bundle/final/candidate_contents.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/models/candidate-difference-v3-20260728-final33/feature_contract.json](<../../runs/golden_v2/blind_v5_20260728/models/candidate-difference-v3-20260728-final33/feature_contract.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/models/candidate-difference-v3-20260728-final33/manifest.json](<../../runs/golden_v2/blind_v5_20260728/models/candidate-difference-v3-20260728-final33/manifest.json>) | `json` | 固定该阶段语料清单与来源，支持复现和审计。 |
+| [runs/golden_v2/blind_v5_20260728/models/candidate-difference-v3-20260728-final33/short_fallback.json](<../../runs/golden_v2/blind_v5_20260728/models/candidate-difference-v3-20260728-final33/short_fallback.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/models/candidate-difference-v3-20260728-final33/test_vectors.json](<../../runs/golden_v2/blind_v5_20260728/models/candidate-difference-v3-20260728-final33/test_vectors.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/prepared/structured_v2/candidate_contents.json](<../../runs/golden_v2/blind_v5_20260728/prepared/structured_v2/candidate_contents.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/prepared/t2retrieval/candidate_contents.json](<../../runs/golden_v2/blind_v5_20260728/prepared/t2retrieval/candidate_contents.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
 | [runs/golden_v2/candidates/candidate_pool_report.json](<../../runs/golden_v2/candidates/candidate_pool_report.json>) | `json` | 统计候选池覆盖率、候选来源及未覆盖 Query，供后续标注使用。 |
 | [runs/golden_v2/candidates/live_candidate_pool_smoke_report.json](<../../runs/golden_v2/candidates/live_candidate_pool_smoke_report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
 | [runs/golden_v2/candidates/live_candidate_pool_smoke_threshold0_report.json](<../../runs/golden_v2/candidates/live_candidate_pool_smoke_threshold0_report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
@@ -491,6 +502,10 @@
 | [runs/golden_v2/blind_v4_20260724/tune/online_smoke.json](<../../runs/golden_v2/blind_v4_20260724/tune/online_smoke.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
 | [runs/golden_v2/blind_v4_20260724/tune/online_smoke_frozen.json](<../../runs/golden_v2/blind_v4_20260724/tune/online_smoke_frozen.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
 | [runs/golden_v2/blind_v4_20260724/tune/short_fallback.json](<../../runs/golden_v2/blind_v4_20260724/tune/short_fallback.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/tune/cv/ltr_cross_validation.html](<../../runs/golden_v2/blind_v5_20260728/tune/cv/ltr_cross_validation.html>) | `html` | 学习型融合的数据扩展、候选缓存、交叉验证结果与固定 Hybrid 对比。 |
+| [runs/golden_v2/blind_v5_20260728/tune/cv/ltr_cross_validation.json](<../../runs/golden_v2/blind_v5_20260728/tune/cv/ltr_cross_validation.json>) | `json` | 学习型融合的数据扩展、候选缓存、交叉验证结果与固定 Hybrid 对比。 |
+| [runs/golden_v2/blind_v5_20260728/tune/ltr_candidates_no_alias_report.json](<../../runs/golden_v2/blind_v5_20260728/tune/ltr_candidates_no_alias_report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/tune/short_fallback.json](<../../runs/golden_v2/blind_v5_20260728/tune/short_fallback.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
 | [runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/realistic_additional_300/overnight_final/tune_expanded_272/recall_tuning_realistic_tune_expanded_20260714_005343.csv](<../../runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/realistic_additional_300/overnight_final/tune_expanded_272/recall_tuning_realistic_tune_expanded_20260714_005343.csv>) | `csv` | 记录召回阈值、TopK、权重或融合参数搜索结果。 |
 | [runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/realistic_additional_300/overnight_final/tune_expanded_272/recall_tuning_realistic_tune_expanded_20260714_005343.html](<../../runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/realistic_additional_300/overnight_final/tune_expanded_272/recall_tuning_realistic_tune_expanded_20260714_005343.html>) | `html` | 记录召回阈值、TopK、权重或融合参数搜索结果。 |
 | [runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/realistic_additional_300/overnight_final/tune_expanded_272/recall_tuning_realistic_tune_expanded_20260714_005343.json](<../../runs/golden_v2/scale_100k_991004/scale_100k_991004_batch_0001_ds992000/realistic_additional_300/overnight_final/tune_expanded_272/recall_tuning_realistic_tune_expanded_20260714_005343.json>) | `json` | 记录召回阈值、TopK、权重或融合参数搜索结果。 |
@@ -776,6 +791,12 @@
 | [runs/golden_v2/blind_v4_20260724/prepared/structured_v1/report.json](<../../runs/golden_v2/blind_v4_20260724/prepared/structured_v1/report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
 | [runs/golden_v2/blind_v4_20260724/prepared/structured_v1/source_manifest.json](<../../runs/golden_v2/blind_v4_20260724/prepared/structured_v1/source_manifest.json>) | `json` | 固定该阶段语料清单与来源，支持复现和审计。 |
 | [runs/golden_v2/blind_v4_20260724/prepared/t2retrieval/source_manifest.json](<../../runs/golden_v2/blind_v4_20260724/prepared/t2retrieval/source_manifest.json>) | `json` | 固定该阶段语料清单与来源，支持复现和审计。 |
+| [runs/golden_v2/blind_v5_20260728/blind/final_result.json](<../../runs/golden_v2/blind_v5_20260728/blind/final_result.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/bundle/final/bundle_manifest.json](<../../runs/golden_v2/blind_v5_20260728/bundle/final/bundle_manifest.json>) | `json` | 固定该阶段语料清单与来源，支持复现和审计。 |
+| [runs/golden_v2/blind_v5_20260728/models/active.json](<../../runs/golden_v2/blind_v5_20260728/models/active.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/prepared/structured_v2/report.json](<../../runs/golden_v2/blind_v5_20260728/prepared/structured_v2/report.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
+| [runs/golden_v2/blind_v5_20260728/prepared/structured_v2/source_manifest.json](<../../runs/golden_v2/blind_v5_20260728/prepared/structured_v2/source_manifest.json>) | `json` | 固定该阶段语料清单与来源，支持复现和审计。 |
+| [runs/golden_v2/blind_v5_20260728/prepared/t2retrieval/source_manifest.json](<../../runs/golden_v2/blind_v5_20260728/prepared/t2retrieval/source_manifest.json>) | `json` | 固定该阶段语料清单与来源，支持复现和审计。 |
 | [runs/golden_v2/pilot_plan_smoke/pilot_plan.json](<../../runs/golden_v2/pilot_plan_smoke/pilot_plan.json>) | `json` | 试运行计划及数据分批方案，用于控制正式评测前的范围。 |
 | [runs/golden_v2/pilot_plan_smoke/pilot_plan.md](<../../runs/golden_v2/pilot_plan_smoke/pilot_plan.md>) | `md` | 试运行计划及数据分批方案，用于控制正式评测前的范围。 |
 | [runs/golden_v2/pilot_plan_smoke/preflight.json](<../../runs/golden_v2/pilot_plan_smoke/preflight.json>) | `json` | 运行前置检查结果，确认数据、配置和依赖是否满足评测条件。 |

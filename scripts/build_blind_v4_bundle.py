@@ -33,6 +33,7 @@ def main() -> None:
     parser.add_argument("--contents", action="append", required=True)
     parser.add_argument("--chunks", action="append", required=True)
     parser.add_argument("--out-dir", required=True)
+    parser.add_argument("--blind-label", default="blind_v4")
     args = parser.parse_args()
     tune = [row for path in args.tune for row in _read_jsonl(Path(path))]
     blind = [row for path in args.blind for row in _read_jsonl(Path(path))]
@@ -58,7 +59,7 @@ def main() -> None:
         raise ValueError("chunk_id 重复")
     out = Path(args.out_dir)
     tune_path = out / "tune_frozen.jsonl"
-    blind_path = out / "blind_v4_candidate.jsonl"
+    blind_path = out / f"{args.blind_label}_candidate.jsonl"
     contents_path = out / "candidate_contents.json"
     chunks_path = out / "chunk_records.jsonl"
     _write_jsonl(tune_path, tune)
@@ -80,6 +81,7 @@ def main() -> None:
     manifest = {
         "tune_count": len(tune),
         "blind_count": len(blind),
+        "blind_label": args.blind_label,
         "chunk_count": len(chunks),
         "query_sources": dict(sorted(sources.items())),
         "scenarios": dict(sorted(scenarios.items())),

@@ -1,6 +1,6 @@
 # 文档目录与完成状态
 
-> 更新时间：2026-07-21
+> 更新时间：2026-07-28
 > 本目录回答“有哪些文档”和“文档对应的工作是否完成”。项目实时进度仍以
 > [CURRENT_STATUS.md](CURRENT_STATUS.md) 为准。
 
@@ -41,7 +41,7 @@
 
 | 文档 | 文档状态 | 实验状态 | 结论或剩余工作 |
 | --- | --- | --- | --- |
-| [LambdaMART 三路融合](experiments/ltr-fusion-v1.md) | 完成 | 完成 | 固定 `candidate_difference_v2` 已实现版本化在线推理、短词回退、降级、Shadow、监控和回滚；Blind v4 已一次性验收 |
+| [LambdaMART 三路融合](experiments/ltr-fusion-v1.md) | 完成 | 完成 | 活动 `candidate_difference_v3` 已移除离线场景和 Alias 依赖，生产模型包与 Blind v5 已验收；生产默认切换仍须 Shadow |
 | [Query 重写配对基准](experiments/query-rewrite-benchmark-v1.md) | 完成 | 完成 | 当前数据上 Recall 无提升、MRR 下降，不进入默认链路；保留作对照实验 |
 | [Query 软分流候选](experiments/query-soft-routing-candidates.md) | 完成 | 完成离线验收 | 候选深度已在 2,000 条 Tune 冻结，完整 Top10 与 Blind v3 已验收；动态权重仍未成为默认方案 |
 
@@ -59,6 +59,7 @@
 | --- | --- | --- |
 | [统一报告索引](reports/REPORT_INDEX.md) | 持续维护 | 收录全部保留的 HTML、Markdown、JSON、CSV 阶段产物 |
 | [Blind v4 最终一次性验收](reports/blind_v4_final_acceptance_2026_07_24.md) | 完成 | 记录 750 条 Blind v4 的冻结门禁、数据来源、pooled 复核、在线运行指标与统计结论 |
+| [Blind v5 无 Alias 生产契约验收](reports/blind_v5_production_contract_acceptance_2026_07_28.md) | 完成 | 记录生产可用 v3 特征、无 Alias 模型包、750 条唯一 Blind 运行及 Shadow 结论 |
 | [800 vs 2000 语料规模对照](reports/corpus_scale_800_vs_2000.md) | 完成 | 说明背景语料规模对召回区分度的影响 |
 | [Doubao 稀疏检索 500 题评测](reports/doubao_retrieval_eval_500.md) | 完成 | 记录稀疏模型扩样本评测结果 |
 | [RRF 与 weighted score 对比](reports/fusion_strategy_comparison_2026_07_02.md) | 完成 | 对比两种融合策略；另有同名 HTML 版本 |

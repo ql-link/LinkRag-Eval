@@ -238,16 +238,15 @@ def _add_ltr(sub: argparse._SubParsersAction) -> None:
     external.add_argument("--blend-alpha", type=float, default=1.0)
     external.add_argument("--protect-baseline-top-k", type=int, default=0)
 
-    freeze = commands.add_parser("freeze", help="训练并冻结 candidate_difference_v2 在线模型")
+    freeze = commands.add_parser("freeze", help="训练并冻结 candidate_difference_v3 在线模型")
     freeze.add_argument("--cache", required=True, help="仅包含 Tune 的干净候选缓存 JSONL")
     freeze.add_argument("--candidate-contents", required=True, help="chunk_id→content JSON")
     freeze.add_argument("--registry-dir", required=True)
     freeze.add_argument("--model-version", required=True)
-    freeze.add_argument("--alias-registry", required=True)
     freeze.add_argument("--short-fallback-config", required=True)
     freeze.add_argument("--n-estimators", type=int, default=24)
-    freeze.add_argument("--latency-budget-ms", type=int, default=25)
-    freeze.add_argument("--timeout-ms", type=int, default=40)
+    freeze.add_argument("--latency-budget-ms", type=int, default=250)
+    freeze.add_argument("--timeout-ms", type=int, default=350)
     freeze.add_argument("--seed", type=int, default=20260724)
 
     activate = commands.add_parser("activate", help="原子切换在线 LambdaMART 活跃版本")
@@ -267,6 +266,9 @@ def _add_ltr(sub: argparse._SubParsersAction) -> None:
     frozen_eval.add_argument("--candidate-contents", required=True)
     frozen_eval.add_argument("--out", required=True)
     frozen_eval.add_argument("--shadow-version", default=None)
+
+    validate_bundle = commands.add_parser("validate-bundle", help="校验生产模型包哈希与测试向量")
+    validate_bundle.add_argument("--model-dir", required=True)
 
 
 def _add_golden_opensource(sub: argparse._SubParsersAction) -> None:
@@ -1172,7 +1174,6 @@ async def _do_ltr(args) -> int:
 
     if args.ltr_command == "freeze":
         from linkrag_eval.retrieval.learning_to_rank.online import freeze_model
-        from linkrag_eval.retrieval.aliases import AliasRegistry
 
         cache_path = Path(args.cache)
         rows = [
@@ -1184,8 +1185,6 @@ async def _do_ltr(args) -> int:
         if failed:
             raise ValueError(f"冻结模型拒绝包含 failed_sources 的 Tune cache:{failed[:3]}")
         contents = json.loads(Path(args.candidate_contents).read_text(encoding="utf-8"))
-        alias_path = Path(args.alias_registry)
-        alias_registry = AliasRegistry.load(alias_path)
         short_payload = json.loads(Path(args.short_fallback_config).read_text(encoding="utf-8"))
         short_config = short_payload.get("config", short_payload)
         manifest = freeze_model(
@@ -1194,8 +1193,6 @@ async def _do_ltr(args) -> int:
             out_dir=Path(args.registry_dir) / args.model_version,
             model_version=args.model_version,
             training_data_sha256=hashlib.sha256(cache_path.read_bytes()).hexdigest(),
-            alias_registry_version=alias_registry.version,
-            alias_registry_payload=json.loads(alias_path.read_text(encoding="utf-8")),
             short_fallback_config=short_config,
             n_estimators=args.n_estimators,
             latency_budget_ms=args.latency_budget_ms,
@@ -1256,6 +1253,13 @@ async def _do_ltr(args) -> int:
         out.parent.mkdir(parents=True, exist_ok=True)
         out.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         print(json.dumps({key: value for key, value in report.items() if key != "predictions"}, ensure_ascii=False, indent=2))
+        return 0
+
+    if args.ltr_command == "validate-bundle":
+        from linkrag_eval.retrieval.learning_to_rank.online import validate_production_bundle
+
+        report = validate_production_bundle(args.model_dir)
+        print(json.dumps(report, ensure_ascii=False, indent=2))
         return 0
 
     print(

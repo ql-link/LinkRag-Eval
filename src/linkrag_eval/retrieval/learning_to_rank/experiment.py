@@ -15,11 +15,10 @@ import numpy as np
 
 from linkrag_eval.retrieval.tuning import RouteHit, weighted_score_fuse
 
-
 ROUTES = ("dense", "sparse", "bm25")
 BASELINE_WEIGHTS = {"dense": 0.70, "sparse": 0.15, "bm25": 0.15}
 BASELINE_THRESHOLDS = {"dense": 0.30, "sparse": 0.20, "bm25": 0.0}
-FEATURE_VERSION = "candidate_difference_v2"
+FEATURE_VERSION = "candidate_difference_v3"
 FEATURE_NAMES = [
     "dense_score",
     "sparse_log_score",
@@ -48,14 +47,6 @@ FEATURE_NAMES = [
     "baseline_rr",
     "query_length",
     "query_has_digit",
-    "scenario_short",
-    "scenario_exact",
-    "scenario_long",
-    "scenario_dense",
-    "scenario_similar_docs",
-    "scenario_multi_constraint",
-    "scenario_number_time",
-    "scenario_alias",
     "identifier_exact_coverage",
     "number_exact_coverage",
     "negation_overlap_coverage",
@@ -171,11 +162,15 @@ def _top12_margin(hits: list[RouteHit], source: str) -> float:
     return max(0.0, values[0] - values[1]) / max(abs(values[0]), 1e-9)
 
 
-def _candidate_features(
-    row: dict[str, Any],
+def build_online_features(
+    *,
+    query: str,
+    routes: dict[str, list[dict[str, Any]]],
     candidate_contents: dict[str, str] | None = None,
-) -> tuple[list[str], np.ndarray, np.ndarray]:
-    route_hits = {source: _route_hits(row, source) for source in ROUTES}
+) -> tuple[list[str], np.ndarray]:
+    """Build production-safe features without Golden/qrels/evaluation metadata."""
+    online_row = {"routes": routes}
+    route_hits = {source: _route_hits(online_row, source) for source in ROUTES}
     by_source = {source: {hit.chunk_id: hit for hit in hits} for source, hits in route_hits.items()}
     rank_by_source = {
         source: {hit.chunk_id: rank for rank, hit in enumerate(hits, 1)}
@@ -195,16 +190,13 @@ def _candidate_features(
             chunk_id,
         ),
     )
-    scenario = str(row.get("scenario") or "")
-    query = str(row["query"])
-    expected = set(str(value) for value in row["expected_chunk_ids"])
     if candidate_contents is None:
-        raise ValueError("candidate_difference_v2 requires --candidate-contents")
+        raise ValueError(f"{FEATURE_VERSION} requires candidate contents")
     missing_contents = [chunk_id for chunk_id in chunk_ids if chunk_id not in candidate_contents]
     if missing_contents:
         raise ValueError(
-            f"missing candidate contents for sample {row['sample_id']}: "
-            f"{missing_contents[:3]} ({len(missing_contents)} total)"
+            f"missing candidate contents: {missing_contents[:3]} "
+            f"({len(missing_contents)} total)"
         )
 
     query_identifiers = {match.group(0).lower() for match in _IDENTIFIER_RE.finditer(query)}
@@ -226,7 +218,6 @@ def _candidate_features(
         chunks_by_doc[doc_by_chunk[chunk_id]].append(chunk_id)
     top12_margins = {source: _top12_margin(route_hits[source], source) for source in ROUTES}
     features: list[list[float]] = []
-    labels: list[int] = []
     for chunk_id in chunk_ids:
         hits = {source: by_source[source].get(chunk_id) for source in ROUTES}
         ranks = {source: rank_by_source[source].get(chunk_id, 0) for source in ROUTES}
@@ -281,14 +272,6 @@ def _candidate_features(
             1.0 / (baseline_hit.rank + 1) if baseline_hit else 0.0,
             float(len(query)),
             float(any(char.isdigit() for char in query)),
-            float(scenario == "short_keyword"),
-            float(scenario == "exact_identifier"),
-            float(scenario == "long_sparse"),
-            float(scenario == "dense_paraphrase"),
-            float(scenario == "similar_docs"),
-            float(scenario == "multi_constraint"),
-            float(scenario == "number_time"),
-            float(scenario == "alias"),
             _coverage(query_identifiers, content),
             _coverage(query_numbers, content),
             (
@@ -317,8 +300,25 @@ def _candidate_features(
             math.log1p(len(content)),
         ]
         features.append(values)
-        labels.append(1 if chunk_id in expected else 0)
-    return chunk_ids, np.asarray(features, dtype=np.float32), np.asarray(labels, dtype=np.int32)
+    matrix = np.asarray(features, dtype=np.float32)
+    if not features:
+        matrix = np.empty((0, len(FEATURE_NAMES)), dtype=np.float32)
+    return chunk_ids, matrix
+
+
+def _candidate_features(
+    row: dict[str, Any],
+    candidate_contents: dict[str, str] | None = None,
+) -> tuple[list[str], np.ndarray, np.ndarray]:
+    """Evaluation wrapper: production features plus qrels-derived training labels."""
+    chunk_ids, features = build_online_features(
+        query=str(row["query"]),
+        routes=row["routes"],
+        candidate_contents=candidate_contents,
+    )
+    expected = {str(value) for value in row["expected_chunk_ids"]}
+    labels = np.asarray([int(chunk_id in expected) for chunk_id in chunk_ids], dtype=np.int32)
+    return chunk_ids, features, labels
 
 
 def _fold(row: dict[str, Any], folds: int) -> int:

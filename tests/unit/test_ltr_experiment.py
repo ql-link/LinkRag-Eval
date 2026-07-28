@@ -6,6 +6,7 @@ from linkrag_eval.retrieval.learning_to_rank.experiment import (
     _fold,
     _render_external_html,
     _render_html,
+    build_online_features,
     rank_with_hybrid_protection,
     tune_hybrid_protection,
 )
@@ -61,12 +62,10 @@ def test_candidate_features_include_positive_and_route_overlap() -> None:
     assert labels.tolist() == [0, 1]
     target_index = chunk_ids.index("target")
     route_count_index = FEATURE_NAMES.index("route_count")
-    exact_index = FEATURE_NAMES.index("scenario_exact")
     identifier_index = FEATURE_NAMES.index("identifier_exact_coverage")
     number_index = FEATURE_NAMES.index("number_exact_coverage")
     negation_index = FEATURE_NAMES.index("negation_overlap_coverage")
     assert features[target_index, route_count_index] == 2
-    assert features[target_index, exact_index] == 1
     assert features[target_index, identifier_index] == 1
     assert features[target_index, number_index] == 1
     assert features[target_index, negation_index] == 1
@@ -76,9 +75,25 @@ def test_candidate_features_require_content_sidecar() -> None:
     try:
         _candidate_features(row())
     except ValueError as exc:
-        assert "candidate_difference_v2" in str(exc)
+        assert "candidate_difference_v3" in str(exc)
     else:
         raise AssertionError("missing candidate contents must fail")
+
+
+def test_online_features_do_not_require_golden_or_qrels_metadata() -> None:
+    value = row()
+    chunk_ids, features = build_online_features(
+        query=value["query"],
+        routes=value["routes"],
+        candidate_contents={
+            "dense-only": "订单XYZ-2024允许退款，没有其他限制。",
+            "target": "订单ABC-2025不能退款，版本v2.1规则明确禁止退款。",
+        },
+    )
+
+    assert chunk_ids == ["dense-only", "target"]
+    assert features.shape == (2, len(FEATURE_NAMES))
+    assert not any(name.startswith("scenario_") for name in FEATURE_NAMES)
 
 
 def test_fold_is_stable_for_same_evidence_document() -> None:

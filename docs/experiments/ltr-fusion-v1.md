@@ -1,6 +1,6 @@
 # LambdaMART 三路召回融合方案与实验分析（v1）
 
-> 状态：2000 条训练、候选分流重训和未曝光 Blind v3 一次性验证已完成；Rerank/Cross Encoder 路线已终止，LambdaMART 固定为不含重排分数的 `candidate_difference_v2`；尚未接入生产默认链路。项目级进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md)。
+> 状态：历史 v2 实验与 Blind v4 已封存；活动实现升级为无 Alias、无离线场景依赖的 `candidate_difference_v3`，并完成 750 条 Blind v5 一次性生产契约验收。可交付生产 Shadow，尚不批准默认全量切换。项目级进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md)。
 
 ## 0. 结论摘要
 
@@ -608,7 +608,8 @@ Top80 将基础 shortlist 目标覆盖提高到 Tune 86.85%，Tune OOF 达到 46
 
 2026-07-21 最终决策：**终止直接 Rerank 与 Cross Encoder 附加特征路线，不再补跑 Top80。**
 历史报告和结果继续保留用于解释失败原因；活动代码删除 Cross Encoder 分数缓存入口、LTR v3 特征和相关
-CLI 参数。LambdaMART 的训练与推理统一固定为 `candidate_difference_v2`，因此不依赖用户是否选择重排模型。
+CLI 参数。该段记录的是历史 `candidate_difference_v2` 实验；活动训练与推理已升级为同样不含
+Rerank 分数、且不含 Golden 场景特征的 `candidate_difference_v3`。
 
 ---
 

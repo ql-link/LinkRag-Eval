@@ -1,6 +1,6 @@
 # LinkRag-Eval 下一对话交接
 
-> 更新时间：2026-07-24
+> 更新时间：2026-07-28
 > 当前分支：`codex/ltr-eval-quality-suite`  
 > 目标：让新的对话在不重做历史实验、不破坏隔离边界的前提下继续完成剩余工作。
 
@@ -17,11 +17,12 @@
 1. 主指标使用 chunk 粒度；doc 粒度单独报告，不能混成 headline recall。
 2. 当前规模固定在 20k 背景语料，10万扩容暂缓，不是阻塞项。
 3. 默认候选来自 Dense、Sparse、SQLite FTS5 BM25 三路，融合与候选深度按冻结配置评测。
-4. LambdaMART 固定特征版本为 `candidate_difference_v2`，不依赖 Rerank 分数。
-5. 直接 Rerank、Cross Encoder 特征和 qwen3-vl-rerank 路线均已终止；不要重新启用或补跑 Top80。
-6. Query重写实验没有稳定收益，不进入默认链路。
-7. Blind v3 已揭盲，只能用于回归观察，不能再用于选参或最终验收。
-8. Blind v4 已按 `blind-v4-final-once-20260724` 唯一运行并封存，也不得再用于选参或重跑。
+4. 活动 LambdaMART 固定为生产可用的 `candidate_difference_v3`：38 个特征只依赖 Query、三路候选和候选正文，不依赖 Rerank、Golden scenario 或 qrels。
+5. Alias 已从活动候选缓存、模型训练和生产模型包移除；历史 v2 Alias 产物只作追溯。
+6. 直接 Rerank、Cross Encoder 特征和 qwen3-vl-rerank 路线均已终止；不要重新启用或补跑 Top80。
+7. Query重写实验没有稳定收益，不进入默认链路。
+8. Blind v3 已揭盲，只能用于回归观察，不能再用于选参或最终验收。
+9. Blind v4 与 Blind v5 均已唯一运行并封存，不得再用于选参或重跑。
 
 ## 3. 已完成的主要结果
 
@@ -34,9 +35,10 @@
 - SQLite FTS5 最终验收已完成：同一 116 条冻结集上 OFF/ON 均 clean，chunk Recall@10 `31.32%→36.74%`（`+5.42pp`），MRR `16.58%→17.03%`（`+0.45pp`）。
 - Blind v4 数据真实性与覆盖缺口已关闭：450 Tune、750 Blind、10,300 chunks；800 条开源 Query 与 400 条显式 synthetic Query 均保留 provenance；结构语料覆盖多 Chunk、跨段落、编号、日期和版本号。
 - 300 条 Tune pooled Top50 的 15,000 个候选已完成独立复核与第三方仲裁，未解决 0；最终 1,782 个正 qrels，270/300 为多正例。
-- Alias 词表、短词低置信度回退和固定 `candidate_difference_v2` 在线 LambdaMART 均已冻结；模型版本、特征签名、超时/预算降级、Shadow、监控与回滚已实现并验证。
+- 无 Alias `candidate_difference_v3`、短词低置信度回退和生产模型包均已冻结；序列化版本、完整超参、特征签名、超时/预算降级、Shadow、监控、测试向量和 weighted score 回滚已验证。
 - Blind v4 唯一一次结果：Hit@10 `98.53%→98.93%`（+0.40pp），MRR `90.41%→98.02%`（+7.62pp）；95% CI 跨 0，因此只能判定工程门禁通过、效果方向为正，不能宣称 Hit@10 显著提升。
 - 旧 `tolink_rag_eval_db` 已从 `100.86.10.52` 停机前备份完整迁到本地 `runs/linkrag_eval.sqlite3`；六表计数和内容摘要校验通过，后续禁止恢复远端 MySQL 运行依赖。
+- Blind v5 唯一一次结果：Hit@10 `98.80%→99.07%`、MRR `92.16%→95.64%`，2 gained / 0 lost，p95 83.71ms；但 500 条真实搜索 MRR -0.70pp，因此只批准生产 Shadow，不批准直接全量切换。
 
 ## 4. 审查发现的关键缺口
 
@@ -65,9 +67,9 @@
 ## 5. 推荐执行顺序
 
 1. 将已修复依赖安装和假跳过问题的 workflow 纳入版本控制，推送后确认 GitHub Actions 全绿。
-2. 保留 Blind v4 封存状态，禁止二次运行或根据其结果调整当前模型。
-3. 若上游生产项目决定采用，先以 Shadow 观察真实业务延迟、回退率和 Top10 变化，再在生产仓库完成切换。
-4. 下一次效果研究必须新建 Tune/Blind v5，优先增加脱敏真实业务 Query，并预注册验收标准。
+2. Blind v4、Blind v5 均已封存，禁止二次运行或据此调参。
+3. 上游生产项目使用 `models/candidate-difference-v3-20260728-final33/` 模型包适配，先以 Shadow 观察真实业务延迟、回退率和 Top10 变化；weighted score 必须保留为启动/异常/主动回滚路径。
+4. 下一次效果研究必须新建 Tune/Blind v6，优先增加脱敏真实业务 Query，并预注册验收标准。
 
 ## 6. 新对话必读文档
 
@@ -97,6 +99,7 @@
 - 20k总体验收：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/scale20k_acceptance_report.html`
 - SQLite FTS5最终A/B验收：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/bm25_sqlite_final_acceptance_20260724/bm25_sqlite_fts5_ab_acceptance_report.html`
 - Blind v4 最终一次性验收：[blind_v4_final_acceptance_2026_07_24.md](reports/blind_v4_final_acceptance_2026_07_24.md)
+- Blind v5 无 Alias 生产契约验收：[blind_v5_production_contract_acceptance_2026_07_28.md](reports/blind_v5_production_contract_acceptance_2026_07_28.md)
 - Rerank失败历史：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/cross_encoder_feature_v1/cross_encoder_ltr_experiment_report.html`
 - qwen3-vl-rerank 150条对照：`runs/golden_v2/scale_100k_991004/scale_20k_overnight/ltr_query_expansion_2000/final_2000/candidate_routing_ltr_v3_20260720/qwen3_vl_rerank_batch_150_20260721/batch_comparison.html`
 
@@ -108,7 +111,7 @@
 - 召回装配：`src/linkrag_eval/retrieval/recall_factory.py`
 - LambdaMART：`src/linkrag_eval/retrieval/learning_to_rank/experiment.py`
 - LambdaMART 在线运行：`src/linkrag_eval/retrieval/learning_to_rank/online.py`
-- Alias 词表：`src/linkrag_eval/retrieval/aliases.py`、`configs/aliases/general_web_search.v1.json`
+- 历史 Alias（活动 v3 不使用）：`src/linkrag_eval/retrieval/aliases.py`、`configs/aliases/general_web_search.v1.json`
 - 候选分流：`src/linkrag_eval/retrieval/candidate_routing.py`
 - CI：`.github/workflows/ci.yml`、`tests/contract/`、`tests/test_import_boundary.py`
 

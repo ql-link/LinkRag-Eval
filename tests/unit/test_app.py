@@ -79,10 +79,26 @@ async def test_run_eval_end_to_end(tmp_path) -> None:
         str(golden), top_k=10, run_id="r1",
         evaluable=_FakeRecall(), metrics=[RecallAtK([1, 10])], store=_Store(),
     )
-    recall = {(m.name, m.k): m.mean for m in result.metrics if m.name == "recall"}
-    assert recall[("recall", 1)] == 1.0
+    recall = {(m.name, m.k): m.mean for m in result.metrics if m.name == "recall_doc"}
+    assert recall[("recall_doc", 1)] == 1.0
     summary = format_retrieval_summary(result)
-    assert "recall@1" in summary and "1.0000" in summary
+    assert "recall_doc@1" in summary and "1.0000" in summary
+
+
+async def test_run_eval_can_require_chunk_references(tmp_path) -> None:
+    golden = tmp_path / "g.jsonl"
+    golden.write_text(json.dumps(
+        {"id": "q1", "query": "问", "user_id": 1, "dataset_ids": [990131], "expected_doc_ids": [1]}
+    ), encoding="utf-8")
+
+    import pytest
+
+    with pytest.raises(ValueError, match="doc-only"):
+        await run_eval(
+            str(golden), top_k=10, run_id="r1",
+            evaluable=_FakeRecall(), metrics=[RecallAtK([1])], store=_Store(),
+            require_chunk_refs=True,
+        )
 
 
 async def test_run_eval_snapshot_records_recall_fusion_config(tmp_path) -> None:
@@ -99,7 +115,23 @@ async def test_run_eval_snapshot_records_recall_fusion_config(tmp_path) -> None:
         settings=settings,
     )
 
-    assert result.snapshot.route_top_ks == {"bm25": 50, "dense": 150, "sparse": 50}
-    assert result.snapshot.route_score_thresholds == {"dense": 0.20, "sparse": 0.40}
+    assert result.snapshot.route_top_ks == {"bm25": 100, "dense": 150, "sparse": 50}
+    assert result.snapshot.route_score_thresholds == {"dense": 0.30, "sparse": 0.20}
     assert result.snapshot.fusion_strategy == "weighted_score"
-    assert result.snapshot.fusion_weights == {"dense": 0.90, "sparse": 0.10, "bm25": 0.0}
+    assert result.snapshot.fusion_weights == {"dense": 0.70, "sparse": 0.15, "bm25": 0.15}
+
+
+async def test_run_eval_snapshot_accepts_enabled_sources_override(tmp_path) -> None:
+    golden = tmp_path / "g.jsonl"
+    golden.write_text(json.dumps(
+        {"id": "q1", "query": "问", "user_id": 1, "dataset_ids": [990131], "expected_doc_ids": [1]}
+    ), encoding="utf-8")
+
+    result = await run_eval(
+        str(golden), top_k=10, run_id="r1",
+        evaluable=_FakeRecall(), metrics=[RecallAtK([10])], store=_Store(),
+        settings=EvalSettings(_env_file=None),
+        enabled_sources=["dense", "bm25"],
+    )
+
+    assert result.snapshot.enabled_sources == ["dense", "bm25"]

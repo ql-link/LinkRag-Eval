@@ -126,7 +126,10 @@ class EvalChatClient:
             for attempt in range(self.max_retries + 1):
                 try:
                     client = await self._client()
-                    resp = await client.post(self.base_url, json=payload, headers=headers)
+                    resp = await asyncio.wait_for(
+                        client.post(self.base_url, json=payload, headers=headers),
+                        timeout=self.timeout_s,
+                    )
                     if resp.status_code == 429 or resp.status_code >= 500:
                         # 瞬时:限流 / 服务端错误 → 退避重试
                         raise _Transient(f"HTTP {resp.status_code}")
@@ -137,7 +140,7 @@ class EvalChatClient:
                         or ""
                     )
                     return EvalChatResult(content=content, model=self.model, raw=data)
-                except (_Transient, httpx.TimeoutException, httpx.ConnectError) as exc:
+                except (_Transient, asyncio.TimeoutError, httpx.TimeoutException, httpx.ConnectError) as exc:
                     last_exc = exc
                     if attempt == self.max_retries:
                         break
@@ -158,12 +161,15 @@ class EvalChatClient:
         """generate + parse_llm_json:返回解析后的 dict,无法解析或调用失败返回 None。"""
         from linkrag_eval.judge.json_parse import parse_llm_json
 
-        result = await self.generate(
-            prompt=prompt,
-            system_prompt=system_prompt,
-            temperature=temperature,
-            max_tokens=max_tokens,
-        )
+        try:
+            result = await self.generate(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=temperature,
+                max_tokens=max_tokens,
+            )
+        except (ProviderUnavailable, httpx.HTTPError, asyncio.TimeoutError):
+            return None
         return parse_llm_json(result.content or "")
 
 

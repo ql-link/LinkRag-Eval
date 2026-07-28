@@ -1,7 +1,7 @@
 """DB 结果仓储:把 EvalResult 写入 eval_run / eval_metric_result。
 
 文件结果仍是可审计原始产物;DB 台账用于趋势查询与跨 run 汇总。实现只使用 eval 自持
-``EvalBase`` 模型和 ``EVAL_DB_*`` 连接,不触碰生产库。
+``EvalBase`` 模型和本地 SQLite 连接,不触碰远端 MySQL 或生产库。
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from dataclasses import asdict
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from linkrag_eval.models import EvalResult, Layer, MetricResult, QuestionType, Snapshot
@@ -26,7 +26,8 @@ def _json_dumps(value: Any) -> str:
 
 
 def _scale_of(metric_name: str) -> str:
-    return "graded" if metric_name.endswith("_graded") else "binary"
+    base = metric_name.removesuffix("_chunk").removesuffix("_doc")
+    return "graded" if base.endswith("_graded") else "binary"
 
 
 def _run_record(
@@ -55,7 +56,9 @@ def _run_record(
         chat_model=snap.chat_model or None,
         judge_model=snap.judge_model or None,
         generator_model=snap.generator_model or None,
-        computer_fingerprint=None,
+        computer_fingerprint=(
+            _json_dumps(snap.computer_fingerprint) if snap.computer_fingerprint else None
+        ),
         run_quality=quality.get("run_quality"),
         failed_samples=quality.get("failed_samples"),
         failed_sources_json=(
@@ -119,23 +122,6 @@ def _metric_records(result: EvalResult) -> list[EvalMetricResultDB]:
     return rows
 
 
-async def _assign_sqlite_metric_ids(
-    session: AsyncSession,
-    rows: list[EvalMetricResultDB],
-) -> None:
-    """SQLite 不会对 BigInteger PK 自动递增;单测后端显式补 id,MySQL 不走此分支。"""
-    bind = session.get_bind()
-    if bind.dialect.name != "sqlite" or not rows:
-        return
-    max_id = (
-        await session.execute(select(func.max(EvalMetricResultDB.id)))
-    ).scalar_one_or_none()
-    next_id = int(max_id or 0) + 1
-    for row in rows:
-        row.id = next_id
-        next_id += 1
-
-
 class EvalDbResultStore:
     """异步 DB 后端,写 ``eval_run`` 与 ``eval_metric_result`` 两张表。"""
 
@@ -175,7 +161,6 @@ class EvalDbResultStore:
                 delete(EvalMetricResultDB).where(EvalMetricResultDB.run_id == result.run_id)
             )
             metrics = _metric_records(result)
-            await _assign_sqlite_metric_ids(session, metrics)
             session.add_all(metrics)
             await session.commit()
 
@@ -189,10 +174,14 @@ class EvalDbResultStore:
             if run is None or not run.snapshot_json:
                 return None
             metric_rows = (
-                await session.execute(
-                    select(EvalMetricResultDB).where(EvalMetricResultDB.run_id == run_id)
+                (
+                    await session.execute(
+                        select(EvalMetricResultDB).where(EvalMetricResultDB.run_id == run_id)
+                    )
                 )
-            ).scalars().all()
+                .scalars()
+                .all()
+            )
 
         snapshot = Snapshot(**json.loads(run.snapshot_json))
         grouped: dict[tuple[str, str, int | None], MetricResult] = {}

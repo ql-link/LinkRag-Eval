@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Sequence
+from typing import Any, Callable, Sequence
 
 from linkrag_eval.golden.gen.sampler import SampleSpec, SampledChunk
 from linkrag_eval.golden.opensource.convert import write_golden_jsonl

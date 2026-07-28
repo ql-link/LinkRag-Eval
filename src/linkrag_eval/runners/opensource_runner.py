@@ -1,4 +1,4 @@
-"""Track A 开源数据集端到端编排:段落灌 eval 库 → 标注转 doc 粒度 GoldenSample。
+"""Track A 开源数据集端到端编排:段落灌 eval 库 → 标注转 GoldenSample。
 
 一次跑通「开源真实 query + 人工标注 → 可评测黄金集」:先 ``ingest_passages`` 把段落语料写进
 eval namespace 并产出 ``source_id↔doc_id`` manifest,再 ``convert_to_golden`` 按该 manifest
@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Awaitable, Callable, Literal
 
 from linkrag_eval.golden.corpus_io import ManifestRecord, load_manifest
 from linkrag_eval.golden.opensource.convert import (
@@ -35,7 +35,8 @@ class OpensourceRunReport:
         c = self.convert
         return (
             f"opensource: 灌库 {self.ingested_docs} 段 → 转换 {c.converted}/{c.total_queries} query"
-            f"(无正例跳过 {c.skipped_no_positive} / 部分缺失 {c.skipped_partial_missing})\n"
+            f"(reference={c.reference_granularity}; 无正例跳过 {c.skipped_no_positive}"
+            f" / 部分缺失 {c.skipped_partial_missing} / 无chunk {c.skipped_no_chunks})\n"
             f"  golden: {self.golden_path}\n  manifest: {self.manifest_path}"
         )
 
@@ -56,6 +57,8 @@ async def run_opensource_golden(
     max_samples: int | None = None,
     batch: int = 25,
     skip_ingest: bool = False,
+    reference_granularity: Literal["doc", "chunk"] = "doc",
+    chunk_lookup: Callable[[list[int]], Awaitable[dict[int, list[str]]]] | None = None,
     progress: Callable[[str], None] | None = None,
 ) -> OpensourceRunReport:
     """灌段落语料(可跳过)→ 转标注 → 写 golden jsonl。返回 :class:`OpensourceRunReport`。"""
@@ -73,9 +76,20 @@ async def run_opensource_golden(
         )
 
     ingested = sum(1 for r in manifest if r.status == "success")
+    chunks_by_doc = None
+    if reference_granularity == "chunk":
+        if chunk_lookup is None:
+            raise ValueError("chunk 粒度转换需提供 chunk_lookup")
+        doc_ids = sorted({r.doc_id for r in manifest if r.status == "success"})
+        chunks_by_doc = await chunk_lookup(doc_ids)
+        if progress:
+            n_chunks = sum(len(v) for v in chunks_by_doc.values())
+            progress(f"chunk 粒度映射: docs={len(doc_ids)} chunks={n_chunks}")
     samples, report = convert_to_golden(
         judgments, manifest, dataset_name=dataset_name, dataset_id=dataset_id,
         user_id=user_id, graded=graded, max_samples=max_samples,
+        reference_granularity=reference_granularity,
+        chunks_by_doc=chunks_by_doc,
     )
     if progress:
         progress(f"转换 {report.converted}/{report.total_queries} query → golden")

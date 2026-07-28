@@ -80,7 +80,7 @@ def diff_metrics(
         delta = mr.mean - bm.mean
         is_regression = False
         if report.comparable and mr.n >= criteria.min_n:
-            if mr.name == "recall" and delta < -criteria.recall_drop:
+            if (mr.name == "recall" or mr.name.startswith("recall_")) and delta < -criteria.recall_drop:
                 is_regression = True
             elif mr.name.startswith("ndcg") and delta < -criteria.ndcg_drop:
                 is_regression = True

@@ -7,14 +7,18 @@
 from __future__ import annotations
 
 from collections import Counter
+import hashlib
+from pathlib import Path
+import subprocess
 from typing import Any, Awaitable, Callable
 
 from linkrag_eval.golden.corpus_io import load_manifest, read_tsv_collection
-from linkrag_eval.golden.loader import load_golden, precheck
+from linkrag_eval.golden.loader import load_golden, precheck, require_chunk_references
 from linkrag_eval.metrics.retrieval import DEFAULT_K_VALUES
 from linkrag_eval.models import EvalResult, Layer, Snapshot
 from linkrag_eval.runners import RunContext, run_stage
 from linkrag_eval.store.indexer import EvalPassage
+from linkrag_eval.store.ids import content_hash
 
 
 async def run_ingest(
@@ -46,12 +50,31 @@ async def run_ingest(
         if not text:
             missing += 1
             continue
-        passages.append(EvalPassage(source_passage_id=r.source_id, content=text, doc_id=r.doc_id))
+        passages.append(
+            EvalPassage(
+                source_passage_id=r.source_id,
+                content=text,
+                doc_id=r.doc_id,
+                ordinal=r.ordinal,
+            )
+        )
     if limit:
         passages = passages[:limit]
+    skipped_existing = 0
+    fetch_ingested = getattr(corpus_repo, "fetch_ingested_positions", None)
+    if fetch_ingested is not None:
+        indexed = await fetch_ingested(dataset_id)
+        pending = []
+        for passage in passages:
+            key = (int(passage.doc_id), int(passage.ordinal))
+            if indexed.get(key) == content_hash(passage.content):
+                skipped_existing += 1
+            else:
+                pending.append(passage)
+        passages = pending
     if progress:
         progress(f"manifest success={len(records)} collection={len(corpus)} "
-                 f"待灌={len(passages)}(缺正文 {missing} 跳过)")
+                 f"待灌={len(passages)}(缺正文 {missing} 跳过, 已完成 {skipped_existing} 跳过)")
     if not passages:
         return 0
 
@@ -84,7 +107,13 @@ async def run_ingest(
     return total
 
 
-def _minimal_snapshot(run_id: str, top_k: int, *, settings: Any | None = None) -> Snapshot:
+def _minimal_snapshot(
+    run_id: str,
+    top_k: int,
+    *,
+    settings: Any | None = None,
+    enabled_sources: list[str] | None = None,
+) -> Snapshot:
     """据 eval 配置构最小快照(检索层用;生成层字段留空)。"""
     sparse_provider = "unknown"
     dense_threshold = 0.0
@@ -92,8 +121,11 @@ def _minimal_snapshot(run_id: str, top_k: int, *, settings: Any | None = None) -
     dense_top_k = top_k
     sparse_top_k = top_k
     bm25_top_k = top_k
-    fusion_strategy = "rrf"
+    fusion_strategy = "weighted_score"
     fusion_weights: dict[str, float] = {}
+    bm25_mode = "stub"
+    bm25_sidecar_identity: dict[str, Any] = {}
+    computer_fingerprint: dict[str, Any] = {}
     if settings is not None:
         sparse_provider = f"{getattr(settings, 'sparse_provider', '')}:{getattr(settings, 'sparse_model', '')}"
         dense_threshold = getattr(settings, "recall_dense_score_threshold", 0.0)
@@ -101,24 +133,104 @@ def _minimal_snapshot(run_id: str, top_k: int, *, settings: Any | None = None) -
         dense_top_k = getattr(settings, "recall_dense_top_k", top_k)
         sparse_top_k = getattr(settings, "recall_sparse_top_k", top_k)
         bm25_top_k = getattr(settings, "recall_bm25_top_k", top_k)
-        fusion_strategy = getattr(settings, "recall_fusion_strategy", "rrf")
         fusion_weights = {
             "dense": getattr(settings, "recall_dense_weight", 0.5),
             "sparse": getattr(settings, "recall_sparse_weight", 0.3),
             "bm25": getattr(settings, "recall_bm25_weight", 0.0),
         }
-    enabled_sources = ["dense", "sparse"]
-    if getattr(settings, "bm25_mode", "stub") == "qdrant_bm25":
-        enabled_sources = ["bm25", "dense", "sparse"]
+        bm25_mode = getattr(settings, "bm25_mode", "stub")
+        computer_fingerprint = {
+            "dense": {
+                "model": getattr(settings, "embed_model", None),
+                "dim": getattr(settings, "embed_dim", None),
+            },
+            "sparse": {
+                "provider": getattr(settings, "sparse_provider", None),
+                "model": getattr(settings, "sparse_model", None),
+            },
+            "bm25": {
+                "mode": bm25_mode,
+                "tokenizer": (
+                    "linkrag_eval.store.sqlite_bm25.SQLiteBm25Tokenizer"
+                    if bm25_mode == "sqlite_fts5"
+                    else None
+                ),
+            },
+        }
+        if bm25_mode == "sqlite_fts5":
+            from linkrag_eval.store.sqlite_bm25 import inspect_sqlite_bm25_identity
+
+            bm25_sidecar_identity = inspect_sqlite_bm25_identity(
+                getattr(settings, "bm25_sqlite_path", "runs/bm25_eval.sqlite3"),
+                coarse_weight=getattr(settings, "bm25_sqlite_coarse_weight", 2.0),
+                fine_weight=getattr(settings, "bm25_sqlite_fine_weight", 1.0),
+            )
+    if enabled_sources is None:
+        enabled_sources = ["dense", "sparse"]
+        if getattr(settings, "bm25_mode", "stub") in {"qdrant_bm25", "sqlite_fts5"}:
+            enabled_sources = ["bm25", "dense", "sparse"]
+    git_sha, git_dirty, git_worktree_sha256 = _git_state()
     return Snapshot(
-        run_id=run_id, git_sha="", sparse_vector_provider=sparse_provider, top_k=top_k,
+        run_id=run_id, git_sha=git_sha, sparse_vector_provider=sparse_provider, top_k=top_k,
         score_threshold=sparse_threshold, enabled_sources=enabled_sources, rrf_k=60, rerank_top_n=None,
         chat_model="", judge_model="", generator_model="", token_budget=0, prompt_version="v1",
         route_score_thresholds={"dense": dense_threshold, "sparse": sparse_threshold},
         route_top_ks={"bm25": bm25_top_k, "dense": dense_top_k, "sparse": sparse_top_k},
         fusion_strategy=fusion_strategy,
         fusion_weights=fusion_weights,
+        bm25_mode=bm25_mode,
+        bm25_sidecar_identity=bm25_sidecar_identity,
+        computer_fingerprint=computer_fingerprint,
+        feature_version="recall_pipeline_v1",
+        git_dirty=git_dirty,
+        git_worktree_sha256=git_worktree_sha256,
     )
+
+
+def _git_state() -> tuple[str, bool, str]:
+    """抓取当前仓库提交和 dirty 状态；失败时显式返回 unknown。"""
+    cwd = Path(__file__).resolve().parents[2]
+    try:
+        sha = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=cwd,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        changed_raw = subprocess.run(
+                [
+                    "git",
+                    "ls-files",
+                    "--modified",
+                    "--deleted",
+                    "--others",
+                    "--exclude-standard",
+                    "-z",
+                ],
+                cwd=cwd,
+                check=True,
+                capture_output=True,
+            ).stdout
+        changed = sorted(path for path in changed_raw.split(b"\0") if path)
+        digest = hashlib.sha256()
+        for raw_path in changed:
+            relative = raw_path.decode("utf-8", errors="surrogateescape")
+            path = cwd / relative
+            digest.update(raw_path)
+            digest.update(b"\0")
+            if path.is_symlink():
+                digest.update(b"symlink\0")
+                digest.update(path.readlink().as_posix().encode("utf-8"))
+            elif path.is_file():
+                digest.update(b"file\0")
+                digest.update(path.read_bytes())
+            else:
+                digest.update(b"deleted\0")
+            digest.update(b"\0")
+        return sha, bool(changed), digest.hexdigest() if changed else ""
+    except (OSError, subprocess.CalledProcessError):
+        return "unknown", True, "unknown"
 
 
 async def run_eval(
@@ -132,11 +244,15 @@ async def run_eval(
     settings: Any | None = None,
     domain_of: Callable[[Any], str | None] | None = None,
     fetch_status: Callable[[list[str]], Awaitable[dict[str, str]]] | None = None,
+    require_chunk_refs: bool = False,
     k_values: list[int] | None = None,
+    enabled_sources: list[str] | None = None,
     progress: Callable[[str], None] | None = None,
 ) -> EvalResult:
     """加载 golden →(可选 precheck)→ run_stage → 返回 EvalResult。"""
     golden = load_golden(golden_path)
+    if require_chunk_refs:
+        require_chunk_references(golden)
     if fetch_status is not None:
         report = await precheck(golden, fetch_status)
         if progress:
@@ -144,7 +260,9 @@ async def run_eval(
         if not report.ok:
             raise RuntimeError(f"golden precheck 失败:{len(report.invalid_sample_ids)} 条 reference 失效")
 
-    snapshot = _minimal_snapshot(run_id, top_k, settings=settings)
+    snapshot = _minimal_snapshot(
+        run_id, top_k, settings=settings, enabled_sources=enabled_sources
+    )
     ctx = RunContext(
         run_id=run_id, snapshot=snapshot, store=store, top_k=top_k,
         k_values=list(k_values or DEFAULT_K_VALUES),

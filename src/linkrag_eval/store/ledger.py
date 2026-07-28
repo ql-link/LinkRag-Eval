@@ -15,7 +15,8 @@ ALL_BUCKET = "__all__"
 
 
 def _scale_of(metric_name: str) -> str:
-    return "graded" if metric_name.endswith("_graded") else "binary"
+    base = metric_name.removesuffix("_chunk").removesuffix("_doc")
+    return "graded" if base.endswith("_graded") else "binary"
 
 
 def ledger_rows(result: EvalResult, *, dataset: str, ts: str) -> list[dict[str, Any]]:

@@ -2,7 +2,8 @@
 
 eval 对 rag 的依赖只剩 **chunk 切分** 与 **bm25 分词**(dense/sparse 已移到 eval llm 模块)。
 只验这两处白名单纯函数存在且签名未变——轻量,不触发网络/模型推理。需 toLink-Rag 可 import,
-故标 ``contract``;rag 不在环境时整文件跳过。
+故标 ``contract``；普通本地环境缺依赖时跳过，CI 设置 ``LINKRAG_EVAL_REQUIRE_RAG=1``
+后会在收集前直接失败。
 """
 
 from __future__ import annotations
@@ -11,7 +12,8 @@ import inspect
 
 import pytest
 
-pytest.importorskip("src", reason="需安装 toLink-Rag(pip install -e <path>)")
+pytest.importorskip("src.core", reason="需安装 toLink-Rag(pip install -e <path>)")
+pytestmark = pytest.mark.contract
 
 
 def test_chunk_dataclass_fields() -> None:

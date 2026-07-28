@@ -1,14 +1,16 @@
 """漂移守卫:eval 自持的 normalize 必须与生产 ``normalize_lexical_weights`` 同输入同输出。
 
 eval 为保依赖边界(llm 模块零 rag import)重实现了清洗;本测试确保它和生产口径一字不差,
-否则 eval 的 sparse 分数与线上不可比。需 toLink-Rag 可 import,故标 contract。
+否则 eval 的 sparse 分数与线上不可比。需 toLink-Rag 可 import,故标 contract；普通本地环境
+缺依赖时跳过，CI 设置 ``LINKRAG_EVAL_REQUIRE_RAG=1`` 后会在收集前直接失败。
 """
 
 from __future__ import annotations
 
 import pytest
 
-pytest.importorskip("src", reason="需安装 toLink-Rag(pip install -e <path>)")
+pytest.importorskip("src.core", reason="需安装 toLink-Rag(pip install -e <path>)")
+pytestmark = pytest.mark.contract
 
 from linkrag_eval.llm.normalize import normalize_lexical_weights as eval_norm  # noqa: E402
 

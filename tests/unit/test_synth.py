@@ -5,7 +5,6 @@ from __future__ import annotations
 import pytest
 
 from linkrag_eval.golden.synth.compose import (
-    ComposeResult,
     DocumentComposer,
     check_anchors,
 )

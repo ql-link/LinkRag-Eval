@@ -36,3 +36,13 @@ def test_load_manifest_filters_fields(tmp_path) -> None:
     assert [r.source_id for r in recs] == ["p1", "p2"]
     assert recs[0].doc_id == 991310000 and recs[0].status == "success"
     assert recs[1].status == "failed"
+
+
+def test_load_manifest_reads_optional_ordinal(tmp_path) -> None:
+    p = tmp_path / "m.jsonl"
+    p.write_text(
+        json.dumps({"source_id": "p1", "doc_id": 991310000, "status": "success", "ordinal": 2}),
+        encoding="utf-8",
+    )
+    [rec] = load_manifest(p)
+    assert rec.ordinal == 2

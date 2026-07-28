@@ -21,6 +21,7 @@ class Sample(Protocol):
     expected_doc_ids: list[int] | None
     golden_answer: str | None
     type: QuestionType
+    provenance: object | None
 
 
 @runtime_checkable

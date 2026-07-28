@@ -1,13 +1,16 @@
 """recall_factory 装配:注入 fake 编码器,验证能装出 eval 前缀的 RecallPipeline(不连网络)。
 
-需 toLink-Rag 可 import(facade/retriever/pipeline 是 rag),故标 contract;rag 不在则跳过。
+需 toLink-Rag 可 import(facade/retriever/pipeline 是 rag),故标 contract；普通本地环境缺依赖
+时跳过，CI 设置 ``LINKRAG_EVAL_REQUIRE_RAG=1`` 后会在收集前直接失败。
 """
 
 from __future__ import annotations
 
+import inspect
 import pytest
 
-pytest.importorskip("src", reason="需安装 toLink-Rag(pip install -e <path>)")
+pytest.importorskip("src.core", reason="需安装 toLink-Rag(pip install -e <path>)")
+pytestmark = pytest.mark.contract
 
 from linkrag_eval.config import EvalSettings  # noqa: E402
 from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline  # noqa: E402
@@ -44,6 +47,7 @@ class _FakeTokenizer:
 
 def _settings(prefix="eval_kb_bucket") -> EvalSettings:
     return EvalSettings(
+        _env_file=None,
         qdrant_prefix=prefix,
         qdrant_host="http://localhost:36333",
         recall_dense_score_threshold=0.11,
@@ -53,16 +57,21 @@ def _settings(prefix="eval_kb_bucket") -> EvalSettings:
 
 
 def test_assembles_two_route_pipeline() -> None:
+    settings = _settings()
+    settings.sparse_vector_name = "eval_sparse_for_test"
     pipe = build_eval_recall_pipeline(
-        settings=_settings(), dense_encoder=_FakeDense(), sparse_encoder=_FakeSparse()
+        settings=settings, dense_encoder=_FakeDense(), sparse_encoder=_FakeSparse()
     )
     from src.core.pipeline.recall.pipeline import RecallPipeline
 
     assert isinstance(pipe, RecallPipeline)
     # dense + sparse 两路(bm25 P1 stub)
     assert len(pipe._retrievers) == 2
+    assert pipe._readiness_gate.__class__.__name__ == "_EvalReadinessGate"
     assert pipe._retrievers[0]._score_threshold == 0.11
+    assert pipe._retrievers[0]._backend._embedding_pipeline.__class__ is _FakeDense
     assert pipe._retrievers[1]._score_threshold == 0.30
+    assert pipe._retrievers[1]._backend._sparse_vector_service.vector_name == "eval_sparse_for_test"
 
 
 def test_assembles_qdrant_bm25_route_when_enabled() -> None:
@@ -76,6 +85,22 @@ def test_assembles_qdrant_bm25_route_when_enabled() -> None:
     )
 
     assert [r.source for r in pipe._retrievers] == ["bm25", "dense", "sparse"]
+
+
+def test_assembles_sqlite_bm25_route_when_enabled(tmp_path) -> None:
+    settings = _settings()
+    settings.bm25_mode = "sqlite_fts5"
+    settings.bm25_sqlite_path = str(tmp_path / "bm25.sqlite3")
+    pipe = build_eval_recall_pipeline(
+        settings=settings,
+        dense_encoder=_FakeDense(),
+        sparse_encoder=_FakeSparse(),
+        bm25_tokenizer=_FakeTokenizer(),
+    )
+
+    assert [r.source for r in pipe._retrievers] == ["bm25", "dense", "sparse"]
+    signature = inspect.signature(pipe._retrievers[0].recall)
+    assert "dataset_contexts" in signature.parameters
 
 
 def test_prefix_guard_rejects_non_eval() -> None:

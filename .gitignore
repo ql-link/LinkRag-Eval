@@ -5,7 +5,7 @@
 
 # —— 评测数据产物(语料 / golden / qrels / 跑分中间物)——
 .specs/
-golden/
+/golden/
 data/
 *.jsonl
 *.tsv

@@ -10,7 +10,6 @@ from linkrag_eval.golden.corpus_io import write_manifest, ManifestRecord
 from linkrag_eval.golden.loader import load_golden
 from linkrag_eval.golden.opensource.datasets import PassageCorpus, QueryJudgment
 from linkrag_eval.runners import run_opensource_golden
-from linkrag_eval.store.indexer import EvalPassage
 
 
 class _FakeIndexer:
@@ -72,3 +71,33 @@ class TestOpensourceRunner:
         assert indexer.calls == []          # 没碰 indexer
         assert report.ingested_docs == 3
         assert report.convert.converted == 2
+
+    async def test_chunk_granularity_uses_chunk_lookup(self, tmp_path):
+        corpus, judgments = _data()
+        write_manifest(
+            [ManifestRecord("p1", 990300000, "success"),
+             ManifestRecord("p2", 990300001, "success"),
+             ManifestRecord("p3", 990300002, "success")],
+            tmp_path / "m.jsonl",
+        )
+
+        async def lookup(doc_ids):
+            assert doc_ids == [990300000, 990300001, 990300002]
+            return {
+                990300000: ["c1"],
+                990300001: ["c2a", "c2b"],
+                990300002: ["c3"],
+            }
+
+        report = await run_opensource_golden(
+            corpus, judgments,
+            dataset_id=990201, user_id=990001, dataset_name="dur",
+            indexer=_FakeIndexer(), manifest_path=tmp_path / "m.jsonl",
+            golden_out=tmp_path / "g.jsonl", doc_id_base=990300000,
+            skip_ingest=True, reference_granularity="chunk", chunk_lookup=lookup,
+        )
+        assert report.convert.reference_granularity == "chunk"
+        golden = load_golden(tmp_path / "g.jsonl")
+        q2 = next(g for g in golden if g.id == "dur-q2")
+        assert q2.expected_doc_ids == [990300001, 990300002]
+        assert q2.expected_chunk_ids == ["c2a", "c2b", "c3"]

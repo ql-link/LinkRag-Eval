@@ -1,14 +1,13 @@
-"""评测自持存储 ORM(独立 ``EvalBase``,MySQL)。
+"""评测自持存储 ORM(独立 ``EvalBase``,默认本地 SQLite)。
 
 搬迁自源仓库 ``src/evaluation/store/models.py``,改动:
-- 后端定为 MySQL(同生产服务器、独立库 ``tolink_rag_eval_db``):自增代理键用纯
-  ``BigInteger``(MySQL AUTO_INCREMENT),去掉 SQLite variant。
+- 默认后端为本地 SQLite；自增代理键在 SQLite 使用 ``Integer``，旧 MySQL 迁移源仍使用
+  ``BigInteger``。
 - ``eval_corpus_chunk.es_indexed`` → ``bm25_indexed``(对齐目标态无 ES、bm25 走 Qdrant)。
 - ``eval_run`` 新增 ``computer_fingerprint``(dense 模型 / sparse encoder / bm25 mode 指纹)。
 
 硬约束:独立 ``EvalBase``,不 import ``src.*``,零生产依赖;只建 eval 库的表,绝不碰生产
-``tolink_rag_db``。枚举值以 ``String`` + 注释承载(改值不需 migration)。模型 dialect 无关
-(单测仍用 SQLite 建表);MySQL 侧 utf8mb4 由库默认字符集 + 连接 ``charset=utf8mb4`` 保证。
+``tolink_rag_db``。枚举值以 ``String`` + 注释承载(改值不需 migration)。
 schema 演进唯一入口是 alembic/。
 """
 
@@ -33,6 +32,9 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 class EvalBase(DeclarativeBase):
     """评测自持存储的独立声明基类,与生产 ``Base`` 互不相干。"""
+
+
+_AUTO_PK = BigInteger().with_variant(Integer, "sqlite")
 
 
 class EvalDatasetDB(EvalBase):
@@ -106,7 +108,7 @@ class EvalQrelDB(EvalBase):
 
     __tablename__ = "eval_qrel"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(_AUTO_PK, primary_key=True, autoincrement=True)
     query_id: Mapped[str] = mapped_column(String(64), nullable=False)
     reference_id: Mapped[str] = mapped_column(String(128), nullable=False)
     reference_kind: Mapped[str] = mapped_column(String(8), nullable=False, default="chunk")  # chunk|doc
@@ -155,7 +157,7 @@ class EvalMetricResultDB(EvalBase):
 
     __tablename__ = "eval_metric_result"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(_AUTO_PK, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(96), nullable=False)
     layer: Mapped[str] = mapped_column(String(16), nullable=False)
     metric: Mapped[str] = mapped_column(String(32), nullable=False)

@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 30
     env:
       LINKRAG_EVAL_REQUIRE_RAG: "1"
-      TOLINK_RAG_SHA: 6bf3237941657f40fd48ce8c0edec5af127c8f0a
+      TOLINK_RAG_SHA: 6296990fd80181f0f7608746faf259a9aa256dc0
     steps:
       - name: Checkout LinkRag-Eval
         uses: actions/checkout@v4
@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: ql-link/LinkRag
-          ref: 6bf3237941657f40fd48ce8c0edec5af127c8f0a
+          ref: 6296990fd80181f0f7608746faf259a9aa256dc0
           path: vendor/toLink-Rag
           persist-credentials: false
 

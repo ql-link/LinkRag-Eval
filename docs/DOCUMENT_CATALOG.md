@@ -102,7 +102,7 @@
 
 当前真正未完成的阻塞工作只有一项：
 
-1. **CI 远端证据**：本地 workflow 已固定安装 toLink-Rag SHA `6bf3237941657f40fd48ce8c0edec5af127c8f0a`，并阻止契约测试因缺包静默跳过；workflow 尚未提交推送，仍需形成远端 pytest、真实 contract、import-lint、Alembic heads 门禁证据。
+1. **CI 远端证据**：workflow 已固定安装包含 LambdaMART Shadow 与固定 weighted score 契约的 toLink-Rag SHA `6296990fd80181f0f7608746faf259a9aa256dc0`，并阻止契约测试因缺包静默跳过；远端 pytest、真实 contract、import-lint、Alembic heads 门禁均由 PR CI 验证。
 
 本轮 Query provenance、Top50 pooled 独立复核、多正例 qrels、多 Chunk/编号类语料、Alias、短词回退、
 在线 LambdaMART 和 750 条 Blind v4 一次性验收均已完成。Blind v4 已封存，不得复用选参或重跑。

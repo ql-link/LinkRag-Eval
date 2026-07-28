@@ -50,7 +50,7 @@
 
 ### P0：CI远端证据待形成
 
-- `.github/workflows/ci.yml` 已 checkout/安装固定 SHA `6bf3237941657f40fd48ce8c0edec5af127c8f0a` 的公开 `ql-link/LinkRag`。
+- `.github/workflows/ci.yml` 已 checkout/安装固定 SHA `6296990fd80181f0f7608746faf259a9aa256dc0` 的公开 `ql-link/LinkRag`。
 - CI 设置 `LINKRAG_EVAL_REQUIRE_RAG=1`；缺少 `src.core` 会在测试收集前失败，不能再静默跳过。
 - contract 文件已统一标记，workflow 独立执行 16 个真实生产契约测试；本地等价门禁通过。
 - workflow 尚未提交、推送，因此还需形成真实 GitHub Actions 全绿证据。

@@ -41,7 +41,7 @@
 
 | 文档 | 文档状态 | 实验状态 | 结论或剩余工作 |
 | --- | --- | --- | --- |
-| [LambdaMART 三路融合](experiments/ltr-fusion-v1.md) | 完成 | 完成 | 活动 `candidate_difference_v3` 已移除离线场景和 Alias 依赖，生产模型包与 Blind v5 已验收；生产默认切换仍须 Shadow |
+| [LambdaMART 三路融合](experiments/ltr-fusion-v1.md) | 完成 | 已部署，待线上观察 | 活动 `candidate_difference_v3` 已移除离线场景和 Alias 依赖，生产模型包与 Blind v5 已验收；LinkRag 已默认 `active`，仍需留存线上稳定性与业务效果证据 |
 | [Query 重写配对基准](experiments/query-rewrite-benchmark-v1.md) | 完成 | 完成 | 当前数据上 Recall 无提升、MRR 下降，不进入默认链路；保留作对照实验 |
 | [Query 软分流候选](experiments/query-soft-routing-candidates.md) | 完成 | 完成离线验收 | 候选深度已在 2,000 条 Tune 冻结，完整 Top10 与 Blind v3 已验收；动态权重仍未成为默认方案 |
 
@@ -100,9 +100,14 @@
 
 ## 八、未完成工作汇总
 
-当前真正未完成的阻塞工作只有一项：
+生产接入与 CI 阻塞项均已关闭。当前需要继续留档的 P1 工作只有一项：
 
-1. **CI 远端证据**：workflow 已固定安装包含 LambdaMART Shadow 与固定 weighted score 契约的 toLink-Rag SHA `6296990fd80181f0f7608746faf259a9aa256dc0`，并阻止契约测试因缺包静默跳过；远端 pytest、真实 contract、import-lint、Alembic heads 门禁均由 PR CI 验证。
+1. **线上运行验证**：`candidate-difference-v3-20260728-final33` 已进入 LinkRag `master`、默认
+   `active` 并由用户确认部署线上；仍需留存 `/health`、延迟、回退率、Top10 变化和业务反馈，
+   不能用离线 Blind 结果替代线上效果结论。异常时使用 `baseline` 回滚到 weighted score。
+
+CI 远端证据已由 PR #1 关闭：workflow 固定生产 RAG SHA，并验证非集成测试、真实 contract、
+import-lint 与 Alembic heads 门禁。
 
 本轮 Query provenance、Top50 pooled 独立复核、多正例 qrels、多 Chunk/编号类语料、Alias、短词回退、
 在线 LambdaMART 和 750 条 Blind v4 一次性验收均已完成。Blind v4 已封存，不得复用选参或重跑。

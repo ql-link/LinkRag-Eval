@@ -1,6 +1,6 @@
 # 当前开发状态
 
-> 更新时间：2026-07-28
+> 更新时间：2026-08-07
 > 本页是项目级进度的唯一维护入口。专题文档中的历史状态和实验结论不得覆盖本页。
 
 ## 总体结论
@@ -8,8 +8,10 @@
 评测研发主链路、SQLite FTS5 BM25、真实来源元数据、多正例 qrels、结构化多 Chunk 语料和
 无 Alias LambdaMART 生产契约均已完成。旧 v2 的离线元数据依赖已由生产可用的
 `candidate_difference_v3` 关闭。全新 750 条 Blind v5 在参数冻结后只运行一次：Hit@10
-`98.80%→99.07%`、MRR `92.16%→95.64%`，0 条 Top10 退化，p95 83.71ms。工程门禁通过，
-但 500 条真实搜索 MRR 下降 0.70pp，故当前结论是“可交付生产 Shadow”，不是“可直接全量切换”。
+`98.80%→99.07%`、MRR `92.16%→95.64%`，0 条 Top10 退化，p95 83.71ms。工程门禁通过。
+`candidate-difference-v3-20260728-final33` 已接入 LinkRag `master` 并由用户确认部署到线上；生产代码
+默认 `RECALL_LTR_MODE=active`，模型异常、超时、低置信度或延迟超预算时回退 frozen weighted score。
+500 条开源真实搜索 MRR 仍下降 0.70pp，因此“已部署”只关闭工程接入项，不等于线上效果已经证实。
 
 | 范围 | 状态 | 说明 |
 | --- | --- | --- |
@@ -22,8 +24,9 @@
 | 候选深度优化 | 完成 | 2,000 条 Tune 分流候选覆盖率 98.55%；Blind v3 候选覆盖率 92.67% |
 | Rerank / Cross Encoder | 已终止 | 新链路不依赖远端 Rerank；活动 LambdaMART v3 不含重排分数 |
 | LambdaMART 在线化 | 完成 | v3 仅使用线上字段；无 Alias；序列化、特征签名、预算/超时降级、Shadow、监控、回滚和测试向量均已验证 |
+| LambdaMART 生产接入 | 已部署 | v3 模型包已进入 LinkRag `master`，生产默认 `active`；保留 `baseline` weighted score 主动回滚 |
 | Blind v4 最终验收 | 完成一次性验收 | 750 条，Hit@10 +0.40pp、MRR +7.62pp；结果已 seal，禁止复用调参 |
-| Blind v5 生产契约验收 | 完成一次性验收 | 750 条，Hit@10 +0.27pp、MRR +3.48pp；0 lost、无降级、p95 83.71ms；仅批准生产 Shadow |
+| Blind v5 生产契约验收 | 完成一次性验收 | 750 条，Hit@10 +0.27pp、MRR +3.48pp；0 lost、无降级、p95 83.71ms；离线验收当时仅批准生产 Shadow |
 | 10 万背景语料 | 暂缓 | 当前先完善 20k；不属于本轮阻塞项 |
 
 ## 已固化结果
@@ -61,6 +64,10 @@
 - Blind v5 包含 500 条排除历史曝光 Query 的 T2Retrieval 与 250 条新结构化题；475/750 为多正例。唯一运行 Hit@10 `98.80%→99.07%`、MRR `92.16%→95.64%`，2 gained / 0 lost。
 - Blind v5 真实搜索子集 Hit@10 持平、MRR `95.80%→95.10%`；跨 Chunk/编号/版本号 MRR 明显提升。该差异决定生产只能先 Shadow，不得把整体合成结构收益外推为真实业务收益。
 - 最终模型 `candidate-difference-v3-20260728-final33` 使用 `lightgbm_text_v1`，特征签名 `52a69c3b...b8782d7b`；版本化包位于 `models/candidate-difference-v3-20260728-final33/`，内含完整超参、5 个文件哈希、3 个测试向量和 weighted score 基线回滚。
+- 2026-08-07 复核 LinkRag `dev` / `master`：模型包、`candidate_difference_v3` 在线特征、启动预加载、
+  Shadow 有界执行器、`active` 主排序和 `baseline` 回滚均已进入主线；本地模型加载结果为
+  `configured_mode=active`、`serving_strategy=lambdamart`、`loaded=true`，相关定向测试 `67 passed`。
+  用户确认该版本已部署到线上；本次未取得线上 `/health` 快照或持续业务指标，故不据此宣称效果收益。
 
 不同报告的数据分布、Query 数量和候选参数不同，只能在同一报告内比较变化量。
 历史四域 `recall@10 ~= 0.901` 等价门槛不能与 Hard Blind v2 的绝对值直接比较。
@@ -69,14 +76,14 @@
 
 | 优先级 | 工作 | 当前缺口 | 完成标准 |
 | --- | --- | --- | --- |
-| P1 | 生产 Shadow | 离线工程契约通过，但真实搜索 MRR -0.70pp，且不等于真实业务流量 | 生产端接入 v3 模型包，保留 weighted score 回滚；观测延迟、回退率、Top10 变化和业务反馈后再决定默认切换 |
+| P1 | 线上运行验证 | 模型已部署且默认 `active`，但尚无本项目留档的线上 `/health`、延迟、回退率、Top10 变化和业务反馈 | 留存线上运行快照与观察窗口指标；异常时切换 `baseline`，不得用离线 Blind 结果代替线上结论 |
 | P2 | 真实业务效果增强 | 当前真实 Query 来源仍是开源检索，不是脱敏生产 Query | 如继续优化，建立全新 Tune/Blind v6；禁止复用 Blind v5 调参 |
 
 ### 推荐执行顺序
 
 1. 保持 PR #1 已全绿的固定 SHA 依赖、源码跟踪和 contract 强制门禁，后续变更不得绕过。
 2. Blind v4、Blind v5 均已封存，禁止二次运行或据此调参。
-3. 生产项目先接入 v3 制品并 Shadow，weighted score 始终作为启动、超时、错误和主动回滚降级路径。
+3. 观察已部署的 v3：留存 `/health`、延迟、回退率、Top10 变化和业务反馈；weighted score 始终作为启动、超时、错误和主动回滚降级路径。
 4. 若需提高真实搜索 MRR，创建全新 Tune/Blind v6，优先补脱敏业务 Query并预注册门禁。
 
 ## 非阻塞增强项

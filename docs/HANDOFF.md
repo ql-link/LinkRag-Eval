@@ -1,15 +1,15 @@
 # LinkRag-Eval 下一对话交接
 
-> 更新时间：2026-07-28
-> 当前分支：`codex/ltr-eval-quality-suite`  
+> 更新时间：2026-08-07
+> 当前分支：`master`
 > 目标：让新的对话在不重做历史实验、不破坏隔离边界的前提下继续完成剩余工作。
 
 ## 1. 开始前必须知道
 
 - 本仓库是独立评测项目，只写本地 `runs/linkrag_eval.sqlite3` 和 `eval*` Qdrant collection，绝不写生产库或旧 eval MySQL。
-- 当前工作区有大量未提交改动和未跟踪文件。先运行 `git status --short`，不得 reset、checkout 或删除不属于当前任务的文件。
+- 开始工作前先运行 `git status --short`，不得 reset、checkout 或删除不属于当前任务的文件。
 - `runs/` 被 Git 忽略，但所有阶段报告必须保留；新报告必须使用新目录或时间戳，禁止覆盖历史产物。
-- 当前没有提交或推送。`.github/workflows/ci.yml` 仍是未跟踪文件。
+- PR #1 已合并到 `master`，CI workflow、Golden 源码和生产 contract 门禁均已纳入版本控制。
 - 项目级进度只以 [CURRENT_STATUS.md](CURRENT_STATUS.md) 为准；历史报告只能证明对应数据和参数下的结果。
 
 ## 2. 已冻结决策
@@ -38,7 +38,8 @@
 - 无 Alias `candidate_difference_v3`、短词低置信度回退和生产模型包均已冻结；序列化版本、完整超参、特征签名、超时/预算降级、Shadow、监控、测试向量和 weighted score 回滚已验证。
 - Blind v4 唯一一次结果：Hit@10 `98.53%→98.93%`（+0.40pp），MRR `90.41%→98.02%`（+7.62pp）；95% CI 跨 0，因此只能判定工程门禁通过、效果方向为正，不能宣称 Hit@10 显著提升。
 - 旧 `tolink_rag_eval_db` 已从 `100.86.10.52` 停机前备份完整迁到本地 `runs/linkrag_eval.sqlite3`；六表计数和内容摘要校验通过，后续禁止恢复远端 MySQL 运行依赖。
-- Blind v5 唯一一次结果：Hit@10 `98.80%→99.07%`、MRR `92.16%→95.64%`，2 gained / 0 lost，p95 83.71ms；但 500 条真实搜索 MRR -0.70pp，因此只批准生产 Shadow，不批准直接全量切换。
+- Blind v5 唯一一次结果：Hit@10 `98.80%→99.07%`、MRR `92.16%→95.64%`，2 gained / 0 lost，p95 83.71ms；但 500 条真实搜索 MRR -0.70pp，因此离线验收当时只批准生产 Shadow，不批准直接全量切换。
+- 2026-08-07 已复核 LinkRag `dev` / `master` 的 v3 生产实现与模型包；默认模式为 `active`，本地模型契约加载成功，相关定向测试 `67 passed`。用户确认该版本已部署到线上。该事实关闭“生产接入/部署”项，但线上持续效果与稳定性仍待留档验证。
 
 ## 4. 审查发现的关键缺口
 
@@ -48,12 +49,12 @@
 - 20k sidecar 从 eval MySQL 权威语料重建，992000–992003 各 5,000 chunks。
 - 最终 v2 OFF/ON 两轮均 `failed_sources=0`、`zero_ranked=0`；验收报告位于 `runs/golden_v2/scale_100k_991004/scale_20k_overnight/bm25_sqlite_final_acceptance_20260724/`。
 
-### P0：CI远端证据待形成
+### 已关闭：CI 远端证据
 
 - `.github/workflows/ci.yml` 已 checkout/安装固定 SHA `6296990fd80181f0f7608746faf259a9aa256dc0` 的公开 `ql-link/LinkRag`。
 - CI 设置 `LINKRAG_EVAL_REQUIRE_RAG=1`；缺少 `src.core` 会在测试收集前失败，不能再静默跳过。
 - contract 文件已统一标记，workflow 独立执行 16 个真实生产契约测试；本地等价门禁通过。
-- workflow 尚未提交、推送，因此还需形成真实 GitHub Actions 全绿证据。
+- PR #1 已合并，GitHub Actions 已验证非集成测试、真实 contract、import-lint 与 Alembic heads 门禁。
 
 ### 已关闭：评测数据真实性与在线化
 
@@ -66,9 +67,9 @@
 
 ## 5. 推荐执行顺序
 
-1. 将已修复依赖安装和假跳过问题的 workflow 纳入版本控制，推送后确认 GitHub Actions 全绿。
+1. 保持 PR #1 已验证的固定生产依赖和 contract 强制门禁，后续升级必须显式更新固定 SHA 并复跑 CI。
 2. Blind v4、Blind v5 均已封存，禁止二次运行或据此调参。
-3. 上游生产项目使用 `models/candidate-difference-v3-20260728-final33/` 模型包适配，先以 Shadow 观察真实业务延迟、回退率和 Top10 变化；weighted score 必须保留为启动/异常/主动回滚路径。
+3. 上游生产项目已部署 `candidate-difference-v3-20260728-final33` 且默认 `active`；下一步留存线上 `/health`、延迟、回退率、Top10 变化和业务反馈，weighted score 必须保留为启动/异常/主动回滚路径。
 4. 下一次效果研究必须新建 Tune/Blind v6，优先增加脱敏真实业务 Query，并预注册验收标准。
 
 ## 6. 新对话必读文档

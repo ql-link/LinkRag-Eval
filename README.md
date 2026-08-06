@@ -55,7 +55,10 @@ alembic upgrade head
 
 真实活栈已用正式 eval 前缀跑通 `alembic upgrade head`、小规模 ingest、四域 800 chunk/domain 重灌和 `run --precheck`;实证记录见 [docs/reports/live_smoke_2026_07_02.md](docs/reports/live_smoke_2026_07_02.md)。2026-07-04 的 `weighted-score-clean-20260704-top10` 已固化为 dense+sparse 两路 clean 基线:`failed_sources=0`,`zero_ranked=0`,`recall@10=0.9745`。
 
-剩余关键工作统一维护在 [当前开发状态](docs/CURRENT_STATUS.md)。近期重点是补齐可复现运行快照和 CI 真契约门禁,完成 SQLite FTS5 A/B clean run,补真实 Query/多正例/多 Chunk 数据缺口,并在生产试验前实现不含 Rerank 的 LambdaMART 在线推理和降级能力。
+剩余关键工作统一维护在 [当前开发状态](docs/CURRENT_STATUS.md)。`candidate-difference-v3-20260728-final33`
+已接入 LinkRag `master` 并部署线上，生产默认 `active`，保留 weighted score 降级与 `baseline`
+主动回滚。近期重点是留存线上 `/health`、延迟、回退率、Top10 变化和业务反馈；如继续优化真实
+搜索效果，须新建 Tune/Blind v6，不得复用已封存的 Blind v4/v5 调参。
 
 ## 验收
 

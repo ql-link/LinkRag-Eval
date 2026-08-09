@@ -716,7 +716,7 @@ linkrag-eval run \
 验收:
 
 - 导出的 collection pid 唯一,manifest doc_id/status/ordinal 完整。
-- `linkrag-eval ingest --dataset-id 990901 ...` 只写本地 `runs/linkrag_eval.sqlite3` 与 eval Qdrant 前缀。
+- `linkrag-eval ingest --dataset-id 990901 ...` 只写本地 `runs/linkrag_eval.sqlite3` 与 eval Qdrant 单 collection。
 - `bm25-backfill --dataset-ids 990901` 后 SQLite FTS5 可检索该批语料。
 
 ### Step 2:开源数据 chunk 化

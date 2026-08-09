@@ -1,6 +1,6 @@
 # 当前开发状态
 
-> 更新时间：2026-07-28
+> 更新时间：2026-08-09
 > 本页是项目级进度的唯一维护入口。专题文档中的历史状态和实验结论不得覆盖本页。
 
 ## 总体结论
@@ -16,6 +16,7 @@
 | 项目解耦 Step 0-4 | 完成 | 本地 SQLite、eval Qdrant、ProductComputer、SQLite FTS5 BM25 已落地 |
 | 项目解耦 Step 5 | 完成 | 代码、CLI、报告、结果台账和 import 边界已迁入；最终 A/B 快照已固化 backend、sidecar/computer fingerprint、Git SHA 与工作区指纹 |
 | 项目解耦 Step 6 | 完成 | SQLite FTS5 已在同一冻结 116 条、20k 语料上完成 OFF/ON clean A/B；Recall@10 提升 5.42pp |
+| 最新 LinkRag 适配 | 代码完成，待活栈重灌 | 依赖钉在 `861f24810c3482ec0d86768a24f952b1e08ae675`；已移除 BucketRouter/qdrant_bm25 兼容，改用 eval 单 collection named dense/sparse |
 | Golden V2 | 主链路完成 | chunk 粒度、候选池、标注、QC、仲裁、tune/blind、20k 评测已落地 |
 | 2000 条 LTR 数据 | 完成 | 420 条基集加 1580 条严格新增样本 |
 | LambdaMART 实验 | 完成独立 Blind v3 验证 | Blind v3 Recall@10 从 22.67% 提升到 30.67%，净增 8.00pp |
@@ -75,6 +76,7 @@
 ### 推荐执行顺序
 
 1. 保持 PR #1 已全绿的固定 SHA 依赖、源码跟踪和 contract 强制门禁，后续变更不得绕过。
+   当前依赖已升级到 LinkRag `861f24810c3482ec0d86768a24f952b1e08ae675`；历史分桶 collection 不复用，活栈验收前需重灌 `eval_linkrag_chunks`。
 2. Blind v4、Blind v5 均已封存，禁止二次运行或据此调参。
 3. 生产项目先接入 v3 制品并 Shadow，weighted score 始终作为启动、超时、错误和主动回滚降级路径。
 4. 若需提高真实搜索 MRR，创建全新 Tune/Blind v6，优先补脱敏业务 Query并预注册门禁。

@@ -1,6 +1,6 @@
 # LinkRag-Eval 实现约定
 
-`LinkRag-Eval` 是从生产 RAG 仓库(toLink-Rag)剥离的**独立评测/质检项目**。它只通过"产物级纯函数"复用生产计算能力,自己负责入库、检索、算分,使用本地 SQLite `runs/linkrag_eval.sqlite3` + eval 独立前缀的 Qdrant collection。
+`LinkRag-Eval` 是从生产 RAG 仓库(LinkRag)剥离的**独立评测/质检项目**。它只通过"产物级纯函数"复用生产计算能力,自己负责入库、检索、算分,使用本地 SQLite `runs/linkrag_eval.sqlite3` + eval 独立 Qdrant collection。
 
 本文件是 Agent / 开发者的**强制规范**。总方案见 [docs/architecture/decoupling-plan.md](docs/architecture/decoupling-plan.md);当前进度见 [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md);历史设计见 [docs/archive/](docs/archive/);实证报告见 [docs/reports/](docs/reports/)。
 
@@ -18,7 +18,7 @@
 | 生产依赖包 | `toLink-Rag`(import 名 `src.*`,通过 path/git 依赖装入) |
 | 环境变量前缀 | `EVAL_`(judge 用 `EVAL_JUDGE_*`) |
 | 配置文件 | `.env.eval`(gitignored,绝不进版本库) |
-| Qdrant 前缀 | 必须含 `eval`(如 `eval_kb_bucket`) |
+| Qdrant collection | 必须含 `eval`(如 `eval_linkrag_chunks`) |
 | 元数据/结果库 | 本地 SQLite `runs/linkrag_eval.sqlite3`(`EVAL_DB_URL`) |
 
 ---
@@ -45,7 +45,7 @@ LinkRag-Eval/
 ├── src/linkrag_eval/          # ← src-layout:包在此,import 仍 `from linkrag_eval.x`
 │   ├── compute/               # 产物计算封装(rag_adapter 是唯一允许 import rag 的地方)
 │   ├── store/                 # 独立存储(EvalVectorStore + 本地 SQLite repo)
-│   ├── retrieval/             # 召回装配(recall_factory 注入 eval 前缀)
+│   ├── retrieval/             # 召回装配(recall_factory 注入 eval collection)
 │   ├── metrics/               # 指标(纯函数)
 │   ├── golden/                # golden 生成 / 编目
 │   ├── judge/                 # eval_llm(judge,已解耦)
@@ -71,7 +71,7 @@ LinkRag-Eval/
 | 类别 | 模块 |
 | --- | --- |
 | 纯计算 | `ChunkingEngine.aprocess`(chunk 切分)、`RagFlowTokenizer.tokenize`(bm25 分词)。**dense/sparse 已移到 eval `llm/` 模块,不再经 rag** |
-| Qdrant 原语 | `QdrantIndexStore`、`BucketRouter`、`point_factory`、`qdrant.models`(复用 schema,自己装配 writer) |
+| Qdrant 原语 | `QdrantIndexStore`、`point_factory`、`qdrant.models`(复用 schema,自己装配 writer) |
 | 被测对象 | `RecallPipeline`、`Retriever`、`compose_vector_storage_facade`、`DenseRetriever`、`SparseRetriever`、`ParserFactory` |
 | 纯 dataclass | `recall.models.*`、`preprocessor.models.*`(ChunkWithTokens 等) |
 
@@ -88,8 +88,8 @@ LinkRag-Eval/
 
 - **rag 的 import 只允许出现在这几个 adapter 文件**,按关注点:
   - `compute/rag_adapter.py` —— 纯计算(chunk 切分 + bm25 分词;dense/sparse 走 eval llm)
-  - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/`BucketRouter`/point 模型)
-  - `retrieval/recall_factory.py` —— 召回装配(被测对象 `RecallPipeline`,指向 eval 前缀)
+  - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/point 模型)
+  - `retrieval/recall_factory.py` —— 召回装配(被测对象 `RecallPipeline`,指向 eval collection)
   - `retrieval/recall_adapter.py` —— `RecallRequest`/`RecallResponse` marshalling(被测对象类型)
   其余模块依赖 `compute/protocol.py` 的抽象。
 - 新增对 rag 的任何 import,必须先问:这是纯计算 / 被测对象 / Qdrant 原语吗?能否走抽象?默认答案是"走抽象"。允许的 adapter 文件清单由 `tests/test_import_boundary.py` 强制。
@@ -120,10 +120,10 @@ class ProductComputer(Protocol):
 
 ## 五、存储约定
 
-### Qdrant(eval 独立前缀,同 host)
+### Qdrant(eval 独立单 collection,同 host)
 
 - **护栏(强制)**:`EvalVectorStore` 构造时断言 collection 前缀含 `eval`,否则抛 `RuntimeError` 拒跑。防写串生产。
-- 复用 rag 的 `QdrantIndexStore` + `BucketRouter`,named vectors:`dense` / `sparse` /(预留)`bm25`。
+- 只适配最新 LinkRag 的单 collection `QdrantIndexStore`,named vectors:`dense` / `sparse`。不保留 `BucketRouter` 或 `qdrant_bm25` 兼容分支。
 - **`chunk_id` 用 uuid5 确定性**:`uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{ordinal}")`。同输入恒等 → 冻结语料 re-ingest 不变 → qrels 不失效;dense/sparse/bm25 三路与 qrels 共用同一 id。
 - **dense/sparse 均由 eval `llm/` 模块承载**(config 驱动,`EVAL_EMBED_*` / `EVAL_SPARSE_*`,模型可选),不经 rag。写入侧 `compute_dense` 与召回侧 query 编码 **必须用同一 eval dense 编码器口径**(硬约束,见方案风险 C);否则 eval 内部向量空间不一致。
 
@@ -142,8 +142,8 @@ class ProductComputer(Protocol):
 
 - 所有运行时配置经 `linkrag_eval/config.py` 加载,**不 import `src.config`**。
 - 环境变量样例放 `.env.eval.example`;真值放 `.env.eval`(gitignored)。
-- 关键变量:`EVAL_QDRANT_HOST/PREFIX/BUCKET_COUNT`、`EVAL_DB_URL`(本地 SQLite)、`EVAL_SPARSE_*`、`EVAL_JUDGE_BASE_URL/API_KEY/MODEL`、系统 embedder 端点。
-- **`EVAL_USER_ID=990001` 是 routing/partition 常量,不是真实用户**;只用于 bucket 路由,不得据此查 `llm_user_config`。
+- 关键变量:`EVAL_QDRANT_HOST/COLLECTION_NAME`、`EVAL_DB_URL`(本地 SQLite)、`EVAL_SPARSE_*`、`EVAL_JUDGE_BASE_URL/API_KEY/MODEL`、系统 embedder 端点。
+- **`EVAL_USER_ID=990001` 是 eval payload 隔离常量,不是真实用户**;不得据此查 `llm_user_config`。
 
 ---
 
@@ -174,7 +174,7 @@ class ProductComputer(Protocol):
 - `api_key` 只写入本地 `.env.eval`(gitignored),**绝不打印到终端、绝不进版本库**。
 - 元数据和结果只写本地 SQLite。**绝不写生产库 `tolink_rag_db` 的任何表**；旧 eval MySQL 也仅允许迁移工具只读访问。
 - `.env.eval`、`golden/`、`.specs/` 等含数据/密钥的产物 gitignored。
-- Qdrant 前缀护栏(第五节)是写串生产的最后一道防线,不得删除或绕过。
+- Qdrant collection 名护栏(第五节)是写串生产的最后一道防线,不得删除或绕过。
 
 ---
 

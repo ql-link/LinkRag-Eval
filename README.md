@@ -1,6 +1,6 @@
 # LinkRag-Eval
 
-`LinkRag-Eval` 是 toLink-Rag 的**独立评测/质检项目**:衡量三路召回(dense/sparse/bm25)、解析清洗(CLEANING)、生成等环节的质量。它从生产仓库 `src/evaluation/` 剥离独立,**只通过产物级纯函数复用生产计算能力**,自己负责入库、检索、算分,使用本地 SQLite + eval 独立前缀的 Qdrant collection,与生产隔离。
+`LinkRag-Eval` 是 LinkRag 的**独立评测/质检项目**:衡量三路召回(dense/sparse/bm25)、解析清洗(CLEANING)、生成等环节的质量。它从生产仓库 `src/evaluation/` 剥离独立,**只通过产物级纯函数复用生产计算能力**,自己负责入库、检索、算分,使用本地 SQLite + eval 独立 Qdrant collection,与生产隔离。
 
 ## 为什么独立
 
@@ -28,6 +28,22 @@
 - 每个阶段结束后运行 `python3 scripts/build_report_index.py`,更新统一报告索引。
 - 验收前运行 `python3 scripts/build_report_index.py --check`,确保没有未收录的新报告。
 
+## 本地开发环境
+
+项目使用仓库内独立的 Python 3.11 虚拟环境，不复用 `../LinkRag/.venv`。首次初始化：
+
+```bash
+# LinkRag 会按 pyproject.toml 中的固定 Git SHA 安装
+uv sync
+
+# 无需手动激活即可执行
+uv run python -VV
+uv run pytest -m "not integration" -q
+```
+
+如需进入虚拟环境，可执行 `source .venv/bin/activate`。本地 `uv` 与 CI 使用同一固定
+LinkRag SHA；升级生产依赖时应同时更新 `pyproject.toml`、`uv.lock` 和 CI workflow。
+
 ## 数据库初始化
 
 本地评测库 `runs/linkrag_eval.sqlite3` 的 schema 演进唯一入口是 `alembic/`（`EvalBase.metadata`，与生产隔离）：
@@ -46,14 +62,14 @@ alembic upgrade head
 
 - `EvalVectorIndexer` / `EvalVectorStore` / `EvalCorpusRepo` 已取代旧的生产写 pipeline 依赖。
 - `ProductComputer` 已收口产物计算;dense/sparse 由 eval 自带 `llm/` 编码器承载,chunk 与 bm25 分词经 adapter 复用 rag 纯函数。
-- 召回侧通过 `build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 编码走 eval 编码器;BM25 默认使用评测项目自持的 SQLite FTS5 sidecar,Qdrant BM25 仅保留兼容模式。
+- 召回侧通过 `build_eval_recall_pipeline` 指向 eval 单 collection,query 编码走 eval 编码器；BM25 使用评测项目自持的 SQLite FTS5 sidecar。
 - 本地 SQLite eval 自持库 ORM 与 Alembic `0001` baseline 已落地。
 - `run` 命令已在文件结果之外同步写入 `eval_run` / `eval_metric_result` 台账。
 - 召回侧分路默认 `EVAL_RECALL_DENSE_SCORE_THRESHOLD=0.20`、`EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.10`。后者依据 Golden V2 realistic tune 调整,避免新 query 分布下 sparse 路由被全部过滤;历史四域基线需单独复验。
 - CLI 已覆盖 `ingest` / `golden-gen` / `golden-opensource` / `cleaning` / `run` /
   `query-rewrite`。Query 重写使用独立 `EVAL_REWRITE_*`，只在 eval 内生成计划和做配对评测。
 
-真实活栈已用正式 eval 前缀跑通 `alembic upgrade head`、小规模 ingest、四域 800 chunk/domain 重灌和 `run --precheck`;实证记录见 [docs/reports/live_smoke_2026_07_02.md](docs/reports/live_smoke_2026_07_02.md)。2026-07-04 的 `weighted-score-clean-20260704-top10` 已固化为 dense+sparse 两路 clean 基线:`failed_sources=0`,`zero_ranked=0`,`recall@10=0.9745`。
+真实活栈历史上已用正式 eval collection 跑通 `alembic upgrade head`、小规模 ingest、四域 800 chunk/domain 重灌和 `run --precheck`;实证记录见 [docs/reports/live_smoke_2026_07_02.md](docs/reports/live_smoke_2026_07_02.md)。2026-07-04 的 `weighted-score-clean-20260704-top10` 已固化为 dense+sparse 两路 clean 基线:`failed_sources=0`,`zero_ranked=0`,`recall@10=0.9745`。
 
 剩余关键工作统一维护在 [当前开发状态](docs/CURRENT_STATUS.md)。近期重点是补齐可复现运行快照和 CI 真契约门禁,完成 SQLite FTS5 A/B clean run,补真实 Query/多正例/多 Chunk 数据缺口,并在生产试验前实现不含 Rerank 的 LambdaMART 在线推理和降级能力。
 

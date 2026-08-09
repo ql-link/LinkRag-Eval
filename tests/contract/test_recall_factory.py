@@ -1,4 +1,4 @@
-"""recall_factory 装配:注入 fake 编码器,验证能装出 eval 前缀的 RecallPipeline(不连网络)。
+"""recall_factory 装配:注入 fake 编码器,验证能装出 eval collection 的 RecallPipeline(不连网络)。
 
 需 toLink-Rag 可 import(facade/retriever/pipeline 是 rag),故标 contract；普通本地环境缺依赖
 时跳过，CI 设置 ``LINKRAG_EVAL_REQUIRE_RAG=1`` 后会在收集前直接失败。
@@ -7,13 +7,14 @@
 from __future__ import annotations
 
 import inspect
+
 import pytest
 
 pytest.importorskip("src.core", reason="需安装 toLink-Rag(pip install -e <path>)")
 pytestmark = pytest.mark.contract
 
-from linkrag_eval.config import EvalSettings  # noqa: E402
-from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline  # noqa: E402
+from linkrag_eval.config import EvalSettings
+from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline
 
 
 class _FakeDense:
@@ -45,14 +46,13 @@ class _FakeTokenizer:
         return _FakeTokenized()
 
 
-def _settings(prefix="eval_kb_bucket") -> EvalSettings:
+def _settings(collection_name="eval_linkrag_chunks") -> EvalSettings:
     return EvalSettings(
         _env_file=None,
-        qdrant_prefix=prefix,
+        qdrant_collection_name=collection_name,
         qdrant_host="http://localhost:36333",
         recall_dense_score_threshold=0.11,
         recall_sparse_score_threshold=0.30,
-        qdrant_bm25_collection="eval_bm25",
     )
 
 
@@ -72,19 +72,7 @@ def test_assembles_two_route_pipeline() -> None:
     assert pipe._retrievers[0]._backend._embedding_pipeline.__class__ is _FakeDense
     assert pipe._retrievers[1]._score_threshold == 0.30
     assert pipe._retrievers[1]._backend._sparse_vector_service.vector_name == "eval_sparse_for_test"
-
-
-def test_assembles_qdrant_bm25_route_when_enabled() -> None:
-    settings = _settings()
-    settings.bm25_mode = "qdrant_bm25"
-    pipe = build_eval_recall_pipeline(
-        settings=settings,
-        dense_encoder=_FakeDense(),
-        sparse_encoder=_FakeSparse(),
-        bm25_tokenizer=_FakeTokenizer(),
-    )
-
-    assert [r.source for r in pipe._retrievers] == ["bm25", "dense", "sparse"]
+    assert pipe._retrievers[0]._backend.qdrant_store.collection_name == "eval_linkrag_chunks"
 
 
 def test_assembles_sqlite_bm25_route_when_enabled(tmp_path) -> None:
@@ -103,12 +91,14 @@ def test_assembles_sqlite_bm25_route_when_enabled(tmp_path) -> None:
     assert "dataset_contexts" in signature.parameters
 
 
-def test_prefix_guard_rejects_non_eval() -> None:
+def test_collection_guard_rejects_non_eval() -> None:
     # 用 SimpleNamespace 绕过 EvalSettings 的 pydantic 校验,直测 recall_factory 自身的护栏
     from types import SimpleNamespace
 
-    bad = SimpleNamespace(qdrant_prefix="kb_bucket", qdrant_host="http://localhost:36333",
-                          qdrant_bucket_count=16)
+    bad = SimpleNamespace(
+        qdrant_collection_name="linkrag_chunks",
+        qdrant_host="http://localhost:36333",
+    )
     with pytest.raises(RuntimeError, match="eval"):
         build_eval_recall_pipeline(
             settings=bad, dense_encoder=_FakeDense(), sparse_encoder=_FakeSparse()

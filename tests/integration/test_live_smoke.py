@@ -25,7 +25,7 @@ def test_live_settings_keep_eval_isolation() -> None:
     from linkrag_eval.config import get_settings
 
     settings = get_settings()
-    assert "eval" in settings.qdrant_prefix
+    assert "eval" in settings.qdrant_collection_name
     assert settings.database_url().startswith("sqlite+aiosqlite:///")
 
 
@@ -73,6 +73,6 @@ async def test_eval_qdrant_is_reachable() -> None:
     try:
         collections = await client.get_collections()
         names = {c.name for c in collections.collections}
-        assert any(name.startswith(settings.qdrant_prefix) for name in names)
+        assert settings.qdrant_collection_name in names
     finally:
         await client.close()

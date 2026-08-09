@@ -1,1 +1,1 @@
-"""独立存储层:EvalVectorStore(eval 前缀 Qdrant)+ 本地 SQLite corpus/result repo。"""
+"""独立存储层:EvalVectorStore(eval 单 collection Qdrant)+ 本地 SQLite corpus/result repo。"""

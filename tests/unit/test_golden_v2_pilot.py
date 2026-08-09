@@ -21,7 +21,7 @@ def _write_jsonl(path, n: int) -> None:
 def _settings(**overrides):
     base = {
         "db_url": "sqlite+aiosqlite:///runs/linkrag_eval.sqlite3",
-        "qdrant_prefix": "eval_kb_bucket",
+        "qdrant_collection_name": "eval_linkrag_chunks",
         "judge_base_url": "https://judge/chat/completions",
         "judge_api_key": "secret",
         "judge_model": "deepseek",

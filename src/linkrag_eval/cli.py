@@ -4,7 +4,7 @@
 - ``config``      打印已解析配置(脱敏)做自检
 - ``ingest``      collection.tsv + manifest → eval Qdrant/本地 SQLite(EvalVectorIndexer)
 - ``golden-gen``  eval 自有语料 → 采样 → LLM 生成 → 自动门禁 → golden jsonl
-- ``run``         golden → 召回(eval 前缀)→ 检索指标 → 出分
+- ``run``         golden → 召回(eval collection)→ 检索指标 → 出分
 
 真实组件(rag + 活栈)在各子命令内惰性装配;``app.py`` 只编排抽象。
 """
@@ -1970,9 +1970,7 @@ def main(argv: list[str] | None = None) -> int:
         s = get_settings()
         masked = "***" if s.judge_api_key else "(空)"
         print(f"qdrant_host     = {s.qdrant_host}")
-        print(f"qdrant_prefix   = {s.qdrant_prefix}")
-        print(f"qdrant_buckets  = {s.qdrant_bucket_count}")
-        print(f"qdrant_bm25     = {s.qdrant_bm25_collection}/{s.qdrant_bm25_vector_name}")
+        print(f"qdrant_collection = {s.qdrant_collection_name}")
         print(f"sqlite_bm25     = {s.bm25_sqlite_path}")
         print(f"database        = {s.database_url()}")
         print(f"judge_model     = {s.judge_model or '(空)'}  api_key={masked}")

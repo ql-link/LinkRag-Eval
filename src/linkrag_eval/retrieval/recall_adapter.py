@@ -3,7 +3,7 @@
 搬迁自源仓库 ``adapters/recall_adapter.py``。RecallRequest/RecallResponse 是 rag(被测对象)
 类型,故本文件是允许 import rag 的 adapter 之一;rag import 惰性、收在本文件。
 
-装配(指向 eval 前缀)见 ``recall_factory.build_eval_recall_pipeline``。``_to_stage_output``
+装配(指向 eval collection)见 ``recall_factory.build_eval_recall_pipeline``。``_to_stage_output``
 为纯 marshalling,可注入 fake response 单测。
 """
 

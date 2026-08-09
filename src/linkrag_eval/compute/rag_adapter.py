@@ -144,9 +144,8 @@ def _try_build_sparse():
 # —— rag 纯函数(chunk 切分 / bm25 分词):此处(且仅此处)触碰 rag,惰性 import ——
 def _default_chunking_engine():
     from src.core.splitter.factory import _create_structured_chunking_engine
-    from src.core.splitter.llm_embedding_client import create_lazy_system_embedding_client
 
-    return _create_structured_chunking_engine(embedder=create_lazy_system_embedding_client())
+    return _create_structured_chunking_engine()
 
 
 def _default_tokenizer():

@@ -86,15 +86,15 @@ async def test_with_sparse_false_skips_sparse() -> None:
     assert repo.rows[0].sparse_indexed is False
 
 
-async def test_bm25_mode_flags_row() -> None:
+async def test_removed_qdrant_bm25_mode_is_rejected() -> None:
     comp, store, repo = _FakeComputer(), _FakeStore(), _FakeRepo()
     idx = EvalVectorIndexer(
         computer=comp, vector_store=store, corpus_repo=repo, bm25_mode="qdrant_bm25"
     )
-    await idx.index_passages(1, _passages(1))
-    assert repo.rows[0].bm25_indexed is True
-    assert store.upserts[0][1][0].bm25_tokens == Bm25Tokens(coarse="c0", fine="c0")
-    assert comp.bm25_contents == ["c0"]
+    import pytest
+
+    with pytest.raises(ValueError, match="qdrant_bm25"):
+        await idx.index_passages(1, _passages(1))
 
 
 async def test_sqlite_bm25_mode_flags_row() -> None:

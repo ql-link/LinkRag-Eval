@@ -2,7 +2,7 @@
 
 **解耦改动**:源版经废弃 ``ingest_common.CorpusIngestor``(全栈 ParseTaskPipeline + 生产
 ORM/MinIO/MQ)灌库;这里改走 :class:`~linkrag_eval.store.indexer.EvalVectorIndexer`——
-段落=一个 chunk(开源按 **doc 粒度** 评测,无需再切分),算 dense/sparse → eval 前缀 Qdrant
+段落=一个 chunk(开源按 **doc 粒度** 评测,无需再切分),算 dense/sparse → eval collection Qdrant
 + 独立库 MySQL,零生产写依赖。
 
 粒度对齐:**以段落为 ingestion 单元**(一个段落 → 一个 doc_id),doc 粒度用

@@ -8,7 +8,7 @@
   (生产 ParserFactory 收在那个已白名单文件里);
 - ``computer``::class:`~linkrag_eval.compute.protocol.ProductComputer`,用 ``compute_chunks``
   做被测分块;
-- ``indexer``::class:`~linkrag_eval.store.indexer.EvalVectorIndexer` 写 eval 前缀 Qdrant + 独立库。
+- ``indexer``::class:`~linkrag_eval.store.indexer.EvalVectorIndexer` 写 eval collection Qdrant + 独立库。
 
 刚算出的 chunk 及其确定性 chunk_id(``eval_chunk_id``)直接在内存里组 ``{chunk_id: content}``
 喂回定位,无需回查 DB。

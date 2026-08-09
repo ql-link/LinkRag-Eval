@@ -94,9 +94,9 @@ def run_pilot_preflight(
     )
     _add(
         checks,
-        "qdrant_eval_prefix",
-        "eval" in str(getattr(settings, "qdrant_prefix", "")),
-        f"qdrant_prefix={getattr(settings, 'qdrant_prefix', '')}",
+        "qdrant_eval_collection",
+        "eval" in str(getattr(settings, "qdrant_collection_name", "")),
+        f"qdrant_collection_name={getattr(settings, 'qdrant_collection_name', '')}",
     )
     _add(
         checks,

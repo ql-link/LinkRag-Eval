@@ -3,7 +3,7 @@
 独立于生产 ``src.config``:只读 ``EVAL_*`` 环境变量(样例见 .env.eval.example),
 真值放 ``.env.eval``(gitignored)。所有模块经 :func:`get_settings` 取配置,不直接读 env。
 
-护栏:Qdrant 前缀必须含 ``eval``——构造期校验,防写串生产 collection。
+护栏:Qdrant collection 名必须含 ``eval``——构造期校验,防写串生产 collection。
 """
 
 from __future__ import annotations
@@ -17,13 +17,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class EvalSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env.eval", env_prefix="EVAL_", extra="ignore")
 
-    # —— Qdrant(同 host,eval 独立前缀)——
+    # —— Qdrant(同 host,eval 独立单 collection)——
     qdrant_host: str = Field(default="http://localhost:36333")
-    qdrant_prefix: str = Field(default="eval_kb_bucket")
-    qdrant_bucket_count: int = Field(default=16)
+    qdrant_collection_name: str = Field(default="eval_linkrag_chunks")
     sparse_vector_name: str = Field(default="sparse_text")
-    qdrant_bm25_collection: str = Field(default="eval_bm25")
-    qdrant_bm25_vector_name: str = Field(default="bm25_text")
     bm25_sqlite_path: str = Field(default="runs/bm25_eval.sqlite3")
 
     # —— eval 自持元数据/结果库(默认本地 SQLite)——
@@ -93,23 +90,18 @@ class EvalSettings(BaseSettings):
     recall_sparse_weight: float = Field(default=0.15)
     recall_bm25_weight: float = Field(default=0.15)
 
-    # —— 路由常量(非真实用户,仅 bucket 分区)——
+    # —— eval payload 隔离常量(非真实用户,不得据此查生产用户配置)——
     user_id: int = Field(default=990001)
 
-    # —— bm25 模式:stub | sparse_proxy | qdrant_bm25 | sqlite_fts5 ——
+    # —— bm25 模式:stub | sqlite_fts5 ——
     bm25_mode: str = Field(default="stub")
-    bm25_k1: float = Field(default=1.2)
-    bm25_b: float = Field(default=0.75)
-    bm25_avgdl: float = Field(default=200.0)
-    bm25_avgdl_fine: float = Field(default=220.0)
-    bm25_coarse_boost: float = Field(default=2.0)
     bm25_sqlite_coarse_weight: float = Field(default=2.0)
     bm25_sqlite_fine_weight: float = Field(default=1.0)
 
-    @field_validator("qdrant_prefix", "qdrant_bm25_collection")
+    @field_validator("qdrant_collection_name")
     @classmethod
-    def _prefix_must_be_eval(cls, v: str) -> str:
-        """护栏:前缀必须含 'eval',否则拒绝——防写串生产。"""
+    def _collection_must_be_eval(cls, v: str) -> str:
+        """护栏:collection 名必须含 'eval',否则拒绝——防写串生产。"""
         if "eval" not in v:
             raise ValueError(
                 f"Qdrant eval 标识 {v!r} 不含 'eval';为防写串生产 collection,必须含 'eval'。"
@@ -119,7 +111,7 @@ class EvalSettings(BaseSettings):
     @field_validator("bm25_mode")
     @classmethod
     def _bm25_mode_known(cls, v: str) -> str:
-        allowed = {"stub", "sparse_proxy", "qdrant_bm25", "sqlite_fts5"}
+        allowed = {"stub", "sqlite_fts5"}
         if v not in allowed:
             raise ValueError(f"EVAL_BM25_MODE={v!r} 非法;应为 {sorted(allowed)} 之一。")
         return v

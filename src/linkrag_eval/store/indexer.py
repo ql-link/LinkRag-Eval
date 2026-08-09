@@ -1,18 +1,18 @@
 """灌库编排(``EvalVectorIndexer``)——取代源仓库 ``live_indexer.py``,是解耦承重墙本体。
 
 把 passage 经 ``ProductComputer`` 算出产物(dense / sparse / [bm25])→ ``EvalVectorStore`` 写
-eval 前缀 Qdrant → ``EvalCorpusRepo`` 落本地 SQLite。**不 import 任何生产写 pipeline / ORM**,
+eval 独立 Qdrant collection → ``EvalCorpusRepo`` 落本地 SQLite。**不 import 任何生产写 pipeline / ORM**,
 全部经 compute/store 抽象;rag 仅在 rag_adapter / vector_store 两个 adapter 内被触碰。
 
 passage 语义:一个 passage 即一个 chunk(``ordinal`` 为 doc 内序号);需切分的 corpus 走另一条
 路径(compute_chunks,后续接)。bm25 路按 mode 可插拔:``stub`` 只跑 dense+sparse;
-``qdrant_bm25`` 写 eval 独立 Qdrant collection,``sqlite_fts5`` 写本地 SQLite FTS5。
+``sqlite_fts5`` 写本地 SQLite FTS5。
 """
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 from linkrag_eval.compute.protocol import ProductComputer
 from linkrag_eval.store.corpus_repo import CorpusChunkRow, EvalCorpusRepo
@@ -71,16 +71,12 @@ class EvalVectorIndexer:
                 raise ValueError(f"sparse 数量不符:{len(sparse)} != {len(items)}")
 
         bm25_tokens = None
-        if self._bm25_mode == "qdrant_bm25":
-            bm25_tokens = [self._computer.compute_bm25_tokens(c) for c in contents]
-        elif self._bm25_mode == "sqlite_fts5":
+        if self._bm25_mode == "sqlite_fts5":
             from linkrag_eval.store.sqlite_bm25 import local_bm25_tokens
 
             bm25_tokens = [local_bm25_tokens(c) for c in contents]
-        elif self._bm25_mode == "sparse_proxy":
-            raise NotImplementedError(
-                "EVAL_BM25_MODE=sparse_proxy 未实现;请使用 stub、qdrant_bm25 或 sqlite_fts5。"
-            )
+        elif self._bm25_mode != "stub":
+            raise ValueError(f"不支持的 bm25_mode: {self._bm25_mode!r}")
 
         points: list[EvalPoint] = []
         rows: list[CorpusChunkRow] = []

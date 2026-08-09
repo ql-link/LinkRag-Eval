@@ -167,7 +167,7 @@ def _minimal_snapshot(
             )
     if enabled_sources is None:
         enabled_sources = ["dense", "sparse"]
-        if getattr(settings, "bm25_mode", "stub") in {"qdrant_bm25", "sqlite_fts5"}:
+        if getattr(settings, "bm25_mode", "stub") == "sqlite_fts5":
             enabled_sources = ["bm25", "dense", "sparse"]
     git_sha, git_dirty, git_worktree_sha256 = _git_state()
     return Snapshot(

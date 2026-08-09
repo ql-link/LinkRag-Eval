@@ -20,8 +20,7 @@ def test_recall_threshold_defaults() -> None:
     assert settings.recall_dense_weight == 0.70
     assert settings.recall_sparse_weight == 0.15
     assert settings.recall_bm25_weight == 0.15
-    assert settings.qdrant_bm25_collection == "eval_bm25"
-    assert settings.qdrant_bm25_vector_name == "bm25_text"
+    assert settings.qdrant_collection_name == "eval_linkrag_chunks"
     assert settings.bm25_sqlite_path == "runs/bm25_eval.sqlite3"
     assert settings.alt_embed_provider == "openai"
     assert settings.alt_embed_base_url == ""
@@ -29,6 +28,24 @@ def test_recall_threshold_defaults() -> None:
     assert settings.alt_embed_model == ""
     assert settings.alt_embed_dim == 1024
     assert settings.alt_embed_sqlite_path == "runs/alt_embedding_eval.sqlite3"
+
+
+def test_removed_bucket_and_qdrant_bm25_env_are_not_runtime_fields() -> None:
+    settings = EvalSettings(
+        _env_file=None,
+        qdrant_prefix="eval_old_bucket",
+        qdrant_bucket_count=16,
+        qdrant_bm25_collection="eval_bm25",
+    )
+
+    assert not hasattr(settings, "qdrant_prefix")
+    assert not hasattr(settings, "qdrant_bucket_count")
+    assert not hasattr(settings, "qdrant_bm25_collection")
+
+
+def test_removed_qdrant_bm25_mode_is_rejected() -> None:
+    with pytest.raises(ValueError, match="qdrant_bm25"):
+        EvalSettings(_env_file=None, bm25_mode="qdrant_bm25")
 
 
 def test_runtime_database_rejects_remote_mysql() -> None:

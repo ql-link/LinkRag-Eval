@@ -29,8 +29,37 @@ def test_chunking_engine_aprocess_signature() -> None:
     assert "text" in params and "source_file" in params
 
 
+def test_default_chunking_engine_factory_is_current() -> None:
+    from src.core.splitter.chunking_engine import ChunkingEngine
+
+    from linkrag_eval.compute.rag_adapter import _default_chunking_engine
+
+    assert isinstance(_default_chunking_engine(), ChunkingEngine)
+
+
 def test_ragflow_tokenizer_contract() -> None:
     from src.core.preprocessor.ragflow_tokenizer import RagFlowTokenizer, TokenizedText
 
     assert hasattr(RagFlowTokenizer, "tokenize")
     assert {"coarse_tokens", "fine_tokens"} <= set(TokenizedText.__dataclass_fields__)
+
+
+def test_qdrant_single_collection_contract() -> None:
+    from src.core.storage.qdrant import QdrantIndexStore
+    from src.core.storage.qdrant.models import IndexedPoint, SparseIndexedPoint
+
+    constructor = inspect.signature(QdrantIndexStore).parameters
+    assert "collection_name" in constructor
+    assert "bucket_router" not in constructor
+    for method_name in (
+        "ensure_collection",
+        "upsert_points",
+        "ensure_sparse_vector_schema",
+        "upsert_sparse_vectors",
+        "delete_points",
+    ):
+        assert "bucket_id" not in inspect.signature(
+            getattr(QdrantIndexStore, method_name)
+        ).parameters
+    assert "bucket_id" not in IndexedPoint.__dataclass_fields__
+    assert "bucket_id" not in SparseIndexedPoint.__dataclass_fields__

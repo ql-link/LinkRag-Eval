@@ -11,7 +11,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Sequence
+from collections.abc import Sequence
 
 import httpx
 
@@ -162,11 +162,11 @@ class OpenAIDenseEmbedder:
 
 
 class BgeM3HttpDenseEmbedder:
-    """BGE-M3 HTTP 服务 dense 编码器,用于 Golden V2 alt embedding。
+    """历史 Golden V2 的 BGE-M3 HTTP dense 兼容客户端。
 
     ``POST {endpoint}`` body ``{"texts":[...],"return_dense":true,"return_sparse":false}``,
-    响应 ``{"dense":[[...], ...]}``。该服务无需 API key,只作为候选池独立 embedding 来源,
-    不写正式 Qdrant。
+    响应 ``{"dense":[[...], ...]}``。当前 Robust Fusion 研究已淘汰 BGE-M3；本类只允许
+    解释或重放历史 Golden/Alt 资产，不得装配为 Gate A route、实验相似度或独立审计编码器。
     """
 
     def __init__(

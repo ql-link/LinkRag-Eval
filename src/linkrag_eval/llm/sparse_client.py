@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Sequence
+from collections.abc import Sequence
 
 import httpx
 
@@ -138,11 +138,12 @@ class ArkSparseEncoder:
 
 
 class BgeM3HttpSparseEncoder:
-    """BGE-M3 HTTP 服务稀疏编码器(对齐生产 ``bge_m3_http`` provider 口径,无需 key)。
+    """历史 BGE-M3 HTTP 兼容编码器；当前鲁棒融合研究不得选用。
 
     ``POST {endpoint}`` body ``{"texts":[...],"return_dense":false,"return_sparse":true}``,
     响应 ``data["sparse"]`` 每条一个 ``{token_id: weight}``,经 :func:`normalize_lexical_weights`
-    清洗。批量一次请求(与 Ark 逐条不同)。这是生产系统级 sparse 实际所用,故 eval 对齐它最稳。
+    清洗。批量一次请求(与 Ark 逐条不同)。当前真实 Learned Sparse 已改为 Ark/豆包在线
+    API；保留此类只为读取历史 Golden V2 配置，不能作为 Gate A route 或相似度编码器。
     """
 
     def __init__(

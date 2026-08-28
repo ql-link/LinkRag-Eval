@@ -25,6 +25,13 @@
 
 ## 当前专题
 
+- [Robust Fusion 科研协议](plans/robust-fusion-research.md)
+- [Robust Fusion 工程实施协议](plans/robust-fusion-engineering.md)
+- [Robust Fusion 研究推进清单](plans/robust-fusion-todo.md)
+- [Internal Stress v6 数据协议](plans/robust-fusion-internal-stress-v6.md)
+- [Robust Fusion 标注手册](plans/robust-fusion-annotation-handbook.md)
+- [Robust Fusion 实验相似度 manifest](plans/robust-fusion-similarity-manifest.md)
+- [Robust Fusion 发表路径与投稿治理](plans/robust-fusion-publication.md)
 - [Golden V2 真实召回评测](plans/golden-v2-realistic-evaluation.md)
 - [LambdaMART 三路融合](experiments/ltr-fusion-v1.md)
 - [Query 重写配对基准](experiments/query-rewrite-benchmark-v1.md)

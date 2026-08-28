@@ -1,16 +1,17 @@
-"""eval 召回装配:复用生产 RecallPipeline,指向 **eval 前缀** Qdrant,query 侧注入 **eval 编码器**。
+"""eval 召回装配:复用生产 RecallPipeline,指向 **eval collection** Qdrant,query 侧注入 **eval 编码器**。
 
 是允许 import rag 的 adapter 之一(召回真链路=被测对象)。装配口径对齐生产
 ``recall_pipeline_provider``,但两处替换以解耦:
-- **Qdrant 指向 eval 前缀**:facade 注入 eval 前缀的 ``QdrantIndexStore``(eval client + router)。
+- **Qdrant 指向 eval collection**:按冻结 routing 常量解析显式 collection 名，再注入
+  现行 ``QdrantIndexStore(collection_name=...)``。
 - **query 编码走 eval llm**:dense 直接注入 eval dense embedding pipeline(它有
   ``aembed_query_detailed``),sparse 注入 :class:`_EvalSparseQueryService`(把 eval sparse 输出
   转成 rag ``SparseVector``),不读取生产 Dataset/per-user 配置。写入侧(EvalVectorStore)
   与召回侧共用同一 eval 编码器口径。
 
-融合/排序由生产 RecallPipeline 按固定 weighted score 与请求级权重执行。bm25 路在
-``EVAL_BM25_MODE=qdrant_bm25`` 时装配生产 Qdrant BM25 retriever;在 ``sqlite_fts5``
-时装配 eval 自持 SQLite FTS5 BM25;``stub`` 时只装 dense+sparse 两路。
+融合/排序由生产 RecallPipeline 按固定 weighted score 与请求级权重执行。BM25 路在
+``sqlite_fts5`` 时装配 eval 自持 SQLite FTS5；``stub`` 时只装 dense+sparse 两路。
+现行 LinkRag 已删除旧 ``qdrant_bm25`` 模块，该模式显式拒绝而不恢复生产旧接口。
 
 护栏:Qdrant 前缀必须含 ``eval``,否则拒绝装配——防打到生产 collection。
 """
@@ -147,17 +148,21 @@ def build_eval_recall_pipeline(
         sparse_score_threshold = getattr(settings, "recall_sparse_score_threshold", 0.10)
 
     from qdrant_client import AsyncQdrantClient
-
     from src.core.pipeline.recall import RecallPipeline, RecallPipelineConfig
     from src.core.storage.qdrant import QdrantIndexStore
-    from src.core.storage.qdrant.bucket_router import BucketRouter
     from src.core.storage.vector import compose_vector_storage_facade
     from src.core.storage.vector.dense_retriever import DenseRetriever
     from src.core.storage.vector.sparse_retriever import SparseRetriever
 
-    router = BucketRouter(prefix=settings.qdrant_prefix, bucket_count=settings.qdrant_bucket_count)
+    from linkrag_eval.store.vector_store import resolve_eval_qdrant_collection
+
+    collection_name = resolve_eval_qdrant_collection(
+        prefix=settings.qdrant_prefix,
+        bucket_count=settings.qdrant_bucket_count,
+        user_id=settings.user_id,
+    )
     client = AsyncQdrantClient(url=settings.qdrant_host, api_key=None)
-    store = QdrantIndexStore(client=client, bucket_router=router)
+    store = QdrantIndexStore(client=client, collection_name=collection_name)
 
     _sparse_service = _EvalSparseQueryService(
         sparse_encoder, vector_name=getattr(settings, "sparse_vector_name", "sparse_text")
@@ -166,14 +171,12 @@ def build_eval_recall_pipeline(
     dense = DenseRetriever(
         backend=compose_vector_storage_facade(
             qdrant_store=store,
-            bucket_router=router,
             embedding_pipeline=dense_encoder,
         ),
         score_threshold=dense_score_threshold,
     )
     sparse_backend = compose_vector_storage_facade(
         qdrant_store=store,
-        bucket_router=router,
     )
     # 生产 facade 在调用 resolver 前需要 vector_name。这里显式挂 eval service,
     # 避免回退读取生产 settings 中的 sparse vector name。
@@ -181,54 +184,21 @@ def build_eval_recall_pipeline(
     sparse = SparseRetriever(backend=sparse_backend, score_threshold=sparse_score_threshold)
     retrievers = []
     if getattr(settings, "bm25_mode", "stub") == "qdrant_bm25":
-        retrievers.append(_build_qdrant_bm25_retriever(settings, tokenizer=bm25_tokenizer))
+        raise NotImplementedError(
+            "EVAL_BM25_MODE=qdrant_bm25 依赖的生产模块已删除；"
+            "Gate A 研究请使用 sqlite_fts5。"
+        )
     elif getattr(settings, "bm25_mode", "stub") == "sqlite_fts5":
         retrievers.append(_build_sqlite_bm25_retriever(settings, tokenizer=bm25_tokenizer))
     elif getattr(settings, "bm25_mode", "stub") == "sparse_proxy":
         raise NotImplementedError(
-            "EVAL_BM25_MODE=sparse_proxy 未实现;请使用 stub、qdrant_bm25 或 sqlite_fts5。"
+            "EVAL_BM25_MODE=sparse_proxy 未实现;请使用 stub 或 sqlite_fts5。"
         )
     retrievers.extend([dense, sparse])
     return RecallPipeline(
         [*retrievers],
         RecallPipelineConfig(strict=strict),
         readiness_gate=_EvalReadinessGate(),
-    )
-
-
-def _build_qdrant_bm25_retriever(settings: Any, *, tokenizer: Any | None = None):
-    if "eval" not in settings.qdrant_bm25_collection:
-        raise RuntimeError(
-            f"Qdrant BM25 collection {settings.qdrant_bm25_collection!r} 不含 'eval';拒绝装配。"
-        )
-    from qdrant_client import AsyncQdrantClient
-
-    from src.core.storage.qdrant_bm25 import (
-        Bm25SparseEncoder,
-        QdrantBm25Retriever,
-        QdrantBm25Store,
-    )
-
-    client = AsyncQdrantClient(url=settings.qdrant_host, api_key=None)
-    store = QdrantBm25Store(
-        client=client,
-        collection_name=settings.qdrant_bm25_collection,
-        vector_name=settings.qdrant_bm25_vector_name,
-    )
-    encoder = Bm25SparseEncoder(
-        k1=settings.bm25_k1,
-        b=settings.bm25_b,
-        avgdl_coarse=settings.bm25_avgdl,
-        avgdl_fine=settings.bm25_avgdl_fine,
-        coarse_boost=settings.bm25_coarse_boost,
-    )
-    if tokenizer is None:
-        from src.core.preprocessor.ragflow_tokenizer import RagFlowTokenizer
-
-        tokenizer = RagFlowTokenizer()
-    return _EvalBm25Retriever(
-        backend=QdrantBm25Retriever(store=store, encoder=encoder),
-        tokenizer=tokenizer,
     )
 
 

@@ -7,13 +7,14 @@
 from __future__ import annotations
 
 import inspect
+
 import pytest
 
 pytest.importorskip("src.core", reason="需安装 toLink-Rag(pip install -e <path>)")
 pytestmark = pytest.mark.contract
 
-from linkrag_eval.config import EvalSettings  # noqa: E402
-from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline  # noqa: E402
+from linkrag_eval.config import EvalSettings
+from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline
 
 
 class _FakeDense:
@@ -45,6 +46,22 @@ class _FakeTokenizer:
         return _FakeTokenized()
 
 
+class _PassAllReadiness:
+    async def filter_visible_hits(self, hits, *, user_id):
+        del user_id
+        return list(hits)
+
+
+class _FixedRetriever:
+    def __init__(self, source, hits):
+        self.source = source
+        self._hits = list(hits)
+
+    async def recall(self, *args, **kwargs):
+        del args, kwargs
+        return list(self._hits)
+
+
 def _settings(prefix="eval_kb_bucket") -> EvalSettings:
     return EvalSettings(
         _env_file=None,
@@ -53,6 +70,7 @@ def _settings(prefix="eval_kb_bucket") -> EvalSettings:
         recall_dense_score_threshold=0.11,
         recall_sparse_score_threshold=0.30,
         qdrant_bm25_collection="eval_bm25",
+        user_id=990001,
     )
 
 
@@ -72,19 +90,19 @@ def test_assembles_two_route_pipeline() -> None:
     assert pipe._retrievers[0]._backend._embedding_pipeline.__class__ is _FakeDense
     assert pipe._retrievers[1]._score_threshold == 0.30
     assert pipe._retrievers[1]._backend._sparse_vector_service.vector_name == "eval_sparse_for_test"
+    assert pipe._retrievers[0]._backend.qdrant_store.collection_name == "eval_kb_bucket_9"
 
 
-def test_assembles_qdrant_bm25_route_when_enabled() -> None:
+def test_removed_qdrant_bm25_route_is_rejected() -> None:
     settings = _settings()
     settings.bm25_mode = "qdrant_bm25"
-    pipe = build_eval_recall_pipeline(
-        settings=settings,
-        dense_encoder=_FakeDense(),
-        sparse_encoder=_FakeSparse(),
-        bm25_tokenizer=_FakeTokenizer(),
-    )
-
-    assert [r.source for r in pipe._retrievers] == ["bm25", "dense", "sparse"]
+    with pytest.raises(NotImplementedError, match="sqlite_fts5"):
+        build_eval_recall_pipeline(
+            settings=settings,
+            dense_encoder=_FakeDense(),
+            sparse_encoder=_FakeSparse(),
+            bm25_tokenizer=_FakeTokenizer(),
+        )
 
 
 def test_assembles_sqlite_bm25_route_when_enabled(tmp_path) -> None:
@@ -113,3 +131,50 @@ def test_prefix_guard_rejects_non_eval() -> None:
         build_eval_recall_pipeline(
             settings=bad, dense_encoder=_FakeDense(), sparse_encoder=_FakeSparse()
         )
+
+
+async def test_current_candidate_and_route_contract_preserves_untruncated_pool() -> None:
+    from src.core.pipeline.recall import RecallPipeline, RecallPipelineConfig
+    from src.core.pipeline.recall.models import RecallRequest, RetrieverHit
+
+    def hit(chunk_id, source, score):
+        return RetrieverHit(
+            chunk_id=chunk_id,
+            doc_id=1,
+            dataset_id=990131,
+            score=score,
+            source=source,
+        )
+
+    pipe = RecallPipeline(
+        [
+            _FixedRetriever("dense", [hit("shared", "dense", 0.9), hit("d", "dense", 0.8)]),
+            _FixedRetriever("sparse", [hit("shared", "sparse", 0.7), hit("s", "sparse", 0.6)]),
+            _FixedRetriever("bm25", []),
+        ],
+        RecallPipelineConfig(parallel=False, strict=True),
+        readiness_gate=_PassAllReadiness(),
+    )
+    response = await pipe.execute(
+        RecallRequest(
+            query="固定契约样例",
+            user_id=990001,
+            dataset_ids=[990131],
+            top_k=1,
+            bm25_top_k=10,
+            sparse_top_k=10,
+            dense_top_k=10,
+            candidate_contract_version="robust-fusion-p4-00-v1",
+            candidate_profile="gate-a-preflight",
+            required_sources=["dense", "sparse", "bm25"],
+        )
+    )
+
+    assert len(response.hits) == 1
+    assert {item.chunk_id for item in response.candidate_hits} == {"shared", "d", "s"}
+    assert set(response.route_hits) == {"dense", "sparse", "bm25"}
+    assert [item.chunk_id for item in response.route_hits["dense"]] == ["shared", "d"]
+    assert [item.chunk_id for item in response.route_hits["sparse"]] == ["shared", "s"]
+    assert response.route_hits["bm25"] == []
+    assert response.per_source_counts == {"dense": 2, "sparse": 2, "bm25": 0}
+    assert response.failed_sources == []

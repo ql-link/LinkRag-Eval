@@ -14,7 +14,7 @@ authors = [{ name = "JiXu" }]
 # 注:生产计算依赖 toLink-Rag(顶层包名 `src`)。它不在 PyPI,通过本地可编辑安装接入:
 #   pip install -e /Users/jixu/Project/Agent/toLink-Rag   # 暴露 `src` 顶层包 + 拉齐其重依赖
 # 装好 rag 后再 `pip install -e .` 装本项目。CI 在 workflow 中把 rag 钉到固定 git SHA
-# `6296990fd80181f0f7608746faf259a9aa256dc0`(见 AGENTS.md 七)。
+# `861f24810c3482ec0d86768a24f952b1e08ae675`(见 AGENTS.md 七)。
 # 这里不把 tolink-rag 写进 dependencies,避免构建期解析失败;由安装步骤显式接入。
 dependencies = [
     # toLink-Rag 的 torch 依赖要求 setuptools<82;固定上限避免 editable 安装后环境漂移。

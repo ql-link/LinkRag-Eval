@@ -1,6 +1,6 @@
 """EvalVectorStore 编排:注入 fake index_store,验证构点/前缀护栏/dense+sparse 时序。
 
-需 rag 可 import(构 IndexedPoint/BucketRouter),但不连真 Qdrant(fake 记录调用)。
+需 rag 可 import(构 IndexedPoint),但不连真 Qdrant(fake 记录调用)。
 rag 不在环境时整文件跳过。
 """
 
@@ -10,31 +10,36 @@ import pytest
 
 pytest.importorskip("src", reason="需安装 toLink-Rag(pip install -e <path>)")
 
-from linkrag_eval.compute.protocol import SparseVec  # noqa: E402
-from linkrag_eval.compute.protocol import Bm25Tokens  # noqa: E402
-from linkrag_eval.config import EvalSettings  # noqa: E402
-from linkrag_eval.store.vector_store import EvalPoint, EvalVectorStore  # noqa: E402
-from linkrag_eval.store.vector_store import build_eval_vector_store  # noqa: E402
+from linkrag_eval.compute.protocol import (
+    Bm25Tokens,
+    SparseVec,
+)
+from linkrag_eval.config import EvalSettings
+from linkrag_eval.store.vector_store import (
+    EvalPoint,
+    EvalVectorStore,
+    build_eval_vector_store,
+)
 
 
 class _FakeIndexStore:
     def __init__(self) -> None:
         self.calls: list[tuple] = []
 
-    async def ensure_collection(self, *, bucket_id, vector_size):
-        self.calls.append(("ensure_collection", bucket_id, vector_size))
+    async def ensure_collection(self, *, vector_size):
+        self.calls.append(("ensure_collection", vector_size))
 
-    async def upsert_points(self, *, bucket_id, points):
-        self.calls.append(("upsert_points", bucket_id, list(points)))
+    async def upsert_points(self, *, points):
+        self.calls.append(("upsert_points", list(points)))
 
-    async def ensure_sparse_vector_schema(self, *, bucket_id, vector_name):
-        self.calls.append(("ensure_sparse_schema", bucket_id, vector_name))
+    async def ensure_sparse_vector_schema(self, *, vector_name):
+        self.calls.append(("ensure_sparse_schema", vector_name))
 
-    async def upsert_sparse_vectors(self, *, bucket_id, points):
-        self.calls.append(("upsert_sparse", bucket_id, list(points)))
+    async def upsert_sparse_vectors(self, *, points):
+        self.calls.append(("upsert_sparse", list(points)))
 
-    async def delete_points(self, *, bucket_id, chunk_ids):
-        self.calls.append(("delete", bucket_id, list(chunk_ids)))
+    async def delete_points(self, *, chunk_ids):
+        self.calls.append(("delete", list(chunk_ids)))
 
 
 class _FakeBm25Encoder:
@@ -96,15 +101,17 @@ async def test_upsert_dense_and_sparse_sequencing() -> None:
     assert names == ["ensure_collection", "upsert_points", "ensure_sparse_schema", "upsert_sparse"]
 
     # ensure_collection 用首点维度
-    assert fake.calls[0] == ("ensure_collection", store.bucket_id, 2)
+    assert fake.calls[0] == ("ensure_collection", 2)
+    assert store.bucket_id == 9
+    assert store.collection_name == "eval_kb_bucket_9"
     # dense:两点都写,payload 含 set_id=dataset_id / doc_id / user_id
-    dense_points = fake.calls[1][2]
+    dense_points = fake.calls[1][1]
     assert len(dense_points) == 2
     assert dense_points[0].payload == {
         "chunk_id": "a", "user_id": 990001, "set_id": 990131, "doc_id": 1
     }
     # sparse:仅带 sparse 的点(a),named vector
-    sparse_points = fake.calls[3][2]
+    sparse_points = fake.calls[3][1]
     assert len(sparse_points) == 1
     assert sparse_points[0].chunk_id == "a"
     assert sparse_points[0].vector_name == "sparse_text"
@@ -125,26 +132,21 @@ async def test_dense_only_skips_sparse() -> None:
     assert [c[0] for c in fake.calls] == ["ensure_collection", "upsert_points"]
 
 
-async def test_upsert_writes_qdrant_bm25_when_tokens_present() -> None:
+async def test_removed_qdrant_bm25_mode_is_rejected() -> None:
     fake = _FakeIndexStore()
     bm25 = _FakeBm25Store()
-    await _store_with_bm25(fake, bm25).upsert(
-        dataset_id=990131,
-        points=[
-            EvalPoint(
-                chunk_id="a",
-                doc_id=1,
-                dense=[0.1, 0.2],
-                bm25_tokens=Bm25Tokens(coarse="暖气 滤网", fine="暖气 滤网"),
-            )
-        ],
-    )
-    assert [c[0] for c in bm25.calls] == ["ensure_bm25_collection", "upsert_bm25"]
-    point = bm25.calls[1][1][0]
-    assert point.chunk_id == "a"
-    assert point.dataset_id == 990131
-    assert point.user_id == 990001
-    assert point.sparse_vector.indices == [7]
+    with pytest.raises(NotImplementedError, match="sqlite_fts5"):
+        await _store_with_bm25(fake, bm25).upsert(
+            dataset_id=990131,
+            points=[
+                EvalPoint(
+                    chunk_id="a",
+                    doc_id=1,
+                    dense=[0.1, 0.2],
+                    bm25_tokens=Bm25Tokens(coarse="暖气 滤网", fine="暖气 滤网"),
+                )
+            ],
+        )
 
 
 async def test_upsert_writes_sqlite_bm25_when_tokens_present() -> None:

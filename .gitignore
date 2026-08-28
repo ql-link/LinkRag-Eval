@@ -11,6 +11,10 @@ data/
 *.tsv
 runs/
 reports/*.html
+/linkrag-eval-sqlite-share-20260827/
+/docs/papers/*
+!/docs/papers/README.md
+/.agents/
 
 # —— Python ——
 __pycache__/

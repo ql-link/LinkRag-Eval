@@ -1,7 +1,7 @@
 # Robust Fusion R2 source v7 与自动测量交接报告
 
-日期：2026-08-29
-research_id：`ROBUST-FUSION-R2-2026-08-29`
+日期：2026-08-29  
+research_id：`ROBUST-FUSION-R2-2026-08-29`  
 状态：`R2_AUTOMATIC_COMPLETE_AWAITING_FOUR_HUMAN_SUBMISSIONS`
 
 ## 1. Source data 收口
@@ -48,3 +48,4 @@ E5 四个 length×language strata 均 0 截断。DistilUSE 的 short_zh/short_en
 每位研究员只进入自己的两个目录，阅读各自 `README.txt`，把 `submission_template.csv` 复制为 `submission.csv`，独立填写全部行，不改表头或 `audit_id`，也不查看另一位研究员或 facilitator 目录。当前四个 `submission.csv` 均不存在，Codex 未代填。
 
 收到四份真实提交后，下一阶段必须先锁 hash 再解析、机械校验、比较和人工仲裁；此时才允许一次性 measurement finalizer。当前不得运行 readiness、Gate A/B、Blind、Reranker effects、D1–D3、A0 或 M1。
+

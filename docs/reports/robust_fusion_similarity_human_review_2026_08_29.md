@@ -1,6 +1,6 @@
 # P2-01 Dev 相似度人工审阅与仲裁后效度报告
 
-> 状态：`REVIEW_COMPLETE_FORMAL_FREEZE_BLOCKED`
+> 状态：`REVIEW_COMPLETE_FORMAL_FREEZE_BLOCKED`  
 > 范围：只审阅 Internal v6-Dev 的两份相似度人工提交与一份真实仲裁提交；Gate A/B、Reranker 效果与 M1 均未运行。
 
 ## Material Passport

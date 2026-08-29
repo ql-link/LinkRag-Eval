@@ -1,7 +1,7 @@
 # Robust Fusion R2 相似度 measurement 草案
 
-> 记录：`ROBUST-FUSION-RESEARCH-R2-2026-08-29-v1-DRAFT`
-> 状态：`DRAFT_NOT_AUTHORIZED`
+> 记录：`ROBUST-FUSION-RESEARCH-R2-2026-08-29-v1-DRAFT`  
+> 状态：`DRAFT_NOT_AUTHORIZED`  
 > 推荐方案：`MATCHED_CALIPER_CONDITIONAL_E5_V1_DRAFT`
 
 ## 1. 保持不变的 estimand
@@ -76,3 +76,4 @@ R1 要求全局连续 E5 分数同时承担高相似定义、跨长度/语言可
 ## 6. 截断与编码器角色
 
 正式预注册必须给每个 encoder 固定最大长度、tokenizer revision、截断侧和超长处理。R2 Dev 必须在每个 length×language cell 报告截断比例，并对 DistilUSE 截断/未截断作预定敏感性；任何 cell 截断状态与 cohort 完全共线时，该敏感性记不可解释。E5 主角色不能因为 R1 失败被事后替换，DistilUSE 也不能因为 R1 combined 通过而晋升。若未来提议新主编码器，必须给出独立学术理由、单一候选、全新 family-disjoint Dev 一次验证，禁止模型赛马。
+

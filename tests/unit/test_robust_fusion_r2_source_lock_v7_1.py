@@ -35,3 +35,4 @@ def test_cross_family_template_duplicate_is_rejected() -> None:
 
 def test_distinct_cross_family_rows_pass() -> None:
     validate_cross_family_duplicates([_family("Alder", 10), _family("Zephyr", 24)])
+

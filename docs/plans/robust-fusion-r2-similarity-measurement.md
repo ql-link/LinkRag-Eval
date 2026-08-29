@@ -1,7 +1,7 @@
 # Robust Fusion R2 相似度 measurement 正式协议
 
-> `record_id`: `ROBUST-FUSION-RESEARCH-R2-2026-08-29-v1`
-> measurement: `MATCHED_CALIPER_CONDITIONAL_E5_V1`
+> `record_id`: `ROBUST-FUSION-RESEARCH-R2-2026-08-29-v1`  
+> measurement: `MATCHED_CALIPER_CONDITIONAL_E5_V1`  
 > 状态：`RESULT_BEFORE_PROTOCOL_READY_FOR_LOCAL_SEAL`
 
 数学 estimand 不变：`S_qg(c)=max_{h∈A_qg} cosine(z(c),z(h))`，其中 `A_qg` 只来自唯一目标等价组的 Clean evaluation view。它不是 Query—Chunk 相似度，也不是 M1 候选—近邻特征；construction role 不形成真值。

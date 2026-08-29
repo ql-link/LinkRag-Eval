@@ -1,8 +1,8 @@
 # Robust Fusion R2 DeepSeek 正文来源工程恢复规范 v6
 
-> research_id: `ROBUST-FUSION-R2-2026-08-29`
-> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-RECOVERY-2026-08-29-v6`
-> 状态：`AUTHORIZED_OUTCOME_AWARE_ENGINEERING_RECOVERY_READY_TO_SEAL`
+> research_id: `ROBUST-FUSION-R2-2026-08-29`  
+> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-RECOVERY-2026-08-29-v6`  
+> 状态：`AUTHORIZED_OUTCOME_AWARE_ENGINEERING_RECOVERY_READY_TO_SEAL`  
 > 性质：看到 v2–v5 source implementation failure 后的 outcome-aware engineering recovery；不是 measurement outcome tuning，不修改 scientific prereg、数据结果、estimand 或 Gate。
 
 ## 1. 不可变边界与模型来源

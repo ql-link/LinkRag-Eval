@@ -1,8 +1,8 @@
 # Robust Fusion R2 DeepSeek 正文来源实现规范 v1
 
-> research_id: `ROBUST-FUSION-R2-2026-08-29`
-> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-GENERATION-2026-08-29-v1`
-> 状态：`RESULT_BEFORE_IMPLEMENTATION_SPEC_FINAL_FOR_SEAL`
+> research_id: `ROBUST-FUSION-R2-2026-08-29`  
+> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-GENERATION-2026-08-29-v1`  
+> 状态：`RESULT_BEFORE_IMPLEMENTATION_SPEC_FINAL_FOR_SEAL`  
 > 本规范位于既有 R2 prereg 之外，不修改其 estimand、样本量、配额、门槛或停止规则。
 
 ## 1. 调用身份与数据边界

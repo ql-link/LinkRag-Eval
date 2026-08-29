@@ -1,8 +1,8 @@
 # 高相似度干扰下检索增强生成的多路来源感知鲁棒融合方法研究：R2 协议草案
 
-> `research_id`: `ROBUST-FUSION-R2-2026-08-29`
-> `record_id`: `ROBUST-FUSION-RESEARCH-R2-2026-08-29-v1-DRAFT`
-> 状态：`DRAFT_NOT_AUTHORIZED`
+> `research_id`: `ROBUST-FUSION-R2-2026-08-29`  
+> `record_id`: `ROBUST-FUSION-RESEARCH-R2-2026-08-29-v1-DRAFT`  
+> 状态：`DRAFT_NOT_AUTHORIZED`  
 > 本文件不替换或修改 R1/v29；未获得研究负责人批准前，不得生成 R2 数据、运行编码器、人工发包、readiness 或 Gate。
 
 ## 1. 研究身份与 R1 边界
@@ -81,3 +81,4 @@ similarity 改为 7 点行为锚定量表，并明确评估“相对正确参照
 ## 8. 唯一待决问题
 
 研究负责人是否批准以“128 个全新 family、匹配 caliper + length×language×dataset 条件 E5、7 点行为锚定量表、一次性无追加”为 R2 的正式 measurement 方向？批准仅允许继续写成可时间戳预注册包，不等于授权生成数据或运行 Gate。
+

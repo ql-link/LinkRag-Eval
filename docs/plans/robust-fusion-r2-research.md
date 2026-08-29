@@ -1,7 +1,7 @@
 # 高相似度干扰下检索增强生成的多路来源感知鲁棒融合方法研究：R2 正式协议
 
-> `research_id`: `ROBUST-FUSION-R2-2026-08-29`
-> `record_id`: `ROBUST-FUSION-RESEARCH-R2-2026-08-29-v1`
+> `research_id`: `ROBUST-FUSION-R2-2026-08-29`  
+> `record_id`: `ROBUST-FUSION-RESEARCH-R2-2026-08-29-v1`  
 > 状态：`RESULT_BEFORE_PROTOCOL_READY_FOR_LOCAL_SEAL`
 
 正式题目、Dense/Learned Sparse/BM25 三路来源、RQ1—RQ3 与 C1—C3 的科学角色原样继承。R1/v29 的 v1+唯一补充终局 `INCONCLUSIVE` 永久成立；R1 的 Query/document/version/template family 与正文只可作探索性设计证据，并以机器注册表 hard exclude，不进入 R2 Dev、Gate A 或 Blind。

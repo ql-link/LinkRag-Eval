@@ -123,3 +123,4 @@ def lock_data() -> dict[str, Any]:
 
 if __name__ == "__main__":
     print(json.dumps(lock_data(), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+

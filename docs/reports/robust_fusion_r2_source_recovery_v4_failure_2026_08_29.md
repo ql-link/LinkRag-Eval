@@ -1,7 +1,7 @@
 # Robust Fusion R2 source recovery v4 fail-closed 记录
 
-> research_id: `ROBUST-FUSION-R2-2026-08-29`
-> 状态：`SOURCE_RECOVERY_V4_ABORTED_FAIL_CLOSED_AWAITING_RECOVERY_DECISION`
+> research_id: `ROBUST-FUSION-R2-2026-08-29`  
+> 状态：`SOURCE_RECOVERY_V4_ABORTED_FAIL_CLOSED_AWAITING_RECOVERY_DECISION`  
 > 分类：source implementation/provider prompt interaction；不是数据质量、measurement、编码器、人工、readiness 或 Gate 结果。
 
 ## 结果

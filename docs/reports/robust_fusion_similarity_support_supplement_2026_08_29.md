@@ -1,6 +1,6 @@
 # P2-01 Dev 共同支持唯一补充周期预注册、发包与终审报告
 
-> 状态：`P2_TERMINAL_INCONCLUSIVE_GATE_A_UNAUTHORIZED`
+> 状态：`P2_TERMINAL_INCONCLUSIVE_GATE_A_UNAUTHORIZED`  
 > 范围：唯一一次 pre-Gate Dev 共同支持补充；Gate A/B、Reranker 效果、D1–D3、A0 与 M1 均未运行。
 
 ## Material Passport

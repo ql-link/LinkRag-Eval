@@ -1,6 +1,6 @@
 # Robust Fusion R2 source recovery v4 只读结构诊断计划
 
-> 状态：`OUTCOME_AWARE_NON_SEMANTIC_IMPLEMENTATION_DIAGNOSTIC`
+> 状态：`OUTCOME_AWARE_NON_SEMANTIC_IMPLEMENTATION_DIAGNOSTIC`  
 > 目的：解释 R2SRC-002/E 的 identical-response breaker；不形成数据质量、measurement、编码器、人工、readiness 或 Gate 结论。
 
 ## 固定输入

@@ -142,3 +142,4 @@ def truncation_summary(
         }
         for stratum in sorted(family_stratum.values())
     }
+

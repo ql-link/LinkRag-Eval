@@ -1,8 +1,8 @@
 # Robust Fusion R2 DeepSeek 正文来源执行规范 v2
 
-> research_id: `ROBUST-FUSION-R2-2026-08-29`
-> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-EXECUTION-2026-08-29-v2`
-> 状态：`AUTHORIZED_RESULT_BEFORE_READY_TO_SEAL`
+> research_id: `ROBUST-FUSION-R2-2026-08-29`  
+> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-EXECUTION-2026-08-29-v2`  
+> 状态：`AUTHORIZED_RESULT_BEFORE_READY_TO_SEAL`  
 > 本规范追加于 v1，不覆盖 v1，也不修改正式 R2 scientific prereg。
 
 ## 1. 修订依据与边界

@@ -1,8 +1,8 @@
 # Robust Fusion R2 source recovery v5 fail-closed 运行报告
 
-> `research_id`: `ROBUST-FUSION-R2-2026-08-29`
-> `source_protocol_id`: `ROBUST-FUSION-R2-SOURCE-RECOVERY-2026-08-29-v5`
-> 运行状态：`SOURCE_RECOVERY_V5_ABORTED_FAIL_CLOSED`
+> `research_id`: `ROBUST-FUSION-R2-2026-08-29`  
+> `source_protocol_id`: `ROBUST-FUSION-R2-SOURCE-RECOVERY-2026-08-29-v5`  
+> 运行状态：`SOURCE_RECOVERY_V5_ABORTED_FAIL_CLOSED`  
 > 性质：source implementation terminal；不是数据、measurement 或 Gate 结果。
 
 ## 1. 结果前封存

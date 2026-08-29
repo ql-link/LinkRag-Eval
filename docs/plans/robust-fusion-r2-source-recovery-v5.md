@@ -1,8 +1,8 @@
 # Robust Fusion R2 DeepSeek 正文来源保守恢复规范 v5
 
-> research_id: `ROBUST-FUSION-R2-2026-08-29`
-> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-RECOVERY-2026-08-29-v5`
-> 状态：`AUTHORIZED_RESULT_BEFORE_READY_TO_SEAL`
+> research_id: `ROBUST-FUSION-R2-2026-08-29`  
+> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-RECOVERY-2026-08-29-v5`  
+> 状态：`AUTHORIZED_RESULT_BEFORE_READY_TO_SEAL`  
 > 性质：source implementation recovery；不修改 scientific prereg、数据结果、measurement 或 Gate。
 
 ## 1. 永久只读与继承

@@ -1,8 +1,8 @@
 # Robust Fusion P2-01 Dev 相似度自动校准与盲审发包报告
 
-> 记录：`ROBUST-FUSION-SIMILARITY-DEV-CALIBRATION-2026-08-29-v1`
-> 日期：2026-08-29
-> 状态：`AWAITING_HUMAN_SUBMISSIONS`
+> 记录：`ROBUST-FUSION-SIMILARITY-DEV-CALIBRATION-2026-08-29-v1`  
+> 日期：2026-08-29  
+> 状态：`AWAITING_HUMAN_SUBMISSIONS`  
 > 边界：只使用 Internal v6-Dev；Gate A/B 未运行，P2-01/P2-04 未完成。
 
 ## Material Passport

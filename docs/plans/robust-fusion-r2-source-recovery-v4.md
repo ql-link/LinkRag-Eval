@@ -1,8 +1,8 @@
 # Robust Fusion R2 DeepSeek 正文来源三阶段恢复规范 v4
 
-> research_id: `ROBUST-FUSION-R2-2026-08-29`
-> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-RECOVERY-2026-08-29-v4`
-> 状态：`AUTHORIZED_RESULT_BEFORE_READY_TO_SEAL`
+> research_id: `ROBUST-FUSION-R2-2026-08-29`  
+> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-RECOVERY-2026-08-29-v4`  
+> 状态：`AUTHORIZED_RESULT_BEFORE_READY_TO_SEAL`  
 > 性质：source implementation recovery；不是 scientific prereg、数据结果、measurement 或 Gate 变更。
 
 ## 1. 继承与只读边界

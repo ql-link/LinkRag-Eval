@@ -1,7 +1,7 @@
 # Robust Fusion R2 source recovery v3 机械诊断
 
-> research_id: `ROBUST-FUSION-R2-2026-08-29`
-> 状态：`FAIL_CLOSED_SOURCE_IMPLEMENTATION_DIAGNOSTIC_AWAITING_V4_REVIEW`
+> research_id: `ROBUST-FUSION-R2-2026-08-29`  
+> 状态：`FAIL_CLOSED_SOURCE_IMPLEMENTATION_DIAGNOSTIC_AWAITING_V4_REVIEW`  
 > 本报告不评价正文语义，不形成数据质量、measurement、readiness 或 Gate 结果。
 
 ## 1. 结论

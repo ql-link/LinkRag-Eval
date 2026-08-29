@@ -1,7 +1,7 @@
 # Robust Fusion R2 source recovery v4 只读结构诊断
 
-> research_id: `ROBUST-FUSION-R2-2026-08-29`
-> 状态：`FAIL_CLOSED_NON_SEMANTIC_SOURCE_IMPLEMENTATION_DIAGNOSTIC_AWAITING_V5_DECISION`
+> research_id: `ROBUST-FUSION-R2-2026-08-29`  
+> 状态：`FAIL_CLOSED_NON_SEMANTIC_SOURCE_IMPLEMENTATION_DIAGNOSTIC_AWAITING_V5_DECISION`  
 > 本报告不输出正文、不评价等价或冲突语义，也不形成数据质量、measurement、编码器、人工、readiness 或 Gate 结论。
 
 ## 1. 请求是否相同

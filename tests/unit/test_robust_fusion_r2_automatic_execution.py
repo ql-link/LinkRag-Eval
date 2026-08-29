@@ -50,3 +50,4 @@ def test_scored_frame_keeps_fixed_denominator() -> None:
     rows = build_scored_candidate_frame(families, main_scores=scores, audit_scores=scores)
     assert len(rows) == 256
     assert all(row["main_similarity"] == 0.5 for row in rows)
+

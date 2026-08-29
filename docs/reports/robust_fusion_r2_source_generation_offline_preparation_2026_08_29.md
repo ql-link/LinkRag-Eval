@@ -1,8 +1,8 @@
 # Robust Fusion R2 DeepSeek 正文来源离线准备报告
 
-> research_id: `ROBUST-FUSION-R2-2026-08-29`
-> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-GENERATION-2026-08-29-v1`
-> 状态：`AWAITING_EXPLICIT_PAID_API_AUTHORIZATION`
+> research_id: `ROBUST-FUSION-R2-2026-08-29`  
+> source_protocol_id: `ROBUST-FUSION-R2-SOURCE-GENERATION-2026-08-29-v1`  
+> 状态：`AWAITING_EXPLICIT_PAID_API_AUTHORIZATION`  
 > 本报告不构成付费调用授权、R2 measurement PASS、readiness 或 Gate A/B 授权。
 
 ## 1. 结论

@@ -1,7 +1,7 @@
 # Robust Fusion R2 到 Gate A 的 Delta Checklist
 
 > `research_id`: `ROBUST-FUSION-R2-2026-08-29`
-> 当前：`R2_AUTOMATIC_COMPLETE_AWAITING_FOUR_HUMAN_SUBMISSIONS`。本文记录进度，不授权 measurement finalizer、readiness 或 Gate。
+> 当前：`AWAITING_HUMAN_ADJUDICATION`。四份 A/B 提交已锁定并完成仲裁前机械审阅；readiness 与 Gate 不授权。
 
 ## A. 研究与测量批准
 
@@ -24,8 +24,10 @@
 - [x] 完成 128 个全新 family-disjoint Dev family；accepted ledger 与失败 attempt/hash 全部保留，未用外部生成服务或模型分数调文。
 - [x] 在看编码器分数前锁定全部正文、来源、strata、冲突类型、编辑强度和固定分母。旧 v7 final lock 的同-family template 作用域缺陷 fail-closed 留痕；v7.1 仅修复 cross-family 执行作用域并先封存，不改 parser/prereg/accepted rows。
 - [x] 单次计算冻结 E5/DistilUSE 并封存 provenance、向量、输入/token/截断与分数哈希；未按分数替换候选。
-- [x] 生成双盲 A/B relation 与 similarity 包；每位研究员 512 行，当前四份 `submission.csv` 均不存在。
-- [ ] 先锁提交再校验/仲裁；一次性执行 measurement finalizer。
+- [x] 生成双盲 A/B relation 与 similarity 包；每位研究员 512 行。
+- [x] 四份真实提交在答案解析前完成 raw-byte hash 锁；锁后 schema/ID/身份/枚举校验通过。relation 7 行、similarity 96 行需真实人类仲裁，物理隔离包已封存。
+- [ ] 安排一名新的真实研究员独立完成 relation 7 行与 similarity 96 行仲裁；收到提交后先锁后验。
+- [ ] 仲裁机械校验通过后，才可按冻结协议形成唯一人工记录并一次性运行 measurement finalizer。
 - [ ] 只有完整性、一致性、分辨率、人工 caliper、共同支持、条件 E5 人工效度全部 PASS 才冻结 measurement。
 
 ## C. Gate A 资格增量
@@ -48,4 +50,4 @@
 
 ## 当前唯一下一动作
 
-安排两名真实研究员独立完成各自 relation 256 + similarity 256 = 512 行。A 只使用 `human_packages/relation/annotator_a/` 与 `human_packages/similarity/annotator_a/`；B 只使用对应 `annotator_b/` 目录。各自复制 `submission_template.csv` 为 `submission.csv` 后填写全部行，不改表头/audit_id，不查看另一位或 facilitator 目录。收到四份提交后先锁后验；在此之前不得 finalizer/readiness/Gate。
+安排一名新的真实研究员，只使用原 `human_review/adjudication_v1/relation/` 与 `human_review/adjudication_v1/similarity/` 空白包，分别填写 7 行与 96 行。不得查看 A/B 以外的结果或任何模型分数；收到两份 `submission.csv` 后必须先锁后验。在此之前不得运行 measurement finalizer、readiness 或 Gate。

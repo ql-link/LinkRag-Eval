@@ -1,6 +1,6 @@
 # 当前开发状态
 
-> 更新时间：2026-08-29
+> 更新时间：2026-08-30
 > 本页是项目级进度的唯一维护入口。专题文档中的历史状态和实验结论不得覆盖本页。
 
 ## 总体结论
@@ -15,7 +15,9 @@
 
 R2 最新追加状态（覆盖上段 v4/v5 决策时点）：outcome-aware engineering v6 已在任何新响应前封存并单次运行；逐字节继承 R2SRC-001（Flash/v4），其余请求固定 `deepseek-v4-pro`。R2SRC-002 的 R/EP/E/C 最终机械通过并永久接受；R2SRC-003 的 R/EP/E 通过，但 C 的同一 response hash 六次且均 normalized 等于 equivalent candidate，账本先持久化 `CALL_COMPLETED` 再写 `HARD_BLOCK`，命令 fail-closed、未重跑且未回退 Flash。当前为 `SOURCE_RECOVERY_V6_ABORTED_FAIL_CLOSED_AWAITING_COORDINATOR_DECISION`；accepted ledger 为 2/128，formal data lock 未形成，尚无编码器结果或人工包，readiness/Gate 继续未授权。详见 [v6 fail-closed 报告](reports/robust_fusion_r2_source_recovery_v6_failure_2026_08_29.md)。
 
-R2 最新收口状态（覆盖上述 v6 时点）：负责人授权的 Codex source v7 已逐字节 hard-lock 001/002，并以 append-only 首个机械 PASS 完成 003–128；accepted ledger SHA-256 为 `c022a74e…a2ae8`。旧 v7 final lock 因把同一 family 的 numeric/version 配对也纳入 cross-family template 去重而 fail-closed，未创建 data root；独立 v7.1 erratum 在正式数据前封存且只修复最终校验作用域，不改 parser、prereg、accepted rows、配额或门槛。正式 128-family/256-candidate source lock 已完成（families `f41a9f76…84231`）。冻结 E5/DistilUSE 随后单次本地运行成功，automatic manifest 为 `7b6c97e5…723c`；E5 全部不截断，DistilUSE 对 long_zh/long_en 各 96/96 输入按冻结 128-token 右截断。A/B relation 与 similarity 四个物理隔离盲包已生成，每位研究员 512 行，当前状态 `R2_AUTOMATIC_COMPLETE_AWAITING_FOUR_HUMAN_SUBMISSIONS`。尚无人工提交、仲裁或 measurement 决策；readiness/Gate 继续未授权。详见 [R2 source v7 与自动测量交接报告](reports/robust_fusion_r2_source_v7_automatic_handoff_2026_08_29.md)。
+R2 最新活动状态（覆盖上述 v6 时点）：负责人授权的 Codex source v7 已逐字节 hard-lock 001/002，并以 append-only 首个机械 PASS 完成 003–128；v7.1 在正式数据前只修复 cross-family 最终校验作用域。正式 128-family/256-candidate source lock、单次冻结 E5/DistilUSE、四个物理隔离盲包和两名研究员四份提交均已完成。四提交在答案解析前完成 raw-byte hash 锁，submission lock 为 `679bf8d1…f952a`；锁后 schema、ID、身份和枚举机械校验通过，原空白仲裁包已封存，relation 7 行、similarity 96 行等待一名新的真实研究员独立仲裁。当前状态为 `AWAITING_HUMAN_ADJUDICATION`；不存在活动 measurement decision，readiness/Gate A/Gate B 均未运行且未授权。详见 [R2 人工提交锁定与仲裁前审阅报告](reports/robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md)。
+
+2026-08-30，研究负责人授权将 R2 活动流程操作性回退到第一次人工仲裁之前；活动状态仅以上述 pre-adjudication 边界为准。
 
 | 范围 | 状态 | 说明 |
 | --- | --- | --- |
@@ -36,7 +38,7 @@ R2 最新收口状态（覆盖上述 v6 时点）：负责人授权的 Codex sou
 | Gate A 数据资格 | P3-01 完成，P3-02 资格层已制品化但最终分母未冻结 | ID/hash-only manifest 已重放 T2、cMedQA2、DuRetrieval pinned 输入：T2 Dev exposed-only；cMedQA2 排除 80 个跨 split Query family；DuRetrieval 零删减且仅辅助。医学只作分层属性。最终分母仍待扩展 family、构造率、Internal v6 与功效封存，当前没有可直接进入 Gate A 的 cohort |
 | Internal Stress v6 | 正式骨架、30-family Dev 双审仲裁与 Dev 三路 v5 核验完成；确认性人口未完成 | 首批机械结构产率 24/30；恢复后的 30 个提案完成 A/B 各 30+90+90 行，最终接纳 28/30 并物化为 28/112/112/28。v2/v3 失败、v4 完整性拒收均保留；v5 形成 3,056 条候选，三路各 28/28 非空，112/112 已标注候选与 28/28 gold target 入并集，独立完整性和真实存储核验通过。C2 8 槽包为 `PLANNED_EMPTY`；GateA/Blind 保持 `NOT_ELIGIBLE` |
 | P2-01 Dev 相似度校准 | `P2_TERMINAL_INCONCLUSIVE_GATE_A_UNAUTHORIZED` | v1 永久 `INCONCLUSIVE`；唯一补充四提交已锁定并零仲裁终审。combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均 `INCONCLUSIVE`。无正式数值冻结、无第三轮；P2-01/P2-04 未完成、Gate 未授权 |
-| Robust Fusion R2 相似度重设计 | `R2_AUTOMATIC_COMPLETE_AWAITING_FOUR_HUMAN_SUBMISSIONS` | Codex source v7 已完成 128/128，v7.1 正确收口 cross-family final lock；128-family/256-candidate fixed denominator 已锁。冻结 E5/DistilUSE 已单次运行并封存，四个 A/B relation/similarity 盲包各 256 行；尚无真实 submission、仲裁或 measurement 决策 |
+| Robust Fusion R2 相似度重设计 | `AWAITING_HUMAN_ADJUDICATION` | 四份 A/B 提交已先锁后验且机械校验通过；relation 7 行、similarity 96 行的原空白仲裁包已封存，等待一名新的真实研究员。尚无 measurement decision，readiness/Gate 未运行且未授权 |
 | 10 万背景语料 | 暂缓 | 当前先完善 20k；不属于本轮阻塞项 |
 
 ## 已固化结果
@@ -84,7 +86,7 @@ R2 最新收口状态（覆盖上述 v6 时点）：负责人授权的 Codex sou
 - P2 桌面校准已完成：v1 泄漏包和模型/工具试填保持无资格；v2 首轮真实 A/B 提交、失败审查和锁定快照完整保留，5 个制品缺陷案例由 v3 补包一对一替换。最终合并 12 例、13 条候选、9 条事实冲突和 1 条候选对通过全部冻结准入线，格式与零容忍构念错误为 0；标注手册已升级为 v2。最终机器结论 SHA-256 为 `fe906b9e755135cfe4fe6607297aec5c5a0c2b2c0a0a5118e4c38ada9a01ef1c`，提交锁 SHA-256 为 `9d743fb23d4d88d128229a81d381aab444550e2663e11eacbe296cad0c722f82`。研究负责人已进一步核验 P2 与 Internal v6 的正式提交均由两名研究员独立完成、未使用模型或工具代填；追加的[机器可读核验旁证](reports/robust_fusion_human_annotation_verification_2026_08_29.json) SHA-256 为 `6e4746c0a1b83455d7b62880490a53ebb93b7f03f94f2ede1a30cb5770d80419`，不改写任何原始提交或裁定。主持人预先知道 v3 key 的事实已披露，不声称主持人盲态；Gate A/B 均未运行。
 - P2-01 Dev 相似度 v1 的自动校准与人工效度审计已完成：[自动校准报告](reports/robust_fusion_similarity_dev_calibration_2026_08_29.md)与[仲裁后效度报告](reports/robust_fusion_similarity_human_review_2026_08_29.md)记录人工六项门槛全 PASS、共同支持 17.86%/57.14%，正式结论永久为 `INCONCLUSIVE`。唯一一次[共同支持补充](reports/robust_fusion_similarity_support_supplement_2026_08_29.md)在任何新分数前锁定 72-family、每侧 combined 分母 100、missing-as-miss 与无第三轮规则；四提交锁 `7a3ca434…2ae6`。锁后缺失 finalizer 以 implementation manifest `af35908b…499fb` 先封存后单次执行；final manifest `ea40f4f0…f2b35`。combined 共同支持 96%/99% PASS，但 supplement-only/combined E5 overall 0.1775/0.3968 未达 0.50，两个人工效度均 `INCONCLUSIVE`，联合 terminal `INCONCLUSIVE`。不生成正式数值冻结，P2-01/P2-04 和 Gate 均未完成且无第三轮。
 - 独立 R2 只读诊断已按 outcome-aware/exploratory 地位先锁计划与输入 hash、后单次运行，manifest SHA-256 为 `872b45bdda7c236d563945814ec96d5ea88bed25da62614024af6f535dfd3bd8`。方案 B 随后获批准；有效功效模拟 v2 在 ρ=.60 的完整门禁通过率为 91.25%，正式 prereg manifest SHA-256 为 `b3c75dee6140c7aa57b865e592054ff5534405872efef4769b9636cccd09c71b`，R1 exclusion registry 为 `f54115330edeabb077d149f09106051a210fb086669208dd5177839989c4fe16`。旧 Gate inventory 审计未解析结果内容，因独立资格元数据不足为 `NOT_ELIGIBLE_METADATA_INSUFFICIENT`。DeepSeek source-generation v2–v5 现场和两份诊断均永久保留；v6 preparation manifest `91685d72…8091` 在任何 Pro 响应前封存，静态 endpoint contract 零 probe。唯一命令以 Pro/v6 永久接受 R2SRC-002，随后 R2SRC-003/C 同一 response hash 六次且均因 normalized 等于 equivalent 机械失败，`CALL_COMPLETED` 后触发 frozen `HARD_BLOCK`；未重跑、未回退 Flash。accepted ledger 2/128，formal data lock 未形成，当前等待协调方决定。详见 [R2 v6 fail-closed 报告](reports/robust_fusion_r2_source_recovery_v6_failure_2026_08_29.md)。
-- R2 后续由负责人授权 Codex source v7 收口：001/002 继承不改，003–128 只使用冻结 slot metadata 直接撰写并 append-only 首个机械 PASS 锁定。最终 source lock、单次 E5/DistilUSE 与四个人工盲包均完成；自动分数仅作待人工校准的测量输入，不是真值。当前唯一缺口是两名真实研究员各自独立填写 512 行，之后才能先锁后验、仲裁和唯一 finalizer。
+- R2 source、单次编码和两名研究员四份提交已完成；四提交先锁后验，pre-adjudication 机械审阅确认 relation 7 行、similarity 96 行需要一名新的真实研究员仲裁。当前没有 measurement decision，readiness/Gate 不授权。
 - 2026-07-26 PR #1 的 GitHub Actions run `30191660556` 已全绿：330 项非集成测试、import-lint、16 项真实 contract 和 Alembic heads 门禁全部通过；同时修复了 `golden` 数据忽略规则误伤源码包的问题。
 - `candidate_difference_v3` 已删除 8 个 Golden scenario 特征，线上构造只接收 Query、三路候选和候选正文；qrels 只用于训练标签。Alias 已从冻结 CLI 和模型包移除。
 - 无 Alias Tune OOF 450 条：Hit@10 `97.33%→99.33%`、MRR `84.93%→96.59%`，9 gained / 0 lost；仅据 Tune 冻结 33 轮和短词阈值 0.1。
@@ -100,13 +102,13 @@ R2 最新收口状态（覆盖上述 v6 时点）：负责人授权的 Codex sou
 | 优先级 | 工作 | 当前缺口 | 完成标准 |
 | --- | --- | --- | --- |
 | P0 | 鲁棒融合研究 current-HEAD 契约复验 | 薄适配、精确 pin、本地全测、LTR 固定向量、真实栈冒烟和正式 v2 三路 preflight 已完成；仍缺 clean 双仓、远端绿色 CI run 和正式 lock | 形成可提交 clean 状态、取得绿色 CI、生成 `contract-lock.json` |
-| 研究 P2/P3/P4 | Gate A 构念、数据与测量工具 | R1 P2-01 永久 terminal `INCONCLUSIVE`；R2 128-family source/fixed denominator、单次冻结编码与四个盲包已完成，但尚无四份真实 submission、仲裁或 measurement PASS | 两名真实研究员各独立完成 512 行；随后先锁后验、必要仲裁与唯一 finalizer。当前不得运行 readiness/Gate |
+| 研究 P2/P3/P4 | Gate A 构念、数据与测量工具 | R1 P2-01 terminal `INCONCLUSIVE`；R2 已完成 source、自动测量及四提交锁定/机械预审，当前等待 relation 7 行、similarity 96 行真人仲裁 | 安排一名新的真实研究员只使用原空白仲裁包独立填写；提交必须先锁后验。在形成合法 measurement decision 前不得运行 readiness/Gate |
 | P1 | 生产模式证据补齐 | 当前开发配置为 `active`，但本页没有新的线上/Shadow 观测能够替代 Blind v5 的历史风险结论 | 保留 weighted score 回滚；以明确的发布范围、延迟、回退率、Top10 变化和业务反馈另行形成运行报告 |
 | P2 | 真实业务效果增强 | 当前真实 Query 来源仍是开源检索，不是脱敏生产 Query | 如继续优化，建立全新 Tune/Blind v6；禁止复用 Blind v5 调参 |
 
 ### 推荐执行顺序
 
-1. R1 P2-01 已按唯一补充停止规则得到 terminal `INCONCLUSIVE`；R2 方案 B 已正式预注册，DeepSeek v2–v6 历史现场永久保留。Codex source v7、正式 128-family lock、单次冻结编码和 A/B 四盲包已经完成。当前唯一动作是两名真实研究员各独立完成 relation 256 + similarity 256 行；四提交锁定、校验/仲裁和唯一 finalizer 前不得运行 readiness/Gate。
+1. R1 P2-01 已 terminal `INCONCLUSIVE`；R2 当前为 `AWAITING_HUMAN_ADJUDICATION`。唯一研究动作是安排一名新的真实研究员填写原 relation 7 行与 similarity 96 行仲裁包；收到提交后必须先锁后验。在此之前不得运行 measurement finalizer、readiness 或 Gate。
 2. P4-00 可独立并行：Dense 重放策略和正式 v2 三路 preflight 已关闭；保留已完成的 Eval 薄适配、精确 LinkRag pin、本地全测和真实栈证据，在双仓 clean 后运行远端 CI 并保存绿色 run/report 与 `contract-lock.json`。正式快照仍须等待 P2/P3 冻结。
 3. Blind v4、Blind v5 均已封存，禁止二次运行或据此调参；其 Query 条件化 T2 子池不得进入新研究的确认性候选生成。
 4. 将 Blind v5 的“先 Shadow”保留为历史验收建议，将 `.env.development=active` 记录为当前配置事实；在没有新的运行报告时，不把两者合并成“已证明全量可用”。weighted score 始终作为启动、超时、错误和主动回滚降级路径。
@@ -139,6 +141,8 @@ R2 最新收口状态（覆盖上述 v6 时点）：负责人授权的 Codex sou
 - [R1 → R2 继承/排除矩阵](plans/robust-fusion-r1-to-r2-inheritance-matrix.md)
 - [R2 到 Gate A Delta Checklist](plans/robust-fusion-r2-gate-a-delta-checklist.md)
 - [R2 source v7 与自动测量交接报告](reports/robust_fusion_r2_source_v7_automatic_handoff_2026_08_29.md)
+- [R2 人工提交锁定与仲裁前审阅报告](reports/robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md)
+- [R2 人工审阅与终审执行规范](plans/robust-fusion-r2-human-review-finalization-v1.md)
 - [R2 source lock v7.1 执行器说明](plans/robust-fusion-r2-source-lock-v7-1.md)
 - [R2 自动测量执行规范](plans/robust-fusion-r2-automatic-execution-v1.md)
 - [鲁棒融合文献地图](plans/robust-fusion-literature.md)

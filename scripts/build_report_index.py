@@ -8,7 +8,6 @@ import os
 from collections import Counter, defaultdict
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "docs/reports/REPORT_INDEX.md"
 REPORT_ROOTS = (ROOT / "runs/golden_v2", ROOT / "docs/reports")
@@ -64,6 +63,9 @@ def _stage(path: Path) -> str:
 def _purpose(path: Path) -> str:
     rel = path.relative_to(ROOT).as_posix().lower()
     name = path.name.lower()
+
+    if name == "robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md":
+        return "记录四份提交的先锁后验、机械预审和 relation 7 / similarity 96 待仲裁清单。"
 
     rules = (
         (("acceptance_report", "acceptance_summary"), "汇总阶段验收指标、结论、风险与待办。"),

@@ -21,12 +21,60 @@ if TYPE_CHECKING:
     from src.core.pipeline.recall.pipeline import RecallPipeline
 
 
+async def execute_candidate_contract_once(
+    pipeline: RecallPipeline,
+    *,
+    query: str,
+    user_id: int,
+    dataset_ids: list[int],
+    top_k: int,
+    bm25_top_k: int,
+    dense_top_k: int,
+    sparse_top_k: int,
+    dense_score_threshold: float | None,
+    sparse_score_threshold: float | None,
+    enabled_sources: list[str],
+    required_sources: list[str],
+    fusion_weights: dict[str, float],
+    candidate_contract_version: str,
+    candidate_profile: str,
+) -> RecallResponse:
+    """执行一次保留 ``candidate_hits/route_hits`` 的候选契约请求。
+
+    本入口没有自动重试；研究 runner 可以把一次性执行与失败状态完整封存。rag 类型的构造
+    继续收口在允许的 adapter 文件内，Robust Fusion 模块无需直接 import ``src.*``。
+    """
+
+    from src.core.pipeline.recall.models import RecallRequest
+
+    request = RecallRequest(
+        query=query,
+        user_id=user_id,
+        dataset_ids=dataset_ids,
+        top_k=top_k,
+        bm25_top_k=bm25_top_k,
+        dense_top_k=dense_top_k,
+        sparse_top_k=sparse_top_k,
+        dense_score_threshold_override=dense_score_threshold,
+        sparse_score_threshold_override=sparse_score_threshold,
+        enabled_sources=enabled_sources,
+        strict_override=True,
+        fusion_dense_weight_override=fusion_weights["dense"],
+        fusion_sparse_weight_override=fusion_weights["sparse"],
+        fusion_bm25_weight_override=fusion_weights["bm25"],
+        candidate_contract_version=candidate_contract_version,
+        candidate_profile=candidate_profile,
+        required_sources=required_sources,
+    )
+    return await pipeline.execute(request)
+
+
 class RecallEvaluable:
     layer = Layer.RETRIEVAL
 
     def __init__(
         self,
-        pipeline: "RecallPipeline",
+        pipeline: RecallPipeline,
         top_k: int,
         *,
         bm25_top_k: int | None = None,
@@ -88,11 +136,11 @@ class RecallEvaluable:
         return self._to_stage_output(sample.query, resp, wall_ms)
 
     @staticmethod
-    def _needs_retry(resp: "RecallResponse") -> bool:
+    def _needs_retry(resp: RecallResponse) -> bool:
         """宽松模式下 failed_sources/零结果不抛错,这里把它们视为可重试的不完整响应。"""
         return bool(resp.failed_sources) or not bool(resp.hits)
 
-    def _to_stage_output(self, query: str, resp: "RecallResponse", wall_ms: int) -> StageOutput:
+    def _to_stage_output(self, query: str, resp: RecallResponse, wall_ms: int) -> StageOutput:
         ordered = sorted(resp.hits, key=lambda h: h.fused_score, reverse=True)
         ranked = [
             RankedHit(

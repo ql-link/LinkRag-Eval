@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probe the actual Dense / Doubao Learned Sparse / SQLite BM25 Gate A routes."""
+"""Probe structural contracts for the actual Dense/Sparse/BM25 research routes."""
 
 from __future__ import annotations
 
@@ -7,9 +7,6 @@ import argparse
 import asyncio
 import hashlib
 import json
-import math
-import shutil
-import struct
 from pathlib import Path
 from typing import Any
 
@@ -17,22 +14,16 @@ from linkrag_eval.config import EvalSettings
 from linkrag_eval.llm.dense_client import OpenAIDenseEmbedder
 from linkrag_eval.llm.sparse_client import ArkSparseEncoder
 from linkrag_eval.robust_fusion.replay_contract import (
-    DENSE_REPLAY_POLICY_ID,
-    DENSE_REPLAY_TOLERANCE,
-    dense_replay_metrics,
+    PROVIDER_ROUTE_POLICY_ID,
+    dense_vector_fingerprint,
+    sparse_vector_fingerprint,
 )
 
-ARTIFACT_VERSION = "ROBUST-FUSION-ROUTE-CONTRACT-PREFLIGHT-2026-08-29-v2"
-SCIENTIFIC_PROTOCOL = "ROBUST-FUSION-RESEARCH-2026-08-28-v19"
-ENGINEERING_PROTOCOL = "ROBUST-FUSION-ENGINEERING-2026-08-29-v10"
+ARTIFACT_VERSION = "ROBUST-FUSION-ROUTE-CONTRACT-PREFLIGHT-2026-08-29-v3"
+SCIENTIFIC_PROTOCOL = "ROBUST-FUSION-RESEARCH-2026-08-29-v26"
+ENGINEERING_PROTOCOL = "ROBUST-FUSION-ENGINEERING-2026-08-29-v17"
 EXPECTED_DENSE_MODEL = "text-embedding-v4"
 EXPECTED_SPARSE_MODEL = "doubao-embedding-vision-251215"
-DIAGNOSTIC_ARTIFACT = (
-    "runs/robust_fusion/contracts/dense-replay-diagnostic-v1/manifest.json"
-)
-DIAGNOSTIC_MANIFEST_SHA256 = (
-    "3606a60aca87d41f959214c121b402a1c0ea303d228629cfac622d5648ec9081"
-)
 
 
 def canonical_json(value: Any) -> str:
@@ -44,17 +35,6 @@ def sha256_file(path: Path) -> str:
     with path.open("rb") as handle:
         for block in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(block)
-    return digest.hexdigest()
-
-
-def sparse_vector_sha256(indices: list[int], values: list[float]) -> str:
-    if len(indices) != len(values) or indices != sorted(indices) or len(indices) != len(set(indices)):
-        raise RuntimeError("sparse vector index/value contract invalid")
-    digest = hashlib.sha256()
-    for index, value in zip(indices, values):
-        if not math.isfinite(value):
-            raise RuntimeError("sparse vector contains NaN or Inf")
-        digest.update(struct.pack("<qf", int(index), float(value)))
     return digest.hexdigest()
 
 
@@ -111,53 +91,45 @@ async def run_probe(settings: EvalSettings) -> dict[str, Any]:
     )
     items = fixed_inputs()
     try:
-        dense_first = await dense_encoder.aembed([text for _, text in items])
-        dense_reversed_vectors = await dense_encoder.aembed(
-            [text for _, text in reversed(items)]
-        )
-        sparse_first = await sparse_encoder.aencode([text for _, text in items])
-        sparse_reversed_vectors = await sparse_encoder.aencode(
-            [text for _, text in reversed(items)]
-        )
+        dense_vectors = await dense_encoder.aembed([text for _, text in items])
+        sparse_vectors = await sparse_encoder.aencode([text for _, text in items])
     finally:
         await dense_encoder.aclose()
         await sparse_encoder.aclose()
-    dense_second = list(reversed(dense_reversed_vectors))
-    sparse_second = list(reversed(sparse_reversed_vectors))
+
+    if len(dense_vectors) != len(items):
+        raise RuntimeError(
+            f"Dense response count drift: {len(dense_vectors)} != {len(items)}"
+        )
+    if len(sparse_vectors) != len(items):
+        raise RuntimeError(
+            f"Sparse response count drift: {len(sparse_vectors)} != {len(items)}"
+        )
 
     dense_rows = []
     sparse_rows = []
-    for (probe_id, text), dense_left, dense_right, sparse_left, sparse_right in zip(
-        items, dense_first, dense_second, sparse_first, sparse_second
+    for (probe_id, text), dense_vector, sparse_vector in zip(
+        items, dense_vectors, sparse_vectors
     ):
-        dense_metrics = dense_replay_metrics(
-            dense_left, dense_right, expected_dim=settings.embed_dim
-        )
-        if not dense_metrics["within_frozen_numeric_tolerance"]:
-            raise RuntimeError(f"Dense output exceeded frozen replay tolerance: {probe_id}")
         dense_rows.append(
             {
                 "probe_id": probe_id,
                 "input_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
-                "dimension": len(dense_left),
-                **dense_metrics,
+                **dense_vector_fingerprint(
+                    dense_vector, expected_dim=settings.embed_dim
+                ),
             }
         )
 
-        left = sparse_left
-        right = sparse_right
-        left_hash = sparse_vector_sha256(left.indices, left.values)
-        right_hash = sparse_vector_sha256(right.indices, right.values)
-        if left_hash != right_hash:
-            raise RuntimeError(f"Doubao sparse output changed across replay/order: {probe_id}")
-        if len(left.indices) > settings.sparse_top_k:
-            raise RuntimeError(f"Doubao sparse top_k overflow: {probe_id}")
         sparse_rows.append(
             {
                 "probe_id": probe_id,
                 "input_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
-                "nonzero_count": len(left.indices),
-                "canonical_sparse_float32_sha256": left_hash,
+                **sparse_vector_fingerprint(
+                    sparse_vector.indices,
+                    sparse_vector.values,
+                    top_k=settings.sparse_top_k,
+                ),
             }
         )
 
@@ -165,9 +137,19 @@ async def run_probe(settings: EvalSettings) -> dict[str, Any]:
         "artifact_version": ARTIFACT_VERSION,
         "scientific_protocol": SCIENTIFIC_PROTOCOL,
         "engineering_protocol": ENGINEERING_PROTOCOL,
-        "status": "LOCAL_CONFIG_AND_LIVE_DENSE_TOLERANCE_SPARSE_EXACT_REPLAY_PASS",
+        "status": "LOCAL_CONFIG_AND_LIVE_PROVIDER_STRUCTURE_PASS",
         "gate_a_executed": False,
         "outcome_data_read": False,
+        "provider_route_governance": {
+            "policy_id": PROVIDER_ROUTE_POLICY_ID,
+            "numeric_acceptance_threshold": None,
+            "numeric_comparison_role": "DESCRIPTIVE_ONLY",
+            "snapshot_policy": "ONE_AUTHORIZED_GENERATION_THEN_HASH_SEAL",
+            "rerun_due_to_numeric_difference": "FORBIDDEN",
+            "run_selection_by_numeric_output": "FORBIDDEN",
+            "automatic_retry_count": 0,
+            "encoder_method_call_count": 2,
+        },
         "routes": {
             "dense": {
                 "provider_contract": "OpenAI-compatible online embeddings",
@@ -176,26 +158,8 @@ async def run_probe(settings: EvalSettings) -> dict[str, Any]:
                 "endpoint_identity_sha256": hashlib.sha256(
                     dense_endpoint.encode("utf-8")
                 ).hexdigest(),
-                "replay_policy_id": DENSE_REPLAY_POLICY_ID,
-                "replay_policy": "EXACT_OR_FROZEN_NUMERIC_TOLERANCE",
-                "frozen_numeric_tolerance": DENSE_REPLAY_TOLERANCE,
-                "exact_replay_across_request_order": all(
-                    row["exact_float32_match"] for row in dense_rows
-                ),
-                "numeric_replay_within_frozen_tolerance": all(
-                    row["within_frozen_numeric_tolerance"] for row in dense_rows
-                ),
-                "replay_acceptance": (
-                    "EXACT"
-                    if all(row["exact_float32_match"] for row in dense_rows)
-                    else "WITHIN_FROZEN_NUMERIC_TOLERANCE"
-                ),
-                "diagnostic_evidence": {
-                    "artifact": DIAGNOSTIC_ARTIFACT,
-                    "manifest_sha256": DIAGNOSTIC_MANIFEST_SHA256,
-                    "observed_replay": "FOUR_PROBES_FLOAT32_EXACT",
-                    "historical_unmeasured_mismatch_not_reclassified": True,
-                },
+                "policy_id": PROVIDER_ROUTE_POLICY_ID,
+                "numeric_replay_gate": "NONE",
                 "probe_vectors": dense_rows,
             },
             "learned_sparse": {
@@ -209,7 +173,8 @@ async def run_probe(settings: EvalSettings) -> dict[str, Any]:
                 "request_schema": "multimodal text input + sparse_embedding enabled",
                 "response_schema": "data.sparse_embedding[index,value]",
                 "online_weight_revision_visibility": "MODEL_ID_ONLY_PROVIDER_MANAGED_WEIGHTS",
-                "exact_replay_across_request_order": True,
+                "policy_id": PROVIDER_ROUTE_POLICY_ID,
+                "numeric_replay_gate": "NONE",
                 "probe_vectors": sparse_rows,
             },
             "bm25": {
@@ -237,23 +202,15 @@ async def async_main() -> int:
     parser.add_argument(
         "--output-root",
         type=Path,
-        default=Path("runs/robust_fusion/contracts/route-contract-preflight-v2"),
+        default=Path("runs/robust_fusion/contracts/route-contract-preflight-v3"),
     )
-    parser.add_argument("--replace", action="store_true")
     args = parser.parse_args()
     repository_root = Path(__file__).resolve().parents[1]
     output_root = args.output_root
     if not output_root.is_absolute():
         output_root = repository_root / output_root
-    diagnostic_path = repository_root / DIAGNOSTIC_ARTIFACT
-    if not diagnostic_path.is_file():
-        raise RuntimeError(f"missing frozen Dense diagnostic artifact: {diagnostic_path}")
-    if sha256_file(diagnostic_path) != DIAGNOSTIC_MANIFEST_SHA256:
-        raise RuntimeError("frozen Dense diagnostic manifest checksum mismatch")
     if output_root.exists():
-        if not args.replace:
-            raise RuntimeError(f"refusing to overwrite existing output: {output_root}")
-        shutil.rmtree(output_root)
+        raise RuntimeError(f"refusing to overwrite existing output: {output_root}")
     output_root.mkdir(parents=True)
     manifest = await run_probe(EvalSettings())
     script_path = Path(__file__).resolve()
@@ -268,7 +225,9 @@ async def async_main() -> int:
     manifest_path = output_root / "manifest.json"
     manifest_path.write_text(canonical_json(manifest) + "\n", encoding="utf-8")
     digest = sha256_file(manifest_path)
-    (output_root / "manifest.sha256").write_text(f"{digest}  manifest.json\n", encoding="utf-8")
+    (output_root / "manifest.sha256").write_text(
+        f"{digest}  manifest.json\n", encoding="utf-8"
+    )
     print(
         canonical_json(
             {

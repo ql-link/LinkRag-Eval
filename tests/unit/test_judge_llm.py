@@ -19,8 +19,11 @@ def _client(handler) -> httpx.AsyncClient:
 
 def _chat(handler, **kw) -> EvalChatClient:
     return EvalChatClient(
-        base_url="https://x/v1/chat/completions", api_key="k", model="deepseek-chat",
-        http_client=_client(handler), **kw,
+        base_url="https://x/v1/chat/completions",
+        api_key="k",
+        model="deepseek-chat",
+        http_client=_client(handler),
+        **kw,
     )
 
 
@@ -34,13 +37,19 @@ async def test_generate_parses_content() -> None:
     def handler(req: httpx.Request) -> httpx.Response:
         seen["url"] = str(req.url)
         import json
-        seen["model"] = json.loads(req.content)["model"]
+
+        seen["payload"] = json.loads(req.content)
         return _ok("hello")
 
-    res = await _chat(handler).generate(prompt="hi", system_prompt="sys")
+    res = await _chat(handler).generate(
+        prompt="hi", system_prompt="sys", thinking=False, json_object=True
+    )
     assert res.content == "hello"
+    assert res.retry_count == 0
     assert seen["url"] == "https://x/v1/chat/completions"  # base_url 即完整端点,不拼后缀
-    assert seen["model"] == "deepseek-chat"
+    assert seen["payload"]["model"] == "deepseek-chat"
+    assert seen["payload"]["thinking"] == {"type": "disabled"}
+    assert seen["payload"]["response_format"] == {"type": "json_object"}
 
 
 async def test_generate_json_strips_fence() -> None:
@@ -62,6 +71,7 @@ async def test_generate_json_returns_none_on_provider_unavailable() -> None:
         return httpx.Response(500, text="boom")
 
     import linkrag_eval.judge.eval_llm as mod
+
     orig_sleep = mod.asyncio.sleep
 
     async def _no_sleep(_):
@@ -85,6 +95,7 @@ async def test_5xx_retries_then_succeeds() -> None:
 
     # max_retries=1 + 退避 sleep 打桩为瞬时,避免真等
     import linkrag_eval.judge.eval_llm as mod
+
     orig_sleep = mod.asyncio.sleep
 
     async def _no_sleep(_):
@@ -96,6 +107,7 @@ async def test_5xx_retries_then_succeeds() -> None:
     finally:
         mod.asyncio.sleep = orig_sleep
     assert res.content == "recovered"
+    assert res.retry_count == 1
     assert calls["n"] == 2
 
 
@@ -104,6 +116,7 @@ async def test_5xx_exhausts_raises_provider_unavailable() -> None:
         return httpx.Response(500, text="boom")
 
     import linkrag_eval.judge.eval_llm as mod
+
     orig_sleep = mod.asyncio.sleep
 
     async def _no_sleep(_):

@@ -1,6 +1,6 @@
 # 文档目录与完成状态
 
-> 更新时间：2026-08-28
+> 更新时间：2026-08-29
 > 本目录回答“有哪些文档”和“文档对应的工作是否完成”。项目实时进度仍以
 > [CURRENT_STATUS.md](CURRENT_STATUS.md) 为准。
 
@@ -36,11 +36,13 @@
 | 文档 | 文档状态 | 对应工作状态 | 未完成内容 |
 | --- | --- | --- | --- |
 | [Golden V2 真实召回评测](plans/golden-v2-realistic-evaluation.md) | 完成 | 完成当前 20k 验收 | 问题标注修正、exact identifier 门禁、2,000 Tune 重训和未曝光 Blind v3 已完成；编号类语料补充和 10 万扩容属于后续阶段 |
-| [Robust Fusion 科研协议](plans/robust-fusion-research.md) | 完成 | P2 进行中，Gate A 未运行 | 冻结相似度制品与 Dev 实值；完成数据资格、校准、预注册和 Gate A |
-| [Robust Fusion 工程实施协议](plans/robust-fusion-engineering.md) | 完成 | P4-00 部分完成 | Eval 薄适配、精确 LinkRag pin、本地契约/真实栈检查已通过；仍须双仓 clean、远端绿色 CI 与正式 `contract-lock.json` |
+| [Robust Fusion 科研协议](plans/robust-fusion-research.md) | 完成 | v26 已冻结在线路由无数值 Gate、单次结构校验与哈希封存；P2-05、v6-Dev 双审仲裁与 Dev 三路 v5 独立核验已完成；Gate A 未运行 | 完成 P2-04/P2-06、相似度 Dev 实值、最终数据资格与预注册 |
+| [Robust Fusion 工程实施协议](plans/robust-fusion-engineering.md) | 完成 | v17 已移除在线 Dense/Sparse 数值重放硬门槛；P4-00 部分完成，Dev v5 三路先导已核验 | Dev runner 不是正式 P4-02；仍须双仓 clean、远端绿色 CI 与正式 `contract-lock.json` |
 | [Robust Fusion 研究推进清单](plans/robust-fusion-todo.md) | 完成 | 持续维护 | 当前唯一任务和各阶段完成证据以该清单记录 |
-| [Internal Stress v6 数据协议](plans/robust-fusion-internal-stress-v6.md) | 完成 | 正式骨架完成、人口未完成 | 三分目录、访问锁、摄取 schema 与来源资格已建立；仍缺新的真实 Query、正确证据、family 分配、双审和 seal |
-| [Robust Fusion 标注手册](plans/robust-fusion-annotation-handbook.md) | 部分完成 | 12 案例输入包已生成，待双人校准 | 校准、一致性与仲裁通过后冻结正式版本 |
+| [Internal Stress v13 数据协议](plans/robust-fusion-internal-stress-v6.md) | 完成 | 正式骨架、30-family Dev 双审仲裁与三路 v5 核验完成；v5 数值差异仅作描述；确认性人口未完成 | 另建 GateA/Blind 自然来源锚点，完成 family 分配和 seal |
+| [C2 三分边界最小补充方案](plans/robust-fusion-c2-boundary-supplement.md) | 完成 | 8 个 Dev-only 规划槽已初始化，0 正文/0 标签 | 生成并结构复核案例，盲化发包，完成 A/B 锁定、仲裁与机器验收；不进入 Gate A/B |
+| [Robust Fusion 标注手册](plans/robust-fusion-annotation-handbook.md) | 完成 | P2-05 双人校准与五例替换重放通过 | v2 已冻结；后续只按变更纪律处理新语义缺陷 |
+| [Robust Fusion 标注全量操作手册](plans/robust-fusion-annotation-full-guide.md) | 完成 | v8 已纳入 Internal 30-family、Dev 三路 v5 与 C2 空白补充流程 | C2 正文生成后按固定盲化、双审与仲裁流程更新实际分配信息 |
 | [Robust Fusion 实验相似度 manifest](plans/robust-fusion-similarity-manifest.md) | 规范与非 BGE 资格预选完成 | Gate A 未授权 | 主 E5/审计 DistilUSE 的身份、输入与无标签探针已冻结；Reranker 独立性、Dev 人工效度、标准化/共同支持/分带及参照集合尚未冻结 |
 | [Robust Fusion 发表路径与投稿治理](plans/robust-fusion-publication.md) | 完成 | 持续维护 | 目标渠道的范围、时效、费用和投稿规则须在每次正式投稿前复核 |
 
@@ -74,6 +76,7 @@
 | [池化重标可靠性](reports/label_reliability_pooled_relabel.md) | 完成 | 量化单正例标注漏标风险 |
 | [Gate A 数据覆盖、标签覆盖与研究缺口审计](reports/robust_fusion_gate_a_data_coverage_audit_2026_08_28.md) | 完成 | 记录公开实体、DuRetrieval 完整独立保留、C-MTEB Cmedqa 四类来源剥离、历史曝光、资产复用边界、标签缺口和最小人工工作；不构成 Gate A 结果 |
 | [Robust Fusion 候选快照字段缺口审计](reports/robust_fusion_candidate_snapshot_field_gap_audit_2026_08_28.md) | 完成 | P4-01：核对生产候选契约、Eval/历史 cache 缺口并冻结 P4-02 双视图最小字段；不生成或读取 Gate A 结果 |
+| [Internal v6-Dev 三路证据 v5 独立核验](reports/internal_v6_dev_route_evidence_v5_verification_2026_08_29.md) | 完成 | 核验 v5 的 plan/manifest/content root、28/112/3,056 数量闭合、双视图、SQLite/FTS5、真实 Qdrant 112 点及跨运行数值边界；Dev-only、`NOT_ELIGIBLE` |
 | [SQLite 工作副本恢复与检索资产对账](reports/sqlite_share_restore_and_asset_reconciliation_2026_08_28.md) | 完成 | 对应分享包、旧 eval MySQL、Qdrant 与 `ssh linkcv` 服务器角色；分享包是研究假设/工程起点，不是确认性分母 |
 | [活栈 Smoke](reports/live_smoke_2026_07_02.md) | 完成 | 证明 eval MySQL/Qdrant 隔离链路和两路 clean 基线可用 |
 | [多路召回对比](reports/multi_route_recall_comparison_2026_07_05.md) | 完成 | 比较 Dense、Dense+BM25 和三路召回；另有同名 HTML 版本 |
@@ -113,8 +116,8 @@
 当前未完成的主工作以 [CURRENT_STATUS.md](CURRENT_STATUS.md) 和
 [Robust Fusion 研究推进清单](plans/robust-fusion-todo.md) 为准。当前硬缺口包括：
 
-1. **Gate A P2/P3**：cMedQA2 已在非商业科研边界下正式替换 MedicalRetrieval，C-MTEB Cmedqa 来源已剥离；Internal v6 只完成正式空骨架，仍缺新的真实 Query/正确证据；相似度编码器精确实现与 Dev 实值未冻结，12 案例双人校准未完成，T2/cMedQA2 的 split/exclusion manifest、构造率、功效与三数据集最终分母仍待封存。
-2. **P4-00 current-HEAD 契约**：历史 CI 虽曾全绿，但当前 Eval 薄适配仍引用 LinkRag 已删除的 `BucketRouter`；须修适配、重钉实际 clean commit，并生成绿色 run/report 与 `contract-lock.json`。
+1. **Gate A P2/P3**：P2-05 已通过；cMedQA2 已在非商业科研边界下正式替换 MedicalRetrieval，C-MTEB Cmedqa 来源已剥离。Internal v6 的 30-family 合成 Dev 首批结构产率为 24/30，双审仲裁后的人工接纳率为 28/30；接纳的主冲突均为 detectable-only，GateA/Blind 仍缺独立自然来源锚点与 C2 三分边界覆盖。P2-04/P2-06、相似度 Dev 实值、扩展 family、自然来源构造率、功效与三数据集最终分母仍待封存。
+2. **P4-00 current-HEAD 契约**：Eval 薄适配、精确 pin、本地测试、真实栈和历史正式三路 preflight 已通过；当前在线路由不设数值 Gate，按单次结构校验与哈希封存治理。仍须双仓 clean、当前版本远端绿色 CI 和正式 `contract-lock.json`。
 
 本轮 Query provenance、Top50 pooled 独立复核、多正例 qrels、多 Chunk/编号类语料、Alias、短词回退、
 在线 LambdaMART 和 750 条 Blind v4 一次性验收均已完成。Blind v4 已封存，不得复用选参或重跑。

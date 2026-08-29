@@ -17,10 +17,10 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-ARTIFACT_VERSION = "ROBUST-FUSION-GATE-A-READINESS-PREFLIGHT-2026-08-29-v3"
-SCIENTIFIC_PROTOCOL = "ROBUST-FUSION-RESEARCH-2026-08-28-v19"
-ENGINEERING_PROTOCOL = "ROBUST-FUSION-ENGINEERING-2026-08-29-v10"
-PROGRESS_RECORD = "ROBUST-FUSION-PROGRESS-2026-08-29-v21"
+ARTIFACT_VERSION = "ROBUST-FUSION-GATE-A-READINESS-PREFLIGHT-2026-08-29-v4"
+SCIENTIFIC_PROTOCOL = "ROBUST-FUSION-RESEARCH-2026-08-29-v26"
+ENGINEERING_PROTOCOL = "ROBUST-FUSION-ENGINEERING-2026-08-29-v17"
+PROGRESS_RECORD = "ROBUST-FUSION-PROGRESS-2026-08-29-v28"
 RERANKER_SELECTION_PROGRESS_RECORD = "ROBUST-FUSION-PROGRESS-2026-08-28-v19"
 DATA_AUDIT_RECORD = "ROBUST-FUSION-GATE-A-DATA-AUDIT-2026-08-28-v10"
 SIMILARITY_MANIFEST_RECORD = "ROBUST-FUSION-SIMILARITY-MANIFEST-2026-08-28-v5"
@@ -28,17 +28,21 @@ SIMILARITY_QUALIFICATION_RECORD = (
     "ROBUST-FUSION-SIMILARITY-ENCODER-QUALIFICATION-2026-08-28-v3"
 )
 RERANKER_QUALIFICATION_RECORD = "ROBUST-FUSION-RERANKER-QUALIFICATION-2026-08-28-v2"
-DENSE_REPLAY_POLICY_ID = "ROBUST-FUSION-DENSE-REPLAY-POLICY-2026-08-29-v1"
-DENSE_DIAGNOSTIC_MANIFEST_SHA256 = (
+PROVIDER_ROUTE_POLICY_ID = (
+    "ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2"
+)
+HISTORICAL_ROUTE_MANIFEST_SHA256 = (
+    "640e3d52a2f7cfc6f991cefe4d111ae18d09ba3260626a2e927988b5cd17a38a"
+)
+HISTORICAL_ROUTE_GENERATOR_SHA256 = (
+    "01ba5f6b0b729adaa556755750974692722e47e69ada1caaac0fd0ced3371814"
+)
+HISTORICAL_REPLAY_CONTRACT_SHA256 = (
+    "c2d12f961a18a1fbe9d5b4da857a51c6983e0c2502ed55b11c59e0a59dcc48c0"
+)
+HISTORICAL_DENSE_DIAGNOSTIC_MANIFEST_SHA256 = (
     "3606a60aca87d41f959214c121b402a1c0ea303d228629cfac622d5648ec9081"
 )
-DENSE_REPLAY_TOLERANCE = {
-    "max_absolute_component_delta": 1e-6,
-    "relative_l2_delta": 1e-5,
-    "normalized_query_l2_delta": 1e-5,
-    "cosine_distance": 1e-8,
-    "max_single_candidate_cosine_score_delta_bound": 1e-5,
-}
 
 REQUIRED_PRE_GATE_TASKS = (
     "P0-03",
@@ -209,18 +213,6 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
     replay_contract_script = (
         repository_root / "src/linkrag_eval/robust_fusion/replay_contract.py"
     )
-    diagnostic_root = (
-        repository_root / "runs/robust_fusion/contracts/dense-replay-diagnostic-v1"
-    )
-    diagnostic_path = diagnostic_root / "manifest.json"
-    diagnostic = load_json(diagnostic_path) if diagnostic_path.is_file() else {}
-    diagnostic_manifest_sha256 = (
-        sha256_file(diagnostic_path) if diagnostic_path.is_file() else None
-    )
-    diagnostic_script = repository_root / "scripts/diagnose_robust_fusion_dense_replay.py"
-    diagnostic_checksums_ok, diagnostic_checksum_errors = verify_checksum_manifest(
-        diagnostic_root
-    )
     route_refresh_failure_path = (
         repository_root
         / "runs/robust_fusion/contracts/route-contract-preflight-v1-refresh-v19/failure.json"
@@ -229,74 +221,50 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
         load_json(route_refresh_failure_path) if route_refresh_failure_path.is_file() else {}
     )
     route_blob = canonical_json(routes).lower()
-    route_pass = all(
+    route_manifest_sha256 = (
+        sha256_file(route_manifest_path) if route_manifest_path.is_file() else None
+    )
+    historical_route_evidence_ok = all(
         (
             route_manifest.get("status")
             == "LOCAL_CONFIG_AND_LIVE_DENSE_TOLERANCE_SPARSE_EXACT_REPLAY_PASS",
-            route_manifest.get("scientific_protocol") == SCIENTIFIC_PROTOCOL,
-            route_manifest.get("engineering_protocol") == ENGINEERING_PROTOCOL,
+            route_manifest.get("scientific_protocol")
+            == "ROBUST-FUSION-RESEARCH-2026-08-28-v19",
+            route_manifest.get("engineering_protocol")
+            == "ROBUST-FUSION-ENGINEERING-2026-08-29-v10",
             dense.get("model") == "text-embedding-v4",
             dense.get("dimension") == 1024,
-            dense.get("replay_policy_id") == DENSE_REPLAY_POLICY_ID,
-            dense.get("replay_policy") == "EXACT_OR_FROZEN_NUMERIC_TOLERANCE",
-            dense.get("frozen_numeric_tolerance") == DENSE_REPLAY_TOLERANCE,
-            dense.get("numeric_replay_within_frozen_tolerance") is True,
-            dense.get("replay_acceptance")
-            in {"EXACT", "WITHIN_FROZEN_NUMERIC_TOLERANCE"},
             len(dense.get("probe_vectors", [])) == 4,
             sparse.get("provider") == "ark",
             sparse.get("model") == "doubao-embedding-vision-251215",
-            sparse.get("exact_replay_across_request_order") is True,
             len(sparse.get("probe_vectors", [])) == 4,
             bm25.get("mode") == "sqlite_fts5",
             "bge" not in route_blob,
             route_checksums_ok,
-            route_generator.get("sha256") == sha256_file(route_script),
+            route_manifest_sha256 == HISTORICAL_ROUTE_MANIFEST_SHA256,
+            route_generator.get("sha256") == HISTORICAL_ROUTE_GENERATOR_SHA256,
             route_generator.get("replay_contract_sha256")
-            == sha256_file(replay_contract_script),
-            diagnostic.get("artifact_version")
-            == "ROBUST-FUSION-DENSE-REPLAY-DIAGNOSTIC-2026-08-29-v1",
-            diagnostic.get("status") == "DIAGNOSTIC_COMPLETE_NO_POLICY_CHANGE",
-            diagnostic.get("authorization")
-            == "RESEARCH_OWNER_CONDITIONAL_TINY_DRIFT_DIAGNOSTIC_2026-08-29",
-            diagnostic.get("predeclared_tiny_drift_reference", {}).get(
-                "max_absolute_component_delta"
-            )
-            == DENSE_REPLAY_TOLERANCE["max_absolute_component_delta"],
-            diagnostic.get("predeclared_tiny_drift_reference", {}).get(
-                "relative_l2_delta"
-            )
-            == DENSE_REPLAY_TOLERANCE["relative_l2_delta"],
-            diagnostic.get("predeclared_tiny_drift_reference", {}).get(
-                "normalized_query_l2_delta"
-            )
-            == DENSE_REPLAY_TOLERANCE["normalized_query_l2_delta"],
-            diagnostic.get("predeclared_tiny_drift_reference", {}).get(
-                "cosine_distance"
-            )
-            == DENSE_REPLAY_TOLERANCE["cosine_distance"],
-            diagnostic.get("predeclared_tiny_drift_reference", {}).get(
-                "max_single_candidate_cosine_score_delta_bound"
-            )
-            == DENSE_REPLAY_TOLERANCE[
-                "max_single_candidate_cosine_score_delta_bound"
-            ],
-            diagnostic.get("aggregate", {}).get(
-                "all_probes_within_predeclared_tiny_drift_reference"
-            )
-            is True,
-            diagnostic.get("aggregate", {}).get("changed_probe_count") == 0,
-            diagnostic.get("aggregate", {}).get("changed_component_count") == 0,
-            diagnostic.get("request_design", {}).get("external_request_count") == 2,
-            diagnostic.get("request_design", {}).get("automatic_retry_count") == 0,
-            diagnostic.get("gate_a_executed") is False,
-            diagnostic.get("outcome_data_read") is False,
-            diagnostic.get("generator", {}).get("sha256")
-            == sha256_file(diagnostic_script),
-            diagnostic_manifest_sha256 == DENSE_DIAGNOSTIC_MANIFEST_SHA256,
-            diagnostic_checksums_ok,
+            == HISTORICAL_REPLAY_CONTRACT_SHA256,
+            route_manifest.get("gate_a_executed") is False,
+            route_manifest.get("outcome_data_read") is False,
         )
     )
+    replay_contract_text = replay_contract_script.read_text(encoding="utf-8")
+    route_script_text = route_script.read_text(encoding="utf-8")
+    current_provider_policy_ok = all(
+        (
+            PROVIDER_ROUTE_POLICY_ID in doc_text["scientific"],
+            PROVIDER_ROUTE_POLICY_ID in doc_text["engineering"],
+            PROVIDER_ROUTE_POLICY_ID in replay_contract_text,
+            "PROVIDER_ROUTE_POLICY_ID" in route_script_text,
+            "DENSE_REPLAY_TOLERANCE" not in replay_contract_text,
+            "within_frozen_numeric_tolerance" not in replay_contract_text,
+            '"numeric_gate_applied": False' in replay_contract_text,
+            '"numeric_acceptance_threshold": None' in route_script_text,
+            '"numeric_replay_gate": "NONE"' in route_script_text,
+        )
+    )
+    route_pass = historical_route_evidence_ok and current_provider_policy_ok
     checks.append(
         make_check(
             "actual_three_route_preflight",
@@ -305,36 +273,32 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             blocked_kind="BLOCKED_AUTOMATIC",
             evidence={
                 "artifact": str(route_manifest_path.relative_to(repository_root)),
-                "manifest_sha256": sha256_file(route_manifest_path)
-                if route_manifest_path.is_file()
-                else None,
-                "manifest_scientific_protocol": route_manifest.get("scientific_protocol"),
-                "expected_scientific_protocol": SCIENTIFIC_PROTOCOL,
-                "generator_matches_current": route_generator.get("sha256")
-                == sha256_file(route_script)
+                "manifest_sha256": route_manifest_sha256,
+                "artifact_role": "HISTORICAL_ROUTE_AND_SCHEMA_EVIDENCE",
+                "historical_route_evidence_ok": historical_route_evidence_ok,
+                "historical_generator_hashes_preserved": route_generator.get("sha256")
+                == HISTORICAL_ROUTE_GENERATOR_SHA256
                 and route_generator.get("replay_contract_sha256")
-                == sha256_file(replay_contract_script),
+                == HISTORICAL_REPLAY_CONTRACT_SHA256,
                 "dense_model": dense.get("model"),
-                "dense_replay_policy_id": dense.get("replay_policy_id"),
-                "dense_replay_acceptance": dense.get("replay_acceptance"),
                 "sparse_provider": sparse.get("provider"),
                 "sparse_model": sparse.get("model"),
                 "bm25_mode": bm25.get("mode"),
                 "checksum_errors": route_checksum_errors,
-                "diagnostic_artifact": str(diagnostic_path.relative_to(repository_root)),
-                "diagnostic_manifest_sha256": diagnostic_manifest_sha256,
-                "diagnostic_exact_probe_count": sum(
-                    row.get("exact_float32_match") is True
-                    for row in diagnostic.get("probes", [])
-                    if isinstance(row, dict)
+                "current_policy_id": PROVIDER_ROUTE_POLICY_ID,
+                "current_provider_policy_ok": current_provider_policy_ok,
+                "numeric_replay_gate": "NONE",
+                "numeric_comparison_role": "DESCRIPTIVE_ONLY",
+                "snapshot_policy": "ONE_AUTHORIZED_GENERATION_THEN_HASH_SEAL",
+                "historical_dense_diagnostic_manifest_sha256": (
+                    HISTORICAL_DENSE_DIAGNOSTIC_MANIFEST_SHA256
                 ),
-                "diagnostic_checksum_errors": diagnostic_checksum_errors,
-                "replay_policy_decision": "FROZEN_BEFORE_GATE_A",
                 "latest_refresh_failure": route_refresh_failure or None,
             },
             next_action=(
-                "Run the formal v2 three-route preflight under the frozen Dense tolerance policy; "
-                "do not alter thresholds or automatically retry a failure. BGE-M3 remains forbidden."
+                "Restore the immutable historical v2 route/schema evidence or align the current "
+                "no-numeric-gate provider snapshot policy. Do not rerun or select a run because "
+                "provider scores differ; BGE-M3 remains forbidden."
             ),
         )
     )
@@ -899,7 +863,8 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
         },
         "actual_route_contract": {
             "dense": "text-embedding-v4",
-            "dense_replay_policy": DENSE_REPLAY_POLICY_ID,
+            "provider_route_policy": PROVIDER_ROUTE_POLICY_ID,
+            "numeric_replay_gate": "NONE",
             "learned_sparse": "ark/doubao-embedding-vision-251215",
             "bm25": "sqlite_fts5",
             "bge_m3": "RETIRED_FORBIDDEN",
@@ -926,7 +891,7 @@ def main() -> int:
     parser.add_argument(
         "--output",
         type=Path,
-        default=Path("runs/robust_fusion/gate_a/readiness-preflight-v3.json"),
+        default=Path("runs/robust_fusion/gate_a/readiness-preflight-v4.json"),
     )
     parser.add_argument("--replace", action="store_true")
     args = parser.parse_args()

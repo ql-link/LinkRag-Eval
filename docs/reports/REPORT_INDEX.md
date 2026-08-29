@@ -3,14 +3,14 @@
 > 本索引覆盖 `runs/golden_v2/` 与 `docs/reports/` 下的阶段报告。
 > 历史报告必须保留原路径；新一轮测试使用新的 run/batch 目录或带时间戳文件名，禁止覆盖旧报告。
 
-当前共收录 **21** 个报告及机器可读配套产物：HTML 4，MD 17，JSON 0，CSV 0。
+当前共收录 **22** 个报告及机器可读配套产物：HTML 4，MD 18，JSON 0，CSV 0。
 
 更新索引：`python3 scripts/build_report_index.py`
 校验索引：`python3 scripts/build_report_index.py --check`
 
 ## 阶段导航
 
-- [00 历史实证与人工汇总](#00-历史实证与人工汇总)：21 个产物
+- [00 历史实证与人工汇总](#00-历史实证与人工汇总)：22 个产物
 
 ## 00 历史实证与人工汇总
 
@@ -24,6 +24,7 @@
 | [docs/reports/fusion_strategy_comparison_2026_07_02.html](<fusion_strategy_comparison_2026_07_02.html>) | `html` | 人读版测试报告，展示聚合指标、逐题诊断和阶段结论。 |
 | [docs/reports/fusion_strategy_comparison_2026_07_02.md](<fusion_strategy_comparison_2026_07_02.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/golden_v2_realistic_991004_run_2026_07_10.md](<golden_v2_realistic_991004_run_2026_07_10.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
+| [docs/reports/internal_v6_dev_route_evidence_v5_verification_2026_08_29.md](<internal_v6_dev_route_evidence_v5_verification_2026_08_29.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/label_reliability_pooled_relabel.md](<label_reliability_pooled_relabel.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/live_smoke_2026_07_02.md](<live_smoke_2026_07_02.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/multi_route_recall_comparison_2026_07_05.html](<multi_route_recall_comparison_2026_07_05.html>) | `html` | 人读版测试报告，展示聚合指标、逐题诊断和阶段结论。 |

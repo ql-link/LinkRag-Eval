@@ -6,7 +6,7 @@
 > 文献依据：[robust-fusion-literature.md](robust-fusion-literature.md)
 > 证据收束：[robust-fusion-evidence.md](robust-fusion-evidence.md)
 > 发表规划：[robust-fusion-publication.md](robust-fusion-publication.md)
-> 研究记录：`ROBUST-FUSION-PROGRESS-2026-08-29-v21`
+> 研究记录：`ROBUST-FUSION-PROGRESS-2026-08-29-v28`
 > 当前阶段：`P2 构念、标注与指标效度`
 > 当前任务：`P2-01 冻结核心构念与操作化规则`
 > 最近更新：2026-08-29
@@ -113,7 +113,7 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 - [x] 建立[实验相似度 manifest](robust-fusion-similarity-manifest.md)，冻结必填字段、逐值重放规则和 Gate A 拒绝条件；
 - [x] 完成并关闭 BGE-M3 候选审计：历史官方制品曾完成资格核验，但研究负责人在 Gate A 前明确淘汰；真实 Learned Sparse 是 Ark/豆包在线 API，BGE 不得进入 route、\(S_{qg}(c)\) 或独立审计；
 - [x] 在不读取研究数据时完成两个非 BGE 编码器的资格预选，冻结模型/tokenizer exact revision 与摘要、输入前缀、截断、pooling、维度、向量归一化、余弦精度和固定探针重放；
-- [ ] 完成相似度测量最终冻结：先确认两个 Reranker 不复用预选编码器，再在 Dev 完成长短文本分层的独立编码器—盲人工效度；随后封存 \(A_{qg}\) 成员 ID/内容摘要/向量摘要、计算代码与配置摘要，使正式分数可逐值重算；
+- [ ] 完成相似度测量最终冻结：两个 Reranker 与预选相似度编码器无制品复用已经确认；下一步以 v5 Dev route evidence 固定 \(A_{qg}\)，完成长短文本分层的 E5/DistilUSE—盲人工效度，并封存成员 ID、内容/向量摘要、计算代码与配置摘要，使正式分数可逐值重算；
 - [ ] 在 `v6-Dev` 冻结数据源内标准化参数、共同支持区间规则及最低覆盖率、主模型形式、低/高分带、相邻敏感性边界和独立相似性审计量表，并于 Gate A 前锁定；
 - [x] 冻结事实等价、事实冲突、良性冗余、错误共识和疑似 false negative 的操作边界。
 
@@ -122,7 +122,7 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 ### P0 研究逻辑与治理收口
 
 - [x] **P0-01 冻结题目、边界、RQ 和贡献结构**
-  - 证据：科研协议 v19 保持题目和 RQ1—RQ3，并将贡献收束为主要 C1、诊断 C2 和条件性 C3。
+  - 证据：科研协议 v26 保持题目和 RQ1—RQ3，并将贡献收束为主要 C1、诊断 C2 和条件性 C3。
 - [x] **P0-01A 将高成本候选图收缩为 Top-M 局部统计**
   - 证据：主文档已排除持久化候选图、GNN、聚类、Route Fragility、学习门控和 RL 干扰生成。
 - [x] **P0-01B 建立本研究推进清单**
@@ -130,11 +130,11 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 - [x] **P0-01C 全面重构当时的总研究协议**
   - 证据：科研协议前身 v8 已按“问题—构念—数据—仪器—实验—方法—统计—门禁”重排，删除重复和高成本偏题内容，并把术语解释放在首次使用处及概念速查中。
 - [x] **P0-01D 拆分科研协议与工程实施协议并缩短文件名**
-  - 证据：该次拆分形成科研协议 v9 与工程协议 v1；当前分别演进为[科研协议 v19](robust-fusion-research.md)和[工程协议 v10](robust-fusion-engineering.md)，职责边界保持不变；本研究专题文档统一使用 `robust-fusion-*` 短文件名。
+  - 证据：该次拆分形成科研协议 v9 与工程协议 v1；当前分别演进为[科研协议 v26](robust-fusion-research.md)和[工程协议 v17](robust-fusion-engineering.md)，职责边界保持不变；本研究专题文档统一使用 `robust-fusion-*` 短文件名。
 - [x] **P0-02 重构 Gate A 前的研究阶段**
   - 证据：主文档第 5.2、9 节已将内部母池分为 `v6-Dev / v6-GateA / v6-Blind`，并将“≤100 Query”限定为校准先导预算；Gate A 样本量改由功效分析冻结。
 - [x] **P0-02A 闭合第二轮审稿提出的 Gate 治理缺口**
-  - 证据：科研协议 v19 沿用 v12 已明确的 Gate A 停止规则、正向单元、层级比较家族、分阶段实际效应、确认性 pooled estimand、反伪影组合、Track B 后果和无环外部时间戳，并保留 v13 的正交标签 schema；工程协议 v10 已把 current-HEAD 契约复验、在线 Dense 冻结数值重放、CI 重钉、公开正文 ID/hash 对账、DuRetrieval 完整保留、cMedQA2 本地全文治理和 Internal v6 空人口拒绝列为硬前置。
+  - 证据：科研协议 v26 沿用 v12 已明确的 Gate A 停止规则、正向单元、层级比较家族、分阶段实际效应、确认性 pooled estimand、反伪影组合、Track B 后果和无环外部时间戳，并保留 v13 的正交标签 schema；工程协议 v17 已把 current-HEAD 契约复验、provider-managed 路由的单次生成/结构校验/哈希封存、CI 重钉、公开正文 ID/hash 对账、DuRetrieval 完整保留、cMedQA2 本地全文治理、v6-Dev 双审锁定/仲裁、三路证据完整性与 Gate 人口拒绝列为硬前置。
 - [x] **P0-03 建立研究决策与变更记录模板**
   - 证据：本清单第 6 节固定“日期、决策、依据、是否已观察结果、影响”五列，并已用于全部协议变更；Gate A 准入审计另以 outcome-blind JSON 固定完成项与阻塞项。
 
@@ -155,12 +155,12 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 
 - [-] **P2-01 冻结核心构念与操作化规则**（当前任务，见第 2 节）
 - [x] **P2-02 编写 Query—Chunk 关系、等价组和四类冲突的标注手册**
-  - 证据：[标注手册 v1](robust-fusion-annotation-handbook.md)已覆盖正交 schema、标注顺序、四类冲突、false-negative/unknown、候选对标签、证据要求和仲裁；当前 `ROBUST-FUSION-P2-CALIBRATION-REPLAY-2026-08-29-v2` 已从 pinned T2/DRUID 生成 12 个不复用 v1 的案例，移除类别/来源管理员提示，并把 facilitator key 与正式人工交付彻底分离。正式冻结仍依赖 P2-05 双人桌面校准。
+  - 证据：[标注手册 v2](robust-fusion-annotation-handbook.md)已覆盖正交 schema、标注顺序、四类冲突、false-negative/unknown、候选对标签、证据要求和仲裁，并在 P2-05 通过后正式冻结。相对 v1 只增加确定性算术/单位/日历规则与 `detectable_only` 边界澄清。
 - [x] **P2-03 设计双人校准、一致性统计和仲裁流程**
-  - 完成证据：[标注手册 v1 第 9.4 节](robust-fusion-annotation-handbook.md)已在人工结果产生前冻结小样本计数准入线、关键构念零容忍项、facilitator key 对照、失败重放和 v2 解锁规则；alpha/macro-F1 保留为诊断量，不在 13 条记录上设不稳定的单点门槛。
+  - 完成证据：[标注手册 v2 第 9.4 节](robust-fusion-annotation-handbook.md)保留了人工结果产生前冻结的小样本计数准入线、关键构念零容忍项、facilitator key 对照、失败重放和解锁规则；alpha/macro-F1 保留为诊断量，不在 13 条记录上设不稳定的单点门槛。
 - [ ] **P2-04 冻结 EG-nDCG、EG-MRR、翻转率和相似度分带的测量规则**
-- [ ] **P2-05 在小规模 Tune 样本上完成标注者校准并修订手册**
-  - 已有输入：v2 管理员包含 12 个案例、12 条案例资格记录、13 条候选级记录和 1 条候选对记录；Medical 与历史 Blind 被排除，包 manifest SHA-256 为 `a8eee3dba3e0a7fa5822039ce1f39b7a6b917dec0025d2b83e854ec3a4cb0df2`。正式空白 A/B 工作副本位于 `runs/robust_fusion/p2_human_calibration_v2/`，交付 manifest SHA-256 为 `39139ac4a72d2dd2d5f63f347a99c91c49385220709860658de176db98714c12`；两边当前标注字段均为 0。v1 的 `quota_cell` 泄漏包及模型/工具试填只作开发记录，不能计入。尚未产生任何合格双人人工结果。
+- [x] **P2-05 在小规模 Tune 样本上完成标注者校准并修订手册**
+  - 完成证据：v2 首轮失败记录完整保留，5 个制品缺陷案例以 `ROBUST-FUSION-P2-CALIBRATION-PATCH-2026-08-29-v3` 一对一替换；A/B 在隔离目录重新盲标。最终合并 12 例、13 条候选、9 条事实冲突和 1 条候选对：资格 12/12、`target_relation` 13/13、冲突类型 9/9 三方一致；冲突可裁决性 A–B 8/9、A–key 9/9、B–key 8/9；格式与零容忍构念错误均为 0。唯一旧分歧按发包前已澄清的确定性算术规则仲裁。最终机器结论 SHA-256 `fe906b9e755135cfe4fe6607297aec5c5a0c2b2c0a0a5118e4c38ada9a01ef1c`，提交锁 SHA-256 `9d743fb23d4d88d128229a81d381aab444550e2663e11eacbe296cad0c722f82`；Gate A/B 均未运行。
 - [ ] **P2-06 冻结 Gate A 硬资源包和越界缩减顺序**
   - 需与用户讨论并写死：最大唯一 Query、单 Query 人工候选上限、双审条数/人时、API token/费用、GPU 小时；功效需求越界时按 `n=100 饱和敏感性 → 第二种子 → 额外数据集/第三 Reranker → 完整 HybRank/QuDAR` 顺序缩减。`n=50` 是保留 C3 时不可删的主剂量；仍无法承担时在 Gate A 前收缩为 C1/C2。核心 H2、两个 Reranker、两个以上数据集和 false-negative 审计不先删除。
 
@@ -173,33 +173,36 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
   - 完成证据：[Gate A 数据覆盖审计 v10](../reports/robust_fusion_gate_a_data_coverage_audit_2026_08_28.md)已记录原始 T2Ranking、C-MTEB T2、原始 Multi-CPR Medical、C-MTEB Medical、Lo/DRUID，以及 DuRetrieval、上游 cMedQA2/C-MTEB Cmedqa 的固定 revision、许可、实际 schema、SHA-256、行数、唯一键和跨实体 provenance 对账；v2 ID/hash-only 制品同时锁定 DuRetrieval 100,001/2,000/9,839 三实体零删减，并把 C-MTEB Cmedqa 的 100,001 条拆为 88,242 条 Du-only、7,137 条 cMedQA2-only、2,086 条 both、2,536 条统一未解析审计记录。
   - 边界：完成的是实体摄取、替换选择与资格规则，不表示最终 Gate A/B 样本分母已经封存。
 - [ ] **P3-02 固定 revision、许可证、文件摘要、corpus/qrels 结构和纳入排除规则**
-  - 已有进度：`ROBUST-FUSION-GATE-A-ELIGIBILITY-2026-08-28-v1` 已生成 ID/hash-only 资格清单并重放全部 pinned 文件摘要：T2 Train 258,042 个 Query 的资格上界完整保留，Dev 24,831 个 Query 全部 exposed-only；cMedQA2 排除 80 个跨 split family 后，Train/Test 资格上界为 99,894/3,954；DuRetrieval 100,001/2,000/9,839 三实体零删减且只作辅助分析。该制品明确不是最终分母。剩余工作是 document/version/template family 扩展排除、30-family 构造率、功效预估和 Internal v6 人口，再封存三数据集最终分母。
+  - 已有进度：`ROBUST-FUSION-GATE-A-ELIGIBILITY-2026-08-28-v1` 已生成 ID/hash-only 资格清单并重放全部 pinned 文件摘要：T2 Train 258,042 个 Query 的资格上界完整保留，Dev 24,831 个 Query 全部 exposed-only；cMedQA2 排除 80 个跨 split family 后，Train/Test 资格上界为 99,894/3,954；DuRetrieval 100,001/2,000/9,839 三实体零删减且只作辅助分析。Internal v6 的 30-family 首批机械结构产率为 24/30，恢复后的 30 个提案完成双审仲裁，人工接纳 28/30。该 Dev 结果不是最终分母。剩余工作是 document/version/template family 扩展排除、自然来源构造率、功效预估和 Internal v6 确认性人口，再封存三数据集最终分母。
 - [ ] **P3-03 按 Query、文档族和反事实模板完成分组划分**
-- [ ] **P3-04 准备并物理隔离 Internal Stress v6-Dev、v6-GateA 与 v6-Blind**（正式骨架已建立，人口未完成）
-  - 已有进度：[Internal Stress v6 数据协议](robust-fusion-internal-stress-v6.md)、初始化脚本和本地 `data/robust_fusion/internal_stress_v6/` 已建立唯一数据 ID、三个独立目录/cohort manifest、GateA/Blind 方法访问锁、source/exposure 台账、四张摄取模板与 `manifest.sha256`。
-  - 未完成边界：分享包、旧 eval MySQL 与服务器均没有 Query/qrel 行；当前 root 明示 `FORMALLY_ESTABLISHED_AWAITING_NEW_REAL_QUERY_INTAKE`、`NOT_ELIGIBLE`。仍需摄取新的真实 Query/正确证据、完成扩展 family 零交集、双审仲裁、构造率/功效分母和正式 seal，才能完成 P3-04。
+- [ ] **P3-04 准备并物理隔离 Internal Stress v6-Dev、v6-GateA 与 v6-Blind**（正式骨架与 Dev 合成先导完成，确认性人口未完成）
+  - 已有进度：[Internal Stress v13 数据协议](robust-fusion-internal-stress-v6.md)、初始化脚本和本地 `data/robust_fusion/internal_stress_v6/` 已建立唯一数据 ID、三个独立目录/cohort manifest、GateA/Blind 方法访问锁、source/exposure 台账、四张摄取模板与 `manifest.sha256`。DeepSeek 首批 30 次调用得到 24 个结构合格提案；四段恢复链累计 43 次调用后形成 30 个结构合格提案。A/B 各完成 30+90+90 行，六份提交先锁后比，机械错误与 unresolved 为 0；候选级标签全部一致、候选对 89/90 一致，唯一分歧已仲裁。最终接纳 28/30（93.33%）并物化 28/112/112/28 release。Dev 三路 v2/v3 失败和 v4 完整性拒收均保留；独立 v5 已完成 28 Query、112 Chunk、3,056 候选，三路各 28/28 非空，112/112 已标注候选及 28/28 gold target 入候选并集。plan/manifest/content root、SQLite/FTS5 与真实 Qdrant 112 点已独立核验。C2 8 槽空白补充 manifest SHA-256 `ff4e00d857641a2d48e0ece509c29bf357f28918757dc4a1980f9906a681f347` 已独立核验。
+  - 未完成边界：C2 补充仍为 0 正文/0 人工标签。分享包、旧 eval MySQL 与服务器仍没有可继承的 Query/qrel 行；GateA/Blind 仍无独立自然来源锚点人口并保持 `NOT_ELIGIBLE`。28 个 Dev family 和 v5 route evidence 不得迁移进确认性 cohort。仍需扩展 family 语义零交集、自然候选配额、构造率/功效分母和正式 seal。
 - [ ] **P3-05 选择并冻结两个独立家族的语义 Reranker**
   - 已有进度：研究负责人已在结果不可见时正式冻结 `Qwen/Qwen3-Reranker-0.6B@e61197ed…`（生成式、Apache-2.0）与 `jinaai/jina-reranker-v2-base-multilingual@9cfeff2d…`（跨编码器、CC-BY-NC-4.0）。`ROBUST-FUSION-RERANKER-QUALIFICATION-2026-08-28-v2` 已复核精确权重/config/tokenizer/custom code、1024-token 合成探针、正逆序 float32 分数重放、基本中英文相关性以及与 E5/DistilUSE 无制品复用。Jina 还被独立 FEVER 2025 多 Reranker 研究采用（DOI `10.18653/v1/2025.fever-1.2`），但不据此声称其天然最优。
   - 未完成边界：P2-06 尚未冻结 batch size、推理精度、硬件/GPU 小时和成本上限；Dev 的 1024-token 覆盖与正式快照逐值重放也未完成。因此 `p3_05_complete=false`，不得按 Dev 效果换家族，也不得据合成探针分数声称研究现象成立。
 - [ ] **P3-06 估计自然干扰、等价冗余和反事实干扰的可构造率**
+  - 已有进度：受控合成 Dev 的首批机械结构产率为 24/30（80%）；恢复链后的 30/30 只表示结构合格提案齐备；双审仲裁后的人工接纳率为 28/30（93.33%）。v5 已测得本批合成 Dev 的已标注候选与 gold target 候选并集覆盖均为 100%，但这不是自然候选产率，也不能替代 GateA/Blind 的自然来源构造率。
 
 ### P4 研究测量工具
 
 - 工程契约统一见[工程实施协议第 5—10 节](robust-fusion-engineering.md)；本节只维护任务状态和完成证据。
 - [ ] **P4-00 完成 current-HEAD LinkRag/LinkRag-Eval 候选契约复验与 CI 重钉**（独立工程 preflight，可与当前 P2 并行，不等待 P3 样本）
   - 已完成部分：Eval 薄适配已去除 `BucketRouter`/旧参数，显式解析 eval collection；CI 与依赖说明已重钉 LinkRag `861f2481…`；Python 3.11 非集成全测、import-lint、`candidate_hits/route_hits`/缺路/截断契约、LTR-v3 三个固定向量以及 SSH 隧道真实 Qdrant 集成均通过。真实 Learned Sparse route 已确认是 Ark/`doubao-embedding-vision-251215`，BGE 被 preflight 排除；协议 v18 下 Dense/Sparse 四探针曾逐值重放通过。
-  - 已关闭的重放决策：协议 v19 联动刷新时，在线 `text-embedding-v4` 在 `zh_short` 首项出现一次只知 hash 不同、未测幅度的 exact mismatch，脚本拒绝写 manifest且未自动重试。负责人随后授权唯一一次只测量诊断；`ROBUST-FUSION-DENSE-REPLAY-DIAGNOSTIC-2026-08-29-v1` 的四条探针全部 float32 exact，最大绝对差、relative L2、归一化差和余弦分数扰动上界均为 0。先前异常不被事后改写为微小尾差。
-  - 已关闭的正式三路 preflight：负责人授权后，`ROBUST-FUSION-ROUTE-CONTRACT-PREFLIGHT-2026-08-29-v2` 一次执行通过且没有自动重试。Dense 四探针全部 float32 exact、`replay_acceptance=EXACT`；Ark/豆包 Sparse 四探针全部 exact；BM25 绑定 `sqlite_fts5`。manifest SHA-256 为 `640e3d52a2f7cfc6f991cefe4d111ae18d09ba3260626a2e927988b5cd17a38a`，Gate A/候选/qrel/排序结果均未读取。
-  - 剩余硬条件：当前工作区包含既有和本轮未提交修改，双仓不满足正式 `dirty=false`；本轮也尚无远端绿色 CI run ID 和 `contract-lock.json`。在线三路重放不再阻塞，但 P4-00 仍未完成。
+  - 历史重放证据：协议 v19 联动刷新时，在线 `text-embedding-v4` 在 `zh_short` 首项出现一次只知 hash 不同、未测幅度的 exact mismatch。负责人随后授权唯一一次只测量诊断；四条探针全部 float32 exact。正式 v2 三路 preflight 又一次通过：Dense/Sparse 四探针均 exact、BM25=`sqlite_fts5`，manifest SHA-256 为 `640e3d52a2f7cfc6f991cefe4d111ae18d09ba3260626a2e927988b5cd17a38a`。这些不可变制品只证明当时的模型/schema/连通性，不再提供数值接纳门槛。
+  - 当前在线路由治理：`ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2` 不为 Dense/Sparse 设数值误差或 exact 重放标准；获授权快照单次生成，结构校验后哈希封存，禁止因数值差异重跑或择优。本地确定性计算仍须 exact。
+  - 剩余硬条件：当前工作区包含既有和本轮未提交修改，双仓不满足正式 `dirty=false`；本轮也尚无远端绿色 CI run ID 和 `contract-lock.json`。在线路由治理不再阻塞，但 P4-00 仍未完成。
   - 最终产出物：`runs/robust_fusion/contracts/contract-lock.json`、本地完整测试报告、绿色 CI run ID/report、双仓 clean commit/tree 与环境摘要。dirty 预检只能诊断，不能完成此任务。
 - [x] **P4-01 审计现有候选缓存与快照契约的字段缺口**
   - 完成证据：[候选快照字段缺口审计 v1](../reports/robust_fusion_candidate_snapshot_field_gap_audit_2026_08_28.md)逐层核对 `RecallRequest/RecallResponse`、Eval `StageOutput/Snapshot`、历史 LTR cache 与 SQLite，确认生产 `candidate_hits/route_hits` 足够作为上游入口，并冻结专用双视图快照的根、Query/family、方法候选、评价关系、压力链和访问边界。P4-02 只在 Eval 侧实现，不修改生产 LinkRag。
 - [ ] **P4-02 实现最小 Candidate Snapshot Generator**
   - 必须持久化 `target_equivalence_group_id`、`relation_condition`、`pressure_pool_id`、`replacement_chain_id`，并保证这些 evaluator-only 字段不进入 M1。
+  - Dev-only 先导：Internal v6 的专用 runner 已由 v5 实证持久化不截断候选并集、逐路 raw score/rank/retrieved flag 和物理双视图，并通过 manifest/content root、SQLite/FTS5、Qdrant 与禁止字段核验；但仍明确写 `formal_p4_02_snapshot=false`。它没有正式压力池/替换链、clean 双仓、绿色 CI 或 `contract-lock.json`，所以不能据此勾选 P4-02。
 - [ ] **P4-03 实现最小 Offline Fusion and Reranking Experimenter**
 - [ ] **P4-04 实现等价组封顶指标和 Clean/Stress 配对分析**
   - 配对校验必须拒绝相关等价组集合、组级 gain 或 IDCG 发生变化的 Clean/Stress 组合。
 - [ ] **P4-05 实现 `method_view` / `evaluation_view` 隔离与泄漏检查**
+  - Dev-only 先导已加入禁止字段递归扫描、source ID 不透明映射和双目录输出，并有本地单测；正式 P4-05 仍须在通用快照生成器上完成 evaluation-view 删除/置换不变性与全方法入口验收。
 - [ ] **P4-06 完成测量工具的契约、重放一致性和指标校准**
   - 边界：此项只证明实验仪器可靠，不支持 RQ1—RQ3 的研究结论。
 
@@ -299,7 +302,7 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 | P0-01A | 2026-08-09 | [科研协议第 0.3、4.3、11 节](robust-fusion-research.md) | 候选图已收缩为 Top-M 局部统计 |
 | P0-01B | 2026-08-09 | 本研究推进清单 | 建立单一当前任务与准入准出制度 |
 | P0-01C | 2026-08-28 | [科研协议](robust-fusion-research.md) | 前身 v8；全面重构信息架构，保留冻结决策并收束高成本扩展 |
-| P0-01D | 2026-08-28 | [科研协议](robust-fusion-research.md)、[工程协议](robust-fusion-engineering.md) | 科研/工程职责分离；五份专题文档使用短文件名；当前版本为科研 v15、工程 v6 |
+| P0-01D | 2026-08-28 | [科研协议](robust-fusion-research.md)、[工程协议](robust-fusion-engineering.md) | 科研/工程职责分离；五份专题文档使用短文件名；当前版本为科研 v25、工程 v16 |
 | P0-02 | 2026-08-09 | [科研协议第 5.2、9 节](robust-fusion-research.md) | 三分内部数据；校准、Gate A、Gate B 分离；样本量由功效分析冻结 |
 | P1-01 | 2026-08-09 | [主张—证据—空缺表](robust-fusion-evidence.md) | 19 条核心主张及措辞护栏；其中 C18/C19 为 2026-08-28 新增近邻边界 |
 | P1-02 | 2026-08-09 | [主张表第 4、8 节](robust-fusion-evidence.md) | 最相近工作的一手页面与实际方法边界已核验 |
@@ -315,6 +318,7 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 | P2-02A | 2026-08-28 | [确定性构建脚本](../../scripts/prepare_robust_fusion_p2_calibration.py)、本地 `data/robust_fusion/derived/p2_calibration_v1/manifest.json` | 从精确 T2/DRUID revision 生成盲化 12 案例包；四个输入 SHA-256 全量重算通过，连续两次构建输出逐文件 hash 一致；Gate A/B 授权字段均为 false |
 | P2-02B | 2026-08-29 | [v2 冻结构建器](../../scripts/prepare_robust_fusion_p2_calibration_replay.py)、[人工交付生成器](../../scripts/materialize_robust_fusion_p2_human_delivery.py)、本地 `data/robust_fusion/derived/p2_calibration_v2/manifest.json` | 审计发现 v1 的 `quota_cell` 与类别过度对应，故 v1 与既有模型/工具试填均退出准入；v2 使用不复用 v1 的 12 案例并移除数据集、split、配额、来源/qrel/期望标签等管理员字段。正式空白 A/B 交付自检通过、答案键不存在、Gate A/B 授权均为 false |
 | P2-03 | 2026-08-28 | [标注手册 v1 第 9.4 节](robust-fusion-annotation-handbook.md) | 在人工提交前冻结逐字段计数准入线、facilitator key 对照、关键构念零容忍项与失败重放规则；小样本 alpha/macro-F1 只作诊断 |
+| P2-05 | 2026-08-29 | [标注手册 v2](robust-fusion-annotation-handbook.md)、`ROBUST-FUSION-P2-FACILITATOR-PATCH-REVIEW-2026-08-29-v2`、本地 `runs/robust_fusion/internal_v6_deepseek_pilot_v1/human_calibration_patch_v3/facilitator_review/` | v2 首轮失败与 v3 五例替换重放全部保留；最终合并 12/13/9/1 设计通过全部冻结准入线，格式与零容忍错误为 0。主持人预先知道 v3 key 的事实已披露，不声称主持人盲态；A/B 独立盲标和先锁后比成立。最终机器结论 SHA-256 为 `fe906b9e755135cfe4fe6607297aec5c5a0c2b2c0a0a5118e4c38ada9a01ef1c` |
 | P3-00 | 2026-08-28 | [SQLite 与检索资产对账报告](../reports/sqlite_share_restore_and_asset_reconciliation_2026_08_28.md) | 真实评测资产可用；不等同于已具备确认性 Query/qrels 或完整统一索引 |
 | P3-01 | 2026-08-28 | [Gate A 数据覆盖审计 v10](../reports/robust_fusion_gate_a_data_coverage_audit_2026_08_28.md) | 计划实体与替代数据均已固定 revision 落盘审计；cMedQA2 已正式替换 MedicalRetrieval 并冻结资格方向；DuRetrieval 三实体完整独立保留；C-MTEB Cmedqa 四类来源已逐 ID/hash 剥离，三数据集最终分母仍归 P3-02 |
 | P3-01A | 2026-08-28 | [确定性来源与完整性审计脚本](../../scripts/audit_cmedqa_corpus_provenance.py)、本地 `data/robust_fusion/derived/cmedqa_provenance_peel_v2/manifest.json` | DuRetrieval 的 100,001 corpus/2,000 Query/9,839 qrel 全量零删减；Cmedqa 100,001 个 compact passage 全量四分类，2,536 条统一留在未解析审计类；3,999 Query 与 7,449 qrel 只生成一般上游 crosswalk，不建立 qrel 关联专项子集；制品只输出 ID/hash，不输出正文，也不把剥离子集当作正式 cMedQA2 corpus |
@@ -323,11 +327,19 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 | P4-00B | 2026-08-28 | `runs/robust_fusion/contracts/route-contract-preflight-v1-refresh-v19/failure.json` | 科研协议 v19 联动复放在 Dense `zh_short` 首项发现 float32 exact drift；无 manifest、无自动重试、Gate A 未运行。旧 v18 PASS 不能冒充 current-protocol 合格证据 |
 | P4-00C | 2026-08-29 | `ROBUST-FUSION-DENSE-REPLAY-DIAGNOSTIC-2026-08-29-v1`、工程协议 v10、`ROBUST-FUSION-DENSE-REPLAY-POLICY-2026-08-29-v1` | 获授权的唯一一次诊断以两次请求复放四条固定文本，全部 4096 个 float32 分量 exact，自动重试为 0，未读取候选/qrel/排序/Gate 结果；manifest SHA-256 为 `3606a60aca87d41f959214c121b402a1c0ea303d228629cfac622d5648ec9081`。五项容差上界按结果前固定值正式封存；这关闭判定规则，但不替代尚未运行的正式 v2 三路 preflight |
 | P4-00D | 2026-08-29 | `ROBUST-FUSION-ROUTE-CONTRACT-PREFLIGHT-2026-08-29-v2`、本地 `runs/robust_fusion/contracts/route-contract-preflight-v2/manifest.json` | 在冻结容差不变、零自动重试下执行一次正式三路 preflight；Dense 四探针和 Sparse 四探针均 exact，BM25=`sqlite_fts5`，BGE/Alt 继续排除。manifest SHA-256 为 `640e3d52a2f7cfc6f991cefe4d111ae18d09ba3260626a2e927988b5cd17a38a`；`gate_a_executed=false`、`outcome_data_read=false`。在线重放阻塞关闭，P4-00 仅余 clean/CI/lock 治理条件 |
+| P4-00E | 2026-08-29 | 科研协议 v26、工程协议 v17、`ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2` | 负责人在 Gate A/Reranker/M1 均未运行时撤销在线 Dense 五项容差与 Sparse exact 重放 Gate。当前 Dense/Sparse 统一为一次生成、结构校验、哈希封存；跨运行数值差异只作描述，禁止据此重跑或择优。本地确定性环节仍须 exact。历史 v1/v2/诊断制品不覆盖，v5 无需重跑 |
 | P0-03A | 2026-08-28 | [决策与变更记录](#6-决策与变更记录)、[Gate A 准入审计脚本](../../scripts/audit_robust_fusion_gate_a_readiness.py)、本地 `runs/robust_fusion/gate_a/readiness-preflight-v1.json` | outcome-blind 审计只读取协议、控制 manifest、checksum、Git 状态和制品存在性；当前 13 项高层检查中 6 项通过、7 项阻塞，明确保持 `NOT_READY_FOR_GATE_A` |
 | P0-03B | 2026-08-29 | `ROBUST-FUSION-GATE-A-READINESS-PREFLIGHT-2026-08-29-v2`、本地 `runs/robust_fusion/gate_a/readiness-preflight-v2.json` | 审计已识别 Dense policy 为 `FROZEN_BEFORE_GATE_A`、诊断与正式 v2 manifest checksum 有效，三路 preflight 为 `PASS`。整体为 13 项中 7 项通过、6 项阻塞，`gate_a_unlocked=false`、`outcome_data_read=false` |
 | P0-03C | 2026-08-29 | `ROBUST-FUSION-GATE-A-READINESS-PREFLIGHT-2026-08-29-v3`、本地 `runs/robust_fusion/gate_a/readiness-preflight-v3.json` | 将 P2 输入资格切换到无泄漏 v2 管理员包与正式空白人工交付，并机器拒绝模型/工具试填；P2 输入 PASS、人工结果仍 `BLOCKED_HUMAN`。整体仍为 13 项中 7 项通过、6 项阻塞，Gate/结果读取均为 false。为避免自引用，制品 SHA 只写项目状态页，不回写本审计所读取的推进清单 |
 | P4-01 | 2026-08-28 | [候选快照字段缺口审计 v1](../reports/robust_fusion_candidate_snapshot_field_gap_audit_2026_08_28.md) | `candidate_hits/route_hits` 可直接复用；通用 StageOutput、Snapshot、历史 LTR cache 与 SQLite 均不能直接作为确认性快照；P4-02 的双视图最小字段、禁止字段、责任来源和物理隔离已冻结 |
 | P3-04A | 2026-08-28 | [Internal Stress v6 数据协议](robust-fusion-internal-stress-v6.md)、[初始化脚本](../../scripts/initialize_robust_fusion_internal_v6.py)、本地 root manifest | 正式建立 v6 ID、三分目录、访问锁、摄取 schema 与来源资格；人口为空且 `NOT_ELIGIBLE`，所以是 P3-04 部分完成证据而非 Gate 解锁证据 |
+| P3-04B | 2026-08-29 | [Internal Stress v7 数据协议](robust-fusion-internal-stress-v6.md)、[科研协议 v20](robust-fusion-research.md) | 在查看任何 30-family 结果前，将负责人已授权的 DeepSeek 合成路径正式限制为 v6-Dev 受控微型事实先导；保留 GateA/Blind 的独立自然来源锚点、非零自然候选配额、family 零重合和人工真值要求，不授权 Gate |
+| P3-04C | 2026-08-29 | [Internal Stress v8 数据协议](robust-fusion-internal-stress-v6.md)、生成器与双审包生成器、本地 `runs/robust_fusion/internal_v6_deepseek_pilot_v2*` | 首批 30 次调用全部留痕，24/30 通过冻结结构门禁；四段恢复链只补拒绝 ID，43 次总调用后取得 30 个待人工复核提案。五段 manifest 与 A/B 盲审交付 manifest 全部校验通过；历史 v5 精确全文重合为 0。当前仍 `accepted_family_count=null`、`NOT_ELIGIBLE`，Gate A/B 未运行 |
+| P3-04D | 2026-08-29 | [Internal Stress v9 数据协议](robust-fusion-internal-stress-v6.md)、[双审主持人脚本](../../scripts/review_robust_fusion_internal_v6_human.py)、[Dev 物化脚本](../../scripts/materialize_robust_fusion_internal_v6_adjudicated_dev.py)、本地 `facilitator_review/final_v1/` 与 `dev/releases/adjudicated_synthetic_v1/` | A/B 六份答案先锁后比；机械错误 0，候选级标签 90/90 一致、候选对 89/90 一致，唯一分歧完成条款级仲裁。人工接纳 28/30，2 个表面控制失败 family 被拒绝；接纳项已形成 28/112/112/28 四张 Dev 摄取表，最终仍为 Dev-only、`NOT_ELIGIBLE` |
+| P3-04E | 2026-08-29 | [Internal Stress v10 数据协议](robust-fusion-internal-stress-v6.md)、[Dev 三路证据执行器](../../scripts/run_robust_fusion_internal_v6_route_evidence.py)、本地 `internal-v6-dev-route-evidence-v2-20260829/plan.json` | 固定 adjudicated release、隔离 eval collection/SQLite、同编码器写读、当前候选契约、方法/评价双视图和首次远端探测即消费唯一尝试；v1 零尝试计划已 supersede。v2 plan SHA-256 `4e1e279b12e23436421b4b6166b261451000cd0e86817ada5d77ccd0cea98144`，仍为 `PREPARED`/0 次执行，未调用外部 API、未写 Qdrant、未读取检索结果，且不是正式 P4-02 |
+| P3-04F | 2026-08-29 | [Internal Stress v11 数据协议](robust-fusion-internal-stress-v6.md)、v2/v3 `run_state.json`、SSH tunnel healthz 与 collection existence 复核 | 负责人确认 v2 精确命令后，首次 Qdrant existence probe 发生 `ReadTimeout`；按预定规则封存为 `FAILED_NO_AUTORETRY`/1 次尝试。失败早于编码器构造，Dense/Sparse 请求为 0；经隧道复核 v2 collection 不存在。根因是 Qdrant 仅监听 `linkcv:127.0.0.1:6333` 而本地当时无转发；本地 36333 隧道恢复后 healthz=200，另备 v3 plan SHA-256 `14ee97c428b3a0ed460ff29cf2063e0cfd45c6d4969ebdac1d9d44feb5798818`，当前 `PREPARED`/0 次尝试，等待新确认 |
+| P3-04G | 2026-08-29 | [Internal Stress v13 数据协议](robust-fusion-internal-stress-v6.md)、[v5 独立核验报告](../reports/internal_v6_dev_route_evidence_v5_verification_2026_08_29.md)、Dev 三路执行器与回归测试 | v3 因本地 storage 父目录缺失失败，v4 因 manifest 纳入瞬态 SQLite sidecar 而完整性拒收，均保持原状态；修复后独立 v5 一次执行完成。核验确认 28 Query/112 Chunk/3,056 候选、三路各 28/28 非空、112/112 已标注候选与 28/28 gold target 入并集，manifest/content root、SQLite/FTS5 和真实 Qdrant 112 点一致。v5 仍是 Dev-only、`NOT_ELIGIBLE`、`formal_p4_02_snapshot=false` |
+| P2-05A | 2026-08-29 | [C2 三分边界最小补充方案](robust-fusion-c2-boundary-supplement.md)、[空白包初始化器](../../scripts/initialize_robust_fusion_c2_boundary_supplement.py)、本地 `dev/supplements/c2_boundary_calibration_v1/` | 根据既有 Dev 标签分布 1/1/7 与 Internal 28 个 detectable-only，冻结 numeric/version 两条三段匹配链及两个额外 conditional 案例，共 8 槽。manifest SHA-256 `ff4e00d857641a2d48e0ece509c29bf357f28918757dc4a1980f9906a681f347`；当前 0 正文、0 答案键、0 人工标签，Dev-only、`NOT_ELIGIBLE` |
 | P0-02A | 2026-08-28 | [科研协议 v12](robust-fusion-research.md)、[工程协议 v4](robust-fusion-engineering.md) | 闭合重复 Gate、multiplicity、pooled estimand、Top1 剂量/风险集、正向单元、Track B、CI pin、数据集分母时间戳、术语和反伪影组合规则 |
 | P1-05 | 2026-08-28 | [证据台账](robust-fusion-evidence.md)、[文献地图](robust-fusion-literature.md) | 纳入两项已核验 2026 近邻工作；新颖性改为 C1/C2 自立、C3 条件性 |
 
@@ -366,11 +378,19 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 | 2026-08-29 | 冻结 provider-managed Dense 的 `exact OR 五项数值容差交集`，但不重写先前未测量异常 | 负责人确认若仅为尾数误差则应在实验前冻结合理容差；为避免看结果定阈值，诊断脚本在调用前写死 `1e-6` 最大分量差、`1e-5` relative/normalized L2、`1e-8` cosine distance 和 `1e-5` 单候选分数扰动上界 | 否；唯一获授权诊断只使用四条固定无敏感文本，两次请求、零自动重试；本次实测全部 float32 exact，未读取任何候选、qrel、排序或 Gate 结果 | 工程协议升为 v10、进度升为 v20；冻结策略允许 exact 或逐探针五项全过，任一超界即失败。历史 mismatch 仍记为幅度未知；正式 v2 三路 preflight、clean/CI/lock 仍未完成 |
 | 2026-08-29 | 在冻结 Dense 容差不变后执行一次正式 v2 三路 preflight | 诊断已关闭判定规则，负责人明确要求继续推进；正式 preflight 需要同时确认当前 Dense、Ark/豆包 Sparse、SQLite FTS5 和 BGE 排除 | 否；只使用四条固定无敏感文本，零自动重试，未读取候选、qrel、排序或 Gate 结果 | 正式 v2 manifest 一次通过，Dense/Sparse 全部 exact；在线重放阻塞关闭。P4-00 仍须 clean 双仓、远端绿色 CI 和 `contract-lock.json`，不据此解锁 Gate A |
 | 2026-08-29 | P2 正式人工入口从泄漏 `quota_cell` 的 v1 切换到无类别提示的 v2，并排除所有模型/工具试填 | v1 的配额字段与目标类别直接对应；现有已填写 A/B 文件又来自工具会话，不能代表团队人工独立判断 | 是，仅观察 P2 开发校准试填及其机械审查；未观察 Gate A/B 或正式人工结果 | v1 与旧试填只作开发记录；新建 `runs/robust_fusion/p2_human_calibration_v2/` 空白双人交付，每人仍只需 12+13+1 条。只有两名真实标注员提交、锁定、仲裁和机器 PASS 才能关闭 P2-05 |
+| 2026-08-29 | P2-05 按 v2 保留 7 例 + v3 替换 5 例的合并设计判为通过，标注手册升级为 v2 | 首轮制品缺陷没有通过事后改 key 修补；五例替换重放零分歧，合并设计的全部冻结计数门槛和零容忍项通过，唯一旧算术分歧有发包前规则依据 | 是，已观察 P2 人工校准结果；未观察 30-family、Gate A/B、Reranker 或方法结果 | 允许进入 v6-Dev 30-family 构造率先导；不授权 Gate A/B。主持人预知 v3 key 的事实、A/B 独立性范围和全部原始提交均保留 |
+| 2026-08-29 | DeepSeek 生成路径正式限定为 Internal v6-Dev 受控合成微型事实先导 | 研究负责人已明确授权使用项目配置的 DeepSeek、人工审核和 completion-first 预算；此前权威文档仍写“必须真实 Query”，与已确认方案冲突 | 已观察 P2 校准是否通过；尚未生成或查看 30-family 与任何 Gate 结果 | 科研协议升为 v20、Internal 协议升为 v7；LLM Query 永远标 synthetic，30-family 只估计合成构造率。GateA/Blind 仍要求独立自然来源锚点、非零自然候选配额、family 零重合和双审仲裁，不改变 Gate estimand 或阈值 |
+| 2026-08-29 | 执行 30-family Dev 生成并建立不可覆盖恢复链与双人盲审包 | v20 已在结果前授权；首批默认思考模式造成 6 条正文截断，严格门禁又拒绝不逐字/非原子提案，需在不放宽构念的前提下只补失败 ID | 是，仅观察 Dev 生成、token/费用、结构门禁与精确全文重合；尚未观察人工标注、检索/Reranker、Gate A/B 或方法结果 | 科研协议升为 v21、工程协议 v12、Internal 协议 v8、进度 v23；固定首批结构产率 24/30，总调用 43，恢复后 30 个仅为待审提案。A/B 提交、仲裁、人工接纳率、自然来源人口与 Gate 均保持未完成 |
+| 2026-08-29 | 完成 Internal v6-Dev 30-family 双审锁定与主持人裁定 | 模型构造角色不是真值；只有先锁后比、条款级仲裁与接纳台账完成后才能估计人工构造率 | 是，已查看 Dev 人工标签与构造角色偏差；未运行检索/Reranker、Gate A/B 或方法结果 | 科研协议升为 v22、工程协议 v13、Internal 协议 v9、进度 v24；固定人工接纳 28/30，拒绝两个控制失败 family。28 个主冲突全为 detectable-only，C2 三分边界仍未覆盖，GateA/Blind 保持空与锁定 |
+| 2026-08-29 | 将 Internal v6-Dev 三路证据改为两阶段一次性执行，并另建 C2 三分边界最小补充 | 28 个接纳 family 已可进入真实 Dev 重算，但外部调用必须在执行前锁定输入、配置、成本和失败边界；既有 C2 校准分布 1/1/7 且 Internal 主冲突全为 detectable-only，需要单独补齐 method-view 可识别性边界 | 是，只查看既有 Dev 标签分布和本地契约测试；真实三路检索、C2 新正文/标签、Gate A/B 与方法结果均未查看 | 科研协议升为 v23、工程协议 v14、Internal 协议 v10、进度 v25、全量标注指南 v6；三路 v2 计划保持 `PREPARED`/0 次尝试，C2 8 槽包保持 `PLANNED_EMPTY`。二者只属于 Dev，不改变 Gate 估计量、阈值、人口或正式 P4-02 状态 |
+| 2026-08-29 | v2 三路 transport 失败后不重跑原计划，恢复 SSH 隧道并另备 v3 | 一次性规则要求任何首次远端探测失败都消费计划；只读诊断显示 Qdrant 仅在 `linkcv` 本机 6333 监听，而执行时本地无隧道 | 是，只观察 Qdrant transport failure、healthz 和目标 collection 不存在；未发出 Dense/Sparse 请求，未观察候选、Reranker、Gate A/B 或方法结果 | 科研协议升为 v24、工程协议 v15、Internal 协议 v11、进度 v26；v2 永久保持 `FAILED_NO_AUTORETRY`，不改写为未执行。健康隧道下的新 v3 仍须精确命令再确认，Gate 和正式 P4 状态不变 |
+| 2026-08-29 | 保留 v3 运行失败与 v4 完整性拒收，以独立 v5 完成 v6-Dev 三路证据 | v3 暴露本地 storage 父目录前置缺陷；v4 暴露 SQLite `-wal/-shm` 不应进入封存清单。一次性治理要求旧制品不覆盖、不重签，只能修复执行器后使用新 run ID | 是，已查看 Dev 三路候选、分数/排名、标签覆盖及 v4/v5 数值差异；未运行 Reranker、Gate A/B 或 M1 | 科研协议升为 v25、工程协议 v16、Internal 协议 v12、进度 v27、全量标注指南 v8；v5 固定为 `VERIFIED/NOT_ELIGIBLE`。只关闭 Dev route-evidence 缺口，不改变 Gate estimand、阈值、确认性人口或正式 P4-02 状态 |
+| 2026-08-29 | 不再为 provider-managed Dense/Sparse 设置数值误差或 exact 重放标准 | 在线服务的浮点差异不改变同一封存候选快照内的方法比较；设定任意尾差门槛不能增加论文构念效度，反而可能诱发因数值差异重跑或择优 | 是，已观察 v6-Dev v4/v5 的在线数值差异、候选集合和排名稳定性；未运行 Reranker、Gate A/B 或 M1 | 科研协议升为 v26、工程协议 v17、Internal 协议 v13、进度 v28；在线路由单次生成、结构校验、哈希封存，数值差异仅描述。旧容差历史保持原样，本地确定性计算仍 exact；不改变 Gate estimand、效应阈值、人口或 v5 接纳结论 |
 
 ## 7. 阻塞项
 
 - 当前研究任务 P2-01 的构念边界、两个非 BGE 编码器的身份/确定性资格和两个 Reranker 家族选择均已关闭；仍须在 v6-Dev 完成长短文本分层的独立编码器—盲人工效度，以及数据源内统计、共同支持和分带。这些项目均不得由 Gate A 结果反推。真实 Learned Sparse route 已确认是 Ark/豆包在线 API，它不是相似度编码器的替代品。
 - P3-05 已冻结 `Qwen3-Reranker-0.6B + jina-reranker-v2-base-multilingual`，不再开放备选模型比较。剩余阻塞是 P2-06 的 GPU/批量/精度预算，以及 Dev 的 1024-token 覆盖与逐值重放；Dev 只能检查可运行性和契约，不能按效果换家族。
-- P3-02 的当前六单元数据集选择已关闭：T2 使用 Dev-exposed/Train-resplit，cMedQA2 使用 Dev-exposed/Train-GateA/Test-GateB 资格方向且医学只作分层属性，Internal v6 待摄取。DuRetrieval 以 100,001/2,000/9,839 的完整 pinned 实体独立保留，只作预先声明的辅助稳健性数据，不提供备用 Gate 路径。ID/hash-only split/exclusion 资格 manifest 已生成；当前缺口已收缩为 document/version/template family 扩展排除、30-family 构造率、功效预估与 T2/cMedQA2/Internal v6 最终分母封存。
-- P3-04 的数据 ID、三分目录、访问锁、摄取 schema 和来源资格已建立；真正阻塞是当前没有新的内部真实 Query/正确证据。团队工作应先填最小 intake，再只审高相似等价、疑似冲突和疑似漏标项，不重标整个语料。
-- P4-00 的在线三路重放已经关闭；正式候选快照仍受双仓非 clean、缺本轮远端绿色 CI run ID 与正式 `contract-lock.json` 的治理阻塞。该阻塞不妨碍 P2/P3 数据准备，但必须在 P5-07 前解除。
+- P3-02 的当前六单元数据集选择已关闭：T2 使用 Dev-exposed/Train-resplit，cMedQA2 使用 Dev-exposed/Train-GateA/Test-GateB 资格方向且医学只作分层属性，Internal v6 已得到 28/30 的合成 Dev 人工接纳率、完成 Dev 摄取物化，并由 v5 形成经核验的真实三路证据。DuRetrieval 以 100,001/2,000/9,839 的完整 pinned 实体独立保留，只作预先声明的辅助稳健性数据，不提供备用 Gate 路径。ID/hash-only split/exclusion 资格 manifest 已生成；当前缺口已收缩为 document/version/template family 扩展排除、自然来源构造率、功效预估与 T2/cMedQA2/Internal v6 最终分母封存。
+- P2-05 已关闭，标注手册 v2 已冻结。P3-04 的数据 ID、三分目录、访问锁、摄取 schema、来源资格和 30-family Dev 双审仲裁已经建立；接纳的 28 个合成 family 只允许用于 Dev。C2 的 8 槽补充目前只是空白管理员包，尚未生成或发放。GateA/Blind 的独立自然来源锚点人口仍未建立，不能由 Dev 合成样本替代。
+- P4-00 的在线路由模型/schema/结构证据和“无数值 Gate、单次封存”治理规则已经关闭；正式候选快照仍受双仓非 clean、缺本轮远端绿色 CI run ID 与正式 `contract-lock.json` 的治理阻塞。该阻塞不妨碍 P2/P3 数据准备，但必须在 P5-07 前解除。

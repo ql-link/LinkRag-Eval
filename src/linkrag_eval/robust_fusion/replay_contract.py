@@ -1,4 +1,11 @@
-"""Frozen numeric replay contract for provider-managed Dense embeddings."""
+"""Structural validation and descriptive fingerprints for provider routes.
+
+Provider-managed Dense/Sparse values are not subject to a numerical replay
+acceptance threshold. A route snapshot is generated once, validated for
+structural integrity and then hash-sealed. Pairwise replay metrics remain
+available for diagnostics only and must never decide snapshot acceptance or
+trigger a rerun.
+"""
 
 from __future__ import annotations
 
@@ -8,16 +15,9 @@ import struct
 from collections.abc import Sequence
 from typing import Any
 
-DENSE_REPLAY_POLICY_ID = "ROBUST-FUSION-DENSE-REPLAY-POLICY-2026-08-29-v1"
-
-# Frozen before Gate A and before any candidate, qrel, ranking, or outcome was read.
-DENSE_REPLAY_TOLERANCE = {
-    "max_absolute_component_delta": 1e-6,
-    "relative_l2_delta": 1e-5,
-    "normalized_query_l2_delta": 1e-5,
-    "cosine_distance": 1e-8,
-    "max_single_candidate_cosine_score_delta_bound": 1e-5,
-}
+PROVIDER_ROUTE_POLICY_ID = (
+    "ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2"
+)
 
 
 def _as_float32(value: float) -> float:
@@ -51,10 +51,67 @@ def _normalized(values: Sequence[float]) -> list[float]:
     return [value / norm for value in values]
 
 
+def dense_vector_fingerprint(
+    values_raw: Sequence[float], *, expected_dim: int
+) -> dict[str, Any]:
+    """Validate one Dense vector and return a value-free canonical fingerprint."""
+
+    values = _float32_vector(values_raw, expected_dim=expected_dim)
+    norm = _l2_norm(values)
+    if norm == 0:
+        raise ValueError("dense vector has zero norm")
+    return {
+        "dimension": len(values),
+        "float32_sha256": _vector_sha256(values),
+        "l2_norm": norm,
+        "structural_validation": "PASS",
+    }
+
+
+def sparse_vector_fingerprint(
+    indices_raw: Sequence[int],
+    values_raw: Sequence[float],
+    *,
+    top_k: int,
+) -> dict[str, Any]:
+    """Validate one sparse vector and return a value-free canonical fingerprint."""
+
+    if top_k <= 0:
+        raise ValueError("sparse top_k must be positive")
+    if not indices_raw:
+        raise ValueError("sparse vector is empty")
+    if len(indices_raw) != len(values_raw):
+        raise ValueError("sparse vector index/value length mismatch")
+    indices = [int(index) for index in indices_raw]
+    if any(index != converted for index, converted in zip(indices_raw, indices)):
+        raise ValueError("sparse vector index is not an integer")
+    if (
+        indices != sorted(indices)
+        or len(indices) != len(set(indices))
+        or any(index < 0 for index in indices)
+    ):
+        raise ValueError("sparse vector index contract invalid")
+    if len(indices) > top_k:
+        raise ValueError("sparse vector exceeds top_k")
+    values = [_as_float32(value) for value in values_raw]
+    if not all(math.isfinite(value) for value in values):
+        raise ValueError("sparse vector contains NaN or Inf")
+    if not any(value != 0.0 for value in values):
+        raise ValueError("sparse vector has no nonzero weights")
+    digest = hashlib.sha256()
+    for index, value in zip(indices, values):
+        digest.update(struct.pack("<qf", index, value))
+    return {
+        "nonzero_count": len(indices),
+        "canonical_sparse_float32_sha256": digest.hexdigest(),
+        "structural_validation": "PASS",
+    }
+
+
 def dense_replay_metrics(
     left_raw: Sequence[float], right_raw: Sequence[float], *, expected_dim: int
 ) -> dict[str, Any]:
-    """Compare canonical float32 vectors without retaining their plaintext values."""
+    """Describe two canonical float32 vectors without applying an acceptance gate."""
 
     left = _float32_vector(left_raw, expected_dim=expected_dim)
     right = _float32_vector(right_raw, expected_dim=expected_dim)
@@ -90,9 +147,7 @@ def dense_replay_metrics(
         "cosine_distance": 1.0 - cosine,
         # For any unit candidate c: |c·q1 - c·q2| <= ||q1-q2||_2.
         "max_single_candidate_cosine_score_delta_bound": normalized_delta,
+        "numeric_comparison_role": "DESCRIPTIVE_ONLY",
+        "numeric_gate_applied": False,
     }
-    metrics["within_frozen_numeric_tolerance"] = all(
-        float(metrics[name]) <= threshold
-        for name, threshold in DENSE_REPLAY_TOLERANCE.items()
-    )
     return metrics

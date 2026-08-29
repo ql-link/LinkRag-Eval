@@ -14,6 +14,7 @@ pytest.importorskip("src.core", reason="需安装 toLink-Rag(pip install -e <pat
 pytestmark = pytest.mark.contract
 
 from linkrag_eval.config import EvalSettings
+from linkrag_eval.retrieval.recall_adapter import execute_candidate_contract_once
 from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline
 
 
@@ -178,3 +179,40 @@ async def test_current_candidate_and_route_contract_preserves_untruncated_pool()
     assert response.route_hits["bm25"] == []
     assert response.per_source_counts == {"dense": 2, "sparse": 2, "bm25": 0}
     assert response.failed_sources == []
+
+
+async def test_execute_candidate_contract_once_sets_required_research_fields() -> None:
+    class _Pipeline:
+        def __init__(self):
+            self.requests = []
+
+        async def execute(self, request):
+            self.requests.append(request)
+            return "response"
+
+    pipeline = _Pipeline()
+    response = await execute_candidate_contract_once(
+        pipeline,
+        query="一次性候选契约",
+        user_id=990001,
+        dataset_ids=[996601],
+        top_k=112,
+        bm25_top_k=100,
+        dense_top_k=150,
+        sparse_top_k=50,
+        dense_score_threshold=0.3,
+        sparse_score_threshold=0.2,
+        enabled_sources=["dense", "sparse", "bm25"],
+        required_sources=["dense", "sparse", "bm25"],
+        fusion_weights={"dense": 0.7, "sparse": 0.15, "bm25": 0.15},
+        candidate_contract_version="contract-v1",
+        candidate_profile="dev-profile-v1",
+    )
+
+    assert response == "response"
+    assert len(pipeline.requests) == 1
+    request = pipeline.requests[0]
+    assert request.strict_override is True
+    assert request.required_sources == ["dense", "sparse", "bm25"]
+    assert request.candidate_contract_version == "contract-v1"
+    assert request.candidate_profile == "dev-profile-v1"

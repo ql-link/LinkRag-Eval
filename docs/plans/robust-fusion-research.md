@@ -1,10 +1,10 @@
 # 高相似度干扰下检索增强生成的多路来源感知鲁棒融合方法研究
 
 > 文档定位：本文件是科研协议，负责冻结研究问题、构念、证据、实验设计、方法边界和决策门禁；环境、存储、快照和实验器实现在[工程实施协议](robust-fusion-engineering.md)维护，日常任务在[研究推进清单](robust-fusion-todo.md)维护，目标渠道与版本规则在[发表路径与投稿治理](robust-fusion-publication.md)维护。
-> 研究记录：ROBUST-FUSION-RESEARCH-2026-08-28-v19。
+> 研究记录：ROBUST-FUSION-RESEARCH-2026-08-29-v26。
 > 当前阶段：P2 构念、标注与指标效度；尚未进入 Gate A，也尚未开发论文方法 M1。
 > 证据入口：[定向文献地图](robust-fusion-literature.md)、[主张—证据—空缺表](robust-fusion-evidence.md)、[本地论文全文](../papers/)。
-> 最近更新：2026-08-28。
+> 最近更新：2026-08-29。
 
 ## 0. 一页摘要
 
@@ -366,7 +366,7 @@ Top-M 默认只在 \(\{5,10\}\) 中选择；\(\tau\)、冲突阈值、\(\lambda\
 | DuRetrieval | 独立完整保留的中文公开数据；用于预先声明的辅助稳健性分析 | 固定 C-MTEB compact revision 的 100,001 条 corpus、2,000 个 Query 与 9,839 条 qrel 作为一个不可拆分实体保留；不因其文本出现在 C-MTEB Cmedqa 中而删行、合并或降格。本角色不进入当前六单元 C1 主分母或 Gate B；若要改变 Gate 角色，必须在查看结果前另升协议版本 |
 | cMedQA2 | 条件、数字、否定等约束密集的中文公开主实验 | 研究负责人已确认本项目属于非商业科研并接受保守治理；使用上游固定 commit `85feb9278c3ae552c591205cbf3e828368c91f8f` 的原始问题、回答与 train/dev/test candidate 标签。医学只作为预先记录的数据分层属性，不构成研究问题、专门终点或额外 Gate；全文仅在本地研究环境使用，不进入论文复现制品 |
 | MedicalRetrieval（原计划，已替换） | 许可审计与历史方案追溯 | 原始与 C-MTEB 派生版虽已落盘，但官方仓库与 card 均无明确数据许可；不进入确认性主分母 |
-| Internal Stress v6-Dev | 构念、标注、相似度、代理和功效校准 | 数据 ID、目录、schema 与来源资格已建立；真实 Query/正确证据尚未摄取 |
+| Internal Stress v6-Dev | 构念、标注、相似度、代理和功效校准 | 数据 ID、目录、schema 与来源资格已建立；P2-05 已通过；30-family 首批结构产率 24/30，恢复链补足的 30 个提案已完成 A/B 双审、提交锁与主持人仲裁，人工接纳 28/30（93.33%），并物化为 28 Query/112 文档/112 证据标签/28 family assignment。三路执行的 v2/v3 失败与 v4 manifest 拒收均原样保留；独立新计划 v5 已在真实 Dense、Learned Sparse、BM25 与 Qdrant 上完成并核验，28/28 Query 三路均非空、112/112 已标注候选及 28/28 gold target 均进入候选并集。该制品仍是 Dev-only、`NOT_ELIGIBLE`。C2 三分边界的 8 槽补充包仍为空白规划状态 |
 | Internal Stress v6-GateA | 独立现象与代理研究 | 独立目录与方法访问锁已建立；人口为空，未获得 Gate 资格 |
 | Internal Stress v6-Blind | M1 冻结后的 Gate B 一次性内部确认 | 独立目录与 Blind 访问锁已建立；人口为空，未获得 Gate 资格 |
 
@@ -378,7 +378,7 @@ C-MTEB Cmedqa 的 100,001 条 compact corpus 已完成逐条精确正文来源�
 
 ### 5.2 内部三分数据
 
-内部母池需要包含真实 Query、对应文档和正确证据。先按 Query、文档族、文档版本和反事实模板分组，再把组整体分为：
+内部母池需要包含新的独立 Query family、对应文档和正确证据，并显式记录 `query_origin=natural/synthetic`。先按 Query、文档族、文档版本和反事实模板分组，再把组整体分为：
 
 - **v6-Dev**：可反复查看，用于规则、阈值和模型开发；
 - **v6-GateA**：不参与规则调整，只检验现象和代理；
@@ -390,7 +390,13 @@ cMedQA2 的上游 Dev 整体属于 calibration/exposed-only；Train 是 Gate A �
 
 历史 Blind v4/v5 已曝光，只能作动机；不得重新命名后进入 v6。
 
-Internal v6 的唯一数据协议为[Internal Stress v6 数据协议](robust-fusion-internal-stress-v6.md)。分享包可为 v6 提供假设来源、工程 provenance、预算和经验证的 corpus 材料，但不能提供不存在的 Query/qrels。当前三分骨架已正式建立、人口仍为空；只有摄取新的真实 Query、正确证据并完成 family 级隔离、双人复核、构造率与功效封存后才取得 Gate 资格。
+Internal v6 的唯一数据协议为[Internal Stress v13 数据协议](robust-fusion-internal-stress-v6.md)。分享包可为 v6 提供假设来源、工程 provenance、预算和经验证的 corpus 材料，但不能提供不存在的 Query/qrels。研究负责人已在查看 30-family 产出前授权 DeepSeek 生成受控合成 v6-Dev family，并要求人工最终复核。当前生成、机械结构校验、双人盲审、提交锁与主持人仲裁均已完成；28 个 family 接纳、2 个因表面控制实际构成事实冲突而拒绝。接纳项已确定性物化为 Dev 摄取表，并由真实三路 Dev runner 生成可核验的 route evidence。执行谱系保持不可覆盖：v2 因 SSH 转发缺失而 transport 失败，v3 因本地 storage 父目录缺失而失败，v4 虽完成检索但 manifest 纳入瞬态 SQLite sidecar，故不作事后重签并拒绝为正式 Dev 证据；独立 v5 计划完成 28 Query、112 Chunk、3,056 条候选、三路各 28/28 非空召回、112/112 已标注候选入并集和 28/28 gold target 入并集。v5 的 plan、manifest、content root、SQLite/FTS5 和真实 Qdrant 112 点已独立核验，详见[核验报告](../reports/internal_v6_dev_route_evidence_v5_verification_2026_08_29.md)。跨 v4/v5 的候选身份、Top-1、Top-10 和全部标注候选排名稳定，但在线 Dense 存在最大约 `2.46×10⁻⁴` 的数值抖动，因此不声称逐字节浮点复现。这批样本仍只估计合成构造流水线与 Dev 测量仪器，不进入 GateA/Blind。
+
+在线提供方路由现统一受 `ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2` 约束：Dense 与 Learned Sparse 均不设置数值误差、跨请求 exact 或容差通过线。每个获授权的候选快照只生成一次，先检查模型/维度、非空、有限值、ID/数量、目标覆盖和 schema，再保存请求/输出摘要、候选 ID、逐路分数/排名与 tie-break 并哈希封存；不得因数值差异重跑，也不得在多个运行中选择“更稳定”或“更好”的一个。跨运行数值差异只作描述性诊断。BM25、指标、bootstrap、文件生成等本地确定性环节仍要求精确复现，所有方法必须共用同一已封存候选快照。
+
+现有 P2 校准的 9 条事实冲突在 `conditionally_adjudicable / detectable_only / unidentifiable` 上为 1/1/7，Internal v6 的 28 个接纳主冲突又全部是 `detectable_only`。因此另行冻结[C2 三分边界最小补充方案](robust-fusion-c2-boundary-supplement.md)：8 个 Dev-only 规划槽、两条 matched 三段链，当前正文、答案键与人工标签均为 0。它只用于补齐测量校准覆盖，不改变 C2 的 10 项比较家族、Gate estimand 或 GateA/Blind 人口。
+
+LLM 生成的 Query 必须标为 `synthetic`，不得改名为真实或自然 Query。v6-GateA/Blind 即使包含 LLM 提出的 Query 或反事实，每个确认性 family 仍必须具有独立自然来源锚点，并满足本协议冻结的每数据集非零自然候选配额；全合成、无自然锚点的 family 只允许留在 Dev。历史 v4/v5 只提供已曝光的 prompt/schema 和成本经验，不得成为确认性 family 的来源锚点。只有完成人工真值、family 级隔离、自然来源资格、构造率与功效封存后，GateA/Blind 才取得资格。
 
 > **概念解释｜Dev、GateA 与 Blind**：Dev 用来修改规则和模型；GateA 用独立样本判断研究问题是否成立；Blind 用未曝光样本确认最终方法。三者不能由同一 Query、相邻 Chunk、新旧版本或同一反事实模板跨集合派生。
 
@@ -413,6 +419,12 @@ Internal v6 的唯一数据协议为[Internal Stress v6 数据协议](robust-fus
 合成项必须保存父 Chunk、变更前后片段、冲突类型和错误理由，并重新经过与真实语料相同的 Dense、Sparse、BM25 计算。禁止手工填写分数、排名或检索路命中标记。
 
 自然和合成结果分开报告；公开 qrels 中未标相关只能表示“待审”，不能自动当作负例。
+
+30-family v6-Dev 先导可使用自包含的受控合成微型事实世界：每个 family 保存 `synthetic_fact_id`、目标证据、Query、等价对照、单一原子冲突、表面非冲突对照、生成模型、提示词/响应 hash 和人工复核记录。该先导估计的是 schema 合格率、证据锚点合格率、原子冲突合格率和最终人工接纳率；不能据此估计自然 Hard Negative 的可构造率、C1 效应或 Gate 结果。
+
+2026-08-29 的执行结果严格分三层报告：首批 30 次调用全部返回，24/30 通过冻结的 JSON、逐字锚点与原子替换门禁，故**首批机械结构产率为 80%**；6 条因 DeepSeek 默认思考模式耗尽输出额度而截断。随后显式关闭思考模式、启用 JSON Output，并只对上一批拒绝 ID 做四个独立、有 manifest 的最小恢复批次，最终形成 30/30 个待人工复核提案。恢复过程没有覆盖失败响应、放宽标签或改变 estimand；总计 43 次调用、52,320 输入 token、190,663 输出 token，按执行时冻结价格估算人民币 `0.934791` 元。最后，A/B 对 30+90+90 行独立盲审，提交在比较前锁定；候选级标签完全一致、候选对 89/90 一致，唯一分歧已仲裁。人工接纳 28/30（93.33%），2 个 family 因表面控制实际为事实冲突而拒绝。30/30 仍只能表述为“恢复后结构合格提案数”，28/30 也只能表述为“全合成 Dev 人工接纳率”，不能改写成自然候选产率、C1/C2 效应或 Gate 证据。
+
+接纳的 28 个主冲突全部被双人一致标为 `detectable_only`。这符合本轮 Query 不给正确值、候选元数据为空、但候选池内存在同槽不一致的 method view 设计；同时也意味着该批只能支持 Dev 层冲突检测与压力构造校准，不能单独覆盖 C2 的 `conditionally_adjudicable` 和 `unidentifiable` 边界。C2 三分边界仍须由后续自然来源或另行预注册的 Dev 校准样本补足。
 
 ### 5.5 标注质量
 
@@ -976,6 +988,10 @@ Gate A 前不复现 HybRank 或 QuDAR。Gate A = Go 后，只有目标渠道和�
 31. 当前真实三路固定为 `text-embedding-v4` Dense、Ark/豆包 Learned Sparse 与 SQLite FTS5 BM25；BGE-M3 已淘汰，历史 Alt Embedding 不得进入 Gate A route、实验相似度或独立审计。
 32. 实验相似度在不读取研究数据时预选 `multilingual-e5-base@d1287505…` 为主编码器、multilingual DistilUSE `@bfe45d07…` 为独立审计编码器；该决定只冻结资格阶段的模型身份、输入和确定性，不授权 Gate A。Dev 人工效度、共同支持、分带和正式参照集合仍须在结果不可见时封存。
 33. Gate A 两个独立 Reranker 家族在 Gate A/B 与 Dev 排序效果均不可见时冻结为 `Qwen/Qwen3-Reranker-0.6B@e61197ed…`（生成式）与 `jinaai/jina-reranker-v2-base-multilingual@9cfeff2d…`（跨编码器）。Qwen 对应项目真实测评，Jina 提供不同生产者、架构与打分头的确认性重复；Jina 被独立 FEVER 2025 多 Reranker 研究采用（DOI `10.18653/v1/2025.fever-1.2`），但该采用不证明模型天然最优或本文 C1。两者选择不得按 Dev 或 Gate 结果更换；P3-05 仍须完成资源、截断覆盖与逐值重放契约。
+34. P2-05 双人校准、五例替换重放和主持人仲裁已经通过，标注手册冻结为 v2；Internal v6 允许 DeepSeek 生成仅供 Dev 的受控合成 30-family 先导。模型不是真值标注者，LLM Query 必须标为 synthetic；GateA/Blind 仍要求独立自然来源锚点、非零自然候选配额、双审仲裁和 family 零重合，Dev 先导不得自动迁移。
+35. v6-Dev 30-family 首批机械结构产率固定报告为 24/30；四段恢复链只补上一段拒绝 ID，保留全部原始响应和 manifest。恢复后的 30 个结构合格提案已经完成 A/B 独立盲审、提交锁定和仲裁，人工接纳率固定为 28/30（93.33%）；该值只属于 Dev 全合成构造率。真实三路证据计划和 C2 边界补充也都只属于 Dev，P3-04 仍因 GateA/Blind 确认性人口为空而未完成。
+36. v6-Dev 三路证据以独立 v5 计划完成并核验；v2/v3 失败和 v4 完成但完整性拒收的谱系必须保留。v5 只关闭 28 个合成 Dev family 的 route-evidence 缺口，不完成正式 P4-02，也不提供 Gate A/B 资格。provider-managed Dense/Sparse 不设数值误差或 exact 重放门槛；单次生成后只按结构契约与哈希封存，不因数值差异重跑或择优，跨运行差异只作描述。
+37. v6-Dev 主持人裁定覆盖唯一 A/B 候选对分歧，并拒绝两个“表面控制实际构成事实冲突”的 family；模型预设标签不覆盖人工真值。接纳的 28 个主冲突均为 `detectable_only`，不得据此声称 C2 三分边界已经覆盖，也不得将 Dev family 迁入 GateA/Blind。
 
 任何变更必须记录：
 
@@ -989,6 +1005,13 @@ Gate A 前不复现 HybRank 或 QuDAR。Gate A = Go 后，只有目标渠道和�
 
 | 版本 | 时间 | 原因 | 是否已看相关结果 | 影响范围 |
 | --- | --- | --- | --- | --- |
+| v26 | 2026-08-29 | 研究负责人确认 provider-managed Dense/Sparse 不设置数值误差或 exact 重放标准；旧五项 Dense 容差不再作为现行 Gate | 已观察 v6-Dev v4/v5 的在线数值差异和候选/排名稳定性；未运行 Reranker、Gate A/B 或 M1 | 冻结 `ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2`：在线路由单次生成、结构校验、哈希封存，禁止因数值差异重跑或择优；跨运行差异仅作描述。本地确定性环节仍须 exact，v5 无需重跑；不改变任何科学 estimand、效应门槛、确认性人口或 Gate 规则 |
+| v25 | 2026-08-29 | 在不重跑失败计划的前提下修复 Dev 三路 runner 的本地存储与 manifest 封存缺陷，并以独立 v5 计划完成真实三路物化和只读核验 | 已观察 v5 的 Dev 候选集合、三路分数/排名、人工标签覆盖与跨 v4/v5 数值差异；未运行 Reranker、Gate A/B 或 M1 | v2/v3 保持失败、v4 保持完整性拒收；v5 固定为 Dev-only `VERIFIED/NOT_ELIGIBLE`。只关闭 v6-Dev route evidence，不改变科学构念、Gate estimand、阈值、确认性人口或正式 P4-02 状态 |
+| v24 | 2026-08-29 | 获确认的 Dev 三路 v2 运行在首次 Qdrant 只读探测时超时；按冻结失败规则停止，并只读定位为缺少 SSH 本地转发 | 只观察 transport exception、运行状态和 collection 不存在；Dense/Sparse 请求、候选、Reranker、Gate A/B 与方法结果均未产生或读取 | v2 固定为 `FAILED_NO_AUTORETRY`/1 次尝试，不得重跑；建立健康 SSH 隧道后另备 v3 计划，保持 `PREPARED`/0 次尝试并等待新确认。科学构念、Gate 规则、阈值与分母不变 |
+| v23 | 2026-08-29 | 为 28 个已仲裁 Dev family 建立真实三路证据的一次性准备/执行边界，并针对 C2 类别失衡冻结 8 槽最小补充方案 | 只读取既有 Dev 人工标签分布并运行本地结构/契约测试；真实 Dense/Sparse/Qdrant 检索尚未执行，Gate A/B 与方法结果均未查看 | 三路运行保持 `PREPARED`、零执行尝试；C2 包保持 8 个规划槽、0 正文/0 标签。两者均为 Dev-only、`NOT_ELIGIBLE`，不完成正式 P4-02，不改变 Gate 估计量、阈值或分母 |
+| v22 | 2026-08-29 | 完成 v6-Dev 30-family A/B 双审、提交锁定、机械校验和主持人仲裁 | 已查看 Dev 人工标签及构造角色偏差；未运行检索/Reranker、Gate A/B 或方法实验 | 固定人工接纳 28/30、拒绝 2 个控制失败 family；28 个主冲突均为 detectable-only，故不声称 C2 三分边界已覆盖。Dev 仍不得迁入 GateA/Blind，Gate 规则与分母不变 |
+| v21 | 2026-08-29 | 执行已在 v20 预先授权的 v6-Dev 30-family 受控合成先导，并为截断/结构失败建立不可覆盖的最小恢复链与双人盲审包 | 已查看 Dev 生成调用、token/费用、确定性结构校验和历史精确全文重合审计；尚未查看任何人工复核、检索/Reranker、Gate A/B 或方法结果 | 固定报告首批结构产率 24/30、总调用 43、恢复后待审提案 30/30；不改变 C1/C2/C3、六单元 estimand、Gate 阈值、自然来源锚点要求或确认性分母；人工接纳率仍为空 |
+| v20 | 2026-08-29 | P2 双人校准及五例替换重放通过；研究负责人此前已明确授权用项目配置的 DeepSeek 生成 v6 高质量合成样本并接受人工复核，现将该路径正式写入权威协议 | 已查看 P2 构念校准结果，只用于判断标注手册是否达到预先冻结的准入线；未生成或查看 30-family、Gate A/B、Reranker 或方法结果 | 标注手册升级为 v2；授权受控合成 30-family 仅用于 v6-Dev 构造率先导；保持 GateA/Blind 的独立自然来源锚点、每数据集非零自然候选配额、六单元等权 estimand、4/6 方向规则和全部 Gate 阈值不变 |
 | v19 | 2026-08-28 | 研究负责人确认以 Qwen3-Reranker-0.6B 与 Jina v2 multilingual 作为 Gate A 两个独立 Reranker 家族 | Gate A/B 与 Dev 排序效果均未读取；只核对项目真实模型、固定公开制品、许可、合成探针重放和独立学术采用 | 冻结两个 Reranker 的模型 ID/revision、家族角色和不得按效果换模规则；不改变六单元等权 estimand、4/6 方向规则、RQ、Gate 阈值或数据分母；P3-05 仍待资源与 Dev 契约 |
 | v18 | 2026-08-28 | 研究负责人纠正真实 Learned Sparse 使用豆包在线 API，并明确淘汰 BGE-M3；同时重申医学场景不是研究终点 | Gate A/B 均未运行；只核对本地真实配置、兼容代码和一次固定无标签 API 探针，没有查看排序或研究结果 | 固定真实三路；BGE 历史 sidecar 退出 route、\(S_{qg}(c)\) 与独立审计；主相似度编码器回到结果不可见的重新选择门禁；cMedQA2 保留主数据角色但域只作分层，不改变 RQ、Gate estimand、比较家族或门槛 |
 | v17 | 2026-08-28 | 研究负责人要求不对 2,536 条未解析记录中的 qrel 关联项作专项标记或处理，并把 DuRetrieval 的独立性与完整性置于首位 | Gate A/B 均未运行；只使用既有固定 revision、文件摘要和公开实体计数，没有查看新的排序结果 | 完整保留 pinned C-MTEB DuRetrieval 的 100,001/2,000/9,839 实体且禁止重合扣除；2,536 条 `unresolved_neither` 统一保持一个仅审计类别；DuRetrieval 作为六单元 Gate 之外的预先声明辅助稳健性数据，不改变 RQ、Gate estimand、比较家族、门槛或当前确认性分母 |

@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+"""Execute the explicitly authorized R2 DeepSeek source protocol v2 once."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any
+
+import httpx
+from dotenv import dotenv_values
+
+from linkrag_eval.robust_fusion.r2_source_execution_v2 import (
+    AUTHORIZATION_ID,
+    SOURCE_PROTOCOL_ID_V2,
+    PermanentProviderError,
+    RecoverableTransportError,
+    execute_source_v2,
+    materialize_and_validate_families,
+)
+from linkrag_eval.robust_fusion.r2_source_generation import (
+    EXPECTED_BASE_URL,
+    EXPECTED_MODEL,
+    canonical_json,
+)
+from linkrag_eval.robust_fusion.similarity_dev_calibration import (
+    sha256_file,
+    write_json,
+    write_jsonl,
+)
+from scripts.prepare_robust_fusion_r2_source_execution_v2 import (
+    AUTHORIZATION,
+)
+from scripts.prepare_robust_fusion_r2_source_execution_v2 import (
+    OUTPUT_ROOT as PREPARATION_ROOT,
+)
+from scripts.prepare_robust_fusion_r2_source_execution_v2 import (
+    verify as verify_preparation,
+)
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+LIVE_ROOT = REPO_ROOT / (
+    "runs/robust_fusion/r2_source_execution_v2/"
+    "robust-fusion-r2-source-execution-v2-20260829"
+)
+EXCLUSION = REPO_ROOT / (
+    "runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/"
+    "exclusions/registry.json"
+)
+
+
+def append_jsonl_fsync(path: Path, row: dict[str, Any]) -> None:
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(canonical_json(row) + "\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def validate_authorization(path: Path, *, allow_paid_api: bool) -> dict[str, Any]:
+    if not allow_paid_api:
+        raise RuntimeError("v2 paid source execution requires --allow-paid-api")
+    if path.resolve() != AUTHORIZATION.resolve():
+        raise RuntimeError("v2 execution accepts only the sealed authorization amendment")
+    receipt = json.loads(path.read_text(encoding="utf-8"))
+    if (
+        receipt["authorization_id"] != AUTHORIZATION_ID
+        or receipt["authorized_by"] != "research_lead_user"
+        or receipt["source_protocol_id"] != SOURCE_PROTOCOL_ID_V2
+        or receipt["budget_and_total_call_limit"] is not None
+        or receipt["target"] != "128_of_128_fixed_slots_mechanically_valid"
+    ):
+        raise RuntimeError("v2 authorization amendment drift")
+    return receipt
+
+
+def _load_provider() -> tuple[str, str, str]:
+    values = dotenv_values(REPO_ROOT / ".env.eval")
+    base_url = str(values.get("EVAL_JUDGE_BASE_URL") or "")
+    model = str(values.get("EVAL_JUDGE_MODEL") or "")
+    api_key = str(values.get("EVAL_JUDGE_API_KEY") or "")
+    if base_url != EXPECTED_BASE_URL or model != EXPECTED_MODEL or not api_key:
+        raise RuntimeError("provider configuration does not match sealed DeepSeek identity")
+    return base_url, model, api_key
+
+
+def _line_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    with path.open(encoding="utf-8") as handle:
+        return sum(1 for _line in handle)
+
+
+def execute(authorization_path: Path, *, allow_paid_api: bool) -> dict[str, Any]:
+    verify_preparation()
+    authorization = validate_authorization(authorization_path, allow_paid_api=allow_paid_api)
+    if LIVE_ROOT.exists():
+        raise RuntimeError("source execution v2 live root exists; command replay refused")
+    exclusion = json.loads(EXCLUSION.read_text(encoding="utf-8"))
+    base_url, _model, api_key = _load_provider()
+    LIVE_ROOT.mkdir(parents=True, mode=0o700)
+    write_json(
+        LIVE_ROOT / "authorization_receipt_snapshot.json",
+        {**authorization, "source_sha256": sha256_file(authorization_path)},
+    )
+    audit_path = LIVE_ROOT / "call_audit.jsonl"
+    response_path = LIVE_ROOT / "response_archive_synthetic_only.jsonl"
+    proposal_path = LIVE_ROOT / "accepted_proposals_not_truth.jsonl"
+    for path in (audit_path, response_path, proposal_path):
+        path.touch(exist_ok=False)
+
+    def transport(body: dict[str, Any]) -> dict[str, Any]:
+        try:
+            with httpx.Client(timeout=180.0) as client:
+                response = client.post(
+                    base_url,
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json=body,
+                )
+        except httpx.HTTPError as exc:
+            raise RecoverableTransportError(type(exc).__name__) from exc
+        if response.status_code in {408, 409, 425, 429} or response.status_code >= 500:
+            retry_after = response.headers.get("Retry-After")
+            delay = min(float(retry_after), 10.0) if retry_after and retry_after.isdigit() else 1.0
+            time.sleep(delay)
+            raise RecoverableTransportError(f"HTTP_{response.status_code}")
+        if response.status_code >= 400:
+            raise PermanentProviderError(f"permanent provider HTTP_{response.status_code}")
+        try:
+            value = response.json()
+        except json.JSONDecodeError as exc:
+            raise PermanentProviderError("provider envelope is not JSON") from exc
+        if not isinstance(value, dict):
+            raise PermanentProviderError("provider envelope must be an object")
+        return value
+
+    try:
+        result = execute_source_v2(
+            transport=transport,
+            exclusion_registry=exclusion,
+            audit_sink=lambda row: append_jsonl_fsync(audit_path, dict(row)),
+            response_sink=lambda row: append_jsonl_fsync(response_path, dict(row)),
+            proposal_sink=lambda row: append_jsonl_fsync(proposal_path, dict(row)),
+        )
+        proposals = result.pop("proposals")
+        families, validation = materialize_and_validate_families(proposals, exclusion)
+    except Exception as exc:
+        write_json(
+            LIVE_ROOT / "terminal_error.json",
+            {
+                "status": "SOURCE_EXECUTION_V2_ABORTED_FAIL_CLOSED",
+                "error_type": type(exc).__name__,
+                "error": str(exc)[:500],
+                "accepted_slots_persisted": _line_count(proposal_path),
+                "audit_events_persisted": _line_count(audit_path),
+                "responses_persisted": _line_count(response_path),
+                "command_level_retry_performed": False,
+            },
+        )
+        raise
+
+    data_root = LIVE_ROOT / "data_lock"
+    data_root.mkdir()
+    write_jsonl(data_root / "families.jsonl", families)
+    write_json(data_root / "validation.json", validation)
+    data_files = []
+    for path in (
+        audit_path,
+        response_path,
+        proposal_path,
+        data_root / "families.jsonl",
+        data_root / "validation.json",
+    ):
+        data_files.append(
+            {
+                "path": str(path.relative_to(LIVE_ROOT)),
+                "sha256": sha256_file(path),
+                "size_bytes": path.stat().st_size,
+            }
+        )
+    data_manifest = {
+        "status": "R2_SOURCE_DATA_LOCK_COMPLETE_AWAITING_ENCODERS",
+        "source_protocol_id": SOURCE_PROTOCOL_ID_V2,
+        "authorization_id": AUTHORIZATION_ID,
+        "preparation_manifest_sha256": sha256_file(PREPARATION_ROOT / "manifest.json"),
+        "fixed_families": 128,
+        "fixed_candidate_denominator": 256,
+        "construction_role_is_truth": False,
+        "validation": validation,
+        "files": data_files,
+    }
+    write_json(data_root / "manifest.json", data_manifest)
+    write_json(
+        data_root / "lock.json",
+        {
+            "status": "LOCKED_BEFORE_E5_DISTILUSE_OR_HUMAN_REVIEW",
+            "manifest_sha256": sha256_file(data_root / "manifest.json"),
+            "locked_at_unix_ns": time.time_ns(),
+        },
+    )
+    result.update(
+        {
+            "status": "R2_SOURCE_DATA_LOCK_COMPLETE_AWAITING_ENCODERS",
+            "data_manifest_sha256": sha256_file(data_root / "manifest.json"),
+            "data_lock_sha256": sha256_file(data_root / "lock.json"),
+            "family_validation": validation,
+        }
+    )
+    write_json(LIVE_ROOT / "result.json", result)
+    return result
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command", choices=("execute",))
+    parser.add_argument("--authorization-receipt", type=Path, required=True)
+    parser.add_argument("--allow-paid-api", action="store_true")
+    args = parser.parse_args()
+    result = execute(args.authorization_receipt, allow_paid_api=args.allow_paid_api)
+    print(canonical_json(result))
+
+
+if __name__ == "__main__":
+    main()

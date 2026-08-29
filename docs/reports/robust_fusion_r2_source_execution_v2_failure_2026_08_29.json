@@ -1,0 +1,43 @@
+{
+  "event_id": "ROBUST-FUSION-R2-SOURCE-V2-PROMPT-CONTRACT-FAILURE-20260829",
+  "research_id": "ROBUST-FUSION-R2-2026-08-29",
+  "classification": "PROMPT_CONTRACT_IMPLEMENTATION_FAILURE",
+  "not_a_result_of": [
+    "source data quality",
+    "R2 measurement",
+    "encoder validity",
+    "human annotation",
+    "readiness",
+    "Gate A or Gate B"
+  ],
+  "command_exit_code": 1,
+  "command_level_retry_performed": false,
+  "fixed_slot": "R2SRC-001",
+  "accepted_slots": 0,
+  "provider_responses": 24,
+  "audit_events": 48,
+  "failure_category": "schema",
+  "failure_count": 24,
+  "mechanical_diagnosis": {
+    "exact_keys_and_slot_identity_passed": 24,
+    "reference_equals_equivalent_candidate": 23,
+    "reference_equivalent_and_conflict_all_equal": 1,
+    "frozen_parser_rule": "four text fields must be pairwise distinct after normalization"
+  },
+  "usage": {
+    "prompt_tokens": 9811,
+    "completion_tokens": 3065,
+    "prompt_cache_hit_tokens": 0,
+    "prompt_cache_miss_tokens": 9811,
+    "peak_estimated_cost_usd": 0.00836264
+  },
+  "v2_preparation_manifest_sha256": "9f9a2976d17a403d25cf6e055df935bf661fce07e8d6420cc00a9c57bc5916bf",
+  "v2_live_files": {
+    "authorization_receipt_snapshot.json": "18a214a599d632921b46a8d75bf7147181382b43eff5f96d0613746323439ef2",
+    "call_audit.jsonl": "bbbb578a74f491630e5a69d7e056dca678ad3f63adb840f4d314d6482d712483",
+    "response_archive_synthetic_only.jsonl": "79e7f2bb1ac09b33cedc9ae2fef7e9ec7e115514e2fe43b108f72fa2d4e4a447",
+    "accepted_proposals_not_truth.jsonl": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "terminal_error.json": "417b4a2d441f0f45d3ff3d4626b0db578f976218c48d6cec15b635ceaa603a92"
+  },
+  "disposition": "PERMANENTLY_RETAINED_SUPERSEDED_BY_PROMPT_ONLY_V3_RECOVERY"
+}

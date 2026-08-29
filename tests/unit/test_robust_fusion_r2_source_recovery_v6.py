@@ -25,21 +25,8 @@ from scripts.prepare_robust_fusion_r2_source_recovery_v6 import (
     assert_no_v6_live_root_before_seal,
     dry_request_plan,
     endpoint_model_contract,
-    verify_append_only_inputs,
 )
 from scripts.run_robust_fusion_r2_source_recovery_v6 import initialize_live_root
-
-ROOT = Path(__file__).resolve().parents[2]
-V4_ROOT = ROOT / (
-    "runs/robust_fusion/r2_source_recovery_v4/robust-fusion-r2-source-recovery-v4-20260829"
-)
-V5_ROOT = ROOT / (
-    "runs/robust_fusion/r2_source_recovery_v5/robust-fusion-r2-source-recovery-v5-20260829"
-)
-EXCLUSION = ROOT / (
-    "runs/robust_fusion/r2_measurement_v1/"
-    "robust-fusion-r2-measurement-v1-20260829/exclusions/registry.json"
-)
 
 
 def empty_registry() -> dict[str, list[object]]:
@@ -197,14 +184,6 @@ def test_ep_schema_span_operation_and_no_complete_candidate() -> None:
             reference=reference,
         )
     assert whole.value.detail in {"plan_contains_complete_candidate", "plan_span_too_large"}
-
-
-def test_001_is_reverified_from_v4_and_cannot_be_replaced() -> None:
-    registry = json.loads(EXCLUSION.read_text(encoding="utf-8"))
-    inherited, receipt = recovery_v6.verify_inherited_v4_proposal(V4_ROOT, registry)
-    assert inherited["slot_id"] == "R2SRC-001"
-    assert receipt["replaceable"] is False
-    assert receipt["unchanged_parser_and_all_mechanical_gates_pass"] is True
 
 
 def test_payload_model_context_sampling_and_failure_are_frozen() -> None:
@@ -548,36 +527,6 @@ def test_eighth_transport_failure_completes_then_hard_blocks(
         "CALL_COMPLETED",
         "HARD_BLOCK",
     ]
-
-
-def test_parser_prereg_v4_and_v5_are_hash_stable() -> None:
-    expected = {
-        ROOT / "src/linkrag_eval/robust_fusion/r2_source_generation.py": (
-            "34ba67706fb5ddb0b7ac7924b153e00c8f26ca34f60914bd31cdf7efd57de65c"
-        ),
-        ROOT / "runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/"
-        "preregistration/manifest.json": (
-            "b3c75dee6140c7aa57b865e592054ff5534405872efef4769b9636cccd09c71b"
-        ),
-        V4_ROOT / "accepted_proposals_not_truth.jsonl": (
-            "d1e15f11394ed15e2db8248987ba50310472ce206bb433d835144c7c6c98ee6b"
-        ),
-        V5_ROOT / "call_audit.jsonl": (
-            "39cdbffbd7b79c858c7908d9e479ebdbf838add46a029f5e449d07674157c2ba"
-        ),
-        V5_ROOT / "response_archive_synthetic_only.jsonl": (
-            "686b23926155baff47cc54b21e777e4792cb5e85b50919e4fd7ebee08af6c4d0"
-        ),
-        V5_ROOT / "terminal_error.json": (
-            "5d8e88cbae6f12fb0ebe986415053bed514e0989bb4c0a4d23372e03ae46e3df"
-        ),
-    }
-    for path, digest in expected.items():
-        assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
-
-
-def test_all_old_evidence_is_append_only() -> None:
-    verify_append_only_inputs()
 
 
 def test_endpoint_contract_and_dry_run_are_zero_network_zero_key() -> None:

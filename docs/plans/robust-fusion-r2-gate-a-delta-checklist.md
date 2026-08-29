@@ -13,15 +13,8 @@
 
 ## B. 全新 R2 Dev（一次性）
 
-- [x] 在任何 R2 正文前封存 DeepSeek source-generation implementation、价格快照、128-slot registry、代码快照与授权模板；零网络 dry-run 为 384 个唯一信封、理论 peak `$3.3792`、硬熔断 `$5.00`。
-- [x] 永久封存 v2 prompt-contract failure 与 v3 聚合无进展现场；两者均为 source implementation diagnostic，不是数据/measurement/Gate 结果。
-- [x] 协调方批准并在结果前封存最小 v4 分阶段 prompt orchestration；v4 单次正式命令在 1/128 接受后因同一 slot/stage 相同响应六次而 fail-closed。
-- [x] 协调方批准并在任何新响应前封存保守 v5；逐字节继承并 hard-lock R2SRC-001，从 R2SRC-002 的全新 R 开始，substantive retry 与 crash-consistent audit 目标测试和全量非集成测试通过。
-- [x] v5 单次正式命令在 R2SRC-002/R 形成 attempt-scoped lock 后，E 的两个响应 hash 分别出现 6/4 次且均因 normalized 后等于 reference 机械失败；第六次重复在 `CALL_COMPLETED` 后触发 frozen breaker，命令 fail-closed 且未重跑。
-- [x] 协调方批准并在任何 v6 响应前封存 outcome-aware engineering recovery：R→EP→E→C、固定 `deepseek-v4-pro`、Flash/Pro provenance、plan exhaustion 与全部 breaker 均结果前写定。
-- [x] v6 单次正式命令永久接受 R2SRC-002；R2SRC-003 的 R/EP/E 机械通过，但 C 同一 response hash 六次且 normalized 等于 equivalent，按 frozen breaker fail-closed。accepted ledger 为 2/128，未重跑、未回退 Flash。
-- [x] 负责人授权 Codex source v7；逐字节 hard-lock 001/002，003–128 append-only 直接撰写，首个机械 PASS 永久接受，DeepSeek v2–v6 现场继续只读。
-- [x] 完成 128 个全新 family-disjoint Dev family；accepted ledger 与失败 attempt/hash 全部保留，未用外部生成服务或模型分数调文。
+- [x] 负责人授权 Codex source v7；001/002 继承既有首个机械合格对象，003–128 以 append-only 首个机械 PASS 完成。旧 DeepSeek source v1–v6 计划与运行现场已按负责人 2026-08-30 的明确指令物理删除，不再列为活动制品。
+- [x] 完成 128 个全新 family-disjoint Dev family；v7 accepted ledger 与失败 attempt/hash 保留，未用编码器分数或人工结果调文。
 - [x] 在看编码器分数前锁定全部正文、来源、strata、冲突类型、编辑强度和固定分母。旧 v7 final lock 的同-family template 作用域缺陷 fail-closed 留痕；v7.1 仅修复 cross-family 执行作用域并先封存，不改 parser/prereg/accepted rows。
 - [x] 单次计算冻结 E5/DistilUSE 并封存 provenance、向量、输入/token/截断与分数哈希；未按分数替换候选。
 - [x] 生成双盲 A/B relation 与 similarity 包；每位研究员 512 行。

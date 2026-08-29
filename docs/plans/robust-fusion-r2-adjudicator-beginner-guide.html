@@ -1,0 +1,1256 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>R2 独立人工仲裁指南｜初心者版</title>
+  <style>
+    :root {
+      --ink: #18212f;
+      --muted: #5e6b7a;
+      --paper: #ffffff;
+      --canvas: #f3f6f8;
+      --line: #d9e0e7;
+      --blue: #155eef;
+      --blue-soft: #eaf1ff;
+      --teal: #087d70;
+      --teal-soft: #e7f7f3;
+      --amber: #9a5b00;
+      --amber-soft: #fff4dd;
+      --red: #b42318;
+      --red-soft: #fff0ee;
+      --violet: #6d3cc7;
+      --violet-soft: #f3edff;
+      --shadow: 0 16px 40px rgba(24, 33, 47, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.75;
+    }
+    a { color: var(--blue); }
+    code, kbd {
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+    code {
+      padding: 0.1em 0.35em;
+      border: 1px solid #dfe5eb;
+      border-radius: 6px;
+      background: #f7f9fb;
+    }
+    code.path {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    kbd {
+      padding: 0.12em 0.45em;
+      border: 1px solid #b9c2cc;
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      background: #fff;
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 28px auto 72px;
+    }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 46px clamp(24px, 6vw, 72px);
+      color: #fff;
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 85% 15%, rgba(255,255,255,.18), transparent 30%),
+        linear-gradient(135deg, #123b74 0%, #155eef 55%, #0a8274 100%);
+      box-shadow: var(--shadow);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      bottom: -110px;
+      width: 320px;
+      height: 320px;
+      border: 46px solid rgba(255,255,255,.08);
+      border-radius: 50%;
+    }
+    .eyebrow {
+      margin: 0 0 10px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      opacity: .86;
+    }
+    h1 {
+      max-width: 850px;
+      margin: 0;
+      font-size: clamp(2rem, 4.5vw, 3.7rem);
+      line-height: 1.15;
+      letter-spacing: -.025em;
+    }
+    .subtitle {
+      max-width: 820px;
+      margin: 18px 0 0;
+      font-size: 1.08rem;
+      opacity: .94;
+    }
+    .badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+    .badge {
+      padding: 7px 12px;
+      border: 1px solid rgba(255,255,255,.35);
+      border-radius: 999px;
+      background: rgba(255,255,255,.13);
+      font-size: .9rem;
+      font-weight: 700;
+      backdrop-filter: blur(6px);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr);
+      gap: 24px;
+      margin-top: 24px;
+      align-items: start;
+    }
+    .toc {
+      position: sticky;
+      top: 18px;
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: 0 8px 24px rgba(24, 33, 47, .05);
+    }
+    .toc h2 {
+      margin: 0 0 10px;
+      font-size: 1rem;
+    }
+    .toc ol {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+    .toc li { margin: 6px 0; }
+    .toc a {
+      color: #334155;
+      text-decoration: none;
+    }
+    .toc a:hover { color: var(--blue); }
+    .print-button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 10px 14px;
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      background: var(--blue);
+      font: inherit;
+      font-weight: 750;
+      cursor: pointer;
+    }
+
+    main { min-width: 0; }
+    section {
+      margin-bottom: 24px;
+      padding: clamp(22px, 4vw, 42px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--paper);
+      box-shadow: 0 8px 28px rgba(24, 33, 47, .045);
+    }
+    section > :first-child { margin-top: 0; }
+    section > :last-child { margin-bottom: 0; }
+    h2 {
+      margin: 0 0 18px;
+      font-size: clamp(1.45rem, 2.5vw, 2rem);
+      line-height: 1.3;
+    }
+    h3 {
+      margin: 30px 0 12px;
+      font-size: 1.22rem;
+      line-height: 1.4;
+    }
+    h4 {
+      margin: 22px 0 8px;
+      font-size: 1.04rem;
+    }
+    p { margin: 10px 0; }
+    ul, ol { padding-left: 1.4rem; }
+    li + li { margin-top: 5px; }
+
+    .lead {
+      font-size: 1.08rem;
+      color: #334155;
+    }
+    .callout {
+      margin: 18px 0;
+      padding: 17px 19px;
+      border-left: 5px solid var(--blue);
+      border-radius: 12px;
+      background: var(--blue-soft);
+    }
+    .callout strong { display: inline-block; margin-bottom: 2px; }
+    .callout.warning {
+      border-left-color: var(--amber);
+      background: var(--amber-soft);
+    }
+    .callout.danger {
+      border-left-color: var(--red);
+      background: var(--red-soft);
+    }
+    .callout.success {
+      border-left-color: var(--teal);
+      background: var(--teal-soft);
+    }
+    .callout.violet {
+      border-left-color: var(--violet);
+      background: var(--violet-soft);
+    }
+
+    .grid-2, .grid-3 {
+      display: grid;
+      gap: 16px;
+    }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .card {
+      padding: 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfcfd;
+    }
+    .card h3, .card h4 { margin-top: 0; }
+    .step-number {
+      display: inline-grid;
+      place-items: center;
+      width: 32px;
+      height: 32px;
+      margin-right: 8px;
+      color: #fff;
+      border-radius: 50%;
+      background: var(--blue);
+      font-weight: 800;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      margin: 16px 0;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      font-size: .95rem;
+    }
+    th, td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      color: #26364a;
+      background: #f2f5f8;
+      font-weight: 800;
+    }
+    tr:last-child td { border-bottom: 0; }
+    .nowrap { white-space: nowrap; }
+
+    .flow {
+      display: grid;
+      gap: 10px;
+      margin: 18px 0;
+    }
+    .flow-item {
+      position: relative;
+      padding: 15px 18px 15px 48px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfcfd;
+    }
+    .flow-item::before {
+      content: attr(data-step);
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      color: #fff;
+      border-radius: 50%;
+      background: var(--teal);
+      font-size: .82rem;
+      font-weight: 800;
+    }
+
+    .scale-row {
+      display: grid;
+      grid-template-columns: 48px 145px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 13px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .scale-row:last-child { border-bottom: 0; }
+    .score {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      color: #fff;
+      border-radius: 12px;
+      background: var(--violet);
+      font-size: 1.25rem;
+      font-weight: 850;
+    }
+    .scale-name { font-weight: 800; }
+
+    .case {
+      margin: 22px 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+    .case-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 16px 20px;
+      background: linear-gradient(90deg, #eef4ff, #f0faf8);
+    }
+    .case-header h3 { margin: 0; }
+    .case-tag {
+      align-self: center;
+      padding: 4px 9px;
+      border-radius: 999px;
+      color: #155b50;
+      background: #dff3ee;
+      font-size: .82rem;
+      font-weight: 800;
+    }
+    .case-body { padding: 18px 20px 20px; }
+    .text-triplet {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .text-box {
+      padding: 13px 15px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfcfe;
+    }
+    .text-box b {
+      display: inline-block;
+      min-width: 5em;
+      color: #46566a;
+    }
+    details {
+      margin-top: 12px;
+      border: 1px dashed #aeb9c5;
+      border-radius: 11px;
+      background: #fcfdff;
+    }
+    summary {
+      padding: 12px 15px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    details > div { padding: 0 15px 15px; }
+    .answer {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .answer > div {
+      padding: 10px 12px;
+      border-radius: 9px;
+      background: var(--teal-soft);
+    }
+
+    .csv-example {
+      overflow-x: auto;
+      padding: 14px;
+      color: #d9e2ec;
+      border-radius: 12px;
+      background: #14202e;
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: .83rem;
+      line-height: 1.7;
+      white-space: pre;
+    }
+    .checklist {
+      list-style: none;
+      padding: 0;
+    }
+    .checklist li {
+      position: relative;
+      padding: 8px 0 8px 34px;
+      border-bottom: 1px solid #edf0f3;
+    }
+    .checklist li::before {
+      content: "□";
+      position: absolute;
+      left: 4px;
+      top: 6px;
+      color: var(--blue);
+      font-size: 1.3rem;
+      font-weight: 800;
+    }
+    .checklist li:last-child { border-bottom: 0; }
+
+    footer {
+      padding: 20px;
+      color: var(--muted);
+      text-align: center;
+      font-size: .9rem;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .toc { position: static; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
+      .scale-row { grid-template-columns: 48px 1fr; }
+      .scale-row > :last-child { grid-column: 1 / -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 18px, 1180px); margin-top: 9px; }
+      .hero { border-radius: 18px; padding: 30px 22px; }
+      section { padding: 21px 17px; }
+      .answer { grid-template-columns: 1fr; }
+      th, td { padding: 10px; }
+    }
+    @media print {
+      @page { margin: 14mm; }
+      body { background: #fff; font-size: 10.5pt; }
+      .page { width: 100%; margin: 0; }
+      .hero { box-shadow: none; border-radius: 0; print-color-adjust: exact; }
+      .layout { display: block; }
+      .toc, .print-button { display: none; }
+      section { box-shadow: none; break-inside: avoid; }
+      .case { break-inside: avoid; }
+      details { break-inside: avoid; }
+      details > div { display: block !important; }
+      a { color: inherit; text-decoration: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <p class="eyebrow">Robust Fusion R2 · Human Adjudication</p>
+      <h1>R2 独立人工仲裁指南</h1>
+      <p class="subtitle">
+        面向第一次参加文本关系与相似度仲裁的研究员。本指南解释你会看到什么、每一列怎么填、
+        怎样处理两位评审的分歧，以及怎样在不受实验目标影响的前提下作出可复查的独立判断。
+      </p>
+      <div class="badges" aria-label="任务摘要">
+        <span class="badge">关系仲裁：7 行</span>
+        <span class="badge">相似度仲裁：96 行</span>
+        <span class="badge">离线独立完成</span>
+        <span class="badge">示例全部为虚构材料</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <nav class="toc" aria-label="目录">
+        <h2>快速目录</h2>
+        <ol>
+          <li><a href="#mission">你的任务</a></li>
+          <li><a href="#boundaries">信息边界</a></li>
+          <li><a href="#files">文件与操作</a></li>
+          <li><a href="#reading">两遍阅读法</a></li>
+          <li><a href="#relation">关系仲裁</a></li>
+          <li><a href="#similarity">相似度仲裁</a></li>
+          <li><a href="#examples">虚构标注案例</a></li>
+          <li><a href="#uncertain">不确定与备注</a></li>
+          <li><a href="#checklist">交付前检查</a></li>
+        </ol>
+        <button class="print-button" type="button" onclick="window.print()">打印 / 另存为 PDF</button>
+      </nav>
+
+      <main>
+        <section id="mission">
+          <h2>1. 你的任务是什么</h2>
+          <p class="lead">
+            你不是来判断“哪个评审员更可靠”，也不是来帮助实验得到某个结果。你要做的是：
+            针对每个分歧案例，依据 <b>Query、Reference 和 Candidate 三段文字</b>，给出一个独立、唯一、可解释的最终人工判断。
+          </p>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>任务 A：关系仲裁</h3>
+              <p>判断参照是否有效、目标事实是否唯一、候选与参照是等价还是事实冲突，以及冲突属于哪一类。</p>
+              <p><b>工作量：</b>7 行。</p>
+            </div>
+            <div class="card">
+              <h3>任务 B：相似度仲裁</h3>
+              <p>只判断两段文本在语义内容上的接近程度，用 1–7 的整数评分；事实正确与否不能自动决定相似度。</p>
+              <p><b>工作量：</b>96 行。</p>
+            </div>
+          </div>
+
+          <div class="callout success">
+            <strong>一句话抓住核心：</strong>
+            “事实关系”和“语义相似度”是两个不同问题。两句话可以非常相似，却只在一个数字上互相冲突；
+            也可以都谈同一主题，却没有在说同一件事。
+          </div>
+
+          <div class="callout warning">
+            <strong>本指南中的例子不是实际研究数据。</strong>
+            例子中的机构、设备、日期、人物和规则均为教学用途的虚构内容，不能复制到正式提交文件中。
+          </div>
+        </section>
+
+        <section id="boundaries">
+          <h2>2. 必须遵守的信息边界</h2>
+          <p>独立性比“猜中研究团队想要什么”更重要。请在整个任务中遵守下面的边界。</p>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>你可以查看</h3>
+              <ul>
+                <li>本指南；</li>
+                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/README.txt</code>；</li>
+                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/cases.csv</code>；</li>
+                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission_template.csv</code>；</li>
+                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/README.txt</code>；</li>
+                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/cases.csv</code>；</li>
+                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission_template.csv</code>；</li>
+                <li>普通词典，用于确认单词字面含义，但不要上传整行文本。</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>你不得查看或使用</h3>
+              <ul>
+                <li><code>facilitator</code> 目录、自动模型分数或分带；</li>
+                <li>候选的生成来源、构造角色或预期答案；</li>
+                <li>实验通过条件、先前实验结果或其他仲裁员的最终提交；</li>
+                <li>搜索引擎、外部事实核查、LLM、翻译模型或自动评分工具；</li>
+                <li>任何“为了让实验通过应该怎样打分”的建议。</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="callout danger">
+            <strong>如果有人告诉你“应该多打某个分数”“某类候选应该统一判成某标签”或“这样实验才会通过”，请暂停任务并联系协调人。</strong>
+            仲裁必须由文本本身决定，不能由期望结果决定。
+          </div>
+
+          <p>
+            <b>不要联网核实虚构事实。</b> 在本任务中，Reference 是待检查的参照文本；你需要判断它是否在当前案例中回答了 Query，
+            并比较 Candidate 与它的关系，而不是调查这些名称在现实世界是否存在。
+          </p>
+        </section>
+
+        <section id="files">
+          <h2>3. 你会收到哪些文件，应该怎样操作</h2>
+
+          <div class="callout">
+            <strong>以下路径均相对于 LinkRag-Eval 项目根目录；只在这两个指定目录工作：</strong><br>
+            关系目录：<code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/</code><br>
+            相似度目录：<code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/</code><br>
+            不要进入同级或上级的其他研究目录。
+          </div>
+
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>文件</th><th>作用</th><th>能否修改</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/README.txt</code><br>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/README.txt</code>
+                  </td>
+                  <td>目录内的最简正式说明。</td>
+                  <td><b>不能</b></td>
+                </tr>
+                <tr>
+                  <td>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/cases.csv</code><br>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/cases.csv</code>
+                  </td>
+                  <td>显示 Query、Reference、Candidate，以及 A/B 的原始分歧。</td>
+                  <td><b>不能</b></td>
+                </tr>
+                <tr>
+                  <td>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission_template.csv</code><br>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission_template.csv</code>
+                  </td>
+                  <td>空白提交模板。</td>
+                  <td><b>保留原文件不动</b></td>
+                </tr>
+                <tr>
+                  <td>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code><br>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code>
+                  </td>
+                  <td>你复制模板后填写的唯一正式提交。</td>
+                  <td><b>只修改这一份</b></td>
+                </tr>
+                <tr>
+                  <td>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/package_manifest.json</code><br>
+                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/package_manifest.json</code>
+                  </td>
+                  <td>记录包内文件的完整性。</td>
+                  <td><b>不能</b></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>准确操作顺序</h3>
+          <div class="flow">
+            <div class="flow-item" data-step="1">先进入 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/</code>。将 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission_template.csv</code> 复制为 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code>。</div>
+            <div class="flow-item" data-step="2">逐行读取 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/cases.csv</code>，把最终关系判断填写进 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code>。</div>
+            <div class="flow-item" data-step="3">保存、关闭关系文件；建议休息约 10 分钟。不要在相似度任务中查看刚才的关系答案。</div>
+            <div class="flow-item" data-step="4">进入 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/</code>，将其中的 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission_template.csv</code> 复制为 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code>，再完成 96 行评分。</div>
+            <div class="flow-item" data-step="5">运行本指南末尾的人工检查；不要改文件名、表头、ID 或行数。</div>
+            <div class="flow-item" data-step="6">通知协调人 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code> 与 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code> 均已完成。交付后不要再次打开或修改。</div>
+          </div>
+
+          <div class="callout warning">
+            <strong>CSV 注意事项：</strong>
+            推荐用能稳定保存 UTF-8 CSV 的表格软件。不要插入列、删除行、使用公式、合并单元格或自动改写 ID。
+            所有英文枚举必须严格使用小写，前后不能有空格。
+          </div>
+        </section>
+
+        <section id="reading">
+          <h2>4. 每一行都采用“两遍阅读法”</h2>
+          <p>两位原评审的答案会出现在 <code>reviewer_a_value</code> 和 <code>reviewer_b_value</code> 中。它们是待仲裁的意见，不是答案键。</p>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3><span class="step-number">1</span>第一遍：独立判断</h3>
+              <ol>
+                <li>先把 A/B 两列隐藏、折叠，或用纸遮住；</li>
+                <li>只读 Query、Reference、Candidate；</li>
+                <li>写下你自己的暂定标签或分数；</li>
+                <li>用一句话指出决定判断的文本片段。</li>
+              </ol>
+            </div>
+            <div class="card">
+              <h3><span class="step-number">2</span>第二遍：审阅分歧</h3>
+              <ol>
+                <li>再查看 A/B 原始值及 uncertain 状态；</li>
+                <li>检查是否遗漏了版本、否定、条件或单位；</li>
+                <li>保留或修正自己的判断；</li>
+                <li>不要机械取平均，也不必强行选择 A 或 B。</li>
+              </ol>
+            </div>
+          </div>
+
+          <p>
+            对关系任务，A/B 值通常是一个 JSON 对象；对相似度任务，通常形如 <code>{"score":6}</code>。
+            你可以选择 A、选择 B，或给出另一个合法值，但必须由文本依据支持。
+          </p>
+        </section>
+
+        <section id="relation">
+          <h2>5. 关系仲裁：逐字段说明</h2>
+          <p class="lead">关系任务不是问“这两段话像不像”，而是问“它们对同一个事实说了什么”。</p>
+
+          <h3>5.1 先把 Query 拆成五个部分</h3>
+          <ol>
+            <li><b>实体：</b>问题在问谁或什么？</li>
+            <li><b>事实槽：</b>问的是数量、时间、状态、权限、条件，还是其他属性？</li>
+            <li><b>时间或版本：</b>是否限定“当前”“第几版”“截至某日”？</li>
+            <li><b>方向：</b>允许还是禁止、增加还是减少、存在还是不存在？</li>
+            <li><b>适用条件：</b>是否限定地区、人群、型号、阶段或触发条件？</li>
+          </ol>
+
+          <h3>5.2 提交列与合法值</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>列名</th><th>合法值</th><th>初心者解释</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>adjudication_id</code></td>
+                  <td>模板已给定</td>
+                  <td>原样保留，不能改、不能重新编号。</td>
+                </tr>
+                <tr>
+                  <td><code>valid_reference</code></td>
+                  <td><code>yes</code> / <code>no</code></td>
+                  <td>Reference 是否直接、完整地回答当前 Query，并满足其时间、版本和条件。</td>
+                </tr>
+                <tr>
+                  <td><code>unique_target_group</code></td>
+                  <td><code>yes</code> / <code>no</code></td>
+                  <td>Query 与 Reference 是否指向一个边界清楚、不会产生两套互不兼容答案的目标事实。</td>
+                </tr>
+                <tr>
+                  <td><code>target_relation</code></td>
+                  <td><code>equivalent</code> / <code>factual_conflict</code></td>
+                  <td>Candidate 与 Reference 对同一目标事实给出相容答案，还是给出互不相容的答案。</td>
+                </tr>
+                <tr>
+                  <td><code>conflict_type</code></td>
+                  <td>空白或四类之一</td>
+                  <td>只有 <code>factual_conflict</code> 才填写；<code>equivalent</code> 时必须保持真正的空单元格。</td>
+                </tr>
+                <tr>
+                  <td><code>uncertain</code></td>
+                  <td><code>yes</code> / <code>no</code></td>
+                  <td>完成全部比较后，是否仍存在会改变标签的实质性歧义。</td>
+                </tr>
+                <tr>
+                  <td><code>notes</code></td>
+                  <td>简短文字</td>
+                  <td><code>uncertain=yes</code> 时必须填写；其他情况下强烈建议写明决定性依据。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>5.3 判断流程</h3>
+          <div class="flow">
+            <div class="flow-item" data-step="1"><b>Reference 是否回答 Query？</b> 如果否，填 <code>valid_reference=no</code>。</div>
+            <div class="flow-item" data-step="2"><b>目标事实是否唯一？</b> 如果存在无法合并的两种合理解释，填 <code>unique_target_group=no</code>。</div>
+            <div class="flow-item" data-step="3"><b>Candidate 是否在说同一实体、事实槽、时间和条件？</b> 逐项对齐，不要只看关键词。</div>
+            <div class="flow-item" data-step="4"><b>答案相同或相容？</b> 填 <code>equivalent</code>，并让 <code>conflict_type</code> 保持空白。</div>
+            <div class="flow-item" data-step="5"><b>答案互不相容？</b> 填 <code>factual_conflict</code>，再选且只选一个主冲突类型。</div>
+            <div class="flow-item" data-step="6"><b>仍有会改变结论的歧义？</b> 填 <code>uncertain=yes</code>，并在 notes 中明确缺少什么。</div>
+          </div>
+
+          <div class="callout warning">
+            <strong>如果 Reference 无效或目标组不唯一：</strong>
+            仍不要把模板中的其他必填列留空。请填写当前文本下最可辩护的关系值，同时设置
+            <code>uncertain=yes</code>，在 notes 中明确说明资格缺陷。不要为了“完成任务”把 <code>no</code> 改成 <code>yes</code>。
+          </div>
+
+          <h3>5.4 四种事实冲突</h3>
+          <div class="grid-2">
+            <div class="card">
+              <h4><code>numeric</code>｜数值</h4>
+              <p>同一量、同一单位口径、同一适用范围下，数字、区间、比例、序号或量级不相容。</p>
+              <p><b>不要误判：</b>90 分钟与 1.5 小时换算后相等，不是冲突。</p>
+            </div>
+            <div class="card">
+              <h4><code>version_time</code>｜版本或时间</h4>
+              <p>把错误版本、年份、生效期、截至日期或历史状态当成 Query 所问的版本或时间。</p>
+              <p><b>不要误判：</b>Query 明确问旧版时，旧版信息不是因为“过时”就错误。</p>
+            </div>
+            <div class="card">
+              <h4><code>negation_direction</code>｜否定或方向</h4>
+              <p>允许/禁止、增加/减少、支持/反对、存在/不存在等结论方向相反。</p>
+              <p><b>不要误判：</b>不能只数“否定词”；要看整句含义是否真的反转。</p>
+            </div>
+            <div class="card">
+              <h4><code>applicability_condition</code>｜适用条件</h4>
+              <p>改变决定结论成立的人群、地区、型号、阶段、阈值或触发条件。</p>
+              <p><b>不要误判：</b>无关修饰语缺失，不构成条件冲突。</p>
+            </div>
+          </div>
+
+          <div class="callout violet">
+            <strong>冲突类型只能选一个。</strong>
+            如果同一候选似乎同时改变两个决定性事实槽，先判断哪一个变化直接造成答案不相容；若不能稳定选出主类，
+            仍填写最可辩护的一类，并设 <code>uncertain=yes</code> 说明多重变化。
+          </div>
+
+          <h3>5.5 关系任务最常见的错误</h3>
+          <ul>
+            <li>看到文本非常像，就直接判 <code>equivalent</code>；</li>
+            <li>看到 Candidate 与 Reference 不同，就直接判数值冲突，而没有先核对单位和口径；</li>
+            <li>把阈值条件中的数字变化误判为 <code>numeric</code>，忽略它其实改变了适用范围；</li>
+            <li><code>target_relation=equivalent</code> 时填写 <code>none</code> 或 <code>not_applicable</code>；正确做法是让 <code>conflict_type</code> 单元格真正空白；</li>
+            <li>因为 A/B 有分歧，就自动填写 <code>uncertain=yes</code>。分歧本身不是不确定性的理由。</li>
+          </ul>
+        </section>
+
+        <section id="similarity">
+          <h2>6. 相似度仲裁：1–7 分怎么打</h2>
+          <p class="lead">
+            相似度任务只回答：“Candidate 与 Reference 在语义内容和表达结构上有多接近？”
+            不回答：“Candidate 是否正确？”
+          </p>
+
+          <div class="callout danger">
+            <strong>事实冲突不等于低相似度。</strong>
+            “设备可运行 18 小时”和“设备可运行 16 小时”几乎整句相同，只在一个数字上冲突；它们仍可能是高度相似文本。
+          </div>
+
+          <h3>6.1 七点行为锚定量表</h3>
+          <div class="card">
+            <div class="scale-row">
+              <div class="score">7</div>
+              <div class="scale-name">命题等价</div>
+              <div>事实、关系、时间和条件相同，只是措辞、语序或句法变化；两段可以互相替换而不改变答案。</div>
+            </div>
+            <div class="scale-row">
+              <div class="score">6</div>
+              <div class="scale-name">极高相似</div>
+              <div>近似复述，或只有一个非常局部的事实槽不同；主体、事件框架和绝大多数内容保持一致。</div>
+            </div>
+            <div class="scale-row">
+              <div class="score">5</div>
+              <div class="scale-name">高度相似</div>
+              <div>明显在说同一事实框架，但存在较显眼的结构改写，或一个关键事实槽/关系发生变化。</div>
+            </div>
+            <div class="scale-row">
+              <div class="score">4</div>
+              <div class="scale-name">同一事件框架</div>
+              <div>核心事件或任务相同，但多个关键槽、参与者角色或语义关系不同，不能视作近似复述。</div>
+            </div>
+            <div class="scale-row">
+              <div class="score">3</div>
+              <div class="scale-name">同领域或同实体</div>
+              <div>共享领域、实体或背景，但讲的是不同事件、谓词或事实槽。</div>
+            </div>
+            <div class="scale-row">
+              <div class="score">2</div>
+              <div class="scale-name">宽泛主题重合</div>
+              <div>只有大主题或少量词语重合，无法对齐到同一事件或同一事实。</div>
+            </div>
+            <div class="scale-row">
+              <div class="score">1</div>
+              <div class="scale-name">基本无关</div>
+              <div>主题、实体和事件都不同，几乎没有可解释的语义对应。</div>
+            </div>
+          </div>
+
+          <h3>6.2 临界分数的四个判断问题</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>纠结位置</th><th>问自己</th><th>倾向</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="nowrap">7 还是 6？</td>
+                  <td>两段是否表达完全相同的命题，互换后答案不变？</td>
+                  <td>是 → 7；有任何决定性事实差异 → 不应为 7。</td>
+                </tr>
+                <tr>
+                  <td class="nowrap">6 还是 5？</td>
+                  <td>差异是否只是一个局部槽，且其余结构几乎逐项对应？</td>
+                  <td>几乎逐项对应 → 6；重写或差异更显眼 → 5。</td>
+                </tr>
+                <tr>
+                  <td class="nowrap">5 还是 4？</td>
+                  <td>是否仍能清楚对齐同一事实框架，且主要只变一个关键点？</td>
+                  <td>主要一个关键点 → 5；多个槽或关系改变 → 4。</td>
+                </tr>
+                <tr>
+                  <td class="nowrap">3 还是 2？</td>
+                  <td>是否共享明确实体或事件类型，而不仅是同一大主题？</td>
+                  <td>有明确实体/事件联系 → 3；只有大主题 → 2。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>6.3 相似度评分的固定步骤</h3>
+          <ol>
+            <li>忽略“哪句正确”，先找共同实体与事件；</li>
+            <li>标出可一一对应的谓词、角色、时间、数量和条件；</li>
+            <li>判断差异是零个、一个局部槽，还是多个关键关系；</li>
+            <li>先选大区间：1–2、3–4、5–7；</li>
+            <li>再用上面的临界问题确定唯一整数；</li>
+            <li>最后才查看 A/B 分数，检查自己是否遗漏文本细节。</li>
+          </ol>
+
+          <div class="callout">
+            <strong>不要为了“使用完整量表”而强行制造分布。</strong>
+            每一行只按它自身的文本证据评分。同样，也不要因为前几行都打了 6，就刻意把下一行压成 5。
+          </div>
+        </section>
+
+        <section id="examples">
+          <h2>7. 虚构标注案例</h2>
+          <p>
+            下列案例由本指南作者专门为培训设计，全部为虚构内容。为方便学习，部分案例同时展示关系与相似度答案；
+            <b>正式任务中必须仍按两个物理目录分开完成</b>。建议先自己判断，再展开“参考解析”。
+          </p>
+
+          <article class="case">
+            <div class="case-header">
+              <h3>案例 1：单位换算后的等价表达</h3>
+              <span class="case-tag">equivalent · 7 分</span>
+            </div>
+            <div class="case-body">
+              <div class="text-triplet">
+                <div class="text-box"><b>Query</b> 云岬温室的备用照明可以连续运行多久？</div>
+                <div class="text-box"><b>Reference</b> 云岬温室的备用照明可连续运行 90 分钟。</div>
+                <div class="text-box"><b>Candidate</b> 该温室的备用灯续航为 1.5 小时。</div>
+              </div>
+              <p><b>模拟分歧：</b>A 认为是数字冲突、相似度 6；B 认为等价、相似度 7。</p>
+              <details>
+                <summary>展开参考解析</summary>
+                <div>
+                  <p>90 分钟等于 1.5 小时。实体、事实槽、单位换算后的值和适用范围都一致，所以不是数字冲突。</p>
+                  <div class="answer">
+                    <div><b>关系：</b><code>yes / yes / equivalent / [空白] / no</code></div>
+                    <div><b>相似度：</b><code>7</code></div>
+                  </div>
+                  <p><b>示例 notes：</b>“90 分钟与 1.5 小时换算后相等，表达同一续航命题。”</p>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <article class="case">
+            <div class="case-header">
+              <h3>案例 2：只改变一个数量</h3>
+              <span class="case-tag">numeric · 6 分</span>
+            </div>
+            <div class="case-body">
+              <div class="text-triplet">
+                <div class="text-box"><b>Query</b> 澄海号一次标准巡航携带多少枚采样盒？</div>
+                <div class="text-box"><b>Reference</b> 澄海号标准巡航配置 12 枚采样盒。</div>
+                <div class="text-box"><b>Candidate</b> 澄海号标准巡航配置 14 枚采样盒。</div>
+              </div>
+              <p><b>模拟分歧：</b>A 判 <code>numeric</code>、相似度 6；B 判 <code>version_time</code>、相似度 5。</p>
+              <details>
+                <summary>展开参考解析</summary>
+                <div>
+                  <p>没有任何版本或时间变化；唯一变化是同一单位下的 12 与 14。两句几乎逐词对应，因此事实冲突与高相似可以同时成立。</p>
+                  <div class="answer">
+                    <div><b>关系：</b><code>yes / yes / factual_conflict / numeric / no</code></div>
+                    <div><b>相似度：</b><code>6</code></div>
+                  </div>
+                  <p><b>示例 notes：</b>“同一标准巡航和同一单位，仅采样盒数量 12/14 不相容。”</p>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <article class="case">
+            <div class="case-header">
+              <h3>案例 3：当前版本被旧版本替代</h3>
+              <span class="case-tag">version_time · 5 分</span>
+            </div>
+            <div class="case-body">
+              <div class="text-triplet">
+                <div class="text-box"><b>Query</b> 截至 2032 年 6 月，银栈港当前执行哪一版靠泊规程？</div>
+                <div class="text-box"><b>Reference</b> 第四版靠泊规程自 2032 年 3 月起生效，目前执行第四版。</div>
+                <div class="text-box"><b>Candidate</b> 银栈港现阶段仍按第三版靠泊手册办理船舶进港。</div>
+              </div>
+              <p><b>模拟分歧：</b>A 判 <code>version_time</code>；B 因两句措辞不同而只关注相似度，关系填成 <code>equivalent</code>。</p>
+              <details>
+                <summary>展开参考解析</summary>
+                <div>
+                  <p>Query 明确询问当前执行版本。Reference 说第四版，Candidate 说仍执行第三版，结论互斥；冲突核心是版本状态。表达有明显改写，但事实框架相同。</p>
+                  <div class="answer">
+                    <div><b>关系：</b><code>yes / yes / factual_conflict / version_time / no</code></div>
+                    <div><b>相似度：</b><code>5</code></div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <article class="case">
+            <div class="case-header">
+              <h3>案例 4：允许与禁止的方向反转</h3>
+              <span class="case-tag">negation_direction · 6 分</span>
+            </div>
+            <div class="case-body">
+              <div class="text-triplet">
+                <div class="text-box"><b>Query</b> 雨桥实验室是否允许研究员在夜间单独进入？</div>
+                <div class="text-box"><b>Reference</b> 夜间不得单人进入雨桥实验室。</div>
+                <div class="text-box"><b>Candidate</b> 研究员夜间可以独自进入雨桥实验室。</div>
+              </div>
+              <p><b>模拟分歧：</b>A 判 <code>negation_direction</code>、相似度 6；B 判 <code>applicability_condition</code>、相似度 5。</p>
+              <details>
+                <summary>展开参考解析</summary>
+                <div>
+                  <p>适用范围都是研究员、夜间、单独进入；变化的是“不得”与“可以”的许可方向，所以主类是否定/方向，而不是适用条件。</p>
+                  <div class="answer">
+                    <div><b>关系：</b><code>yes / yes / factual_conflict / negation_direction / no</code></div>
+                    <div><b>相似度：</b><code>6</code></div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <article class="case">
+            <div class="case-header">
+              <h3>案例 5：阈值数字其实决定适用条件</h3>
+              <span class="case-tag">applicability_condition · 5 分</span>
+            </div>
+            <div class="case-body">
+              <div class="text-triplet">
+                <div class="text-box"><b>Query</b> 星纱电池在什么情况下需要启动前预热？</div>
+                <div class="text-box"><b>Reference</b> 只有环境温度低于 −10°C 时，星纱电池才需要预热。</div>
+                <div class="text-box"><b>Candidate</b> 无论环境温度是多少，星纱电池每次启动前都必须预热。</div>
+              </div>
+              <p><b>模拟分歧：</b>A 因看到 −10°C 判 <code>numeric</code>；B 判 <code>applicability_condition</code>。</p>
+              <details>
+                <summary>展开参考解析</summary>
+                <div>
+                  <p>−10°C 不是待回答的“输出数量”，而是规则何时生效的阈值。Candidate 把“仅低于阈值”扩大为“所有温度”，改变的是适用条件。</p>
+                  <div class="answer">
+                    <div><b>关系：</b><code>yes / yes / factual_conflict / applicability_condition / no</code></div>
+                    <div><b>相似度：</b><code>5</code></div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <article class="case">
+            <div class="case-header">
+              <h3>案例 6：英文重度改写但命题相同</h3>
+              <span class="case-tag">equivalent · 7 分</span>
+            </div>
+            <div class="case-body">
+              <div class="text-triplet">
+                <div class="text-box"><b>Query</b> Who may authorize night access to the Lantern Archive?</div>
+                <div class="text-box"><b>Reference</b> Only the duty curator may authorize night access to the Lantern Archive.</div>
+                <div class="text-box"><b>Candidate</b> After dark, permission to enter the Lantern Archive can be issued solely by the curator assigned to that shift.</div>
+              </div>
+              <p><b>模拟分歧：</b>A 给 6 分，认为句法变化明显；B 给 7 分，认为命题可互换。</p>
+              <details>
+                <summary>展开参考解析</summary>
+                <div>
+                  <p><i>the duty curator</i> 与 <i>the curator assigned to that shift</i> 在本句中表达同一角色；<i>night</i> 与 <i>after dark</i> 相容。没有事实变化，结构改写不妨碍命题等价。</p>
+                  <div class="answer">
+                    <div><b>关系：</b><code>yes / yes / equivalent / [空白] / no</code></div>
+                    <div><b>相似度：</b><code>7</code></div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <article class="case">
+            <div class="case-header">
+              <h3>案例 7：同一实体，但讲的是不同事件</h3>
+              <span class="case-tag">相似度练习 · 3 分</span>
+            </div>
+            <div class="case-body">
+              <div class="text-triplet">
+                <div class="text-box"><b>Reference</b> The Aurora rover completes a full battery charge in four hours.</div>
+                <div class="text-box"><b>Candidate</b> The Aurora rover cleans its optical sensors every four hours.</div>
+              </div>
+              <p><b>模拟分歧：</b>A 给 2 分；B 给 4 分。</p>
+              <details>
+                <summary>展开参考解析</summary>
+                <div>
+                  <p>共享明确实体 Aurora rover，也共享“四小时”这一表面片段，但谓词和事实槽完全不同：一个讲充电时长，一个讲清洁频率。它们不是同一事件框架，因此更接近 3，而不是 4。</p>
+                  <div class="answer">
+                    <div><b>相似度：</b><code>3</code></div>
+                    <div><b>提醒：</b>此例只训练相似度，不代表正式关系任务会出现第三类关系标签。</div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <article class="case">
+            <div class="case-header">
+              <h3>案例 8：只有宽泛主题重合</h3>
+              <span class="case-tag">相似度练习 · 2 分</span>
+            </div>
+            <div class="case-body">
+              <div class="text-triplet">
+                <div class="text-box"><b>Reference</b> 青屿观测站每周三校准主天线的方位传感器。</div>
+                <div class="text-box"><b>Candidate</b> 多座海岛科研站正在推广可回收包装材料。</div>
+              </div>
+              <p><b>模拟分歧：</b>A 给 1 分；B 因“海岛科研站”这一主题联系给 3 分。</p>
+              <details>
+                <summary>展开参考解析</summary>
+                <div>
+                  <p>两句都与海岛科研设施有关，但实体、事件、谓词和事实槽都无法对齐。仍有一点宽泛主题联系，所以 2 比 1 或 3 更合适。</p>
+                  <div class="answer">
+                    <div><b>相似度：</b><code>2</code></div>
+                    <div><b>1 分对照：</b>若 Candidate 改为“厨房里的面包在傍晚出炉”，才属于基本无关。</div>
+                  </div>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <article class="case">
+            <div class="case-header">
+              <h3>案例 9：出现两个可能的主冲突</h3>
+              <span class="case-tag">uncertain 练习</span>
+            </div>
+            <div class="case-body">
+              <div class="text-triplet">
+                <div class="text-box"><b>Query</b> 2031 版规范要求哪类巡检员每隔多久复查冷却阀？</div>
+                <div class="text-box"><b>Reference</b> 2031 版要求高级巡检员每 20 天复查一次。</div>
+                <div class="text-box"><b>Candidate</b> 2029 版规定所有巡检员每 45 天复查一次。</div>
+              </div>
+              <p><b>模拟分歧：</b>A 判 <code>version_time</code>；B 判 <code>applicability_condition</code>；两人都指出还存在周期数值变化。</p>
+              <details>
+                <summary>展开参考解析</summary>
+                <div>
+                  <p>版本、人员范围和周期都变化，已经不是理想的“单一事实槽变化”。如果无法稳定确定哪一个是决定性主冲突，应如实保留不确定，而不是假装只有一个变化。</p>
+                  <div class="answer">
+                    <div><b>一种可辩护填写：</b><code>yes / yes / factual_conflict / version_time / yes</code></div>
+                    <div><b>notes：</b>“候选同时改变版本、适用人员和复查周期；暂以 Query 明示的 2031 版为主类，存在多重冲突。”</div>
+                  </div>
+                  <p>这里的重点不是规定必须选 <code>version_time</code>，而是示范：当主类不能由文本唯一确定时，必须把歧义写出来。</p>
+                </div>
+              </details>
+            </div>
+          </article>
+
+          <div class="callout warning">
+            <strong>不要把示例答案当成打分模板。</strong>
+            正式案例可能比示例更短、更长或更模糊。你的任务是复用判断原则，而不是复用示例中的数字或标签比例。
+          </div>
+        </section>
+
+        <section id="uncertain">
+          <h2>8. 什么时候使用 uncertain，notes 怎么写</h2>
+
+          <h3>8.1 <code>uncertain=yes</code> 的适用情形</h3>
+          <ul>
+            <li>关键指代缺失，不知道“它”“该版本”指什么；</li>
+            <li>单位或统计口径缺失，无法判断两个数是否可比；</li>
+            <li>Query 可以合理解释成两个互不兼容的目标事实；</li>
+            <li>Candidate 同时改变多个决定性事实槽，无法稳定选择唯一主冲突；</li>
+            <li>英文或中文句法存在两种都会改变最终标签的合理解析。</li>
+          </ul>
+
+          <h3>8.2 不应使用 <code>uncertain=yes</code> 的情形</h3>
+          <ul>
+            <li>只是因为 A 与 B 不一致；</li>
+            <li>案例需要多读一遍，但文本最终可以判断；</li>
+            <li>你担心自己的答案与大多数人不同；</li>
+            <li>你不知道研究团队希望得到什么结果；</li>
+            <li>你不想在 5 和 6 之间作出选择。应重新使用临界分数问题，选出更合适的唯一整数。</li>
+          </ul>
+
+          <div class="callout">
+            <strong>uncertain 不是第三种关系标签，也不是跳过按钮。</strong>
+            即使填 <code>uncertain=yes</code>，其他字段仍须填写当前证据下最可辩护的值，notes 必须说明具体歧义。
+          </div>
+
+          <h3>8.3 好 notes 与坏 notes</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>质量</th><th>示例</th><th>为什么</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><b>好</b></td>
+                  <td>“90 分钟=1.5 小时；实体、时长和适用范围一致。”</td>
+                  <td>指出可复查的决定性依据。</td>
+                </tr>
+                <tr>
+                  <td><b>好</b></td>
+                  <td>“Candidate 同时改变版本和适用人群，无法唯一确定主冲突类型。”</td>
+                  <td>明确说明不确定来自哪里。</td>
+                </tr>
+                <tr>
+                  <td><b>坏</b></td>
+                  <td>“我觉得 A 对。”</td>
+                  <td>没有文本依据。</td>
+                </tr>
+                <tr>
+                  <td><b>坏</b></td>
+                  <td>“模型可能更喜欢这个答案。”</td>
+                  <td>模型偏好不属于人工真值证据。</td>
+                </tr>
+                <tr>
+                  <td><b>坏</b></td>
+                  <td>“太难了。”</td>
+                  <td>没有说明哪一处歧义会改变标签。</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="checklist">
+          <h2>9. 交付前逐项检查</h2>
+
+          <div class="grid-2">
+            <div class="card">
+              <h3>关系文件</h3>
+              <ul class="checklist">
+                <li>文件准确位于 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code>。</li>
+                <li>共有 7 条数据行；没有删除、增加或排序错位。</li>
+                <li>所有 <code>adjudication_id</code> 与模板完全一致。</li>
+                <li><code>yes/no</code>、关系标签和冲突类型均为规定的小写英文。</li>
+                <li><code>equivalent</code> 行的 <code>conflict_type</code> 是空单元格。</li>
+                <li><code>factual_conflict</code> 行恰好填写一个合法冲突类型。</li>
+                <li><code>uncertain=yes</code> 的每一行都有具体 notes。</li>
+              </ul>
+            </div>
+            <div class="card">
+              <h3>相似度文件</h3>
+              <ul class="checklist">
+                <li>文件准确位于 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code>。</li>
+                <li>共有 96 条数据行；所有 ID 与模板一致。</li>
+                <li>每一行分数都是单个整数 <code>1</code>–<code>7</code>。</li>
+                <li>没有使用 5.5、区间、文字“高/低”或空白分数。</li>
+                <li>评分只基于语义接近程度，没有因 Candidate 错误而自动扣分。</li>
+                <li><code>uncertain=yes</code> 的每一行都有具体 notes。</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3>两个文件共同检查</h3>
+          <ul class="checklist">
+            <li>没有修改表头、文件编码或原始模板。</li>
+            <li>没有公式、合并单元格、隐藏字符或字段前后空格。</li>
+            <li>没有把示例中的 <code>DEMO</code> 内容或虚构文本粘贴进正式提交。</li>
+            <li>没有查看模型分数、构造来源、facilitator registry 或实验通过条件。</li>
+            <li>没有使用 AI/LLM、搜索引擎或外部人员代填。</li>
+            <li>两个文件均已保存并关闭；交付后不再修改。</li>
+          </ul>
+
+          <div class="callout success">
+            <strong>完成后只需要通知协调人：</strong>
+            “<code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code>
+            与 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code>
+            均已独立完成。”协调人接下来会先锁定文件原始字节，再解析内容。
+            在收到确认前，不要重新保存文件。
+          </div>
+
+          <h3>附：格式示意（不能复制到正式文件）</h3>
+          <p>下面仅展示列顺序。<code>DEMO-*</code> 不是正式 ID。</p>
+          <div class="csv-example">adjudication_id,valid_reference,unique_target_group,target_relation,conflict_type,uncertain,notes
+DEMO-REL-001,yes,yes,equivalent,,no,90分钟与1.5小时换算后相等
+DEMO-REL-002,yes,yes,factual_conflict,numeric,no,同一单位下12与14不相容</div>
+
+          <div class="csv-example" style="margin-top:12px">adjudication_id,similarity_1_to_7,uncertain,notes
+DEMO-SIM-001,7,no,命题相同仅单位表达不同
+DEMO-SIM-002,6,no,只有一个局部数值差异</div>
+        </section>
+      </main>
+    </div>
+
+    <footer>
+      <p>R2 独立人工仲裁指南 · 初心者版 v1 · 2026-08-30</p>
+      <p>本文件是培训与操作说明，不是答案键，不包含真实 R2 样本、模型分数或实验通过条件。</p>
+    </footer>
+  </div>
+</body>
+</html>

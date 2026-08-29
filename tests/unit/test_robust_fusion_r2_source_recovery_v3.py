@@ -17,10 +17,7 @@ from linkrag_eval.robust_fusion.r2_source_recovery_v3 import (
 from scripts.prepare_robust_fusion_r2_source_recovery_v3 import (
     EXPECTED_PARSER_SOURCE_SHA,
     REPO_ROOT,
-    V2_LIVE,
-    V2_LIVE_HASHES,
     _dry_fixture,
-    verify_v2_append_only,
 )
 from scripts.run_robust_fusion_r2_source_recovery_v3 import initialize_live_root
 
@@ -85,12 +82,6 @@ def test_new_dry_structural_fixture_passes_frozen_parser() -> None:
     )}) == 4
     assert receipt["status"] == "DRY_STRUCTURAL_FIXTURE_PASS"
     assert receipt["provider_calls"] == 0
-
-
-def test_v2_live_root_is_append_only_and_hash_stable() -> None:
-    verify_v2_append_only()
-    for name, expected in V2_LIVE_HASHES.items():
-        assert hashlib.sha256((V2_LIVE / name).read_bytes()).hexdigest() == expected
 
 
 def test_v3_live_root_replay_is_rejected(tmp_path: Path) -> None:

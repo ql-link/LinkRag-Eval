@@ -112,5 +112,4 @@ E5 在 72 条人工样本中 0 条截断。DistilUSE 截断 24 条，全部来�
 
 ## 6. 对 R2 的边界
 
-本诊断支持在 R2 中同时解决分布设计、量表分辨率和条件化汇总，不能支持简单换模型、降低 0.50 门槛或把 DistilUSE 改成主编码器。R2 的具体建议见[研究协议草案](../plans/robust-fusion-r2-research-draft.md)和[相似度 measurement 草案](../plans/robust-fusion-r2-similarity-measurement-draft.md)。
-
+本诊断支持在 R2 中同时解决分布设计、量表分辨率和条件化汇总，不能支持简单换模型、降低 0.50 门槛或把 DistilUSE 改成主编码器。后续已收口为 [R2 正式研究协议](../plans/robust-fusion-r2-research.md)和 [R2 正式相似度 measurement](../plans/robust-fusion-r2-similarity-measurement.md)。

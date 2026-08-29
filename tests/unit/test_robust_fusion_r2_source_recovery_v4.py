@@ -21,10 +21,7 @@ from linkrag_eval.robust_fusion.r2_source_recovery_v4 import (
     length_rule,
     validate_stage_response,
 )
-from scripts.prepare_robust_fusion_r2_source_recovery_v4 import (
-    assert_no_v4_live_root_before_seal,
-    verify_v3_append_only,
-)
+from scripts.prepare_robust_fusion_r2_source_recovery_v4 import assert_no_v4_live_root_before_seal
 from scripts.run_robust_fusion_r2_source_recovery_v4 import initialize_live_root
 
 
@@ -302,10 +299,6 @@ def test_frozen_parser_hash_is_unchanged() -> None:
     assert hashlib.sha256(parser.read_bytes()).hexdigest() == (
         "34ba67706fb5ddb0b7ac7924b153e00c8f26ca34f60914bd31cdf7efd57de65c"
     )
-
-
-def test_v2_v3_evidence_is_append_only_and_hash_stable() -> None:
-    verify_v3_append_only()
 
 
 def test_seal_must_precede_live_root_and_replay_is_refused(tmp_path: Path) -> None:

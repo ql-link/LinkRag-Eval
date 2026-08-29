@@ -12,7 +12,7 @@ This is a source-proposal implementation path. It is not a change to the R2 scie
 
 ## Immutable inheritance
 
-- All v2–v6 preparation, live, diagnostic, failure, audit, response, and terminal artifacts remain append-only and read-only.
+- R2SRC-001/002 were accepted under the v4/v6 chain and copied byte-for-byte into the sealed v7 inputs. By explicit research-lead instruction on 2026-08-30, the separate v1–v6 plan files and run roots were later physically deleted; v7 retains the inherited rows and recorded hashes, but no longer claims those earlier roots are locally replayable.
 - R2SRC-001 is inherited byte-for-byte from the v4/Flash acceptance through the v6 accepted ledger.
 - R2SRC-002 is inherited byte-for-byte from the v6/Pro acceptance.
 - Both rows are replayed through the unchanged parser and all mechanical gates, retain their original proposal hashes and generator provenance, are non-replaceable, and precede all v7 rows in cross-slot near-duplicate checks.

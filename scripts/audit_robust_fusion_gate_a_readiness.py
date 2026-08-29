@@ -18,19 +18,49 @@ from pathlib import Path
 from typing import Any
 
 ARTIFACT_VERSION = "ROBUST-FUSION-GATE-A-READINESS-PREFLIGHT-2026-08-29-v4"
-SCIENTIFIC_PROTOCOL = "ROBUST-FUSION-RESEARCH-2026-08-29-v26"
-ENGINEERING_PROTOCOL = "ROBUST-FUSION-ENGINEERING-2026-08-29-v17"
-PROGRESS_RECORD = "ROBUST-FUSION-PROGRESS-2026-08-29-v28"
+SCIENTIFIC_PROTOCOL = "ROBUST-FUSION-RESEARCH-2026-08-29-v29"
+ENGINEERING_PROTOCOL = "ROBUST-FUSION-ENGINEERING-2026-08-29-v22"
+PROGRESS_RECORD = "ROBUST-FUSION-PROGRESS-2026-08-29-v33"
 RERANKER_SELECTION_PROGRESS_RECORD = "ROBUST-FUSION-PROGRESS-2026-08-28-v19"
 DATA_AUDIT_RECORD = "ROBUST-FUSION-GATE-A-DATA-AUDIT-2026-08-28-v10"
 SIMILARITY_MANIFEST_RECORD = "ROBUST-FUSION-SIMILARITY-MANIFEST-2026-08-28-v5"
-SIMILARITY_QUALIFICATION_RECORD = (
-    "ROBUST-FUSION-SIMILARITY-ENCODER-QUALIFICATION-2026-08-28-v3"
-)
+SIMILARITY_QUALIFICATION_RECORD = "ROBUST-FUSION-SIMILARITY-ENCODER-QUALIFICATION-2026-08-28-v3"
 RERANKER_QUALIFICATION_RECORD = "ROBUST-FUSION-RERANKER-QUALIFICATION-2026-08-28-v2"
-PROVIDER_ROUTE_POLICY_ID = (
-    "ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2"
+FROZEN_SELECTION_SCIENTIFIC_PROTOCOL = "ROBUST-FUSION-RESEARCH-2026-08-28-v19"
+ELIGIBILITY_ARTIFACT_VERSION = "ROBUST-FUSION-GATE-A-ELIGIBILITY-2026-08-28-v1"
+ELIGIBILITY_MANIFEST_SHA256 = "09acb844dc9bd86e8536e76f5382c57e89b291135195e073ccdc135f3e71759d"
+SIMILARITY_QUALIFICATION_MANIFEST_SHA256 = (
+    "931946bd244d794bf390d5c37f166308d010870b429919b1167131fd0ceb1f2a"
 )
+RERANKER_QUALIFICATION_MANIFEST_SHA256 = (
+    "96c49a3e58ff167bf675c413e32336c659f6899aca2f7351faa59e1c2ef26f43"
+)
+INTERNAL_BASE_ROOT_MANIFEST_SHA256 = (
+    "6df920ecc2b0da825ba1f139f2ba735c2ededddee0ce57d1e8b1821407fb6291"
+)
+INTERNAL_APPEND_ROOT_MANIFEST_SHA256 = (
+    "683e4967097e041a78fd7c5221c462ff4d75243127d8feb761cf7b0d40d7b2ab"
+)
+INTERNAL_DEV_RELEASE_MANIFEST_SHA256 = (
+    "ad32fbb08a6b076dced1e438ff51060c46073b932cd259ff89beb157e5453bac"
+)
+P2_FINAL_DECISION_SHA256 = "fe906b9e755135cfe4fe6607297aec5c5a0c2b2c0a0a5118e4c38ada9a01ef1c"
+P2_BASE_SUBMISSION_LOCK_SHA256 = "98cce4a8136d1026aed96dcb3f20e3f442fba58b159d458a9d3d131bc7c5be1f"
+P2_SUBMISSION_LOCK_SHA256 = "9d743fb23d4d88d128229a81d381aab444550e2663e11eacbe296cad0c722f82"
+INTERNAL_HUMAN_FINAL_RESULT_SHA256 = (
+    "32bb4c8d3740919ded2ffdab89f5848c10ef766941a10f1a2e0afca10627fa27"
+)
+INTERNAL_HUMAN_FINAL_MANIFEST_SHA256 = (
+    "654ff9ff1959aeb18895b8a872c34665c9a262510f13d79146aca6183650b99a"
+)
+INTERNAL_HUMAN_SUBMISSION_LOCK_SHA256 = (
+    "72d8b77ca601c925ff3840afc4812ac1395019d1930548cd98836201adefbb00"
+)
+HUMAN_ANNOTATION_VERIFICATION_RECORD = "ROBUST-FUSION-HUMAN-ANNOTATION-VERIFICATION-2026-08-29-v1"
+HUMAN_ANNOTATION_VERIFICATION_SHA256 = (
+    "6e4746c0a1b83455d7b62880490a53ebb93b7f03f94f2ede1a30cb5770d80419"
+)
+PROVIDER_ROUTE_POLICY_ID = "ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2"
 HISTORICAL_ROUTE_MANIFEST_SHA256 = (
     "640e3d52a2f7cfc6f991cefe4d111ae18d09ba3260626a2e927988b5cd17a38a"
 )
@@ -94,25 +124,51 @@ def load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def verify_checksum_manifest(root: Path) -> tuple[bool, list[str]]:
-    checksum_path = root / "manifest.sha256"
+def verify_checksum_file(root: Path, checksum_path: Path) -> tuple[bool, list[str]]:
     if not checksum_path.is_file():
-        return False, ["manifest.sha256 missing"]
+        return False, [f"{checksum_path.name} missing"]
     errors: list[str] = []
+    row_count = 0
+    resolved_root = root.resolve()
     for line in checksum_path.read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
+        row_count += 1
         match = re.fullmatch(r"([0-9a-f]{64})  (.+)", line)
         if match is None:
             errors.append(f"invalid checksum row: {line[:80]}")
             continue
         expected, relative = match.groups()
-        target = root / relative
+        target = (root / relative).resolve()
+        try:
+            target.relative_to(resolved_root)
+        except ValueError:
+            errors.append(f"path escapes checksum root: {relative}")
+            continue
         if not target.is_file():
             errors.append(f"missing: {relative}")
         elif sha256_file(target) != expected:
             errors.append(f"checksum mismatch: {relative}")
+    if row_count == 0:
+        errors.append("checksum file has no rows")
     return not errors, errors
+
+
+def verify_checksum_manifest(root: Path) -> tuple[bool, list[str]]:
+    return verify_checksum_file(root, root / "manifest.sha256")
+
+
+def referenced_file_hash_matches(root: Path, reference: dict[str, Any]) -> bool:
+    relative = reference.get("manifest")
+    expected = reference.get("sha256")
+    if not isinstance(relative, str) or not isinstance(expected, str):
+        return False
+    target = (root / relative).resolve()
+    try:
+        target.relative_to(root.resolve())
+    except ValueError:
+        return False
+    return target.is_file() and sha256_file(target) == expected
 
 
 def git_snapshot(root: Path) -> dict[str, Any]:
@@ -173,12 +229,37 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
         / "docs/reports/robust_fusion_gate_a_data_coverage_audit_2026_08_28.md",
         "similarity": repository_root / "docs/plans/robust-fusion-similarity-manifest.md",
         "handbook": repository_root / "docs/plans/robust-fusion-annotation-handbook.md",
+        "internal": repository_root / "docs/plans/robust-fusion-internal-stress-v6.md",
     }
     missing_docs = [str(path) for path in docs.values() if not path.is_file()]
     if missing_docs:
         raise FileNotFoundError(f"missing authoritative documents: {missing_docs}")
 
     doc_text = {name: path.read_text(encoding="utf-8") for name, path in docs.items()}
+    human_verification_path = (
+        repository_root / "docs/reports/robust_fusion_human_annotation_verification_2026_08_29.json"
+    )
+    human_verification = (
+        load_json(human_verification_path) if human_verification_path.is_file() else {}
+    )
+    human_verification_checksum_path = human_verification_path.with_suffix(".sha256")
+    human_verification_checksum_ok, human_verification_checksum_errors = verify_checksum_file(
+        human_verification_path.parent,
+        human_verification_checksum_path,
+    )
+    human_verification_sha256 = (
+        sha256_file(human_verification_path) if human_verification_path.is_file() else None
+    )
+    human_verification_ok = all(
+        (
+            human_verification.get("artifact_version") == HUMAN_ANNOTATION_VERIFICATION_RECORD,
+            human_verification.get("verification_authority") == "research_lead",
+            human_verification_checksum_ok,
+            human_verification_sha256 == HUMAN_ANNOTATION_VERIFICATION_SHA256,
+        )
+    )
+    p2_human_verification = human_verification.get("p2_calibration", {})
+    internal_human_verification = human_verification.get("internal_v6_dev", {})
     required_records = {
         "scientific": SCIENTIFIC_PROTOCOL,
         "engineering": ENGINEERING_PROTOCOL,
@@ -210,9 +291,7 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
     bm25 = routes.get("bm25", {}) if isinstance(routes, dict) else {}
     route_generator = route_manifest.get("generator", {})
     route_script = repository_root / "scripts/probe_robust_fusion_route_contract.py"
-    replay_contract_script = (
-        repository_root / "src/linkrag_eval/robust_fusion/replay_contract.py"
-    )
+    replay_contract_script = repository_root / "src/linkrag_eval/robust_fusion/replay_contract.py"
     route_refresh_failure_path = (
         repository_root
         / "runs/robust_fusion/contracts/route-contract-preflight-v1-refresh-v19/failure.json"
@@ -228,8 +307,7 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
         (
             route_manifest.get("status")
             == "LOCAL_CONFIG_AND_LIVE_DENSE_TOLERANCE_SPARSE_EXACT_REPLAY_PASS",
-            route_manifest.get("scientific_protocol")
-            == "ROBUST-FUSION-RESEARCH-2026-08-28-v19",
+            route_manifest.get("scientific_protocol") == "ROBUST-FUSION-RESEARCH-2026-08-28-v19",
             route_manifest.get("engineering_protocol")
             == "ROBUST-FUSION-ENGINEERING-2026-08-29-v10",
             dense.get("model") == "text-embedding-v4",
@@ -243,8 +321,7 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             route_checksums_ok,
             route_manifest_sha256 == HISTORICAL_ROUTE_MANIFEST_SHA256,
             route_generator.get("sha256") == HISTORICAL_ROUTE_GENERATOR_SHA256,
-            route_generator.get("replay_contract_sha256")
-            == HISTORICAL_REPLAY_CONTRACT_SHA256,
+            route_generator.get("replay_contract_sha256") == HISTORICAL_REPLAY_CONTRACT_SHA256,
             route_manifest.get("gate_a_executed") is False,
             route_manifest.get("outcome_data_read") is False,
         )
@@ -315,9 +392,16 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
     du = datasets.get("duretrieval", {}) if isinstance(datasets, dict) else {}
     eligibility_generator = eligibility.get("generator", {})
     eligibility_script = repository_root / "scripts/prepare_robust_fusion_gate_a_eligibility.py"
+    eligibility_manifest_sha256 = (
+        sha256_file(eligibility_path) if eligibility_path.is_file() else None
+    )
+    eligibility_lineage_current = ELIGIBILITY_ARTIFACT_VERSION in doc_text["progress"]
     eligibility_pass = all(
         (
-            eligibility.get("scientific_protocol") == SCIENTIFIC_PROTOCOL,
+            eligibility.get("artifact_version") == ELIGIBILITY_ARTIFACT_VERSION,
+            eligibility.get("scientific_protocol") == FROZEN_SELECTION_SCIENTIFIC_PROTOCOL,
+            eligibility_manifest_sha256 == ELIGIBILITY_MANIFEST_SHA256,
+            eligibility_lineage_current,
             eligibility.get("status")
             == "ELIGIBILITY_UPPER_BOUNDS_ONLY_NOT_A_FINAL_GATE_DENOMINATOR",
             t2.get("train_query_count") == 258_042,
@@ -342,61 +426,127 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             blocked_kind="BLOCKED_AUTOMATIC",
             evidence={
                 "artifact": str(eligibility_path.relative_to(repository_root)),
-                "manifest_sha256": sha256_file(eligibility_path)
-                if eligibility_path.is_file()
-                else None,
+                "artifact_version": eligibility.get("artifact_version"),
+                "frozen_under_scientific_protocol": eligibility.get("scientific_protocol"),
+                "current_scientific_protocol": SCIENTIFIC_PROTOCOL,
+                "current_ledger_authorizes_frozen_artifact": eligibility_lineage_current,
+                "manifest_sha256": eligibility_manifest_sha256,
                 "t2_train_upper_bound": t2.get("eligible_upper_bound"),
                 "cmedqa2_gatea_upper_bound": cmed.get("gatea_eligible_upper_bound"),
                 "cmedqa2_gateb_upper_bound": cmed.get("gateb_eligible_upper_bound"),
                 "duretrieval_role": du.get("role"),
                 "checksum_errors": eligibility_checksum_errors,
             },
-            next_action="Rebuild the ID/hash-only eligibility artifact from pinned public inputs.",
+            next_action=(
+                "Restore the exact frozen ID/hash eligibility artifact or repair its recorded "
+                "lineage. Do not rebuild it solely to stamp the current protocol version."
+            ),
         )
     )
 
     internal_root = repository_root / "data/robust_fusion/internal_stress_v6"
-    internal_manifest_path = internal_root / "control/root_manifest.json"
-    internal_manifest = load_json(internal_manifest_path) if internal_manifest_path.is_file() else {}
+    internal_base_manifest_path = internal_root / "control/root_manifest.json"
+    internal_append_manifest_path = internal_root / "control/root_manifest_v9.json"
+    internal_base_manifest = (
+        load_json(internal_base_manifest_path) if internal_base_manifest_path.is_file() else {}
+    )
+    internal_append_manifest = (
+        load_json(internal_append_manifest_path) if internal_append_manifest_path.is_file() else {}
+    )
     internal_checksums_ok, internal_checksum_errors = verify_checksum_manifest(internal_root)
-    internal_protocols = internal_manifest.get("protocol_records", {})
-    expected_internal_protocols = {
-        "scientific_protocol": SCIENTIFIC_PROTOCOL,
-        "engineering_protocol": ENGINEERING_PROTOCOL,
-        "progress_record": PROGRESS_RECORD,
-        "data_audit_record": DATA_AUDIT_RECORD,
-    }
-    internal_authoritative_paths = {
-        "scientific_protocol": docs["scientific"],
-        "engineering_protocol": docs["engineering"],
-        "progress_record": docs["progress"],
-        "data_audit": docs["data_audit"],
-        "asset_reconciliation": repository_root
-        / "docs/reports/sqlite_share_restore_and_asset_reconciliation_2026_08_28.md",
-        "internal_v6_protocol": repository_root
-        / "docs/plans/robust-fusion-internal-stress-v6.md",
-    }
-    internal_authoritative_hashes = internal_manifest.get("authoritative_document_sha256", {})
-    current_internal_authoritative_hashes = {
-        name: sha256_file(path) for name, path in internal_authoritative_paths.items()
-    }
-    internal_authoritative_hashes_match = all(
-        internal_authoritative_hashes.get(name) == digest
-        for name, digest in current_internal_authoritative_hashes.items()
+    internal_append_checksum_ok, internal_append_checksum_errors = verify_checksum_file(
+        internal_append_manifest_path.parent,
+        internal_append_manifest_path.with_suffix(".sha256"),
+    )
+    internal_base_manifest_sha256 = (
+        sha256_file(internal_base_manifest_path) if internal_base_manifest_path.is_file() else None
+    )
+    internal_append_manifest_sha256 = (
+        sha256_file(internal_append_manifest_path)
+        if internal_append_manifest_path.is_file()
+        else None
+    )
+    internal_release_path = internal_root / "dev/releases/adjudicated_synthetic_v1/manifest.json"
+    internal_release_sha256 = (
+        sha256_file(internal_release_path) if internal_release_path.is_file() else None
+    )
+    internal_final_result_path = (
+        repository_root / "runs/robust_fusion/internal_v6_deepseek_pilot_v2_human_review_v1/"
+        "facilitator_review/final_v1/final_result.json"
+    )
+    internal_final_manifest_path = internal_final_result_path.with_name("final_manifest.json")
+    internal_submission_lock_path = internal_final_result_path.parents[1] / "submission_lock.json"
+    internal_final_result = (
+        load_json(internal_final_result_path) if internal_final_result_path.is_file() else {}
+    )
+    internal_cohort_references = internal_append_manifest.get("cohorts", {})
+    internal_cohort_chain_ok = (
+        isinstance(internal_cohort_references, dict)
+        and all(
+            isinstance(reference, dict) and referenced_file_hash_matches(internal_root, reference)
+            for reference in internal_cohort_references.values()
+        )
+        and len(internal_cohort_references) == 3
+    )
+    internal_lineage_current = all(
+        (
+            INTERNAL_APPEND_ROOT_MANIFEST_SHA256 in doc_text["engineering"],
+            INTERNAL_APPEND_ROOT_MANIFEST_SHA256 in doc_text["internal"],
+        )
+    )
+    internal_human_verification_ok = all(
+        (
+            human_verification_ok,
+            internal_human_verification.get("formal_human_annotation") is True,
+            internal_human_verification.get("human_annotator_count") == 2,
+            internal_human_verification.get("independent_blind_submissions") is True,
+            internal_human_verification.get("model_or_tool_generated_submission_used") is False,
+            internal_human_verification.get("all_disagreements_adjudicated") is True,
+            internal_human_verification.get("machine_validation_error_count") == 0,
+            internal_human_verification.get("final_result_sha256")
+            == INTERNAL_HUMAN_FINAL_RESULT_SHA256,
+            internal_human_verification.get("final_manifest_sha256")
+            == INTERNAL_HUMAN_FINAL_MANIFEST_SHA256,
+            internal_human_verification.get("submission_lock_sha256")
+            == INTERNAL_HUMAN_SUBMISSION_LOCK_SHA256,
+            internal_human_verification.get("release_manifest_sha256")
+            == INTERNAL_DEV_RELEASE_MANIFEST_SHA256,
+        )
     )
     internal_skeleton_pass = all(
         (
-            internal_manifest.get("package_version")
+            internal_base_manifest.get("package_version")
             == "ROBUST-FUSION-INTERNAL-STRESS-2026-08-28-v6",
-            internal_manifest.get("state")
-            == "FORMALLY_ESTABLISHED_AWAITING_NEW_REAL_QUERY_INTAKE",
-            internal_manifest.get("gate_eligibility") == "NOT_ELIGIBLE",
-            all(
-                internal_protocols.get(key) == value
-                for key, value in expected_internal_protocols.items()
-            ),
-            internal_authoritative_hashes_match,
+            internal_base_manifest.get("gate_eligibility") == "NOT_ELIGIBLE",
+            internal_base_manifest_sha256 == INTERNAL_BASE_ROOT_MANIFEST_SHA256,
             internal_checksums_ok,
+            internal_append_manifest.get("root_manifest_version")
+            == "ROBUST-FUSION-INTERNAL-V6-ROOT-MANIFEST-2026-08-29-v9",
+            internal_append_manifest.get("previous_root_manifest_sha256")
+            == INTERNAL_BASE_ROOT_MANIFEST_SHA256,
+            internal_append_manifest.get("state")
+            == "DEV_SYNTHETIC_ADJUDICATED_CONFIRMATORY_COHORTS_EMPTY",
+            internal_append_manifest.get("gate_eligibility") == "NOT_ELIGIBLE",
+            internal_append_manifest.get("dev_release_manifest_sha256")
+            == INTERNAL_DEV_RELEASE_MANIFEST_SHA256,
+            internal_append_manifest_sha256 == INTERNAL_APPEND_ROOT_MANIFEST_SHA256,
+            internal_append_checksum_ok,
+            internal_release_sha256 == INTERNAL_DEV_RELEASE_MANIFEST_SHA256,
+            internal_cohort_chain_ok,
+            internal_lineage_current,
+            internal_final_result.get("human_truth_status") == "ADJUDICATED_DEV_ONLY",
+            internal_final_result.get("reviewed_family_count") == 30,
+            internal_final_result.get("accepted_family_count") == 28,
+            internal_final_result.get("rejected_family_count") == 2,
+            internal_final_result.get("unresolved_disagreement_count") == 0,
+            internal_final_result.get("model_output_is_truth") is False,
+            internal_final_result_path.is_file()
+            and sha256_file(internal_final_result_path) == INTERNAL_HUMAN_FINAL_RESULT_SHA256,
+            internal_final_manifest_path.is_file()
+            and sha256_file(internal_final_manifest_path) == INTERNAL_HUMAN_FINAL_MANIFEST_SHA256,
+            internal_submission_lock_path.is_file()
+            and sha256_file(internal_submission_lock_path) == INTERNAL_HUMAN_SUBMISSION_LOCK_SHA256,
+            internal_human_verification_ok,
             (internal_root / "gatea/METHOD_ACCESS_LOCK.json").is_file(),
             (internal_root / "blind/METHOD_ACCESS_LOCK.json").is_file(),
         )
@@ -408,16 +558,30 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             internal_skeleton_pass,
             blocked_kind="BLOCKED_GOVERNANCE",
             evidence={
-                "artifact": str(internal_manifest_path.relative_to(repository_root)),
-                "state": internal_manifest.get("state"),
-                "gate_eligibility": internal_manifest.get("gate_eligibility"),
-                "checksum_errors": internal_checksum_errors,
-                "authoritative_document_hashes_match": internal_authoritative_hashes_match,
+                "base_artifact": str(internal_base_manifest_path.relative_to(repository_root)),
+                "base_manifest_sha256": internal_base_manifest_sha256,
+                "append_artifact": str(internal_append_manifest_path.relative_to(repository_root)),
+                "append_manifest_sha256": internal_append_manifest_sha256,
+                "append_only_lineage_valid": internal_lineage_current,
+                "state": internal_append_manifest.get("state"),
+                "gate_eligibility": internal_append_manifest.get("gate_eligibility"),
+                "dev_human_review": {
+                    "verified": internal_human_verification_ok,
+                    "human_annotator_count": internal_human_verification.get(
+                        "human_annotator_count"
+                    ),
+                    "accepted_family_count": internal_final_result.get("accepted_family_count"),
+                },
+                "checksum_errors": (internal_checksum_errors + internal_append_checksum_errors),
+                "human_verification_checksum_errors": human_verification_checksum_errors,
             },
-            next_action="Rebuild the empty governed v6 package before any intake.",
+            next_action=(
+                "Restore the immutable base plus append-only Internal v6 manifest chain and "
+                "its bound human-review hashes. Never overwrite the historical empty root."
+            ),
         )
     )
-    internal_population_pass = internal_manifest.get("gate_eligibility") == "ELIGIBLE"
+    internal_population_pass = internal_append_manifest.get("gate_eligibility") == "ELIGIBLE"
     checks.append(
         make_check(
             "internal_v6_real_population_and_adjudication",
@@ -425,9 +589,11 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             internal_population_pass,
             blocked_kind="BLOCKED_HUMAN",
             evidence={
-                "state": internal_manifest.get("state"),
-                "gate_eligibility": internal_manifest.get("gate_eligibility"),
-                "reason": internal_manifest.get("reason_not_eligible"),
+                "state": internal_append_manifest.get("state"),
+                "gate_eligibility": internal_append_manifest.get("gate_eligibility"),
+                "dev_human_review_complete": internal_human_verification_ok,
+                "dev_accepted_family_count": internal_final_result.get("accepted_family_count"),
+                "reason": internal_append_manifest.get("reason_not_eligible"),
             },
             next_action=(
                 "Intake new authorized real query/evidence families, then complete independent review, "
@@ -469,8 +635,7 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             (
                 receipt.get("reviewer_id") == reviewer_id,
                 receipt.get("answer_key_included") is False,
-                receipt.get("master_manifest_sha256")
-                == delivery.get("manifest_sha256"),
+                receipt.get("master_manifest_sha256") == delivery.get("manifest_sha256"),
             )
         )
     calibration_package_pass = all(
@@ -484,16 +649,13 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             calibration.get("gate_a_authorized") is False,
             calibration.get("gate_b_authorized") is False,
             calibration_checksums_ok,
-            calibration.get("builder", {}).get("sha256")
-            == sha256_file(calibration_builder_path),
-            delivery.get("delivery_version")
-            == "ROBUST-FUSION-P2-HUMAN-DELIVERY-2026-08-29-v1",
+            calibration.get("builder", {}).get("sha256") == sha256_file(calibration_builder_path),
+            delivery.get("delivery_version") == "ROBUST-FUSION-P2-HUMAN-DELIVERY-2026-08-29-v1",
             delivery.get("formal_human_entry") is True,
             delivery.get("prior_model_or_tool_fills_eligible") is False,
             delivery.get("facilitator_key_included") is False,
             delivery.get("manifest_sha256") == sha256_file(calibration_path),
-            delivery.get("generator", {}).get("sha256")
-            == sha256_file(delivery_generator_path),
+            delivery.get("generator", {}).get("sha256") == sha256_file(delivery_generator_path),
             delivery_checksum_ok,
             role_packages_ok,
             not any(delivery_root.rglob("facilitator_key.jsonl")),
@@ -529,23 +691,71 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             next_action="Rebuild the clean v2 human delivery from the pinned administrator package.",
         )
     )
-    calibration_result_path = (
-        delivery_root / "facilitator_review/calibration_result.json"
+    p2_patch_root = (
+        repository_root / "runs/robust_fusion/internal_v6_deepseek_pilot_v1/"
+        "human_calibration_patch_v3"
     )
+    p2_patch_delivery_path = p2_patch_root / "delivery_manifest.json"
+    p2_patch_delivery = (
+        load_json(p2_patch_delivery_path) if p2_patch_delivery_path.is_file() else {}
+    )
+    calibration_result_path = p2_patch_root / "facilitator_review/final_decision.json"
     calibration_result = (
         load_json(calibration_result_path) if calibration_result_path.is_file() else {}
     )
+    p2_patch_review_root = calibration_result_path.parent
+    p2_patch_submission_lock_path = p2_patch_review_root / "submission_lock.json"
+    p2_base_submission_lock_path = (
+        repository_root / "runs/robust_fusion/internal_v6_deepseek_pilot_v1/"
+        "human_calibration_replay_v2/facilitator_review/submission_lock.json"
+    )
+    p2_review_checksums_ok, p2_review_checksum_errors = verify_checksum_file(
+        p2_patch_review_root,
+        p2_patch_review_root / "facilitator_review.sha256",
+    )
+    p2_combined_results = calibration_result.get("combined_results", {})
+    p2_integrity = calibration_result.get("integrity", {})
+    p2_facilitator_disclosure = calibration_result.get("facilitator_disclosure", {})
+    p2_human_verification_ok = all(
+        (
+            human_verification_ok,
+            p2_human_verification.get("formal_human_annotation") is True,
+            p2_human_verification.get("human_annotator_count") == 2,
+            p2_human_verification.get("independent_blind_submissions") is True,
+            p2_human_verification.get("model_or_tool_generated_submission_used") is False,
+            p2_human_verification.get("all_disagreements_adjudicated") is True,
+            p2_human_verification.get("machine_validation_error_count") == 0,
+            p2_human_verification.get("final_decision_sha256") == P2_FINAL_DECISION_SHA256,
+            p2_human_verification.get("submission_lock_sha256") == P2_SUBMISSION_LOCK_SHA256,
+        )
+    )
     calibration_result_pass = all(
         (
-            calibration_result.get("status") == "PASS",
+            calibration_result.get("p2_05_decision") == "PASS",
             calibration_result.get("package_version")
-            == "ROBUST-FUSION-P2-CALIBRATION-REPLAY-2026-08-29-v2",
-            calibration_result.get("human_annotator_count") == 2,
-            calibration_result.get("model_or_tool_generated_submission_used") is False,
-            calibration_result.get("all_disagreements_adjudicated") is True,
-            calibration_result.get("machine_validation_error_count") == 0,
-            isinstance(calibration_result.get("submission_lock_sha256"), str),
-            len(calibration_result.get("submission_lock_sha256", "")) == 64,
+            == "ROBUST-FUSION-P2-CALIBRATION-PATCH-2026-08-29-v3",
+            calibration_result.get("gate_a_authorized") is False,
+            calibration_result.get("gate_b_authorized") is False,
+            p2_combined_results.get("all_frozen_gate_checks") is True,
+            p2_combined_results.get("zero_tolerance_construct_errors") == 0,
+            p2_patch_delivery.get("formal_human_entry") is True,
+            p2_patch_delivery.get("roles") == ["A", "B"],
+            p2_patch_delivery.get("combined_design_rows")
+            == {"candidate": 13, "case": 12, "factual_conflict": 9, "pair": 1},
+            p2_patch_delivery.get("base_v2_submission_lock_sha256")
+            == P2_BASE_SUBMISSION_LOCK_SHA256,
+            p2_facilitator_disclosure.get("submission_content_read_before_lock") is False,
+            p2_facilitator_disclosure.get("submissions_compared_to_key_before_lock") is False,
+            p2_facilitator_disclosure.get("facilitator_blindness_claimed") is False,
+            p2_integrity.get("submission_lock_sha256") == P2_SUBMISSION_LOCK_SHA256,
+            calibration_result_path.is_file()
+            and sha256_file(calibration_result_path) == P2_FINAL_DECISION_SHA256,
+            p2_patch_submission_lock_path.is_file()
+            and sha256_file(p2_patch_submission_lock_path) == P2_SUBMISSION_LOCK_SHA256,
+            p2_base_submission_lock_path.is_file()
+            and sha256_file(p2_base_submission_lock_path) == P2_BASE_SUBMISSION_LOCK_SHA256,
+            p2_review_checksums_ok,
+            p2_human_verification_ok,
         )
     )
     checks.append(
@@ -556,16 +766,23 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             blocked_kind="BLOCKED_HUMAN",
             evidence={
                 "result_present": calibration_result_path.is_file(),
-                "result_status": calibration_result.get("status"),
-                "formal_result_path": str(
-                    calibration_result_path.relative_to(repository_root)
+                "result_status": calibration_result.get("p2_05_decision"),
+                "formal_result_path": str(calibration_result_path.relative_to(repository_root)),
+                "final_decision_sha256": (
+                    sha256_file(calibration_result_path)
+                    if calibration_result_path.is_file()
+                    else None
                 ),
-                "human_annotator_count": calibration_result.get(
-                    "human_annotator_count"
+                "human_verification_artifact": str(
+                    human_verification_path.relative_to(repository_root)
                 ),
-                "model_or_tool_generated_submission_used": calibration_result.get(
+                "human_verification_sha256": human_verification_sha256,
+                "human_verification_checksum_errors": human_verification_checksum_errors,
+                "human_annotator_count": p2_human_verification.get("human_annotator_count"),
+                "model_or_tool_generated_submission_used": p2_human_verification.get(
                     "model_or_tool_generated_submission_used"
                 ),
+                "review_checksum_errors": p2_review_checksum_errors,
                 "required_rows_per_annotator": {
                     "case_qualification": 12,
                     "candidate": 13,
@@ -573,15 +790,15 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
                 },
             },
             next_action=(
-                "Two annotators complete independent copies, the facilitator locks both submissions, "
-                "adjudicates every disagreement and writes a validated PASS result."
+                "Restore the exact append-only v2 plus v3 human-calibration decision, submission "
+                "locks and research-lead verification. Do not repeat completed annotation merely "
+                "because an older result path is absent."
             ),
         )
     )
 
     qualification_root = (
-        repository_root
-        / "runs/robust_fusion/contracts/similarity-encoder-qualification-v3"
+        repository_root / "runs/robust_fusion/contracts/similarity-encoder-qualification-v3"
     )
     qualification_path = qualification_root / "manifest.json"
     qualification = load_json(qualification_path) if qualification_path.is_file() else {}
@@ -598,41 +815,41 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
     audit_encoder = by_role.get("independent_audit_encoder", {})
     qualification_generator = qualification.get("generator", {})
     qualification_primitive = qualification.get("measurement_primitive", {})
-    qualification_script = (
-        repository_root / "scripts/qualify_robust_fusion_similarity_encoders.py"
-    )
+    qualification_script = repository_root / "scripts/qualify_robust_fusion_similarity_encoders.py"
     similarity_primitive = repository_root / "src/linkrag_eval/robust_fusion/similarity.py"
     qualified_model_ids = [
         str(model.get("model_id", "")).lower()
         for model in qualification_models
         if isinstance(model, dict)
     ]
+    qualification_manifest_sha256 = (
+        sha256_file(qualification_path) if qualification_path.is_file() else None
+    )
+    qualification_lineage_current = SIMILARITY_QUALIFICATION_RECORD in doc_text["progress"]
     qualification_pass = all(
         (
             qualification.get("artifact_version") == SIMILARITY_QUALIFICATION_RECORD,
-            qualification.get("scientific_protocol") == SCIENTIFIC_PROTOCOL,
+            qualification.get("scientific_protocol") == FROZEN_SELECTION_SCIENTIFIC_PROTOCOL,
+            qualification_manifest_sha256 == SIMILARITY_QUALIFICATION_MANIFEST_SHA256,
+            qualification_lineage_current,
             qualification.get("similarity_manifest") == SIMILARITY_MANIFEST_RECORD,
-            qualification.get("status")
-            == "QUALIFIED_PRESELECTED_PENDING_DEV_CALIBRATION",
+            qualification.get("status") == "QUALIFIED_PRESELECTED_PENDING_DEV_CALIBRATION",
             qualification.get("selection_fixed_before_probe") is True,
             qualification.get("outcome_data_read") is False,
             qualification.get("gate_a_executed") is False,
             qualification.get("bge_m3") == "RETIRED_FORBIDDEN",
             main_encoder.get("model_id") == "intfloat/multilingual-e5-base",
-            main_encoder.get("revision")
-            == "d128750597153bb5987e10b1c3493a34e5a4502a",
+            main_encoder.get("revision") == "d128750597153bb5987e10b1c3493a34e5a4502a",
             main_encoder.get("qualification_status") == "PASS",
             main_encoder.get("dimension") == 768,
             main_encoder.get("max_tokens") == 512,
             audit_encoder.get("model_id")
             == "sentence-transformers/distiluse-base-multilingual-cased-v2",
-            audit_encoder.get("revision")
-            == "bfe45d0732ca50787611c0fe107ba278c7f3f889",
+            audit_encoder.get("revision") == "bfe45d0732ca50787611c0fe107ba278c7f3f889",
             audit_encoder.get("qualification_status") == "PASS",
             audit_encoder.get("dimension") == 512,
             audit_encoder.get("max_tokens") == 128,
-            main_encoder.get("architecture_family")
-            != audit_encoder.get("architecture_family"),
+            main_encoder.get("architecture_family") != audit_encoder.get("architecture_family"),
             all("bge" not in model_id for model_id in qualified_model_ids),
             qualification.get("implementation", {}).get("sentence_transformers") == "5.7.0",
             qualification_checksums_ok,
@@ -648,9 +865,10 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             blocked_kind="BLOCKED_AUTOMATIC",
             evidence={
                 "artifact": str(qualification_path.relative_to(repository_root)),
-                "manifest_sha256": sha256_file(qualification_path)
-                if qualification_path.is_file()
-                else None,
+                "manifest_sha256": qualification_manifest_sha256,
+                "frozen_under_scientific_protocol": qualification.get("scientific_protocol"),
+                "current_scientific_protocol": SCIENTIFIC_PROTOCOL,
+                "current_ledger_authorizes_frozen_artifact": (qualification_lineage_current),
                 "main_encoder": main_encoder.get("model_id"),
                 "main_revision": main_encoder.get("revision"),
                 "audit_encoder": audit_encoder.get("model_id"),
@@ -659,8 +877,9 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
                 "checksum_errors": qualification_checksum_errors,
             },
             next_action=(
-                "Re-run the pinned outcome-free v3 qualification; do not substitute BGE-M3 or "
-                "read Dev/Gate outcomes."
+                "Restore the exact outcome-free v3 qualification artifact, its recorded code or "
+                "its lineage. Do not rerun model selection after Dev outcomes, and do not "
+                "substitute BGE-M3."
             ),
         )
     )
@@ -681,10 +900,14 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
     reranker_confirmation = reranker.get("research_lead_confirmation", {})
     reranker_generator = reranker.get("generator", {})
     reranker_script = repository_root / "scripts/qualify_robust_fusion_rerankers.py"
+    reranker_manifest_sha256 = sha256_file(reranker_path) if reranker_path.is_file() else None
+    reranker_lineage_current = RERANKER_QUALIFICATION_RECORD in doc_text["progress"]
     reranker_selection_pass = all(
         (
             reranker.get("artifact_version") == RERANKER_QUALIFICATION_RECORD,
-            reranker.get("scientific_protocol") == SCIENTIFIC_PROTOCOL,
+            reranker.get("scientific_protocol") == FROZEN_SELECTION_SCIENTIFIC_PROTOCOL,
+            reranker_manifest_sha256 == RERANKER_QUALIFICATION_MANIFEST_SHA256,
+            reranker_lineage_current,
             reranker.get("progress_record") == RERANKER_SELECTION_PROGRESS_RECORD,
             reranker.get("status")
             == "QUALIFIED_SELECTION_FROZEN_PENDING_RESOURCE_AND_DEV_CONTRACT",
@@ -696,13 +919,10 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             reranker_confirmation.get("confirmed") is True,
             reranker_confirmation.get("non_commercial_jina_use_confirmed") is True,
             qwen_reranker.get("model_id") == "Qwen/Qwen3-Reranker-0.6B",
-            qwen_reranker.get("revision")
-            == "e61197ed45024b0ed8a2d74b80b4d909f1255473",
+            qwen_reranker.get("revision") == "e61197ed45024b0ed8a2d74b80b4d909f1255473",
             qwen_reranker.get("qualification_status") == "PASS",
-            jina_reranker.get("model_id")
-            == "jinaai/jina-reranker-v2-base-multilingual",
-            jina_reranker.get("revision")
-            == "9cfeff2df7d40d1b78e75e5e9cebec92a99813c9",
+            jina_reranker.get("model_id") == "jinaai/jina-reranker-v2-base-multilingual",
+            jina_reranker.get("revision") == "9cfeff2df7d40d1b78e75e5e9cebec92a99813c9",
             jina_reranker.get("qualification_status") == "PASS",
             reranker_independence.get("different_architecture") is True,
             reranker_independence.get("different_producer") is True,
@@ -720,9 +940,10 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
             blocked_kind="BLOCKED_AUTOMATIC",
             evidence={
                 "artifact": str(reranker_path.relative_to(repository_root)),
-                "manifest_sha256": sha256_file(reranker_path)
-                if reranker_path.is_file()
-                else None,
+                "manifest_sha256": reranker_manifest_sha256,
+                "frozen_under_scientific_protocol": reranker.get("scientific_protocol"),
+                "current_scientific_protocol": SCIENTIFIC_PROTOCOL,
+                "current_ledger_authorizes_frozen_artifact": reranker_lineage_current,
                 "status": reranker.get("status"),
                 "qwen_revision": qwen_reranker.get("revision"),
                 "jina_revision": jina_reranker.get("revision"),
@@ -732,8 +953,9 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
                 "checksum_errors": reranker_checksum_errors,
             },
             next_action=(
-                "Freeze the exact two-family selection before reading Dev or Gate outcomes; do not "
-                "replace either family based on observed performance."
+                "Restore the exact pre-Dev two-family selection artifact, its recorded code or "
+                "its lineage. Do not rerun or replace either family based on observed Dev "
+                "performance."
             ),
         )
     )
@@ -871,7 +1093,7 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
         },
         "critical_path": [
             "complete_dev_validity_and_freeze_non_bge_similarity_measurement",
-            "complete_two_annotator_P2_calibration_and_resource_freeze",
+            "freeze_P2_resource_envelope",
             "complete_frozen_reranker_resource_and_dev_contract",
             "populate_internal_v6_with_new_real_query_evidence_families",
             "run_three_dataset_30_family_constructability_pilot_and_power_analysis",
@@ -884,9 +1106,7 @@ def build_report(repository_root: Path, linkrag_root: Path) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--repository-root", type=Path, default=Path(__file__).resolve().parents[1]
-    )
+    parser.add_argument("--repository-root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--linkrag-root", type=Path, default=None)
     parser.add_argument(
         "--output",

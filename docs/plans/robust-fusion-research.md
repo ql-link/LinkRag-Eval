@@ -1,7 +1,7 @@
 # 高相似度干扰下检索增强生成的多路来源感知鲁棒融合方法研究
 
 > 文档定位：本文件是科研协议，负责冻结研究问题、构念、证据、实验设计、方法边界和决策门禁；环境、存储、快照和实验器实现在[工程实施协议](robust-fusion-engineering.md)维护，日常任务在[研究推进清单](robust-fusion-todo.md)维护，目标渠道与版本规则在[发表路径与投稿治理](robust-fusion-publication.md)维护。
-> 研究记录：ROBUST-FUSION-RESEARCH-2026-08-29-v26。
+> 研究记录：ROBUST-FUSION-RESEARCH-2026-08-29-v29。
 > 当前阶段：P2 构念、标注与指标效度；尚未进入 Gate A，也尚未开发论文方法 M1。
 > 证据入口：[定向文献地图](robust-fusion-literature.md)、[主张—证据—空缺表](robust-fusion-evidence.md)、[本地论文全文](../papers/)。
 > 最近更新：2026-08-29。
@@ -220,6 +220,12 @@ S_{qg}(c)=\max_{h\in A_{qg}}\cos(z(c),z(h))
 7. 若最高分带仍不构成明显近邻，该数据源不进入高相似确认性结论。
 
 这是一套可重复的操作标准，不是学界通用的绝对余弦阈值。
+
+Internal v6-Dev v1 的自动校准和人工效度已完成。数据源内标准化固定使用合并等价/冲突候选与 `ddof=1`；共同支持固定为两类观测范围交集并要求两侧覆盖率均至少 60%；解释性主分带固定为合并 eligible 候选 q25/q75，相邻敏感性为 q30/q70 与 q20/q80。v1 的共同支持覆盖为等价 17.86%、冲突 57.14%，永久保留为正式 `INCONCLUSIVE`；其 28 个 family、A/B、仲裁、哈希和报告不得覆盖、筛除或重新仲裁。
+
+研究负责人随后只批准一次全新、版本化的 pre-Gate Dev 共同支持补充。结果前预注册固定新增 72 个成对 synthetic microfact family，使 v1+补充总数恰为 100；每个 family 同时提供表面结构匹配的等价/冲突候选，缺失、关系无效或结构失败均按 miss 保留在每侧 100 的固定分母。72 是在规划成功率 0.80 下，使两侧同时达到 60% 的 Bonferroni 概率下界首次达到 0.80 的上限内最小整数；绝对全命中下限 30 不作为目标量。编码器、estimand、`ddof`、共同支持、人工量表和 PASS 门槛全部不变。只有 combined PASS 才冻结正式数值；否则 P2-01/P2-04 未完成、Gate A 未授权且不得第三轮补充。详见[补充报告](../reports/robust_fusion_similarity_support_supplement_2026_08_29.md)。
+
+该唯一补充现已完成真实 A/B 锁定与零仲裁终审。combined 共同支持等价/冲突覆盖为 96%/99%，通过双方 60% 门槛；但 supplement-only 与 combined 的 E5 overall—人工 ordinal Spearman 分别为 0.1775 与 0.3968，均未达到冻结的 0.50，故两个人工效度结论均为 `INCONCLUSIVE`。唯一联合规则因此得到 terminal `INCONCLUSIVE`：不生成正式标准化/分带数值，不完成 P2-01/P2-04，不授权 Gate A，也不允许第三轮补充。锁后新增的零仲裁执行器只补齐缺失实现，未改变任何科学定义或门槛。
 
 > **概念解释｜连续变量与分带**：连续变量保留每个相似度数值的信息；分带把数值划成低、高等组，便于解释但会损失信息。因此本文以连续交互为主，分带只作预注册复核。
 
@@ -992,6 +998,9 @@ Gate A 前不复现 HybRank 或 QuDAR。Gate A = Go 后，只有目标渠道和�
 35. v6-Dev 30-family 首批机械结构产率固定报告为 24/30；四段恢复链只补上一段拒绝 ID，保留全部原始响应和 manifest。恢复后的 30 个结构合格提案已经完成 A/B 独立盲审、提交锁定和仲裁，人工接纳率固定为 28/30（93.33%）；该值只属于 Dev 全合成构造率。真实三路证据计划和 C2 边界补充也都只属于 Dev，P3-04 仍因 GateA/Blind 确认性人口为空而未完成。
 36. v6-Dev 三路证据以独立 v5 计划完成并核验；v2/v3 失败和 v4 完成但完整性拒收的谱系必须保留。v5 只关闭 28 个合成 Dev family 的 route-evidence 缺口，不完成正式 P4-02，也不提供 Gate A/B 资格。provider-managed Dense/Sparse 不设数值误差或 exact 重放门槛；单次生成后只按结构契约与哈希封存，不因数值差异重跑或择优，跨运行差异只作描述。
 37. v6-Dev 主持人裁定覆盖唯一 A/B 候选对分歧，并拒绝两个“表面控制实际构成事实冲突”的 family；模型预设标签不覆盖人工真值。接纳的 28 个主冲突均为 `detectable_only`，不得据此声称 C2 三分边界已经覆盖，也不得将 Dev family 迁入 GateA/Blind。
+38. P2-01 Dev 相似度 v1 只绑定经核验的 v5 route evidence；28 个 (A_{qg}) 各由唯一 `relevant_gold` 构成，84 个非参照候选由冻结 E5/DistilUSE 逐值计算。A/B 与仲裁后的人工效度 PASS，但共同支持 17.86%/57.14% 未通过，故 v1 永久为正式 `INCONCLUSIVE`，不得覆盖、筛除或重新仲裁。
+39. P2 只允许一次 pre-Gate Dev 共同支持补充：固定 72 个新配对 family、总量 100，每侧 combined 分母 100；缺失/无效按 miss，不提前停止、不按分数删选、不再扩样。只有 combined 共同支持、supplement-only 人工效度和 combined 人工效度全部 PASS 才一次性冻结数值；否则 P2-01/P2-04 继续未完成且不得第三轮补充。
+40. 唯一补充的真实终审为 terminal `INCONCLUSIVE`：combined 共同支持 96%/99% PASS，但 supplement-only/combined 的 E5 overall Spearman 0.1775/0.3968 均未达 0.50。不得冻结 provisional 数值、运行 readiness/Gate，或以换模型、降门槛、重抽样、第三轮补充修复该结果。
 
 任何变更必须记录：
 
@@ -1005,6 +1014,9 @@ Gate A 前不复现 HybRank 或 QuDAR。Gate A = Go 后，只有目标渠道和�
 
 | 版本 | 时间 | 原因 | 是否已看相关结果 | 影响范围 |
 | --- | --- | --- | --- | --- |
+| v29 | 2026-08-29 | 收齐唯一补充的四份真实提交，先锁后验；为零仲裁情形补齐已冻结 protocol 的缺失 finalizer，代码先封存后单次执行 | 已查看 Dev 补充人工关系/相似度与 combined 结果；未读取 Blind，未运行 readiness、Gate A/B、Reranker 或 M1 | combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均因 E5 overall 未达 0.50 而 `INCONCLUSIVE`；联合结论 terminal `INCONCLUSIVE`，P2-01/P2-04 未完成、Gate 未授权、无第三轮 |
+| v28 | 2026-08-29 | 永久封存 v1 `INCONCLUSIVE`，并结果前锁定唯一一次 72-family pre-Gate Dev 共同支持补充 | 已知 v1 自动/人工结果；补充协议、样本量、分母、缺失、合并和停止规则在任何补充分数与人工结果前锁定，未运行 Gate A/B、Reranker 或 M1 | 固定总 Dev family=100、每侧 combined 分母=100；补充自动制品与 A/B 关系/相似度包已生成，当前 `AWAITING_HUMAN_SUBMISSIONS`。不放宽模型、estimand、60% 门槛、ddof 或人工效度线，不允许第三轮补充 |
+| v27 | 2026-08-29 | 完成 P2-01 的 Internal v6-Dev 自动相似度校准、结果前统计/人工规则冻结和 A/B 正式发包 | 已查看 Dev E5/DistilUSE 相似度、分层与共同支持覆盖；尚未读取本轮人工相似性提交，未运行 Reranker、Gate A/B 或 M1 | 固定 28 个参照集合、84 个双编码器分数、标准化/共同支持/分带算法和 A/B 各 24 行盲包。共同支持覆盖 17.86%/57.14% 低于双方 60% 下限，正式数值仍未冻结；状态 `AWAITING_HUMAN_SUBMISSIONS`，P2-01/P2-04 与 Gate 均不完成 |
 | v26 | 2026-08-29 | 研究负责人确认 provider-managed Dense/Sparse 不设置数值误差或 exact 重放标准；旧五项 Dense 容差不再作为现行 Gate | 已观察 v6-Dev v4/v5 的在线数值差异和候选/排名稳定性；未运行 Reranker、Gate A/B 或 M1 | 冻结 `ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2`：在线路由单次生成、结构校验、哈希封存，禁止因数值差异重跑或择优；跨运行差异仅作描述。本地确定性环节仍须 exact，v5 无需重跑；不改变任何科学 estimand、效应门槛、确认性人口或 Gate 规则 |
 | v25 | 2026-08-29 | 在不重跑失败计划的前提下修复 Dev 三路 runner 的本地存储与 manifest 封存缺陷，并以独立 v5 计划完成真实三路物化和只读核验 | 已观察 v5 的 Dev 候选集合、三路分数/排名、人工标签覆盖与跨 v4/v5 数值差异；未运行 Reranker、Gate A/B 或 M1 | v2/v3 保持失败、v4 保持完整性拒收；v5 固定为 Dev-only `VERIFIED/NOT_ELIGIBLE`。只关闭 v6-Dev route evidence，不改变科学构念、Gate estimand、阈值、确认性人口或正式 P4-02 状态 |
 | v24 | 2026-08-29 | 获确认的 Dev 三路 v2 运行在首次 Qdrant 只读探测时超时；按冻结失败规则停止，并只读定位为缺少 SSH 本地转发 | 只观察 transport exception、运行状态和 collection 不存在；Dense/Sparse 请求、候选、Reranker、Gate A/B 与方法结果均未产生或读取 | v2 固定为 `FAILED_NO_AUTORETRY`/1 次尝试，不得重跑；建立健康 SSH 隧道后另备 v3 计划，保持 `PREPARED`/0 次尝试并等待新确认。科学构念、Gate 规则、阈值与分母不变 |

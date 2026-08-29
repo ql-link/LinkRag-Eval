@@ -1,8 +1,8 @@
 # 鲁棒融合研究：工程实施协议
 
 > 文档定位：本文件负责把[科研协议](robust-fusion-research.md)转化为可运行、可重放、无标签泄漏的实验系统；它不定义研究问题，也不判定论文结论。
-> 工程记录：`ROBUST-FUSION-ENGINEERING-2026-08-29-v17`。
-> 当前状态：真实 Python 3.11 环境与评测资产可用；Eval 薄适配已迁移到当前 LinkRag 契约并通过本地与 SSH 隧道真实栈检查，历史正式 v2 三路 preflight 已关闭模型/schema/连通性证据。当前 provider-managed Dense/Sparse 不设数值重放门槛，改为单次生成、结构校验和哈希封存。Internal v6 的 30-family Dev 生成、不可覆盖恢复链、A/B 双审提交锁、机械校验和主持人裁定已落地，人工接纳 28/30。Dev-only 三路证据的 v2/v3 失败与 v4 完整性拒收均保留，修复后的独立 v5 已在真实 Dense、Learned Sparse、BM25、SQLite 与 Qdrant 上完成并独立核验。C2 边界补充包仍为空白规划。clean contract lock、远端绿色 CI、正式研究候选快照和离线实验器仍未完成。
+> 工程记录：`ROBUST-FUSION-ENGINEERING-2026-08-29-v22`。
+> 当前状态：真实 Python 3.11 环境与评测资产可用；Eval 薄适配已迁移到当前 LinkRag 契约并通过本地与 SSH 隧道真实栈检查，历史正式 v2 三路 preflight 已关闭模型/schema/连通性证据。当前 provider-managed Dense/Sparse 不设数值重放门槛，改为单次生成、结构校验和哈希封存。Internal v6 的 30-family Dev 生成、不可覆盖恢复链、A/B 双审提交锁、机械校验和主持人裁定已落地，人工接纳 28/30。Dev-only 三路证据的 v2/v3 失败与 v4 完整性拒收均保留，修复后的独立 v5 已在真实 Dense、Learned Sparse、BM25、SQLite 与 Qdrant 上完成并独立核验。P2-01 v1 人工效度 PASS、共同支持 `INCONCLUSIVE` 的全部制品保持只读；唯一一次 72-family Dev 共同支持补充已完成四提交先锁后验和零仲裁单次终审。combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均为 `INCONCLUSIVE`，故 terminal `INCONCLUSIVE`、无正式数值冻结、P2/Gate 未完成且无第三轮。C2 边界补充包仍为空白规划。clean contract lock、远端绿色 CI、正式研究候选快照和离线实验器仍未完成。
 > 项目级状态：[CURRENT_STATUS](../CURRENT_STATUS.md)是 LinkRag-Eval 全项目进度的唯一入口；本文件只维护本研究专属工程契约。
 > 配套入口：[科研协议](robust-fusion-research.md)、[研究推进清单](robust-fusion-todo.md)、[资产对账报告](../reports/sqlite_share_restore_and_asset_reconciliation_2026_08_28.md)。
 > 最近更新：2026-08-29。
@@ -185,6 +185,12 @@ v5 manifest SHA-256 为 `a2ee6147a791903fa0aceae3be7f3b6a7f54277a58f5241cb62d1e9
 [C2 三分边界最小补充方案](robust-fusion-c2-boundary-supplement.md)由 `scripts/initialize_robust_fusion_c2_boundary_supplement.py` 初始化为 8 个管理员规划槽和空摄取/标注模板，manifest SHA-256 为 `ff4e00d857641a2d48e0ece509c29bf357f28918757dc4a1980f9906a681f347`。当前 materialized case/candidate/pair 均为 0、人工未开始、无三路证据；管理员配额与目标类别不得进入后续 A/B 包。
 
 当前实现为 `scripts/run_robust_fusion_internal_v6_deepseek_pilot.py` 与 `linkrag_eval.robust_fusion.internal_v6_pilot`。首批因 DeepSeek V4 默认开启思考模式而有 6 条 `finish_reason=length`；失败批次没有覆盖或整批自动重跑。恢复调用显式发送 `thinking={"type":"disabled"}` 与 `response_format={"type":"json_object"}`，每次只从前一 manifest 的拒绝 ID 生成新版本化目录，并把技术变更、源 manifest、提示词 hash 和校验错误写入审计。五段链最终以 43 次调用得到 30 个结构合格提案；首批结构产率仍固定为 24/30，不能被恢复后的 30/30 覆盖。
+
+P2-01 相似度自动校准入口为 `scripts/run_robust_fusion_similarity_dev_calibration.py`，纯校验与统计位于 `linkrag_eval.robust_fusion.similarity_dev_calibration`。执行器只接受 v5 route manifest/content root 及其绑定的 adjudicated release，路径或 manifest 出现 GateA/Blind 即拒绝；它从 evaluation view 选择 `relevant_gold` 参照成员，从 method view 读取正文，并对禁止字段递归扫描。两个冻结编码器输出 112×768 与 112×512 的 float32 向量，84 个非参照候选按 (S_{qg}(c)) 计算双编码器相似度。正式制品 manifest SHA-256 为 `b44d13f5a5e4f6bea2225ec8c29588db10a37ad1da124eb2d8ff7fb09f08454c`；第二次完整编码对核心文件逐字节重放一致，verifier 复核 24 个受管文件与 112 条向量摘要。A/B 目录各含 24 行 opaque 文本对和空白提交表，不含 evaluation label、模型分数或答案键。提交审阅入口为 `scripts/review_robust_fusion_similarity_human_audit.py`：它验证 A/B 提交锁和仲裁锁、执行机械校验、计算 κ/±1 一致率与仲裁后效度，并封存最终 24 条人评分及 manifest。当前六项人工效度门槛全部 PASS，但共同支持 FAIL，状态为 `REVIEW_COMPLETE_FORMAL_FREEZE_BLOCKED`。
+
+唯一补充周期入口为 `scripts/run_robust_fusion_similarity_support_supplement.py` 与 `linkrag_eval.robust_fusion.similarity_support_supplement`。`prepare` 在任何新分数前锁定 72-family 固定样本量、两侧 100 固定分母、missing-as-miss、v1 全保留、人工双盲和唯一停止规则；lock SHA-256 为 `57179fbf…c6b2b`。`materialize` 生成 72 个确定性 Dev-only 配对微事实与 A/B 各 144 行关系包；`score` 只加载冻结的本地 E5/DistilUSE，生成 216×768/512 向量、144 个候选分数和 A/B 各 48 行相似度包，自动 manifest SHA-256 为 `1c8b0499…327d`。两组向量二次内存重放均 exact。构造角色预览不得代替关系真值。四份提交的后续入口是 `scripts/review_robust_fusion_similarity_support_supplement.py`：真实执行已严格按 `lock-submissions → validate` 完成，提交锁 `7a3ca434…2ae6`；关系 144/144、相似度 48/48 exact 且三类仲裁集合为空。
+
+锁后发现 CLI 缺少零仲裁 finalizer。该缺口以新模块 `linkrag_eval.robust_fusion.similarity_support_finalization` 补齐，性质只是不修改预注册的缺失执行器。真实运行前先执行 `seal-zero-finalizer-implementation`，封存 spec/code manifest `af35908b…499fb`；finalizer 对任一差异、不确定、lock/package/pre-review/ID/行数漂移 fail-closed，不解析 construction-role preview，且只写 append-only `human_review/facilitator/finalization_v1/`。代码封存后 `finalize-zero-adjudication` 单次成功，final manifest `ea40f4f0…f2b35`、receipt `3953e92e…13465`。combined 共同支持 96%/99% PASS；supplement-only/combined E5 overall Spearman 0.1775/0.3968 未达 0.50，二者人工效度均 `INCONCLUSIVE`，联合状态 `P2_TERMINAL_INCONCLUSIVE_GATE_A_UNAUTHORIZED`，不生成正式数值冻结文件。
 
 `scripts/materialize_robust_fusion_internal_v6_human_review.py` 按 generation ID 选择最早结构合格版本，复验五段 manifest、8/8/7/7 配额、跨 family ID/全文唯一性及历史 v5 精确全文 hash，再输出独立 `annotator_a/`、`annotator_b/` 与 `facilitator/`。标注员视图禁止出现 generation/source ID、origin、配额、模型关系标签或构造角色；A/B 各完成 30 条资格、90 条候选、90 条候选对，目录权限 `0700`、文件 `0600`。空白交付 manifest 保持不变，人工答案与最终裁定由主持人目录另行锁定；任何 loader 只能读取最终接纳台账中的 28 个 Dev family，且必须拒绝 GateA/Blind。
 
@@ -427,6 +433,11 @@ runs/robust_fusion/
 
 | 日期 | 版本 | 变更 |
 | --- | --- | --- |
+| 2026-08-29 | v22 | 四份补充提交先锁后验且零仲裁；补齐已冻结 protocol 的零仲裁 finalizer，合成测试后先封存 post-lock spec/code、再单次真实执行。combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均 `INCONCLUSIVE`；terminal `INCONCLUSIVE`，无正式数值冻结、无第三轮，不授权或运行 readiness/Gate A/B |
+| 2026-08-29 | v21 | 永久保留 v1 `INCONCLUSIVE`；新增唯一一次 72-family Dev 共同支持补充执行器。预注册/样本量/分母/缺失/合并/停止规则先锁后算，本地双编码器 216 条向量 exact 重放，生成 144 分数、A/B 各 144 行关系包和各 48 行相似度包；状态 `AWAITING_HUMAN_SUBMISSIONS`，不授权 Gate A/B |
+| 2026-08-29 | v20 | 相似度仲裁提交按先锁后读完成 9/9 行机械核验；finalizer 形成 24 条唯一最终人评分，E5 overall/short/long、DistilUSE overall 与最高主分带两项人工指标全部 PASS。新增仲裁锁漂移拒绝、最终 manifest 和 11/11 谬误扫描；共同支持仍 FAIL，联合冻结 `INCONCLUSIVE`，不完成 P2-01/P2-04 或 Gate A/B |
+| 2026-08-29 | v19 | 新增 P2-01 人工提交审阅器；A/B 两份真实提交先锁后比，24/24 行机械校验通过，κ=0.9484、±1=100%。生成 9 行无模型分数/关系标签的最小真实人工仲裁包；状态为 `AWAITING_HUMAN_ADJUDICATION`，不执行人工代填、正式分带或 Gate A/B |
+| 2026-08-29 | v18 | 新增 P2-01 Dev-only 相似度执行器、参照集合/向量/分数封存、长短与关系分层、共同支持/分带 provisional 规则、双次确定性重放及 A/B 无答案键正式包。当前共同支持覆盖未过 60% 门禁且人工未提交，状态保持 `AWAITING_HUMAN_SUBMISSIONS`；不完成 P2-01/P2-04/P4-02，不授权或运行 Gate A/B |
 | 2026-08-29 | v17 | 以 `ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2` 取代现行 Dense 五项容差/Sparse exact 重放 Gate：在线 Dense/Sparse 单次生成、结构校验、哈希封存，数值差异只作描述且禁止据此重跑或择优；本地确定性计算仍须 exact。旧 v1/v2/诊断制品保持不可变历史证据，v5 无需重跑；未改变科学 estimand、阈值或人口 |
 | 2026-08-29 | v16 | 保留 v2/v3 失败与 v4 manifest 完整性拒收，修复 storage 预建、SQLite checkpoint/瞬态 sidecar 排除及 completed state content-root 记录；独立 v5 一次执行并通过 plan/manifest/root、双视图、SQLite/FTS5、Qdrant 112 点和三路覆盖核验。Dev-only、`NOT_ELIGIBLE` 与 `formal_p4_02_snapshot=false` 边界不变 |
 | 2026-08-29 | v15 | 记录获确认的 v2 唯一执行在首次 Qdrant existence probe 因直连 `ReadTimeout` 失败并封存：0 Dense/Sparse 请求、0 collection、无重试。只读诊断确认 Qdrant 仅在 `linkcv` 本机监听；恢复本地 36333 SSH 隧道并通过 healthz，另备 v3 `PREPARED` 计划等待新确认，不复用 v2 |

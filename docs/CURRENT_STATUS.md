@@ -1,7 +1,31 @@
 # 当前开发状态
 
-> 更新时间：2026-08-30
+> 更新时间：2026-09-06
 > 本页是项目级进度的唯一维护入口。专题文档中的历史状态和实验结论不得覆盖本页。
+
+## 2026-09-06 研究重构盘点：只列清单，未执行删除
+
+负责人要求方法保持暂定，后续重构全面覆盖混合分支，本轮先形成删除 list。已生成[研究重构盘点与删除候选清单](plans/research-restructure-inventory-2026-09-06.md)及[逐文件 JSON 台账](plans/research-restructure-inventory-2026-09-06.json)：覆盖开始时 496 个 tracked、11 个 untracked 路径和 151 个分支变更，并补充 ignored 资产的目录元数据。列出 2 项低风险删除候选、86 个旧流程代码／脚本／测试的条件性退役候选，以及需改写、历史保留、复用审查和保护资产；这些数量均不是已批准或已执行的删除数量。
+
+“候选差异帮助选择检查位置”仍是候选问题／机制，没有冻结算法、窗口参数、四版本实现或创新主张。本轮仅新增清单与本入口，不删除、移动既有文件，不改实现，不训练、不运行正式实验。共享召回／存储适配、依赖 pin、现有 LTR 与模型契约保留；原始人工提交、锁、历史负结果和封存边界保留。下文 R1/R2 状态是旧流程的事实记录，不构成本次盘点或新方法讨论的前置任务。入口与历史协议的全面整理列入后续改写清单，本轮尚未执行。
+
+## 2026-09-06 研究方向独立审查与回应
+
+负责人要求持久化独立审查及本任务回应。已保存[研究方向审查记录](plans/research-direction-review-2026-09-06.md)，含转交问题、审查原文、回应全文、可核对的项目证据和未决事项。当前保留“查询相关关键区别是否被现有排序表示保留并利用”的问题；通用文本比较器、特殊融合、局部交换及此前四／五版本对照暂不作为执行计划，词序／邻近增强也仅是候选方向。
+
+现存历史报告同时记录了 `qwen3-rerank` 直接重排的负收益，以及将其评分作为历史 LambdaMART v2 新增特征后 Blind v3 Recall@10 30.67% → 30.00%的下降。重新采用文本模型必须说明相对这些尝试的具体变化；不能把它写成项目从未尝试的新方向，也不能外推为所有模型无效。原始调用与精确权重溯源尚未补齐。
+
+当前继续内容限定为特征代码、冻结模型／契约及已有报告的只读核对，区分明确未保留的信息、已经进入模型的信息和证据不足的判断；尚未确定正式方法。上一轮评测集与对照设计问题暂存。R1/R2历史状态及封存边界不变；本轮不实现方法、不训练、不运行正式评测、不清理旧资产。
+
+同日已完成仓库冻结v3模型的静态核对：源码／契约／manifest的38项特征名称顺序和签名一致，模型包5个文件哈希与自身清单一致；33棵树实际在22列上分裂，包括数字、字符二／三元组覆盖和同文档相似度。模型内置名称为位置列名，按契约映射，未发现名称顺序契约不一致。该结果证明这些信息进入并被该冻结模型使用，不证明其语义理解、自然错误率或泛化收益；后续落点及限度见审查记录第6节。
+
+## 2026-09-05 研究设计讨论（后续定位见上）
+
+负责人确认本轮范围为：在 Dense / Learned Sparse / BM25 三路召回后的固定候选集合中，利用相似候选的可见关键差异，以及各路分数和排名，研究融合／重排改进。当前目标仅为 IEEE BigData Undergraduate，证据要求由研究问题决定。
+
+已完成 v3 特征／在线接口核查、近邻方法核查和一个手工特征表示检查：交换“版本—年份—权限”的对应关系并固定路由输入后，现有 38 个特征全部不变。该结果仅说明一个表示盲点，不是实际排序失败率或新方法效果。具体候选机制、最少对照与复现代码见[三路召回后的细节关系与融合草案](plans/post-recall-relational-fusion-concept-2026-09-05.md)。当时草案拟区分“条件归属分析本身的收益”与“关系改变三路证据使用方式的额外收益”；2026-09-06独立审查后，后一个问题不再预设为主研究方向。
+
+本次只推进设计与文档，未实现新排序器、训练模型或启动正式评测。下文 R1/R2 的历史结论、仲裁状态和封存边界继续保留；R2 仲裁不作为这项设计论证的前置条件，本草案也不解除旧流程的运行限制。
 
 ## 总体结论
 
@@ -11,9 +35,11 @@
 `98.80%→99.07%`、MRR `92.16%→95.64%`，0 条 Top10 退化，p95 83.71ms。工程门禁通过，
 但 500 条真实搜索 MRR 下降 0.70pp，因此该次 **Eval 验收的科学/工程建议**是“先 Shadow”，不是“该实验已经证明可全量切换”。这是一条历史验收结论。
 
-当前 LinkRag 本地 `.env.development` 的实际排序模式已由负责人配置为 `active`。这只是当前开发环境的运行事实，不等于上述历史建议被新实验推翻，也不证明线上生产已经全量发布。新的鲁棒融合研究尚未进入 Gate A。P4-00 的 Eval 薄适配、精确 LinkRag pin、本地契约/全测和 SSH 隧道真实栈冒烟已经完成。历史正式 v2 三路 preflight 一次通过，Dense/Sparse 均走 exact，BM25=`sqlite_fts5`；旧五项 Dense 容差与 Sparse exact 只保留为历史决策。科研协议现为 v29、工程协议为 v22：provider-managed Dense/Sparse 不再设置数值误差或 exact 重放 Gate，改为每个获授权快照单次生成、结构校验与哈希封存，禁止因数值差异重跑或择优；本地确定性环节仍须 exact。Internal v6 的 30-family Dev 生成、A/B 双审、提交锁和主持人仲裁完成，修复后的独立 v5 已完成 28 Query、112 Chunk、3,056 候选并通过真实存储核验。R1 P2-01 与唯一补充均已按协议终止，正式分带未冻结，Gate 未授权且不得第三轮。R2 已完成正式 128-family source lock、单次冻结编码和四份人工提交的先锁后验；当前只等待新研究员完成 7 行 relation 与 96 行 similarity 仲裁。旧 DeepSeek source v1–v6 的计划与运行现场已按研究负责人 2026-08-30 的明确指令物理删除，不再作为活动制品。8 槽 C2 补充仍为 0 正文/0 标签；正式候选快照仍受双仓 `dirty=false`、本轮远端绿色 CI run 和 clean `contract-lock.json` 阻塞。
+当前 LinkRag 本地 `.env.development` 的实际排序模式已由负责人配置为 `active`。这只是当前开发环境的运行事实，不等于上述历史建议被新实验推翻，也不证明线上生产已经全量发布。新的鲁棒融合研究尚未进入 Gate A。P4-00 的 Eval 薄适配、精确 LinkRag pin、本地契约/全测和 SSH 隧道真实栈冒烟已经完成。历史正式 v2 三路 preflight 一次通过，Dense/Sparse 均走 exact，BM25=`sqlite_fts5`；旧五项 Dense 容差与 Sparse exact 只保留为历史决策。科研协议现为 v29、工程协议为 v23：provider-managed Dense/Sparse 不再设置数值误差或 exact 重放 Gate，改为每个获授权快照单次生成、结构校验与哈希封存，禁止因数值差异重跑或择优；本地确定性环节仍须 exact。Internal v6 的 30-family Dev 生成、A/B 双审、提交锁和主持人仲裁完成，修复后的独立 v5 已完成 28 Query、112 Chunk、3,056 候选并通过真实存储核验。R1 P2-01 与唯一补充均已按协议终止，正式分带未冻结，Gate 未授权且不得第三轮。R2 已完成正式 128-family source lock、单次冻结编码和四份人工提交的先锁后验；当前只等待新研究员完成 7 行 relation 与 96 行 similarity 仲裁。所有后续人工复核、仲裁、签署和独立评审现统一要求在交付前建立 `human_tasks/<task-id>/` 浅入口；深层 canonical 路径只供机器追溯，Blind 入口仅允许存在于 curator 独立工作区。旧 DeepSeek source v1–v6 的计划与运行现场已按研究负责人 2026-08-30 的明确指令物理删除，不再作为活动制品。8 槽 C2 补充仍为 0 正文/0 标签；正式候选快照仍受双仓 `dirty=false`、本轮远端绿色 CI run 和 clean `contract-lock.json` 阻塞。
 
 R2 当前唯一活动状态：负责人授权的 Codex source v7 已逐字节 hard-lock 001/002，并以 append-only 首个机械 PASS 完成 003–128；v7.1 在正式数据前只修复 cross-family 最终校验作用域。正式 128-family/256-candidate source lock、单次冻结 E5/DistilUSE、四个物理隔离盲包和两名研究员四份提交均已完成。四提交在答案解析前完成 raw-byte hash 锁，submission lock 为 `679bf8d1…f952a`；锁后 schema、ID、身份和枚举机械校验通过，原空白仲裁包已封存，relation 7 行、similarity 96 行等待一名新的真实研究员独立仲裁。当前状态为 `AWAITING_HUMAN_ADJUDICATION`；不存在活动 measurement decision，readiness/Gate A/Gate B 均未运行且未授权。详见 [R2 人工提交锁定与仲裁前审阅报告](reports/robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md)。
+
+当前人工入口已收敛为 `human_tasks/r2-adjudication/START_HERE.html`；研究员只使用其下 `relation/` 与 `similarity/`，不再接触六七层 canonical 路径。完整规范和剩余人类接触点见[人工作业浅入口规范](plans/robust-fusion-human-task-entrypoints.md)。
 
 2026-08-30，研究负责人授权将 R2 活动流程操作性回退到第一次人工仲裁之前；活动状态仅以上述 pre-adjudication 边界为准。
 
@@ -100,13 +126,13 @@ R2 当前唯一活动状态：负责人授权的 Codex source v7 已逐字节 ha
 | 优先级 | 工作 | 当前缺口 | 完成标准 |
 | --- | --- | --- | --- |
 | P0 | 鲁棒融合研究 current-HEAD 契约复验 | 薄适配、精确 pin、本地全测、LTR 固定向量、真实栈冒烟和正式 v2 三路 preflight 已完成；仍缺 clean 双仓、远端绿色 CI run 和正式 lock | 形成可提交 clean 状态、取得绿色 CI、生成 `contract-lock.json` |
-| 研究 P2/P3/P4 | Gate A 构念、数据与测量工具 | R1 P2-01 terminal `INCONCLUSIVE`；R2 已完成 source、自动测量及四提交锁定/机械预审，当前等待 relation 7 行、similarity 96 行真人仲裁 | 安排一名新的真实研究员只使用原空白仲裁包独立填写；提交必须先锁后验。在形成合法 measurement decision 前不得运行 readiness/Gate |
+| 研究 P2/P3/P4 | Gate A 构念、数据与测量工具 | R1 P2-01 terminal `INCONCLUSIVE`；R2 已完成 source、自动测量及四提交锁定/机械预审，当前等待 relation 7 行、similarity 96 行真人仲裁 | 安排一名新的真实研究员只使用 `human_tasks/r2-adjudication/` 浅入口独立填写；提交必须先锁后验。在形成合法 measurement decision 前不得运行 readiness/Gate |
 | P1 | 生产模式证据补齐 | 当前开发配置为 `active`，但本页没有新的线上/Shadow 观测能够替代 Blind v5 的历史风险结论 | 保留 weighted score 回滚；以明确的发布范围、延迟、回退率、Top10 变化和业务反馈另行形成运行报告 |
 | P2 | 真实业务效果增强 | 当前真实 Query 来源仍是开源检索，不是脱敏生产 Query | 如继续优化，建立全新 Tune/Blind v6；禁止复用 Blind v5 调参 |
 
 ### 推荐执行顺序
 
-1. R1 P2-01 已 terminal `INCONCLUSIVE`；R2 当前为 `AWAITING_HUMAN_ADJUDICATION`。唯一研究动作是安排一名新的真实研究员填写原 relation 7 行与 similarity 96 行仲裁包；收到提交后必须先锁后验。在此之前不得运行 measurement finalizer、readiness 或 Gate。
+1. R1 P2-01 已 terminal `INCONCLUSIVE`；R2 当前为 `AWAITING_HUMAN_ADJUDICATION`。若继续 R2 测量流程，其下一动作是安排一名新的真实研究员打开 `human_tasks/r2-adjudication/START_HERE.html`，填写其下 relation 7 行与 similarity 96 行；收到提交后必须先锁后验。在此之前不得运行该流程的 measurement finalizer、readiness 或 Gate。2026-09-05 新增的召回后方法设计论证可独立推进，见本页开头。
 2. P4-00 可独立并行：Dense 重放策略和正式 v2 三路 preflight 已关闭；保留已完成的 Eval 薄适配、精确 LinkRag pin、本地全测和真实栈证据，在双仓 clean 后运行远端 CI 并保存绿色 run/report 与 `contract-lock.json`。正式快照仍须等待 P2/P3 冻结。
 3. Blind v4、Blind v5 均已封存，禁止二次运行或据此调参；其 Query 条件化 T2 子池不得进入新研究的确认性候选生成。
 4. 将 Blind v5 的“先 Shadow”保留为历史验收建议，将 `.env.development=active` 记录为当前配置事实；在没有新的运行报告时，不把两者合并成“已证明全量可用”。weighted score 始终作为启动、超时、错误和主动回滚降级路径。
@@ -121,6 +147,8 @@ R2 当前唯一活动状态：负责人授权的 Codex source v7 已逐字节 ha
 
 ## 相关文档
 
+- [研究方向独立审查、回应与后续判断](plans/research-direction-review-2026-09-06.md)
+- [三路召回后的细节关系与融合：方法草案](plans/post-recall-relational-fusion-concept-2026-09-05.md)
 - [鲁棒融合科研协议](plans/robust-fusion-research.md)
 - [鲁棒融合工程实施协议](plans/robust-fusion-engineering.md)
 - [鲁棒融合研究推进清单](plans/robust-fusion-todo.md)
@@ -137,6 +165,7 @@ R2 当前唯一活动状态：负责人授权的 Codex source v7 已逐字节 ha
 - [R2 source v7 与自动测量交接报告](reports/robust_fusion_r2_source_v7_automatic_handoff_2026_08_29.md)
 - [R2 人工提交锁定与仲裁前审阅报告](reports/robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md)
 - [R2 新研究员独立仲裁指南（HTML）](plans/robust-fusion-r2-adjudicator-beginner-guide.html)
+- [鲁棒融合人工作业浅入口规范](plans/robust-fusion-human-task-entrypoints.md)
 - [R2 人工审阅与终审执行规范](plans/robust-fusion-r2-human-review-finalization-v1.md)
 - [R2 source lock v7.1 执行器说明](plans/robust-fusion-r2-source-lock-v7-1.md)
 - [R2 自动测量执行规范](plans/robust-fusion-r2-automatic-execution-v1.md)

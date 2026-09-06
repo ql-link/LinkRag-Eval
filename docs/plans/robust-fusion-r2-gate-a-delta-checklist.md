@@ -19,6 +19,7 @@
 - [x] 单次计算冻结 E5/DistilUSE 并封存 provenance、向量、输入/token/截断与分数哈希；未按分数替换候选。
 - [x] 生成双盲 A/B relation 与 similarity 包；每位研究员 512 行。
 - [x] 四份真实提交在答案解析前完成 raw-byte hash 锁；锁后 schema/ID/身份/枚举校验通过。relation 7 行、similarity 96 行需真实人类仲裁，物理隔离包已封存。
+- [x] 为新仲裁员建立并校验 `human_tasks/r2-adjudication/` 浅入口；指南和交接不再暴露深层 canonical run 路径，relation/similarity 仍写入唯一冻结包。
 - [ ] 安排一名新的真实研究员独立完成 relation 7 行与 similarity 96 行仲裁；收到提交后先锁后验。
 - [ ] 仲裁机械校验通过后，才可按冻结协议形成唯一人工记录并一次性运行 measurement finalizer。
 - [ ] 只有完整性、一致性、分辨率、人工 caliper、共同支持、条件 E5 人工效度全部 PASS 才冻结 measurement。
@@ -43,4 +44,4 @@
 
 ## 当前唯一下一动作
 
-安排一名新的真实研究员，只使用原 `human_review/adjudication_v1/relation/` 与 `human_review/adjudication_v1/similarity/` 空白包，分别填写 7 行与 96 行。不得查看 A/B 以外的结果或任何模型分数；收到两份 `submission.csv` 后必须先锁后验。在此之前不得运行 measurement finalizer、readiness 或 Gate。
+安排一名新的真实研究员，只从项目根目录进入 `human_tasks/r2-adjudication/START_HERE.html`，并在 `human_tasks/r2-adjudication/relation/` 与 `human_tasks/r2-adjudication/similarity/` 分别填写 7 行与 96 行。不得追踪链接寻找其他版本，不得查看 A/B 以外的结果或任何模型分数；收到两份 `submission.csv` 后必须先锁后验。在此之前不得运行 measurement finalizer、readiness 或 Gate。

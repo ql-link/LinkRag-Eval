@@ -6,10 +6,10 @@
 > 文献依据：[robust-fusion-literature.md](robust-fusion-literature.md)
 > 证据收束：[robust-fusion-evidence.md](robust-fusion-evidence.md)
 > 发表规划：[robust-fusion-publication.md](robust-fusion-publication.md)
-> 研究记录：`ROBUST-FUSION-PROGRESS-2026-08-29-v33`
+> 研究记录：`ROBUST-FUSION-PROGRESS-2026-08-30-v34`
 > 当前阶段：`P2 构念、标注与指标效度`
 > 当前任务：`P2-01 冻结核心构念与操作化规则`
-> 最近更新：2026-08-29
+> 最近更新：2026-08-30
 
 ## 1. 使用规则
 
@@ -19,6 +19,7 @@
 4. `Gate A` 和 `Gate B` 只能由预先冻结的证据规则判定，不因为点估计“看起来不错”而通过。
 5. 工程测试只能证明测量工具可信，不能代替对 RQ 和假设的科学检验。
 6. 本清单由当前研究对话持续维护；每次推进后至少更新当前任务、完成证据、决策记录和下一任务。
+7. 任何需要人类直接读写文件的任务，必须在交付前建立并校验 `human_tasks/<task-id>/` 浅入口；canonical `runs/` 路径只供机器和协调人追溯，不能直接作为研究员操作说明。
 
 > **状态说明**：`[x]` 表示已完成并有证据；`[-]` 表示当前正在推进；`[ ]` 表示尚未开始；`[！]` 表示受阻，且必须写明阻塞原因。
 
@@ -130,11 +131,13 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 - [x] **P0-01C 全面重构当时的总研究协议**
   - 证据：科研协议前身 v8 已按“问题—构念—数据—仪器—实验—方法—统计—门禁”重排，删除重复和高成本偏题内容，并把术语解释放在首次使用处及概念速查中。
 - [x] **P0-01D 拆分科研协议与工程实施协议并缩短文件名**
-  - 证据：该次拆分形成科研协议 v9 与工程协议 v1；当前分别演进为[科研协议 v29](robust-fusion-research.md)和[工程协议 v22](robust-fusion-engineering.md)，职责边界保持不变；本研究专题文档统一使用 `robust-fusion-*` 短文件名。
+  - 证据：该次拆分形成科研协议 v9 与工程协议 v1；当前分别演进为[科研协议 v29](robust-fusion-research.md)和[工程协议 v23](robust-fusion-engineering.md)，职责边界保持不变；本研究专题文档统一使用 `robust-fusion-*` 短文件名。
+- [x] **P0-01E 建立全研究周期的人工作业浅入口规范**
+  - 证据：[人工作业浅入口规范](robust-fusion-human-task-entrypoints.md)、机器注册表、入口校验器和当前 `human_tasks/r2-adjudication/` 已落地；R2、C2、Gate A、条件性追加、Gate B curator、解锁签署及 P9 独立评审的人类接触点均已盘点。后续 canonical 人工包未同时具备浅入口时不得标记为可交付；Blind 入口只能存在于 curator 独立工作区。
 - [x] **P0-02 重构 Gate A 前的研究阶段**
   - 证据：主文档第 5.2、9 节已将内部母池分为 `v6-Dev / v6-GateA / v6-Blind`，并将“≤100 Query”限定为校准先导预算；Gate A 样本量改由功效分析冻结。
 - [x] **P0-02A 闭合第二轮审稿提出的 Gate 治理缺口**
-  - 证据：科研协议 v29 沿用 v12 已明确的 Gate A 停止规则、正向单元、层级比较家族、分阶段实际效应、确认性 pooled estimand、反伪影组合、Track B 后果和无环外部时间戳，并保留 v13 的正交标签 schema；工程协议 v22 已把 current-HEAD 契约复验、provider-managed 路由的单次生成/结构校验/哈希封存、CI 重钉、公开正文 ID/hash 对账、DuRetrieval 完整保留、cMedQA2 本地全文治理、v6-Dev 双审锁定/仲裁、三路证据完整性、唯一共同支持补充终审与 Gate 人口拒绝列为硬前置。
+  - 证据：科研协议 v29 沿用 v12 已明确的 Gate A 停止规则、正向单元、层级比较家族、分阶段实际效应、确认性 pooled estimand、反伪影组合、Track B 后果和无环外部时间戳，并保留 v13 的正交标签 schema；工程协议 v23 已把 current-HEAD 契约复验、provider-managed 路由的单次生成/结构校验/哈希封存、CI 重钉、公开正文 ID/hash 对账、DuRetrieval 完整保留、cMedQA2 本地全文治理、v6-Dev 双审锁定/仲裁、三路证据完整性、唯一共同支持补充终审、Gate 人口拒绝及人工作业浅入口列为硬前置。
 - [x] **P0-03 建立研究决策与变更记录模板**
   - 证据：本清单第 6 节固定“日期、决策、依据、是否已观察结果、影响”五列，并已用于全部协议变更；Gate A 准入审计另以 outcome-blind JSON 固定完成项与阻塞项。
 
@@ -303,7 +306,8 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 | P0-01A | 2026-08-09 | [科研协议第 0.3、4.3、11 节](robust-fusion-research.md) | 候选图已收缩为 Top-M 局部统计 |
 | P0-01B | 2026-08-09 | 本研究推进清单 | 建立单一当前任务与准入准出制度 |
 | P0-01C | 2026-08-28 | [科研协议](robust-fusion-research.md) | 前身 v8；全面重构信息架构，保留冻结决策并收束高成本扩展 |
-| P0-01D | 2026-08-28 | [科研协议](robust-fusion-research.md)、[工程协议](robust-fusion-engineering.md) | 科研/工程职责分离；五份专题文档使用短文件名；当前版本为科研 v29、工程 v22 |
+| P0-01D | 2026-08-28 | [科研协议](robust-fusion-research.md)、[工程协议](robust-fusion-engineering.md) | 科研/工程职责分离；五份专题文档使用短文件名；当前版本为科研 v29、工程 v23 |
+| P0-01E | 2026-08-30 | [人工作业浅入口规范](robust-fusion-human-task-entrypoints.md)、[机器注册表](robust-fusion-human-task-registry.json)、入口校验器、`human_tasks/r2-adjudication/` | 机器 canonical 目录与人工操作界面正式分层；当前 R2 入口已落地，后续 C2、Gate A、条件性追加、Gate B curator/解锁与 P9 独立评审均纳入交付前浅入口门禁；Blind 只允许 curator 独立工作区 |
 | P0-02 | 2026-08-09 | [科研协议第 5.2、9 节](robust-fusion-research.md) | 三分内部数据；校准、Gate A、Gate B 分离；样本量由功效分析冻结 |
 | P1-01 | 2026-08-09 | [主张—证据—空缺表](robust-fusion-evidence.md) | 19 条核心主张及措辞护栏；其中 C18/C19 为 2026-08-28 新增近邻边界 |
 | P1-02 | 2026-08-09 | [主张表第 4、8 节](robust-fusion-evidence.md) | 最相近工作的一手页面与实际方法边界已核验 |
@@ -395,6 +399,7 @@ Query—Chunk 人工真值固定拆成 `relevance_status`、`target_relation`、
 | 2026-08-29 | 接受真实相似度仲裁并判定人工效度 PASS，但保持联合冻结 `INCONCLUSIVE` | 仲裁文件先锁后读且 9/9 行合法；A/B 一致性门禁和六项冻结人工效度阈值全部通过，但共同支持两侧覆盖 17.86%/57.14% 仍低于 60% | 是，仅观察 Dev 人工相似度和既有 Dev 相似度分布；未运行 Reranker、Gate A/B 或 M1 | 科研定义不变，科研协议保持 v27；工程协议升为 v20、相似度 manifest v8、进度 v31。人工 PASS 不覆盖共同支持 FAIL，不冻结 provisional 数值，不完成 P2-01/P2-04，不授权 Gate A |
 | 2026-08-29 | 永久保留 v1 `INCONCLUSIVE`，批准且只执行一次 72-family pre-Gate Dev 共同支持补充 | 绝对下限 30 无功效余量；在规划成功率 0.80、两侧同时达标 Bonferroni 下界≥0.80 和总 family≤100 下，72 是首个合格整数 | v1 结果已知；补充协议/样本量/分母/缺失/合并/停止规则在新分数和人工结果前锁定。随后只查看 Dev 补充自动分数，未运行 Gate A/B、Reranker 或 M1 | 科研协议升 v28、工程 v21、相似度 manifest v9、进度 v32；当前自动与盲包完成、`AWAITING_HUMAN_SUBMISSIONS`。不允许第三轮、降阈值、换模型或按分数删选 |
 | 2026-08-29 | 完成唯一补充四提交先锁后验，并以先封存后单次执行补齐零仲裁 finalizer | validate 得到三类仲裁集合全空，但原 CLI 缺 finalizer；缺口属于已锁 protocol 的执行实现，不允许借机改变任何科学口径 | 是，锁后已查看 Dev 人工提交与 combined 结果；未读取 Blind，未运行 readiness、Gate A/B、Reranker 或 M1 | 科研 v29、工程 v22、相似度 manifest v10、进度 v33；combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度 `INCONCLUSIVE`，联合 terminal `INCONCLUSIVE`。不冻结数值、不完成 P2-01/P2-04、不授权 Gate、无第三轮 |
+| 2026-08-30 | 将所有后续人工作业改为项目根目录下的统一浅入口，不再把版本化 `runs/` 路径直接交给研究员 | R2 指南补全项目根路径后暴露出机器目录同时承担人机界面、层级过深且容易误入相邻版本；同一问题还会在 C2、Gate A 双审/仲裁、Blind curator 和 P9 评审重复出现 | 是，只观察已有目录结构、人工任务协议和当前空白 R2 仲裁包；未读取新人工答案、Blind 或 Gate 结果 | 工程协议升为 v23、进度 v34；建立 `human_tasks/<task-id>/`、机器注册表与交付前校验。当前 R2 使用相对符号链接写回唯一 canonical 包；Blind 必须在 curator 独立工作区使用同样的浅入口，不改变任何 estimand、标签、分母或 Gate 状态 |
 
 ## 7. 阻塞项
 

@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "record_id": "ROBUST-FUSION-HUMAN-TASK-REGISTRY-2026-08-30-v1",
+  "visible_root": "human_tasks",
+  "max_visible_file_components": 4,
+  "forbidden_guide_tokens": [
+    "/Users/",
+    "runs/",
+    "data/robust_fusion/",
+    "docs/plans/"
+  ],
+  "active_tasks": [
+    {
+      "task_id": "r2-adjudication",
+      "research_id": "ROBUST-FUSION-R2-2026-08-29",
+      "status": "AWAITING_HUMAN_SUBMISSION",
+      "workspace_scope": "shared_dev_workspace",
+      "guide": "human_tasks/r2-adjudication/START_HERE.html",
+      "guide_source": "docs/plans/robust-fusion-r2-adjudicator-beginner-guide.html",
+      "workspaces": [
+        {
+          "name": "relation",
+          "entry": "human_tasks/r2-adjudication/relation",
+          "canonical_target": "runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation",
+          "required_inputs": [
+            "README.txt",
+            "cases.csv",
+            "package_manifest.json",
+            "submission_template.csv"
+          ],
+          "expected_output": "submission.csv",
+          "expected_rows": 7
+        },
+        {
+          "name": "similarity",
+          "entry": "human_tasks/r2-adjudication/similarity",
+          "canonical_target": "runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity",
+          "required_inputs": [
+            "README.txt",
+            "cases.csv",
+            "package_manifest.json",
+            "submission_template.csv"
+          ],
+          "expected_output": "submission.csv",
+          "expected_rows": 96
+        }
+      ]
+    }
+  ],
+  "planned_human_touchpoints": [
+    {
+      "touchpoint_id": "c2-dev-review-and-adjudication",
+      "phase": "P3/P5 Dev calibration",
+      "entrypoint_pattern": "human_tasks/c2-<role>",
+      "workspace_scope": "shared_dev_workspace",
+      "human_entry_required_before_handoff": true
+    },
+    {
+      "touchpoint_id": "gatea-primary-secondary-review",
+      "phase": "P5 Gate A cohort qualification",
+      "entrypoint_pattern": "human_tasks/gatea-review-<role>",
+      "workspace_scope": "shared_gatea_curator_workspace",
+      "human_entry_required_before_handoff": true
+    },
+    {
+      "touchpoint_id": "gatea-adjudication",
+      "phase": "P5 Gate A cohort qualification",
+      "entrypoint_pattern": "human_tasks/gatea-adjudication",
+      "workspace_scope": "shared_gatea_curator_workspace",
+      "human_entry_required_before_handoff": true
+    },
+    {
+      "touchpoint_id": "gatea-readiness-signoff",
+      "phase": "P5/P6 Gate A seal and unlock",
+      "entrypoint_pattern": "human_tasks/gatea-readiness-signoff",
+      "workspace_scope": "shared_dev_workspace",
+      "human_entry_required_before_handoff": true
+    },
+    {
+      "touchpoint_id": "gatea-inconclusive-supplement-review",
+      "phase": "P6 conditional one-time supplement",
+      "entrypoint_pattern": "human_tasks/gatea-supplement-<role>",
+      "workspace_scope": "shared_gatea_curator_workspace",
+      "human_entry_required_before_handoff": true
+    },
+    {
+      "touchpoint_id": "gateb-blind-curation-review",
+      "phase": "P3/P8 Blind qualification and seal",
+      "entrypoint_pattern": "human_tasks/gateb-curator-<role>",
+      "workspace_scope": "curator_only",
+      "human_entry_required_before_handoff": true
+    },
+    {
+      "touchpoint_id": "gateb-readiness-signoff",
+      "phase": "P8 Blind unlock",
+      "entrypoint_pattern": "human_tasks/gateb-readiness-signoff",
+      "workspace_scope": "shared_dev_workspace_manifest_only",
+      "human_entry_required_before_handoff": true
+    },
+    {
+      "touchpoint_id": "manuscript-independent-review",
+      "phase": "P9 independent review",
+      "entrypoint_pattern": "human_tasks/manuscript-review-<round>-<reviewer>",
+      "workspace_scope": "reviewer_specific",
+      "human_entry_required_before_handoff": true
+    }
+  ]
+}

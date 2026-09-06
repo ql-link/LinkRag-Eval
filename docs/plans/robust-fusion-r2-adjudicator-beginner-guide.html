@@ -532,12 +532,12 @@
               <h3>你可以查看</h3>
               <ul>
                 <li>本指南；</li>
-                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/README.txt</code>；</li>
-                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/cases.csv</code>；</li>
-                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission_template.csv</code>；</li>
-                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/README.txt</code>；</li>
-                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/cases.csv</code>；</li>
-                <li><code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission_template.csv</code>；</li>
+                <li><code class="path">human_tasks/r2-adjudication/relation/README.txt</code>；</li>
+                <li><code class="path">human_tasks/r2-adjudication/relation/cases.csv</code>；</li>
+                <li><code class="path">human_tasks/r2-adjudication/relation/submission_template.csv</code>；</li>
+                <li><code class="path">human_tasks/r2-adjudication/similarity/README.txt</code>；</li>
+                <li><code class="path">human_tasks/r2-adjudication/similarity/cases.csv</code>；</li>
+                <li><code class="path">human_tasks/r2-adjudication/similarity/submission_template.csv</code>；</li>
                 <li>普通词典，用于确认单词字面含义，但不要上传整行文本。</li>
               </ul>
             </div>
@@ -569,8 +569,8 @@
 
           <div class="callout">
             <strong>以下路径均相对于 LinkRag-Eval 项目根目录；只在这两个指定目录工作：</strong><br>
-            关系目录：<code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/</code><br>
-            相似度目录：<code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/</code><br>
+            关系目录：<code class="path">human_tasks/r2-adjudication/relation/</code><br>
+            相似度目录：<code class="path">human_tasks/r2-adjudication/similarity/</code><br>
             不要进入同级或上级的其他研究目录。
           </div>
 
@@ -582,40 +582,40 @@
               <tbody>
                 <tr>
                   <td>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/README.txt</code><br>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/README.txt</code>
+                    <code class="path">human_tasks/r2-adjudication/relation/README.txt</code><br>
+                    <code class="path">human_tasks/r2-adjudication/similarity/README.txt</code>
                   </td>
                   <td>目录内的最简正式说明。</td>
                   <td><b>不能</b></td>
                 </tr>
                 <tr>
                   <td>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/cases.csv</code><br>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/cases.csv</code>
+                    <code class="path">human_tasks/r2-adjudication/relation/cases.csv</code><br>
+                    <code class="path">human_tasks/r2-adjudication/similarity/cases.csv</code>
                   </td>
                   <td>显示 Query、Reference、Candidate，以及 A/B 的原始分歧。</td>
                   <td><b>不能</b></td>
                 </tr>
                 <tr>
                   <td>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission_template.csv</code><br>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission_template.csv</code>
+                    <code class="path">human_tasks/r2-adjudication/relation/submission_template.csv</code><br>
+                    <code class="path">human_tasks/r2-adjudication/similarity/submission_template.csv</code>
                   </td>
                   <td>空白提交模板。</td>
                   <td><b>保留原文件不动</b></td>
                 </tr>
                 <tr>
                   <td>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code><br>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code>
+                    <code class="path">human_tasks/r2-adjudication/relation/submission.csv</code><br>
+                    <code class="path">human_tasks/r2-adjudication/similarity/submission.csv</code>
                   </td>
                   <td>你复制模板后填写的唯一正式提交。</td>
                   <td><b>只修改这一份</b></td>
                 </tr>
                 <tr>
                   <td>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/package_manifest.json</code><br>
-                    <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/package_manifest.json</code>
+                    <code class="path">human_tasks/r2-adjudication/relation/package_manifest.json</code><br>
+                    <code class="path">human_tasks/r2-adjudication/similarity/package_manifest.json</code>
                   </td>
                   <td>记录包内文件的完整性。</td>
                   <td><b>不能</b></td>
@@ -626,12 +626,12 @@
 
           <h3>准确操作顺序</h3>
           <div class="flow">
-            <div class="flow-item" data-step="1">先进入 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/</code>。将 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission_template.csv</code> 复制为 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code>。</div>
-            <div class="flow-item" data-step="2">逐行读取 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/cases.csv</code>，把最终关系判断填写进 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code>。</div>
+            <div class="flow-item" data-step="1">先进入 <code class="path">human_tasks/r2-adjudication/relation/</code>。将 <code class="path">human_tasks/r2-adjudication/relation/submission_template.csv</code> 复制为 <code class="path">human_tasks/r2-adjudication/relation/submission.csv</code>。</div>
+            <div class="flow-item" data-step="2">逐行读取 <code class="path">human_tasks/r2-adjudication/relation/cases.csv</code>，把最终关系判断填写进 <code class="path">human_tasks/r2-adjudication/relation/submission.csv</code>。</div>
             <div class="flow-item" data-step="3">保存、关闭关系文件；建议休息约 10 分钟。不要在相似度任务中查看刚才的关系答案。</div>
-            <div class="flow-item" data-step="4">进入 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/</code>，将其中的 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission_template.csv</code> 复制为 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code>，再完成 96 行评分。</div>
+            <div class="flow-item" data-step="4">进入 <code class="path">human_tasks/r2-adjudication/similarity/</code>，将其中的 <code class="path">human_tasks/r2-adjudication/similarity/submission_template.csv</code> 复制为 <code class="path">human_tasks/r2-adjudication/similarity/submission.csv</code>，再完成 96 行评分。</div>
             <div class="flow-item" data-step="5">运行本指南末尾的人工检查；不要改文件名、表头、ID 或行数。</div>
-            <div class="flow-item" data-step="6">通知协调人 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code> 与 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code> 均已完成。交付后不要再次打开或修改。</div>
+            <div class="flow-item" data-step="6">通知协调人 <code class="path">human_tasks/r2-adjudication/relation/submission.csv</code> 与 <code class="path">human_tasks/r2-adjudication/similarity/submission.csv</code> 均已完成。交付后不要再次打开或修改。</div>
           </div>
 
           <div class="callout warning">
@@ -1194,7 +1194,7 @@
             <div class="card">
               <h3>关系文件</h3>
               <ul class="checklist">
-                <li>文件准确位于 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code>。</li>
+                <li>文件准确位于 <code class="path">human_tasks/r2-adjudication/relation/submission.csv</code>。</li>
                 <li>共有 7 条数据行；没有删除、增加或排序错位。</li>
                 <li>所有 <code>adjudication_id</code> 与模板完全一致。</li>
                 <li><code>yes/no</code>、关系标签和冲突类型均为规定的小写英文。</li>
@@ -1206,7 +1206,7 @@
             <div class="card">
               <h3>相似度文件</h3>
               <ul class="checklist">
-                <li>文件准确位于 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code>。</li>
+                <li>文件准确位于 <code class="path">human_tasks/r2-adjudication/similarity/submission.csv</code>。</li>
                 <li>共有 96 条数据行；所有 ID 与模板一致。</li>
                 <li>每一行分数都是单个整数 <code>1</code>–<code>7</code>。</li>
                 <li>没有使用 5.5、区间、文字“高/低”或空白分数。</li>
@@ -1228,8 +1228,8 @@
 
           <div class="callout success">
             <strong>完成后只需要通知协调人：</strong>
-            “<code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/relation/submission.csv</code>
-            与 <code class="path">runs/robust_fusion/r2_measurement_v1/robust-fusion-r2-measurement-v1-20260829/human_review/adjudication_v1/similarity/submission.csv</code>
+            “<code class="path">human_tasks/r2-adjudication/relation/submission.csv</code>
+            与 <code class="path">human_tasks/r2-adjudication/similarity/submission.csv</code>
             均已独立完成。”协调人接下来会先锁定文件原始字节，再解析内容。
             在收到确认前，不要重新保存文件。
           </div>

@@ -1,11 +1,11 @@
 # 鲁棒融合研究：工程实施协议
 
 > 文档定位：本文件负责把[科研协议](robust-fusion-research.md)转化为可运行、可重放、无标签泄漏的实验系统；它不定义研究问题，也不判定论文结论。
-> 工程记录：`ROBUST-FUSION-ENGINEERING-2026-08-29-v22`。
-> 当前状态：真实 Python 3.11 环境与评测资产可用；Eval 薄适配已迁移到当前 LinkRag 契约并通过本地与 SSH 隧道真实栈检查，历史正式 v2 三路 preflight 已关闭模型/schema/连通性证据。当前 provider-managed Dense/Sparse 不设数值重放门槛，改为单次生成、结构校验和哈希封存。Internal v6 的 30-family Dev 生成、不可覆盖恢复链、A/B 双审提交锁、机械校验和主持人裁定已落地，人工接纳 28/30。Dev-only 三路证据的 v2/v3 失败与 v4 完整性拒收均保留，修复后的独立 v5 已在真实 Dense、Learned Sparse、BM25、SQLite 与 Qdrant 上完成并独立核验。P2-01 v1 人工效度 PASS、共同支持 `INCONCLUSIVE` 的全部制品保持只读；唯一一次 72-family Dev 共同支持补充已完成四提交先锁后验和零仲裁单次终审。combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均为 `INCONCLUSIVE`，故 terminal `INCONCLUSIVE`、无正式数值冻结、P2/Gate 未完成且无第三轮。C2 边界补充包仍为空白规划。clean contract lock、远端绿色 CI、正式研究候选快照和离线实验器仍未完成。
+> 工程记录：`ROBUST-FUSION-ENGINEERING-2026-08-30-v23`。
+> 当前状态：真实 Python 3.11 环境与评测资产可用；Eval 薄适配已迁移到当前 LinkRag 契约并通过本地与 SSH 隧道真实栈检查，历史正式 v2 三路 preflight 已关闭模型/schema/连通性证据。当前 provider-managed Dense/Sparse 不设数值重放门槛，改为单次生成、结构校验和哈希封存。Internal v6 的 30-family Dev 生成、不可覆盖恢复链、A/B 双审提交锁、机械校验和主持人裁定已落地，人工接纳 28/30。Dev-only 三路证据的 v2/v3 失败与 v4 完整性拒收均保留，修复后的独立 v5 已在真实 Dense、Learned Sparse、BM25、SQLite 与 Qdrant 上完成并独立核验。P2-01 v1 人工效度 PASS、共同支持 `INCONCLUSIVE` 的全部制品保持只读；唯一一次 72-family Dev 共同支持补充已完成四提交先锁后验和零仲裁单次终审。combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均为 `INCONCLUSIVE`，故 terminal `INCONCLUSIVE`、无正式数值冻结、P2/Gate 未完成且无第三轮。C2 边界补充包仍为空白规划。R2 当前等待一名新研究员完成 7 行关系与 96 行相似度仲裁，并已建立统一的 `human_tasks/<task-id>/` 浅入口；后续所有人工复核、仲裁、签署和独立评审均须在交付前通过同一入口门禁。clean contract lock、远端绿色 CI、正式研究候选快照和离线实验器仍未完成。
 > 项目级状态：[CURRENT_STATUS](../CURRENT_STATUS.md)是 LinkRag-Eval 全项目进度的唯一入口；本文件只维护本研究专属工程契约。
 > 配套入口：[科研协议](robust-fusion-research.md)、[研究推进清单](robust-fusion-todo.md)、[资产对账报告](../reports/sqlite_share_restore_and_asset_reconciliation_2026_08_28.md)。
-> 最近更新：2026-08-29。
+> 最近更新：2026-08-30。
 
 ## 0. 一页摘要
 
@@ -350,6 +350,26 @@ runs/robust_fusion/
 
 具体文件格式和命名在 P4-01 冻结。任何产物不得包含 API Key、生产用户信息或未脱敏的敏感内容。
 
+### 9.1 人工作业浅入口
+
+版本化 `runs/` 路径是机器证据位置，不是人工操作界面。所有需要研究员、仲裁员、curator、研究负责人或独立审稿人直接读写文件的任务，必须额外建立项目根目录相对的 `human_tasks/<task-id>/` 浅入口，并遵守[人工作业浅入口规范](robust-fusion-human-task-entrypoints.md)。
+
+工程硬约束如下：
+
+- 人工指南与聊天交接只使用 `human_tasks/<task-id>/...`，不得要求参与者识别 canonical run ID 或日期目录；
+- 浅入口以相对符号链接指向唯一 canonical 包，不复制可编辑任务；
+- 不同评审角色使用不同 task ID，入口不能暴露其他评审者答案、facilitator key、模型分数或 Gate 结果；
+- canonical 包存在但浅入口未建立或未校验时，只能记录为“机器包完成”，不能记录为“可交付”；
+- 提交仍写入 canonical 包并按原始字节先锁后读；浅入口不改变固定分母、manifest 或 finalizer；
+- Blind 人工入口只能建立在独立 curator 工作区，主方法工作区只接收 opaque ID/hash 与资格状态，不能出现指向 Blind 正文的链接；
+- 项目外传递使用独立导出/回收包，不直接压缩包含符号链接的项目内入口。
+
+机器注册表为 `docs/plans/robust-fusion-human-task-registry.json`；交付前执行：
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/check_robust_fusion_human_task_entrypoints.py --before-handoff
+```
+
 ## 10. 验证与验收
 
 ### 10.1 单元与契约检查
@@ -363,6 +383,7 @@ runs/robust_fusion/
 - Top1 安全在任一基线×数据集共同风险集为空、低于 `F_min,flip/rho_min,flip` 或缺失任一主剂量时输出 `Inconclusive`，不得跳过该格；
 - 路由缺失、模型失败和截断不会静默变成空结果；
 - 本地确定性计算必须逐位一致；provider-managed Dense/Sparse 只执行结构合法性与单次快照哈希封存，不设数值误差或跨请求 exact 门槛，也不得因数值差异重跑或择优。
+- 任何人工包必须先通过浅入口路径深度、链接目标、角色隔离、允许文件、行数、指南泄漏和预交付输出不存在性校验，才能标记为可交付。
 
 ### 10.2 真实栈冒烟
 
@@ -433,6 +454,7 @@ runs/robust_fusion/
 
 | 日期 | 版本 | 变更 |
 | --- | --- | --- |
+| 2026-08-30 | v23 | 将人工作业界面与机器证据目录正式分层：所有后续标注、双审、仲裁、签署和独立评审在交付前必须建立 `human_tasks/<task-id>/` 浅入口并通过机器校验；当前 R2 仲裁已落地。Blind 继续物理隔离，只能在 curator 独立工作区使用同样的浅入口，不向方法开发工作区暴露正文或链接 |
 | 2026-08-29 | v22 | 四份补充提交先锁后验且零仲裁；补齐已冻结 protocol 的零仲裁 finalizer，合成测试后先封存 post-lock spec/code、再单次真实执行。combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均 `INCONCLUSIVE`；terminal `INCONCLUSIVE`，无正式数值冻结、无第三轮，不授权或运行 readiness/Gate A/B |
 | 2026-08-29 | v21 | 永久保留 v1 `INCONCLUSIVE`；新增唯一一次 72-family Dev 共同支持补充执行器。预注册/样本量/分母/缺失/合并/停止规则先锁后算，本地双编码器 216 条向量 exact 重放，生成 144 分数、A/B 各 144 行关系包和各 48 行相似度包；状态 `AWAITING_HUMAN_SUBMISSIONS`，不授权 Gate A/B |
 | 2026-08-29 | v20 | 相似度仲裁提交按先锁后读完成 9/9 行机械核验；finalizer 形成 24 条唯一最终人评分，E5 overall/short/long、DistilUSE overall 与最高主分带两项人工指标全部 PASS。新增仲裁锁漂移拒绝、最终 manifest 和 11/11 谬误扫描；共同支持仍 FAIL，联合冻结 `INCONCLUSIVE`，不完成 P2-01/P2-04 或 Gate A/B |

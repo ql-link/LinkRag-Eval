@@ -13,7 +13,7 @@
 | [当前状态](CURRENT_STATUS.md) | 项目级进度、未完成工作与下一步的唯一入口 |
 | 本目录 | 文档用途与历史替代关系 |
 | [解耦架构](architecture/decoupling-plan.md) | 当前工程职责与生产依赖方式；旧 Step 0–6 只作迁移历史 |
-| [人工任务说明](../human_tasks/README.md)及[当前登记](../human_tasks/registry.json) | 活动任务入口；重构后的默认 `active_tasks` 为空 |
+| [人工任务说明](../human_tasks/README.md) | 当前无活动任务；旧入口仅用于追溯 |
 
 ## 本次研究讨论与重构
 
@@ -38,13 +38,13 @@
 
 ## Robust Fusion 历史协议与文献
 
-[Robust Fusion 历史导航](archive/robust-fusion/README.md)逐项列出原科研／工程协议、研究清单、R1→R2 继承、相似度测量、Internal、标注、source lock、自动执行、仲裁与发表治理文件。它们退出活动执行身份，原文件仍保留原路径与字节，便于核对已有哈希和报告引用。旧正文中的 Gate、下一步或授权条件属于当时协议，不能据此启动旧流程。
+[Robust Fusion 历史导航](archive/robust-fusion/README.md)逐项列出原科研／工程协议、研究清单、R1→R2 继承、相似度测量、Internal、标注、source lock、自动执行、仲裁与发表治理文件。它们退出活动执行身份，原文件仍保留原路径与字节，便于追溯原报告。旧正文中的 Gate、下一步或授权条件属于当时协议，不能据此启动旧流程。
 
 文献与证据仍可使用，但应区分文献主张与项目实测：
 
 - [文献综述](plans/robust-fusion-literature.md)：历史综述与来源；具体时效和论断应按新的问题核验。
 - [证据卡片](plans/robust-fusion-evidence.md)：历史证据组织，不自动继承其研究主张或方案选择。
-- 原人工登记 `docs/plans/robust-fusion-human-task-registry.json`、HTML、symlink、提交与锁均保留为历史；活动任务改由 `human_tasks/registry.json` 登记。
+- 原人工登记 `docs/plans/robust-fusion-human-task-registry.json`、HTML、symlink、提交与锁均保留为历史；当前没有活动任务，不保留空注册表。
 
 R1 历史结果仍为 `INCONCLUSIVE`；R2 最后记录状态仍为待仲裁。退出流程不等于完成验证，也不抹掉失败、负结果或未决事项。
 

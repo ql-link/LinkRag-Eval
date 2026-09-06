@@ -25,7 +25,7 @@ def ledger_rows(result: EvalResult, *, dataset: str, ts: str) -> list[dict[str, 
     config_dims = {
         "sparse_provider": snap.sparse_vector_provider,
         "top_k": snap.top_k,
-        "score_threshold": snap.score_threshold,
+        "route_score_thresholds": snap.route_score_thresholds,
         "enabled_sources": ",".join(sorted(snap.enabled_sources)),
         "rrf_k": snap.rrf_k,
         "route_top_ks": snap.route_top_ks,

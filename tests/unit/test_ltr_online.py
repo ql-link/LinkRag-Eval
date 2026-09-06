@@ -28,7 +28,7 @@ def _model_dir(root, version):
     manifest=ModelManifest(
         model_version=version, feature_version=FEATURE_VERSION,
         feature_signature=feature_signature(), feature_names=list(FEATURE_NAMES),
-        training_data_sha256="a"*64,
+        training_data_sha256="",
         n_estimators=10, latency_budget_ms=250, timeout_ms=350, lightgbm_version="4.7.0",
         model_file_sha256=hashlib.sha256(model.read_bytes()).hexdigest(),
     )

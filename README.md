@@ -18,7 +18,7 @@
 
 ## 工程能力与研究边界
 
-工程保留独立入库、Dense／Learned Sparse／SQLite FTS5 BM25 召回、候选快照、评测指标，以及现有 38 维 `candidate_difference_v3` LambdaMART 和回退能力。Dense／Sparse 编码由 eval 自带 `llm/` 模块承载；chunk 切分和 BM25 分词经 adapter 复用生产纯计算。启用三路召回需配置 `bm25_mode=sqlite_fts5`；`stub` 仅装配 Dense／Sparse，旧 `qdrant_bm25` 模式不再支持。
+工程保留独立入库、Dense／Learned Sparse／SQLite FTS5 BM25 召回、候选快照、评测指标，以及现有 38 维 `candidate_difference_v3` LambdaMART 和回退能力。Dense／Sparse 编码由 eval 自带 `llm/` 模块承载；chunk 切分经 adapter 复用生产纯计算，BM25 在 eval 内分词。启用三路召回需配置 `bm25_mode=sqlite_fts5`；`stub` 仅装配 Dense／Sparse。
 
 当前研究围绕三路召回后的固定候选集合，探索如何利用候选的可见关键差异与逐路分数／排名改进融合或重排；不回原文补充信息，不改变召回。具体方法、特征、比较方式与实验版本尚未定案。历史协议中的步骤、门槛或“唯一下一步”不自动成为新研究的前置条件，具体工作以当前状态和用户当轮授权为准。
 
@@ -39,7 +39,7 @@ python3 -m pytest -m "not integration" -q
 lint-imports
 ```
 
-人工任务的当前登记入口为 [human_tasks/registry.json](human_tasks/registry.json)，校验命令为 `python3 scripts/check_human_task_entrypoints.py`。重构后的默认活动列表为空；旧登记、HTML 与链接保留作历史，并不表示仍待执行。
+当前没有人工作业；[human_tasks/README.md](human_tasks/README.md)仅说明历史入口。当前运行接口不为旧研究流程保留兼容层，简化范围见[运行链路简化记录](docs/plans/runtime-simplification-2026-09-06.md)。
 
 ## 历史与恢复
 

@@ -11,8 +11,9 @@ eval 全仓只依赖本文件的抽象;唯一实现 :class:`RagProductComputer`(
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
-from typing import Any, Protocol, Sequence, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 
 @dataclass(frozen=True)
@@ -43,7 +44,7 @@ class SparseVec:
 
 @dataclass(frozen=True)
 class Bm25Tokens:
-    """BM25 预分词产物:粗/细粒度 token 串(ES/Qdrant-BM25 共用口径)。"""
+    """SQLite FTS5 使用的预分词产物。"""
 
     coarse: str
     fine: str
@@ -85,8 +86,6 @@ class ProductComputer(Protocol):
     async def compute_dense(self, contents: Sequence[str]) -> list[DenseVec]: ...
 
     async def compute_sparse(self, contents: Sequence[str]) -> list[SparseVec]: ...
-
-    def compute_bm25_tokens(self, content: str) -> Bm25Tokens: ...
 
     @property
     def dense_dim(self) -> int: ...

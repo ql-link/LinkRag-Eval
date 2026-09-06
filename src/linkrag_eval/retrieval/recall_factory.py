@@ -11,7 +11,6 @@
 
 融合/排序由生产 RecallPipeline 按固定 weighted score 与请求级权重执行。BM25 路在
 ``sqlite_fts5`` 时装配 eval 自持 SQLite FTS5；``stub`` 时只装 dense+sparse 两路。
-现行 LinkRag 已删除旧 ``qdrant_bm25`` 模块，该模式显式拒绝而不恢复生产旧接口。
 
 护栏:Qdrant 前缀必须含 ``eval``,否则拒绝装配——防打到生产 collection。
 """
@@ -57,7 +56,7 @@ class _EvalReadinessGate:
 
 
 class _EvalBm25Retriever:
-    """把生产 Qdrant BM25 backend 适配成 RecallPipeline Retriever,避开 ES adapter 路径。"""
+    """把 eval SQLite FTS5 后端适配成生产 RecallPipeline 的 Retriever。"""
 
     source = "bm25"
 
@@ -78,8 +77,8 @@ class _EvalBm25Retriever:
     ) -> list[Any]:
         from src.core.pipeline.recall.models import RetrieverHit
 
-        # 新版 RecallPipeline 对所有 retriever 统一透传数据集上下文。SQLite/Qdrant
-        # eval BM25 只使用显式 dataset_ids，不读取生产数据集配置，因此有意忽略。
+        # RecallPipeline 统一透传数据集上下文；eval BM25 使用显式 dataset_ids，
+        # 不读取生产数据集配置。
         del dataset_contexts, score_threshold_override
         tokens = self._tokenize(query)
         if not tokens or not dataset_ids:
@@ -134,6 +133,8 @@ def build_eval_recall_pipeline(
         raise RuntimeError(
             f"召回装配前缀 {settings.qdrant_prefix!r} 不含 'eval';为防打到生产 collection,拒绝装配。"
         )
+    if settings.bm25_mode not in {"stub", "sqlite_fts5"}:
+        raise ValueError(f"不支持的 BM25 模式: {settings.bm25_mode!r}")
     if dense_encoder is None:
         from linkrag_eval.llm.dense_client import build_dense_embedder
 
@@ -143,9 +144,9 @@ def build_eval_recall_pipeline(
 
         sparse_encoder = build_sparse_encoder(settings)
     if dense_score_threshold is None:
-        dense_score_threshold = getattr(settings, "recall_dense_score_threshold", 0.0)
+        dense_score_threshold = settings.recall_dense_score_threshold
     if sparse_score_threshold is None:
-        sparse_score_threshold = getattr(settings, "recall_sparse_score_threshold", 0.10)
+        sparse_score_threshold = settings.recall_sparse_score_threshold
 
     from qdrant_client import AsyncQdrantClient
     from src.core.pipeline.recall import RecallPipeline, RecallPipelineConfig
@@ -165,7 +166,7 @@ def build_eval_recall_pipeline(
     store = QdrantIndexStore(client=client, collection_name=collection_name)
 
     _sparse_service = _EvalSparseQueryService(
-        sparse_encoder, vector_name=getattr(settings, "sparse_vector_name", "sparse_text")
+        sparse_encoder, vector_name=settings.sparse_vector_name
     )
 
     dense = DenseRetriever(
@@ -183,17 +184,8 @@ def build_eval_recall_pipeline(
     sparse_backend._sparse_vector_service = _sparse_service
     sparse = SparseRetriever(backend=sparse_backend, score_threshold=sparse_score_threshold)
     retrievers = []
-    if getattr(settings, "bm25_mode", "stub") == "qdrant_bm25":
-        raise NotImplementedError(
-            "EVAL_BM25_MODE=qdrant_bm25 依赖的生产模块已删除；"
-            "当前 eval BM25 适配请使用 sqlite_fts5。"
-        )
-    elif getattr(settings, "bm25_mode", "stub") == "sqlite_fts5":
+    if settings.bm25_mode == "sqlite_fts5":
         retrievers.append(_build_sqlite_bm25_retriever(settings, tokenizer=bm25_tokenizer))
-    elif getattr(settings, "bm25_mode", "stub") == "sparse_proxy":
-        raise NotImplementedError(
-            "EVAL_BM25_MODE=sparse_proxy 未实现;请使用 stub 或 sqlite_fts5。"
-        )
     retrievers.extend([dense, sparse])
     return RecallPipeline(
         [*retrievers],
@@ -226,24 +218,24 @@ def build_eval_recall_evaluable(top_k: int, **kwargs):
 
         settings = get_settings()
     dense_threshold = kwargs.get(
-        "dense_score_threshold", getattr(settings, "recall_dense_score_threshold", None)
+        "dense_score_threshold", settings.recall_dense_score_threshold
     )
     sparse_threshold = kwargs.get(
-        "sparse_score_threshold", getattr(settings, "recall_sparse_score_threshold", None)
+        "sparse_score_threshold", settings.recall_sparse_score_threshold
     )
     enabled_sources = kwargs.pop("enabled_sources", None)
     return RecallEvaluable(
         build_eval_recall_pipeline(**kwargs),
         top_k,
-        bm25_top_k=getattr(settings, "recall_bm25_top_k", top_k),
-        dense_top_k=getattr(settings, "recall_dense_top_k", top_k),
-        sparse_top_k=getattr(settings, "recall_sparse_top_k", top_k),
+        bm25_top_k=settings.recall_bm25_top_k,
+        dense_top_k=settings.recall_dense_top_k,
+        sparse_top_k=settings.recall_sparse_top_k,
         dense_score_threshold=dense_threshold,
         sparse_score_threshold=sparse_threshold,
         enabled_sources=enabled_sources,
         fusion_weights={
-            "dense": getattr(settings, "recall_dense_weight", 0.5),
-            "sparse": getattr(settings, "recall_sparse_weight", 0.3),
-            "bm25": getattr(settings, "recall_bm25_weight", 0.0),
+            "dense": settings.recall_dense_weight,
+            "sparse": settings.recall_sparse_weight,
+            "bm25": settings.recall_bm25_weight,
         },
     )

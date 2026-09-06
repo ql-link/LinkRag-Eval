@@ -8,7 +8,7 @@
 
 研究材料的使用身份见 [文档目录](docs/DOCUMENT_CATALOG.md)。本次[重构执行记录](docs/plans/research-restructure-execution-2026-09-06.md)记录实际变更与验证；原 Robust Fusion、R1／R2、Gate、相似度和人工仲裁协议退出活动执行身份，原文仍按[历史导航](docs/archive/robust-fusion/README.md)保留原路径及字节。不得仅因旧正文含“唯一下一步”或自动执行指令而恢复流程。
 
-当前研究边界是三路召回后的固定候选集合，利用已有可见候选信息与逐路分数／排名探索融合或重排；不回原文补信息，不改召回。具体方法、阈值、窗口与实验版本保持暂定，不能从讨论稿推定为实现要求。人工作业以 `human_tasks/registry.json` 为当前登记，使用 `scripts/check_human_task_entrypoints.py` 校验；旧 registry、HTML、symlink 和提交保留作历史，不表示活动任务。
+当前研究边界是三路召回后的固定候选集合，利用已有可见候选信息与逐路分数／排名探索融合或重排；不回原文补信息，不改召回。具体方法、阈值、窗口与实验版本保持暂定，不能从讨论稿推定为实现要求。当前没有人工作业，不维护空注册表或预设校验流程；旧 registry、HTML、symlink 和提交仅作历史。
 
 重构前源码标签为 `research-pre-restructure-20260906`（`4d31f18`）；需要追溯时在独立目录恢复核对，避免覆盖当前工作区。Git 忽略的证据通过独立备份及 manifest 恢复，具体范围见执行记录，不能把未跟踪或被忽略视为删除依据。
 
@@ -77,7 +77,7 @@ LinkRag-Eval/
 
 | 类别 | 模块 |
 | --- | --- |
-| 纯计算 | `ChunkingEngine.aprocess`(chunk 切分)、`RagFlowTokenizer.tokenize`(bm25 分词)。**dense/sparse 已移到 eval `llm/` 模块,不再经 rag** |
+| 纯计算 | `ChunkingEngine.aprocess`(chunk 切分)。dense/sparse 由 eval `llm/` 承载，BM25 使用本地 FTS5 分词，不经 rag。 |
 | Qdrant 原语 | `QdrantIndexStore`、point 模型、`qdrant.models`(复用 schema,自己装配 writer；显式指定 eval collection) |
 | 被测对象 | `RecallPipeline`、`Retriever`、`compose_vector_storage_facade`、`DenseRetriever`、`SparseRetriever`、`ParserFactory` |
 | 纯 dataclass | `recall.models.*`、`preprocessor.models.*`(ChunkWithTokens 等) |
@@ -94,7 +94,7 @@ LinkRag-Eval/
 ### 收口原则
 
 - **rag 的 import 只允许出现在这几个 adapter 文件**,按关注点:
-  - `compute/rag_adapter.py` —— 纯计算(chunk 切分 + bm25 分词;dense/sparse 走 eval llm)
+  - `compute/rag_adapter.py` —— chunk 切分适配；dense/sparse 走 eval llm，BM25 在 eval 内计算
   - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/point 模型；bucket 在 eval 内计算)
   - `retrieval/recall_factory.py` —— 召回装配(被测对象 `RecallPipeline`,指向 eval 前缀)
   - `retrieval/recall_adapter.py` —— `RecallRequest`/`RecallResponse` marshalling(被测对象类型)
@@ -112,7 +112,6 @@ class ProductComputer(Protocol):
     async def compute_chunks(self, text: str, *, source_file: str | None = None) -> list[EvalChunk]: ...
     async def compute_dense(self, contents: Sequence[str]) -> list[DenseVec]: ...
     async def compute_sparse(self, contents: Sequence[str]) -> list[SparseVec]: ...
-    def       compute_bm25_tokens(self, content: str) -> Bm25Tokens: ...
     @property
     def dense_dim(self) -> int: ...        # 建 collection 用
     @property
@@ -137,9 +136,9 @@ class ProductComputer(Protocol):
 ### SQLite(eval 自持元数据/结果,本地单文件)
 
 - 默认 `EVAL_DB_URL=sqlite+aiosqlite:///runs/linkrag_eval.sqlite3`。正常评测禁止依赖远端 MySQL，数据库文件 gitignored。
-- 旧 `tolink_rag_eval_db` 只允许作为一次性只读迁移源；迁移工具必须校验库名并逐表核对计数与内容摘要，绝不读取或写入生产 `tolink_rag_db`。
+- 当前不保留 MySQL 配置、驱动、迁移脚本或别名接口；绝不读取或写入生产 `tolink_rag_db`。
 - `EvalBase` 六表:`eval_dataset` / `eval_corpus_chunk` / `eval_query` / `eval_qrel` / `eval_run` / `eval_metric_result`。
-- `_AutoPK` 在 SQLite 使用 `Integer` 自增、旧 MySQL 迁移源使用 `BigInteger`;枚举字段保持 `String + 注释`(改值不需 migration)。
+- 自增代理键使用 SQLite `Integer`；枚举字段保持 `String + 注释`。
 - 字段变更:`eval_corpus_chunk.es_indexed` → `bm25_indexed`;`eval_run` 增 `computer_fingerprint`。
 - Schema 演进唯一入口是 `alembic/`(eval 自己的迁移链,与生产 alembic 完全隔离)。
 - BM25 使用 eval 自持 SQLite FTS5 sidecar；`bm25_mode=sqlite_fts5` 启用第三路，`stub` 仅装配 Dense／Sparse。旧 `qdrant_bm25` 模式不再支持，不得用 Sparse 结果伪装 BM25。
@@ -180,7 +179,7 @@ class ProductComputer(Protocol):
 ## 九、安全与隔离纪律(不可妥协)
 
 - `api_key` 只写入本地 `.env.eval`(gitignored),**绝不打印到终端、绝不进版本库**。
-- 元数据和结果只写本地 SQLite。**绝不写生产库 `tolink_rag_db` 的任何表**；旧 eval MySQL 也仅允许迁移工具只读访问。
+- 元数据和结果只写本地 SQLite。**绝不写生产库 `tolink_rag_db` 的任何表**；不保留旧 MySQL 运行入口。
 - `.env.eval`、`golden/`、`.specs/` 等含数据/密钥的产物 gitignored。
 - Qdrant 前缀护栏(第五节)是写串生产的最后一道防线,不得删除或绕过。
 
@@ -195,7 +194,15 @@ class ProductComputer(Protocol):
 
 ---
 
-## 十一、回答风格(面向开发者沟通)
+## 十一、当前版本的简化原则
+
+- 只支持当前确有用途的接口和格式。旧别名、旧后端、宽松回退和没有业务消费者的抽象不因“可能复用”而保留；新格式不兼容时给出明确错误或重新生成，避免静默套用默认值。
+- 新科研流程通常只记录输入／结果位置、代码版本、实际参数和评测口径。不默认建立逐文件哈希台账、反复封存、全工作区或数据库正文扫描，也不把它们当成研究可行性的前置条件。
+- 保留哈希必须有具体消费者和作用，例如校验当前模型包是否损坏、缓存失效、去重或确定性数据分组。单纯为了展示、留一份指纹或沿袭旧协议不足以构成理由。依赖锁文件由包管理器正常维护。
+- `computer_fingerprint` 当前是模型名、维度和后端等配置元数据，不要求逐条向量或文件摘要。历史记录只证明当时做了什么，不约束后续工作区继续匹配旧摘要。
+- 历史数据与报告的保留不意味着保留运行兼容层。原始人工提交和实验结果不因代码简化而重写。
+
+## 十二、回答风格(面向开发者沟通)
 
 - 语言清晰、专业、得体;不过度口语化,也不堆砌术语。
 - 少用生僻术语和生造比喻;确需专业术语时用一句话点明含义。

@@ -9,6 +9,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from typing import Literal
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -22,18 +23,10 @@ class EvalSettings(BaseSettings):
     qdrant_prefix: str = Field(default="eval_kb_bucket")
     qdrant_bucket_count: int = Field(default=16)
     sparse_vector_name: str = Field(default="sparse_text")
-    qdrant_bm25_collection: str = Field(default="eval_bm25")
-    qdrant_bm25_vector_name: str = Field(default="bm25_text")
     bm25_sqlite_path: str = Field(default="runs/bm25_eval.sqlite3")
 
     # —— eval 自持元数据/结果库(默认本地 SQLite)——
     db_url: str = Field(default="sqlite+aiosqlite:///runs/linkrag_eval.sqlite3")
-    # 旧 MySQL 字段仅供一次性只读迁移工具使用；正常评测不依赖远端数据库。
-    db_host: str = Field(default="127.0.0.1")
-    db_port: int = Field(default=3306)
-    db_user: str = Field(default="root")
-    db_password: str = Field(default="")
-    db_name: str = Field(default="tolink_rag_eval_db")
 
     # —— judge LLM(测量仪器,解耦于生产解析链;base_url 为完整 chat completions 端点)——
     judge_base_url: str = Field(default="")
@@ -64,7 +57,7 @@ class EvalSettings(BaseSettings):
     embed_timeout_ms: int = Field(default=60000)
 
     # —— 候选池专用 alt embedding(独立于当前被测 dense,不写正式 Qdrant)——
-    alt_embed_provider: str = Field(default="openai")
+    alt_embed_provider: Literal["openai"] = "openai"
     alt_embed_base_url: str = Field(default="")
     alt_embed_api_key: str = Field(default="")
     alt_embed_model: str = Field(default="")
@@ -74,7 +67,7 @@ class EvalSettings(BaseSettings):
     alt_embed_sqlite_path: str = Field(default="runs/alt_embedding_eval.sqlite3")
 
     # —— sparse 编码器(eval 自带 llm 模块,模型可选;生产无系统工厂故 eval 自持)——
-    sparse_provider: str = Field(default="ark")  # ark(doubao-vision/volcengine)| ...
+    sparse_provider: Literal["ark"] = "ark"
     sparse_base_url: str = Field(default="")  # 完整端点;缺省回退 provider 默认
     sparse_api_key: str = Field(default="")
     sparse_model: str = Field(default="")
@@ -96,17 +89,12 @@ class EvalSettings(BaseSettings):
     # —— 路由常量(非真实用户,仅 bucket 分区)——
     user_id: int = Field(default=990001)
 
-    # —— bm25 模式:stub | sparse_proxy | qdrant_bm25 | sqlite_fts5 ——
-    bm25_mode: str = Field(default="stub")
-    bm25_k1: float = Field(default=1.2)
-    bm25_b: float = Field(default=0.75)
-    bm25_avgdl: float = Field(default=200.0)
-    bm25_avgdl_fine: float = Field(default=220.0)
-    bm25_coarse_boost: float = Field(default=2.0)
+    # —— BM25: stub 不装配第三路，sqlite_fts5 使用本地 sidecar ——
+    bm25_mode: Literal["stub", "sqlite_fts5"] = "stub"
     bm25_sqlite_coarse_weight: float = Field(default=2.0)
     bm25_sqlite_fine_weight: float = Field(default=1.0)
 
-    @field_validator("qdrant_prefix", "qdrant_bm25_collection")
+    @field_validator("qdrant_prefix")
     @classmethod
     def _prefix_must_be_eval(cls, v: str) -> str:
         """护栏:前缀必须含 'eval',否则拒绝——防写串生产。"""
@@ -116,45 +104,13 @@ class EvalSettings(BaseSettings):
             )
         return v
 
-    @field_validator("bm25_mode")
-    @classmethod
-    def _bm25_mode_known(cls, v: str) -> str:
-        allowed = {"stub", "sparse_proxy", "qdrant_bm25", "sqlite_fts5"}
-        if v not in allowed:
-            raise ValueError(f"EVAL_BM25_MODE={v!r} 非法;应为 {sorted(allowed)} 之一。")
-        return v
-
-    @field_validator("alt_embed_provider")
-    @classmethod
-    def _alt_embed_provider_known(cls, v: str) -> str:
-        normalized = v.strip().lower()
-        allowed = {"openai", "bge_m3_http", "bge_m3", "bgem3"}
-        if normalized not in allowed:
-            raise ValueError(f"EVAL_ALT_EMBED_PROVIDER={v!r} 非法;应为 {sorted(allowed)} 之一。")
-        return "bge_m3_http" if normalized in {"bge_m3", "bgem3"} else normalized
-
     def database_url(self) -> str:
         """eval 本地数据库异步 URL。"""
         if not self.db_url.startswith("sqlite+aiosqlite:///"):
             raise RuntimeError(
-                "EVAL_DB_URL 必须指向本地 sqlite+aiosqlite:/// 数据库；"
-                "旧 MySQL 仅允许由迁移工具只读访问。"
+                "EVAL_DB_URL 必须指向本地 sqlite+aiosqlite:/// 数据库。"
             )
         return self.db_url
-
-    def mysql_source_dsn(self) -> str:
-        """旧 MySQL 只读迁移源 DSN；正常运行不得使用。"""
-        from urllib.parse import quote_plus
-
-        pwd = quote_plus(self.db_password)
-        return (
-            f"mysql+aiomysql://{self.db_user}:{pwd}@{self.db_host}:{self.db_port}"
-            f"/{self.db_name}?charset=utf8mb4"
-        )
-
-    def mysql_dsn(self) -> str:
-        """向后兼容旧调用；新代码应使用 :meth:`database_url`。"""
-        return self.database_url()
 
 
 @lru_cache

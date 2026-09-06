@@ -1,20 +1,16 @@
 """SQLite FTS5 BM25 后端。
 
-用途:替代 Qdrant sparse-vector 形式的 BM25。FTS5 是进程内嵌入式全文索引,
-适合 eval 的本地/单机检索场景。SQLite 模式使用 eval 本地轻量分词,避免额外依赖
-生产 RagFlowTokenizer。
+FTS5 是进程内嵌入式全文索引，写入与查询使用同一套 eval 本地分词。
 """
 
 from __future__ import annotations
 
 import asyncio
-import hashlib
-import json
 import re
 import sqlite3
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
 
 from linkrag_eval.compute.protocol import Bm25Tokens
 
@@ -73,11 +69,7 @@ class SQLiteBm25Store:
         )
 
     async def identity(self) -> dict[str, object]:
-        """返回 sidecar 的逻辑内容指纹，供运行快照与验收报告固化。
-
-        不使用 SQLite 文件字节哈希：WAL/checkpoint 等物理布局变化会让相同逻辑内容得到
-        不同哈希。这里按主键顺序哈希所有可检索字段，并记录 schema、数据集分布和权重。
-        """
+        """返回 sidecar 的路径、schema、数量和权重，不扫描正文计算指纹。"""
         return await asyncio.to_thread(
             inspect_sqlite_bm25_identity,
             self.path,
@@ -201,7 +193,7 @@ class SQLiteBm25Tokenized:
 
 
 class SQLiteBm25Tokenizer:
-    """FTS5 本地 tokenizer adapter,兼容 RagFlowTokenizer 的 ``tokenize`` 调用面。"""
+    """提供 eval BM25 检索器所需的本地分词接口。"""
 
     def tokenize(self, text: str) -> SQLiteBm25Tokenized:
         tokens = local_bm25_terms(text)
@@ -247,7 +239,7 @@ def inspect_sqlite_bm25_identity(
     coarse_weight: float = 2.0,
     fine_weight: float = 1.0,
 ) -> dict[str, object]:
-    """只读检查 SQLite BM25 sidecar，并计算稳定的逻辑内容 SHA-256。"""
+    """只读汇总 sidecar 的路径、schema、数量和权重，不读取正文列。"""
     resolved = Path(path).expanduser().resolve()
     identity: dict[str, object] = {
         "backend": "sqlite_fts5",
@@ -256,7 +248,6 @@ def inspect_sqlite_bm25_identity(
         "schema_version": None,
         "chunk_count": 0,
         "dataset_counts": {},
-        "content_sha256": "",
         "coarse_weight": float(coarse_weight),
         "fine_weight": float(fine_weight),
     }
@@ -282,23 +273,6 @@ def inspect_sqlite_bm25_identity(
         }
         identity["chunk_count"] = sum(int(count) for _, count in dataset_rows)
 
-        digest = hashlib.sha256()
-        rows = con.execute(
-            """
-            SELECT chunk_id, doc_id, user_id, dataset_id, chunk_type, coarse, fine
-            FROM bm25_fts
-            ORDER BY chunk_id
-            """
-        )
-        for row in rows:
-            encoded = json.dumps(
-                ["" if value is None else str(value) for value in row],
-                ensure_ascii=False,
-                separators=(",", ":"),
-            ).encode("utf-8")
-            digest.update(encoded)
-            digest.update(b"\n")
-        identity["content_sha256"] = digest.hexdigest()
         identity["file_size"] = resolved.stat().st_size
         return identity
     finally:

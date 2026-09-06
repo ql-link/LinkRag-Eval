@@ -16,7 +16,6 @@ from linkrag_eval.retrieval.candidate_routing import (
     depths_for_query,
 )
 
-
 ROUTES = ("dense", "sparse", "bm25")
 
 
@@ -51,8 +50,8 @@ async def cache_ltr_candidates(
     progress: Any | None = None,
 ) -> dict[str, Any]:
     """Fetch max route candidates and persist progress after every query."""
-    from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline
     from linkrag_eval.retrieval.aliases import AliasRegistry
+    from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline
 
     partial = out.with_suffix(out.suffix + ".partial")
     latest = _load_latest(out)
@@ -76,6 +75,12 @@ async def cache_ltr_candidates(
     def reusable(sample: GoldenSample, row: dict[str, Any]) -> bool:
         if row.get("failed_sources"):
             return False
+        if (
+            row.get("query") != sample.query
+            or row.get("user_id") != sample.user_id
+            or row.get("dataset_ids") != sample.dataset_ids
+        ):
+            return False
         row_alias = row.get("alias_registry")
         if alias_registry is None:
             if row_alias is not None:
@@ -84,8 +89,6 @@ async def cache_ltr_candidates(
             return False
         expected = sample_depths(sample).as_dict()
         actual = row.get("route_top_ks")
-        if actual is None:
-            return not use_query_routing and expected == fallback_depths.as_dict()
         return actual == expected
 
     clean_existing = {

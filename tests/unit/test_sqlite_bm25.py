@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import sqlite3
 from types import SimpleNamespace
 
 from linkrag_eval.compute.protocol import Bm25Tokens
+from linkrag_eval.store import sqlite_bm25
 from linkrag_eval.store.sqlite_bm25 import (
     SQLiteBm25Point,
     SQLiteBm25Store,
@@ -103,7 +105,7 @@ async def test_sqlite_bm25_upsert_replaces_existing(tmp_path) -> None:
     assert [h.chunk_id for h in new_hits] == ["c1"]
 
 
-async def test_sqlite_bm25_identity_is_logical_and_stable(tmp_path) -> None:
+async def test_sqlite_bm25_identity_reports_metadata_without_reading_text(tmp_path, monkeypatch) -> None:
     path = tmp_path / "bm25.sqlite3"
     store = SQLiteBm25Store(path, coarse_weight=2.0, fine_weight=1.0)
     await store.upsert_chunks(
@@ -127,6 +129,20 @@ async def test_sqlite_bm25_identity_is_logical_and_stable(tmp_path) -> None:
         ]
     )
 
+    connect = sqlite3.connect
+
+    def metadata_only_connect(*args, **kwargs):
+        con = connect(*args, **kwargs)
+
+        def authorize(action, table, column, database, trigger):
+            if action == sqlite3.SQLITE_READ and table == "bm25_fts" and column in {"coarse", "fine"}:
+                return sqlite3.SQLITE_DENY
+            return sqlite3.SQLITE_OK
+
+        con.set_authorizer(authorize)
+        return con
+
+    monkeypatch.setattr(sqlite_bm25.sqlite3, "connect", metadata_only_connect)
     first = await store.identity()
     second = inspect_sqlite_bm25_identity(path, coarse_weight=2.0, fine_weight=1.0)
 
@@ -134,12 +150,18 @@ async def test_sqlite_bm25_identity_is_logical_and_stable(tmp_path) -> None:
     assert first["schema_version"] == 1
     assert first["chunk_count"] == 2
     assert first["dataset_counts"] == {"992000": 1, "992001": 1}
-    assert len(str(first["content_sha256"])) == 64
-    assert first["content_sha256"] == second["content_sha256"]
+    assert first["path"] == str(path.resolve())
+    assert first["coarse_weight"] == 2.0
+    assert first["fine_weight"] == 1.0
+    assert set(first) == {
+        "backend", "path", "exists", "schema_version", "chunk_count", "dataset_counts",
+        "coarse_weight", "fine_weight", "file_size",
+    }
+    assert first == second
 
 
 def test_sqlite_bm25_identity_reports_missing_sidecar(tmp_path) -> None:
     identity = inspect_sqlite_bm25_identity(tmp_path / "missing.sqlite3")
     assert identity["exists"] is False
     assert identity["chunk_count"] == 0
-    assert identity["content_sha256"] == ""
+    assert identity["schema_version"] is None

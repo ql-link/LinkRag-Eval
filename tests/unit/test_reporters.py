@@ -24,10 +24,12 @@ from linkrag_eval.reporters import (
     diff_metrics,
 )
 from linkrag_eval.store.ledger import ledger_rows
+
+
 def make_snapshot(run_id: str, **overrides) -> Snapshot:
     defaults = dict(
         run_id=run_id, git_sha="abc1234", sparse_vector_provider="bge_m3",
-        top_k=20, score_threshold=0.0, enabled_sources=["bm25", "dense", "sparse"],
+        top_k=20, route_score_thresholds={"dense": 0.0, "sparse": 0.0}, enabled_sources=["bm25", "dense", "sparse"],
         rrf_k=60, rerank_top_n=8, chat_model="N/A", judge_model="N/A",
         generator_model="N/A", token_budget=4000, prompt_version="N/A",
     )
@@ -148,7 +150,7 @@ class TestJsonReporterAndLedger:
         for col in [
             "run_id", "ts", "git_sha", "dataset", "layer", "metric", "k",
             "relevance_scale", "type_bucket", "value", "n",
-            "sparse_provider", "top_k", "score_threshold", "enabled_sources",
+            "sparse_provider", "top_k", "route_score_thresholds", "enabled_sources",
             "rrf_k", "route_top_ks", "fusion_strategy", "fusion_weights",
             "rerank_top_n", "chat_model", "judge_model", "generator_model",
         ]:

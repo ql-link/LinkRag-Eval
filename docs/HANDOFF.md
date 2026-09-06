@@ -4,7 +4,7 @@
 
 ## 继续工作前
 
-先查看当前状态、`git status --short` 和[重构执行记录](plans/research-restructure-execution-2026-09-06.md)，再确定当前任务范围。重构已由用户授权，按分段提交记录实际变更；不要把原盘点清单当成已经执行的删除结果。
+先查看当前状态、`git status --short` 和[运行链路简化记录](plans/runtime-simplification-2026-09-06.md)，再确定当前任务范围。重构已由用户授权，按分段提交记录实际变更；不要把原盘点清单当成已经执行的删除结果。
 
 本仓库只写本地评测 SQLite 和含 `eval` 前缀的 Qdrant collection。生产依赖只能经允许的 adapter 复用纯计算、被测对象与 Qdrant 原语，具体边界见 [AGENTS.md](../AGENTS.md) 和[解耦架构](architecture/decoupling-plan.md)。密钥、本地数据库与原始数据不进入版本库。
 
@@ -27,7 +27,7 @@
 
 原 Robust Fusion、R1／R2、Gate、Internal、相似度及人工仲裁协议退出活动执行身份，正文仍保留原路径与字节。统一从[历史导航](archive/robust-fusion/README.md)进入，不继续执行其“唯一下一步”、自动执行、finalizer 或旧任务清单。R1 历史结论仍为 `INCONCLUSIVE`，R2 的最后记录状态仍是待仲裁；退役不等于补完验证。
 
-当前人工任务由 [human_tasks/registry.json](../human_tasks/registry.json)登记，默认活动列表为空。入口校验为 `python3 scripts/check_human_task_entrypoints.py`；它只检查登记内容，不仲裁答案或执行研究阶段。旧 registry、HTML、symlink 与提交保留作历史，不通过旧入口继续催办任务。
+当前没有人工任务。空注册表、专用 checker 和没有业务消费者的四个抽离模块已移除；旧 registry、HTML、symlink 与提交仅作历史。后续有实际人工作业时再提供所需入口，不预先建立多阶段校验框架。
 
 已封存的 Blind 及被限定用途的数据继续遵守其曝光和使用边界；本次整理不得读取封存结果来选方法、调参或形成新结论。历史汇总报告可供理解已有证据，不能当作新研究的独立验证集。
 

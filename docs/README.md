@@ -7,7 +7,7 @@
 1. [当前状态](CURRENT_STATUS.md)：项目级进度、未决工作与下一步。
 2. [交接说明](HANDOFF.md)：工程基线、当前研究边界和历史保留纪律。
 3. [研究讨论与独立审查](plans/research-direction-review-2026-09-06.md)：原问题、不同审查意见与回应；具体方法保持暂定。
-4. [重构执行记录](plans/research-restructure-execution-2026-09-06.md)：授权范围、版本管理、实际变更与验证。
+4. [运行链路简化记录](plans/runtime-simplification-2026-09-06.md)：当前删除、简化和必要保留项；[前次重构记录](plans/research-restructure-execution-2026-09-06.md)仅保存当时处理。
 5. [文档目录](DOCUMENT_CATALOG.md)：各文档的使用身份。
 
 ## 目录职责
@@ -26,11 +26,11 @@
 - [Golden V2 真实召回评测](plans/golden-v2-realistic-evaluation.md)：已有数据构建、候选池与标注纪律；其历史人口和阶段配置不自动沿用到新研究。
 - [Query 重写配对基准](experiments/query-rewrite-benchmark-v1.md)与[Query 软分流候选](experiments/query-soft-routing-candidates.md)：已有实验和候选深度选择记录。
 - [报告索引](reports/REPORT_INDEX.md)：阶段产物的完整导航。
-- [人工任务入口](../human_tasks/README.md)：默认读取 `human_tasks/registry.json`，由 `scripts/check_human_task_entrypoints.py` 校验；旧任务保留不代表活动任务。
+- [人工任务说明](../human_tasks/README.md)：当前无活动任务，不建立空注册表或预设校验流程。
 
 ## 历史资料与恢复
 
-[Robust Fusion 历史导航](archive/robust-fusion/README.md)汇总保留在原路径的 R1／R2、Gate、Internal、相似度与人工审查协议。旧正文及其哈希关系保持原样，退出活动执行身份；R1 的 `INCONCLUSIVE` 和 R2 的待仲裁状态不因重构而改变。
+[Robust Fusion 历史导航](archive/robust-fusion/README.md)汇总保留在原路径的 R1／R2、Gate、Internal、相似度与人工审查协议。旧正文保留，退出活动执行身份；R1 的 `INCONCLUSIVE` 和 R2 的待仲裁状态不因重构而改变。
 
 [早期归档说明](archive/README.md)对应 monorepo 迁入的 `archive/design-v1/` 设计，其旧存储和阶段划分可能已被当前架构替代。
 

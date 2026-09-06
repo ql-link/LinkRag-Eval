@@ -47,7 +47,7 @@ class ModelManifest:
     feature_version: str
     feature_signature: str
     feature_names: list[str]
-    training_data_sha256: str
+    training_data_sha256: str  # 当前模型包格式字段；新导出留空，不计算训练输入摘要。
     n_estimators: int
     latency_budget_ms: int
     timeout_ms: int
@@ -319,7 +319,6 @@ def freeze_model(
     *,
     out_dir: str | Path,
     model_version: str,
-    training_data_sha256: str,
     short_fallback_config: dict[str, Any] | None = None,
     n_estimators: int,
     latency_budget_ms: int = 250,
@@ -370,7 +369,7 @@ def freeze_model(
         feature_version=FEATURE_VERSION,
         feature_signature=feature_signature(),
         feature_names=list(FEATURE_NAMES),
-        training_data_sha256=training_data_sha256,
+        training_data_sha256="",
         n_estimators=n_estimators,
         latency_budget_ms=latency_budget_ms,
         timeout_ms=timeout_ms,

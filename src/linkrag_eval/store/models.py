@@ -1,10 +1,7 @@
 """评测自持存储 ORM(独立 ``EvalBase``,默认本地 SQLite)。
 
-搬迁自源仓库 ``src/evaluation/store/models.py``,改动:
-- 默认后端为本地 SQLite；自增代理键在 SQLite 使用 ``Integer``，旧 MySQL 迁移源仍使用
-  ``BigInteger``。
-- ``eval_corpus_chunk.es_indexed`` → ``bm25_indexed``(对齐目标态无 ES、bm25 走 Qdrant)。
-- ``eval_run`` 新增 ``computer_fingerprint``(dense 模型 / sparse encoder / bm25 mode 指纹)。
+自增代理键使用 SQLite 的 ``Integer``；BM25 由本地 FTS5 承载。
+``computer_fingerprint`` 保存模型与编码配置，不是逐文件哈希台账。
 
 硬约束:独立 ``EvalBase``,不 import ``src.*``,零生产依赖;只建 eval 库的表,绝不碰生产
 ``tolink_rag_db``。枚举值以 ``String`` + 注释承载(改值不需 migration)。
@@ -34,7 +31,7 @@ class EvalBase(DeclarativeBase):
     """评测自持存储的独立声明基类,与生产 ``Base`` 互不相干。"""
 
 
-_AUTO_PK = BigInteger().with_variant(Integer, "sqlite")
+_AUTO_PK = Integer()
 
 
 class EvalDatasetDB(EvalBase):

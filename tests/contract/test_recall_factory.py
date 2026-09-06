@@ -84,7 +84,6 @@ def _settings(prefix="eval_kb_bucket") -> EvalSettings:
         qdrant_host="http://localhost:36333",
         recall_dense_score_threshold=0.11,
         recall_sparse_score_threshold=0.30,
-        qdrant_bm25_collection="eval_bm25",
         user_id=990001,
     )
 
@@ -98,7 +97,7 @@ def test_assembles_two_route_pipeline() -> None:
     from src.core.pipeline.recall.pipeline import RecallPipeline
 
     assert isinstance(pipe, RecallPipeline)
-    # dense + sparse 两路(bm25 P1 stub)
+    # 未启用 BM25，只装配 dense + sparse。
     assert len(pipe._retrievers) == 2
     assert pipe._readiness_gate.__class__.__name__ == "_EvalReadinessGate"
     assert pipe._retrievers[0]._score_threshold == 0.11
@@ -106,18 +105,6 @@ def test_assembles_two_route_pipeline() -> None:
     assert pipe._retrievers[1]._score_threshold == 0.30
     assert pipe._retrievers[1]._backend._sparse_vector_service.vector_name == "eval_sparse_for_test"
     assert pipe._retrievers[0]._backend.qdrant_store.collection_name == "eval_kb_bucket_9"
-
-
-def test_removed_qdrant_bm25_route_is_rejected() -> None:
-    settings = _settings()
-    settings.bm25_mode = "qdrant_bm25"
-    with pytest.raises(NotImplementedError, match="sqlite_fts5"):
-        build_eval_recall_pipeline(
-            settings=settings,
-            dense_encoder=_FakeDense(),
-            sparse_encoder=_FakeSparse(),
-            bm25_tokenizer=_FakeTokenizer(),
-        )
 
 
 def test_assembles_sqlite_bm25_route_when_enabled(tmp_path) -> None:
@@ -179,8 +166,8 @@ async def test_current_candidate_and_route_contract_preserves_untruncated_pool()
             bm25_top_k=10,
             sparse_top_k=10,
             dense_top_k=10,
-            candidate_contract_version="robust-fusion-p4-00-v1",
-            candidate_profile="gate-a-preflight",
+            candidate_contract_version="eval-candidate-contract-v1",
+            candidate_profile="contract-test",
             required_sources=["dense", "sparse", "bm25"],
         )
     )

@@ -1,6 +1,6 @@
 """EvalVectorIndexer 编排:注入 fake computer/store/repo,验证产物→点/行映射、id 确定性、bm25 mode。
 
-不需 rag、不连 Qdrant/MySQL。
+不需 rag、不连真实存储。
 """
 
 from __future__ import annotations
@@ -13,7 +13,6 @@ from linkrag_eval.store.indexer import EvalPassage, EvalVectorIndexer
 class _FakeComputer:
     def __init__(self) -> None:
         self.sparse_called = False
-        self.bm25_contents: list[str] = []
 
     async def compute_dense(self, contents):
         return [DenseVec([float(len(c)), 0.1]) for c in contents]
@@ -24,10 +23,6 @@ class _FakeComputer:
 
     async def compute_chunks(self, text, *, source_file=None):  # 未用
         return []
-
-    def compute_bm25_tokens(self, content):
-        self.bm25_contents.append(content)
-        return Bm25Tokens(coarse=content, fine=content)
 
     @property
     def dense_dim(self):
@@ -86,17 +81,6 @@ async def test_with_sparse_false_skips_sparse() -> None:
     assert repo.rows[0].sparse_indexed is False
 
 
-async def test_bm25_mode_flags_row() -> None:
-    comp, store, repo = _FakeComputer(), _FakeStore(), _FakeRepo()
-    idx = EvalVectorIndexer(
-        computer=comp, vector_store=store, corpus_repo=repo, bm25_mode="qdrant_bm25"
-    )
-    await idx.index_passages(1, _passages(1))
-    assert repo.rows[0].bm25_indexed is True
-    assert store.upserts[0][1][0].bm25_tokens == Bm25Tokens(coarse="c0", fine="c0")
-    assert comp.bm25_contents == ["c0"]
-
-
 async def test_sqlite_bm25_mode_flags_row() -> None:
     comp, store, repo = _FakeComputer(), _FakeStore(), _FakeRepo()
     idx = EvalVectorIndexer(
@@ -105,7 +89,6 @@ async def test_sqlite_bm25_mode_flags_row() -> None:
     await idx.index_passages(1, _passages(1))
     assert repo.rows[0].bm25_indexed is True
     assert store.upserts[0][1][0].bm25_tokens == Bm25Tokens(coarse="c0", fine="c0")
-    assert comp.bm25_contents == []
 
 
 async def test_empty_noop() -> None:

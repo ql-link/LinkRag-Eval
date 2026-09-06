@@ -20,7 +20,7 @@ from linkrag_eval.store.filesystem import FilesystemResultStore
 def _snapshot(run_id: str) -> Snapshot:
     return Snapshot(
         run_id=run_id, git_sha="abc1234", sparse_vector_provider="bge_m3", top_k=10,
-        score_threshold=0.0, enabled_sources=["dense", "sparse"], rrf_k=60,
+        route_score_thresholds={"dense": 0.0, "sparse": 0.0}, enabled_sources=["dense", "sparse"], rrf_k=60,
         rerank_top_n=8, chat_model="", judge_model="", generator_model="",
         token_budget=0, prompt_version="v1",
     )

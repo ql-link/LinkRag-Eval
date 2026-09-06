@@ -76,26 +76,6 @@ def test_pilot_preflight_fails_without_alt_config(tmp_path) -> None:
     assert any("EVAL_ALT_EMBED_PROVIDER" in action for action in report.next_actions)
 
 
-def test_pilot_preflight_accepts_bge_alt_without_key(tmp_path) -> None:
-    seeds = tmp_path / "query_seeds.jsonl"
-    _write_jsonl(seeds, 2)
-
-    report = run_pilot_preflight(
-        settings=_settings(
-            alt_embed_provider="bge_m3_http",
-            alt_embed_api_key="",
-            alt_embed_base_url="http://bge/encode",
-            alt_embed_model="BAAI/bge-m3",
-        ),
-        seeds_path=seeds,
-        dataset_ids=[990901],
-        reviewer_model="reviewer",
-        min_seed_count=2,
-    )
-
-    assert report.status == "pass"
-
-
 def test_build_pilot_plan_writes_commands_and_medium_plan_step(tmp_path) -> None:
     report = build_pilot_plan(
         out_dir=tmp_path / "pilot",

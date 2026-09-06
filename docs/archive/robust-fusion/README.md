@@ -35,7 +35,7 @@
 ## 保留的文献、任务与证据
 
 - [文献综述](../../plans/robust-fusion-literature.md)与[证据卡片](../../plans/robust-fusion-evidence.md)保留来源；文献内容不能表述为项目已做过的实验。
-- [旧人工 registry](../../plans/robust-fusion-human-task-registry.json)与[旧仲裁 HTML](../../plans/robust-fusion-r2-adjudicator-beginner-guide.html)保留原样。对应 symlink、人工提交和锁继续保留，但不作为活动任务。当前登记入口是 [human_tasks/registry.json](../../../human_tasks/registry.json)，默认活动列表为空，入口校验为 `scripts/check_human_task_entrypoints.py`。
+- [旧人工 registry](../../plans/robust-fusion-human-task-registry.json)与[旧仲裁 HTML](../../plans/robust-fusion-r2-adjudicator-beginner-guide.html)保留原样。对应 symlink、人工提交和锁继续保留，但不作为活动任务。当前没有人工任务；空 registry 和专用 checker 已在[后续简化](../../plans/runtime-simplification-2026-09-06.md)中移除。
 - 历史报告和运行证据通过[报告索引](../../reports/REPORT_INDEX.md)查找。R1 历史结果仍为 `INCONCLUSIVE`；R2 最后记录状态仍为待仲裁。流程退役不表示标注完成、效度成立或结论翻转。
 - 已有 Qwen 负收益与其他历史负结果保留在[LambdaMART 实验记录](../../experiments/ltr-fusion-v1.md)及原报告中，不能因为新方向调整而删除或重写。
 

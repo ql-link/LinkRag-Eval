@@ -107,7 +107,7 @@ class MetricResult:
 
 @dataclass
 class Snapshot:
-    """配置快照:一次评测运行的可复现判据。
+    """一次评测运行的配置和来源记录。
 
     字段值的实际抓取由 snapshot 填充;top_k 须与召回结果上限同源(单一真相源)。
     """
@@ -117,7 +117,6 @@ class Snapshot:
     # 检索层
     sparse_vector_provider: str  # bge_m3 / bge_m3_http / remote_bge_m3 / ark 等
     top_k: int                   # 融合口径
-    score_threshold: float | None  # 历史兼容字段;当前等同 sparse 阈值
     enabled_sources: list[str]   # dense/sparse/bm25
     rrf_k: int
     rerank_top_n: int | None
@@ -131,13 +130,12 @@ class Snapshot:
     route_top_ks: dict[str, int] = field(default_factory=dict)
     fusion_strategy: str = "rrf"
     fusion_weights: dict[str, float] = field(default_factory=dict)
-    # 可复现性扩展。旧结果文件缺少这些字段时由默认值保持可读。
+    # 运行时配置与资源概况。
     bm25_mode: str = "stub"
     bm25_sidecar_identity: dict[str, Any] = field(default_factory=dict)
     computer_fingerprint: dict[str, Any] = field(default_factory=dict)
     feature_version: str = ""
     git_dirty: bool = False
-    git_worktree_sha256: str = ""
 
     def validate_model_distinctness(self) -> list[str]:
         """三模型(被测 CHAT / 判官 / 生成器)任意同名即告警,防自评偏置。"""

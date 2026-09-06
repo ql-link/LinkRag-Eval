@@ -9,6 +9,7 @@
 | [当前状态](docs/CURRENT_STATUS.md) | 项目进度、未完成工作和下一步的唯一入口 |
 | [实现约定](AGENTS.md) | 依赖边界、存储隔离、配置与测试纪律 |
 | [解耦架构](docs/architecture/decoupling-plan.md) | 当前组件职责及生产依赖的复用方式 |
+| [研究思路与暂定计划](docs/plans/post-recall-research-plan.md) | 当前假设、评测与对照逻辑、未决事项；查询来源与算法保持待定 |
 | [研究讨论与独立审查](docs/plans/research-direction-review-2026-09-06.md) | 原问题、审查意见、回应与未决事项；方法仍为暂定 |
 | [运行链路简化与恢复](docs/plans/runtime-simplification-2026-09-06.md) | 保留能力、简化结果与版本恢复位置 |
 | [文档目录](docs/DOCUMENT_CATALOG.md) | 各文档的使用身份和历史替代关系 |

@@ -54,7 +54,7 @@
 | --- | --- | --- |
 | `contract-guard` | 校验改动是否破坏公共契约并给文档同步清单 | 取值一致性转 config-contract-sync；泛化文档同步转 doc-maintenance-sync |
 | `config-contract-sync` | 核对 topic/bucket/字段在 .env/代码/Java 三处取值一致 | 契约是否破坏转 contract-guard；运行故障转 incident-triage |
-| `doc-maintenance-sync` | 代码变更后同步 docs/AGENTS 等文档 | 项目结构树同步转 agents-tree-sync |
+| `doc-maintenance-sync` | 按工程变更同步文档；按需修订科研材料 | 科研文档规则见 AGENTS.md，不替代工程同步要求 |
 | `agents-tree-sync` | 同步 AGENTS.md 的「当前项目结构」树（非 docs 结构变更） | docs/ 结构变化不触发 |
 
 ### 运维 / 排障

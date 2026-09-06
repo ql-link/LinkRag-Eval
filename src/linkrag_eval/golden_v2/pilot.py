@@ -119,10 +119,7 @@ def run_pilot_preflight(
         checks.append(PreflightCheck("reviewer_model", "fail", "必须指定第二判官 reviewer_model"))
     alt_required_missing = False
     if require_alt_embedding:
-        alt_provider = str(getattr(settings, "alt_embed_provider", "openai") or "openai")
-        required_fields = ["alt_embed_base_url", "alt_embed_model"]
-        if alt_provider == "openai":
-            required_fields.append("alt_embed_api_key")
+        required_fields = ["alt_embed_base_url", "alt_embed_model", "alt_embed_api_key"]
         alt_ready = all(str(getattr(settings, field, "")).strip() for field in required_fields)
         different_model = getattr(settings, "alt_embed_model", "") != getattr(
             settings, "embed_model", ""
@@ -133,7 +130,7 @@ def run_pilot_preflight(
             "alt_embedding_config",
             alt_ready and different_model,
             (
-                f"alt_embed_provider={alt_provider}, "
+                "alt_embed_provider=openai, "
                 f"alt_embed_model={getattr(settings, 'alt_embed_model', '') or '(空)'}, "
                 f"embed_model={getattr(settings, 'embed_model', '') or '(空)'}"
             ),

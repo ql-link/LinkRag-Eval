@@ -42,13 +42,6 @@ class _FakeIndexStore:
         self.calls.append(("delete", list(chunk_ids)))
 
 
-class _FakeBm25Encoder:
-    def encode_document(self, coarse_tokens, fine_tokens):
-        from types import SimpleNamespace
-
-        return SimpleNamespace(indices=[7], values=[1.5])
-
-
 class _FakeBm25Store:
     def __init__(self) -> None:
         self.calls: list[tuple] = []
@@ -67,19 +60,6 @@ def _store(fake) -> EvalVectorStore:
         user_id=990001,
         index_store=fake,
         sparse_vector_name="sparse_text",
-    )
-
-
-def _store_with_bm25(fake, bm25_store) -> EvalVectorStore:
-    return EvalVectorStore(
-        prefix="eval_kb_bucket",
-        bucket_count=16,
-        user_id=990001,
-        index_store=fake,
-        sparse_vector_name="sparse_text",
-        qdrant_bm25_store=bm25_store,
-        bm25_encoder=_FakeBm25Encoder(),
-        bm25_collection="eval_bm25",
     )
 
 
@@ -132,23 +112,6 @@ async def test_dense_only_skips_sparse() -> None:
     assert [c[0] for c in fake.calls] == ["ensure_collection", "upsert_points"]
 
 
-async def test_removed_qdrant_bm25_mode_is_rejected() -> None:
-    fake = _FakeIndexStore()
-    bm25 = _FakeBm25Store()
-    with pytest.raises(NotImplementedError, match="sqlite_fts5"):
-        await _store_with_bm25(fake, bm25).upsert(
-            dataset_id=990131,
-            points=[
-                EvalPoint(
-                    chunk_id="a",
-                    doc_id=1,
-                    dense=[0.1, 0.2],
-                    bm25_tokens=Bm25Tokens(coarse="暖气 滤网", fine="暖气 滤网"),
-                )
-            ],
-        )
-
-
 async def test_upsert_writes_sqlite_bm25_when_tokens_present() -> None:
     fake = _FakeIndexStore()
     bm25 = _FakeBm25Store()
@@ -157,7 +120,7 @@ async def test_upsert_writes_sqlite_bm25_when_tokens_present() -> None:
         bucket_count=16,
         user_id=990001,
         index_store=fake,
-        qdrant_bm25_store=bm25,
+        bm25_store=bm25,
         bm25_mode="sqlite_fts5",
         bm25_sqlite_path="runs/test-bm25.sqlite3",
     )
@@ -178,25 +141,18 @@ async def test_upsert_writes_sqlite_bm25_when_tokens_present() -> None:
     assert point.tokens == Bm25Tokens(coarse="暖气 滤网", fine="暖气 滤网")
 
 
-def test_bm25_collection_guard_rejects_non_eval() -> None:
-    with pytest.raises(RuntimeError):
-        EvalVectorStore(
-            prefix="eval_kb_bucket",
-            bucket_count=16,
-            user_id=990001,
-            index_store=_FakeIndexStore(),
-            bm25_collection="prod_bm25",
-        )
-
-
-def test_build_eval_vector_store_uses_eval_sparse_vector_name() -> None:
+def test_build_eval_vector_store_uses_eval_sparse_vector_name(monkeypatch) -> None:
     fake = _FakeIndexStore()
+    monkeypatch.setattr(
+        "linkrag_eval.store.vector_store._build_index_store", lambda *_args: fake
+    )
     settings = EvalSettings(
+        _env_file=None,
         qdrant_prefix="eval_kb_bucket",
         sparse_vector_name="eval_sparse_text",
     )
     store = build_eval_vector_store(settings=settings)
-    # build_eval_vector_store 不暴露 index_store 注入;这里直测配置字段到构造参数的默认口径。
+    # 只替换底层存储构造，保留配置字段到 EvalVectorStore 的真实装配。
     configured = EvalVectorStore(
         prefix=settings.qdrant_prefix,
         bucket_count=settings.qdrant_bucket_count,
@@ -204,5 +160,19 @@ def test_build_eval_vector_store_uses_eval_sparse_vector_name() -> None:
         index_store=fake,
         sparse_vector_name=settings.sparse_vector_name,
     )
+    assert store._store is fake
     assert configured._sparse_name == "eval_sparse_text"
     assert store._sparse_name == "eval_sparse_text"
+
+
+async def test_bm25_tokens_require_enabled_store_before_any_write() -> None:
+    fake = _FakeIndexStore()
+    with pytest.raises(ValueError, match="需要启用 sqlite_fts5"):
+        await _store(fake).upsert(
+            dataset_id=990131,
+            points=[EvalPoint(
+                chunk_id="a", doc_id=1, dense=[0.1, 0.2],
+                bm25_tokens=Bm25Tokens(coarse="滤网", fine="滤网"),
+            )],
+        )
+    assert fake.calls == []

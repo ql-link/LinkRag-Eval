@@ -206,7 +206,7 @@ class HtmlReporter:
                 ("top_k", snap.top_k),
                 ("thresholds", ",".join(
                     f"{k}:{v:g}" for k, v in sorted(snap.route_score_thresholds.items())
-                ) or snap.score_threshold),
+                ) or "—"),
                 ("route top_k", ",".join(
                     f"{k}:{v}" for k, v in sorted(snap.route_top_ks.items())
                 ) or "—"),
@@ -220,14 +220,13 @@ class HtmlReporter:
                     "bm25 sidecar",
                     (
                         f"{snap.bm25_sidecar_identity.get('chunk_count', 0)} chunks / "
-                        f"{str(snap.bm25_sidecar_identity.get('content_sha256', ''))[:12]}"
+                        f"schema {snap.bm25_sidecar_identity.get('schema_version', '—')}"
                     )
                     if snap.bm25_sidecar_identity
                     else "—"
                 ),
                 ("feature", snap.feature_version or "—"),
                 ("git dirty", snap.git_dirty),
-                ("worktree", snap.git_worktree_sha256[:12] or "clean"),
                 ("rrf_k", snap.rrf_k),
                 ("rerank top_n", snap.rerank_top_n),
                 ("chat", snap.chat_model),

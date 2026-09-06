@@ -1,98 +1,61 @@
-# 解耦独立化方案(已批准基线)
+# LinkRag-Eval 解耦架构
 
-> 本文是 `LinkRag-Eval` 从生产 RAG 仓库(toLink-Rag)`src/evaluation/` 剥离、独立成项目的总方案。
-> 实现细节与硬规则见 [实现约定](../../AGENTS.md);当前进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md);历史设计见 [archive/](../archive/)。
+本文件说明当前工程边界与组件职责；强制规则见 [AGENTS.md](../../AGENTS.md)，实施进度和待办只在 [CURRENT_STATUS.md](../CURRENT_STATUS.md) 维护。旧 Step 0–6 的迁移计划已成为历史，不再作为本次研究的执行清单。重构范围和版本记录见[执行记录](../plans/research-restructure-execution-2026-09-06.md)。
 
-## Context
+## 项目边界
 
-原评测/质检模块(`src/evaluation/`)与生产 RAG 强耦合:`store/live_indexer.py`、`store/ingestor.py` 直接 import 生产的三个"算+写绑死"的写 pipeline(`EsIndexingPipeline.write_es_index`、`SparseIndexingPipeline.run`、`VectorStoragePipeline.index_chunks`)和生产 ORM;`golden/ingest_common.py` 还直驱 `ParseTaskPipeline` + 写生产 MySQL/MinIO/MQ。后果:
+LinkRag-Eval 是独立评测／质检项目。它复用 toLink-Rag 的纯计算、检索被测对象和 Qdrant 原语，自己负责数据、入库、召回装配、评测与报告。元数据和结果使用本地 SQLite；向量使用含 `eval` 前缀的独立 collection。不得调用生产写 pipeline、生产 ORM、per-user 配置解析、MinIO 或 MQ 来完成评测。
 
-- 生产改写 pipeline 内部签名,评测灌库会跟着断;
-- 评测与生产共享 Qdrant collection,**生产清库(剔 ES、迁 Qdrant named-dense、清 chunk)会波及评测数据**;
-- 评测被 per-user 模型配置(`llm_user_config`)拽回共享 MySQL。
+包使用 src-layout：文件位于 `src/linkrag_eval/`，import 为 `linkrag_eval.*`。外层 `src/` 不是本项目包，避免与生产的顶层 `src.*` 包遮蔽。
 
-目标:质检独立成单独 git repo(`LinkRag-Eval`),只通过"产物级纯函数"复用生产计算能力,自己负责入库/检索/算分,使用本地 SQLite + eval 独立 collection 前缀的 Qdrant。
+## 产物计算与依赖收口
 
-**已确认决策**:① 对齐目标态 Qdrant 统一、无 ES;② 独立 repo + 把 toLink-Rag 作为库依赖 import;③ Qdrant 同 host、eval 独立 collection 前缀;④ 自持元数据/结果使用 **本地 SQLite `runs/linkrag_eval.sqlite3`**。旧 MySQL 已于 2026-07-25 停用并完成一次性只读迁移。
+| 能力 | 实现与边界 |
+| --- | --- |
+| chunk 切分 | 经 `compute/rag_adapter.py` 复用 `ChunkingEngine.aprocess` |
+| BM25 分词 | eval 自持 `local_bm25_tokens`／`SQLiteBm25Tokenizer`，写入与查询口径一致 |
+| Dense／Learned Sparse 编码 | 使用 eval 自持 `llm/` 编码器，按 `EVAL_EMBED_*`／`EVAL_SPARSE_*` 配置，不读取生产用户配置 |
+| 向量存储 | `store/vector_store.py` 复用 `QdrantIndexStore` 和 point 模型，显式指定 eval collection |
+| 检索装配 | `retrieval/recall_factory.py` 复用 `RecallPipeline`、Dense／Sparse Retriever 及 storage facade，注入 eval 存储和编码器 |
+| 请求／响应适配 | `retrieval/recall_adapter.py` 转换生产被测对象类型 |
 
-## 生产已有的纯计算函数(eval 唯一应依赖的计算面)
+生产 import 只允许出现在上述四个 adapter 文件，其他模块依赖 eval 抽象；具体白名单和黑名单由 AGENTS、import-lint 与 `tests/test_import_boundary.py` 约束。
 
-| 产物 | 纯函数 | 位置(toLink-Rag) |
-| --- | --- | --- |
-| chunk 切分 | `ChunkingEngine.aprocess(text) -> list[Chunk]` | `src/core/splitter/chunking_engine.py:86` |
-| dense 向量 | `create_chunk_embedding_pipeline()` → `aembed_chunks()` | `src/core/splitter/embedding_pipeline.py:230` / `factory.py:274` |
-| sparse 向量 | `SparseVectorService.vectorize_texts()` | `src/core/encoding/sparse/pipeline.py:50` |
-| bm25 分词 | `RagFlowTokenizer.tokenize() -> TokenizedText` | `src/core/preprocessor/ragflow_tokenizer.py:33` |
+`ProductComputer` 定义 `compute_chunks`、`compute_dense`、`compute_sparse`、`dense_dim` 和 `fingerprint`。计算方法只产出 chunk／向量，不写存储。测试可注入 fake；契约测试验证真实依赖的接口。写入侧与 query 侧须使用同一编码口径，快照记录模型与实际配置。
 
-> 缺口:生产尚无"token → Qdrant 可查 BM25 sparse(IDF 权重)"的 compute 函数(现 bm25=ES)。bm25 路做成可插拔,P1 用 STUB,待生产落地后接入。
+## 独立存储
 
-## 独立 repo 结构
+`EvalVectorStore` 校验前缀包含 `eval`，并在 eval 内按固定 routing 常量计算 bucket，显式构造 `{prefix}_{bucket_id}` collection 名。它不依赖生产 `BucketRouter` 或用户表。向量 schema 与固定版本的生产 Qdrant 原语保持一致，Sparse 名由 eval 配置提供，默认 `sparse_text`；写入与召回必须使用相同名称和编码口径。
 
-> 布局:**src-layout**(包在 `src/linkrag_eval/`,import 仍 `from linkrag_eval.x`)。包名**不能**叫 `src`——会与 toLink-Rag 的 `src` 顶层包遮蔽、无法同时 import。详见 [AGENTS.md 二](../../AGENTS.md)。
+chunk ID 使用 `uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{ordinal}")`，固定数据、文档和 ordinal 产生相同 ID，三路候选与 qrels 共用该 ID。确定性 ID 本身不保证语料正文未变，复现实验仍需核对输入快照。
 
-```
-src/linkrag_eval/
-├── compute/        protocol.py(新) rag_adapter.py(新,唯一碰 rag) bm25_stub.py(新)
-├── store/          vector_store.py(新 EvalVectorStore) indexer.py(替换 live_indexer)
-│                   corpus_repo.py(本地 SQLite) ingestor.py(改写去 ORM) models.py/engine.py
-│                   result_store.py catalog.py(搬迁)
-├── retrieval/      recall_factory.py(新,注入 eval 前缀) recall_adapter.py(搬迁)
-├── metrics/        retrieval.py cleaning.py registry.py(搬迁)
-├── golden/         loader/schema/gen/synth/opensource(搬迁) ingest_corpus.py(重写,取代 ingest_common)
-├── judge/          eval_llm.py(原样搬迁)
-├── contracts/ runners/ reporters/(搬迁) config.py(新) cli.py(新)
-└── alembic/        eval 自己的迁移(EvalBase.metadata,与生产隔离)
-```
+`EvalCorpusRepo` 与结果台账使用 `runs/linkrag_eval.sqlite3`。`EvalBase` 包含 `eval_dataset`、`eval_corpus_chunk`、`eval_query`、`eval_qrel`、`eval_run`、`eval_metric_result` 六表；schema 演进经仓库根目录 `alembic/` 完成，与生产迁移隔离。当前不保留旧 MySQL 配置、驱动或迁移入口，禁止访问生产库。
 
-**废弃不搬**:`live_indexer.py`(被 `EvalVectorIndexer` 取代)、`noop_repository.py`、`golden/ingest_common.py`(全栈 Track A/B 整体废弃)。
+BM25 由 eval 的 SQLite FTS5 sidecar 承载，使用预分词 token 和 FTS5 `bm25()` 排序，不依赖生产 ES。`bm25_mode=sqlite_fts5` 启用第三路；`stub` 仅运行 Dense／Sparse。旧 `qdrant_bm25` 模式明确拒绝运行，不是兼容后端；不得用 Sparse 结果伪装 BM25。
 
-## 核心组件
+## 检索与评测职责
 
-**`EvalVectorStore`**:复用 `QdrantIndexStore`+`BucketRouter`(dense/sparse schema 一致),用 eval 独立前缀实例化,绕开所有写 pipeline,自己用 `point_factory` 构点 upsert。BM25 不再推荐写 Qdrant sparse-vector,默认迁到 SQLite FTS5 sidecar。**启动护栏**:前缀必须含 `eval`,否则抛错。chunk_id 沿用 uuid5 确定性。
+`build_eval_recall_pipeline` 装配生产检索被测对象，显式注入 eval collection、eval 编码器和选定的 BM25 后端。查询权重、阈值、候选深度与融合配置属于运行配置，必须随快照记录，不能仅依赖文档中的历史默认值复现。
 
-**`EvalCorpusRepo`(本地 SQLite)**:`EvalBase` 6 表落 `runs/linkrag_eval.sqlite3`，`_AutoPK` 使用 SQLite `Integer` 自增兼容。`eval_corpus_chunk.es_indexed` 改名 `bm25_indexed`;`eval_run` 新增 `computer_fingerprint`。
+候选路由、现有 38 维 `candidate_difference_v3` LambdaMART、在线模型加载与回退属于 eval 已有工程能力。保留这些实现不代表新研究已选择某种方法，也不改变已有生产接入结论；结果与适用范围见[实验记录](../experiments/ltr-fusion-v1.md)和[报告索引](../reports/REPORT_INDEX.md)。
 
-**`EvalDbResultStore`(SQLite 结果台账)**:`run` 命令保留文件产物用于审计/报告,同时把运行快照写入 `eval_run`,把聚合指标与问题类型分桶写入 `eval_metric_result`。`eval_run` 打平记录 `run_quality`、`failed_samples`、`failed_sources_json`、`zero_ranked`,用于筛选可固化的 clean run。domain 分桶当前仍保留在 JSON 报告,未扩 DB schema。
+`run` 同时保留文件产物与 SQLite 台账，记录输入／结果位置、实际配置、Git 提交及未提交状态、特征版本和运行质量；不逐次扫描工作区或 BM25 正文计算摘要。历史报告保留原路径，新一轮使用独立目录或时间戳；报告是否存在与方法是否有效是两件事。
 
-**召回:复用生产 `RecallPipeline` 指向 eval collection**(融合/排序 RRF+rerank 正是被测对象,自持会排序漂移)。`build_eval_recall_pipeline` 用 `compose_vector_storage_facade` 注入 eval 前缀 store + **系统 embedder**(query 侧 resolver 也走系统,绕开 per-user→共享库)。query 侧默认 `EVAL_RECALL_DENSE_SCORE_THRESHOLD=0.20`、`EVAL_RECALL_SPARSE_SCORE_THRESHOLD=0.10`;后者按 Golden V2 realistic tune 调整,历史四域基线需单独复验。
+## 测试与隔离约束
 
-**bm25 可插拔**:`Bm25Mode = {STUB, SQLITE_FTS5(推荐), QDRANT_BM25(旧)}`。`sqlite_fts5` 把 `RagFlowTokenizer` 产出的 coarse/fine token 写入本地 SQLite FTS5 虚表,用内置 `bm25()` 排序,避免 Qdrant sparse-vector BM25 的远端延迟和性能波动。`qdrant_bm25` 仍保留作兼容模式,collection 指向 eval 独立 `EVAL_QDRANT_BM25_COLLECTION`。mode 写进 `EvalRun.snapshot_json`。
+- 单元测试使用 fake 和临时文件，默认不连接真实活栈；生产依赖的契约测试验证固定版本接口，缺少真实依赖不能冒充通过。
+- 集成测试连接真实 Qdrant／编码服务，需显式开启并使用 eval 配置；Qdrant 前缀护栏不得绕过。
+- 生产依赖固定版本，升级后检查契约；签名漂移在负责该能力的 adapter 收口，不扩散生产 import。
+- 密钥只存本地 `.env.eval`；生产库、生产 collection 和旧远端写入链路均不属于评测写入范围。
 
-## 当前实现状态
+## 研究流程与工程架构的关系
 
-本 repo 已完成物理迁入,并落地 Step 0–5 的主体代码。当前实现状态:
+当前研究仅在三路召回后的固定候选集合上探索融合／重排，不回原文补信息，不改召回。具体候选方法保持暂定，不能把局部窗口、比较器、关系结构、阈值或实验版本写成架构硬约束。新增兼容或校验机制必须有当前用途；不预设哈希台账和多阶段准入流程。
 
-- Step 0:已落地。`LiveEvalChunkIndexer` 已由 `EvalVectorIndexer` 替代,写入经 `EvalVectorStore`,不再依赖三个生产写 pipeline。
-- Step 1:已落地并完成后端收口。`EvalCorpusRepo`、独立 `EvalBase` ORM、Alembic `0001` baseline 均指向本地 SQLite。
-- Step 2:已落地。`ProductComputer` / `RagProductComputer` 已收口产物计算;dense/sparse 已迁至 eval `llm/` 模块。
-- Step 3:已落地。`build_eval_recall_pipeline` 指向 eval Qdrant 前缀,query 侧编码器由 eval 配置注入。
-- Step 4:已落地。bm25 mode 配置与索引状态字段已存在;`stub` 只装 dense+sparse,`sqlite_fts5` 写本地 SQLite FTS5 并在召回侧装入 BM25 路;`qdrant_bm25` 保留为旧兼容模式。
-- Step 5:已完成。代码、测试、CLI、报告、golden/cleaning 相关模块已迁入本 repo;import 边界由 `tests/test_import_boundary.py` 和 import-lint 强制。`Snapshot`、文件报告和 DB 台账现已固化 BM25 backend、sidecar identity、computer fingerprint、feature version、Git SHA、dirty 状态与工作区内容指纹。CI workflow 已补固定 SHA 依赖与 contract 缺包强制失败门禁，尚待提交推送后取得远端 Actions 证据；这不影响本步存储/报告迁移验收结论。
-- Step 6:已完成。2026-07-24 从 `tolink_rag_eval_db` 重建 20k SQLite FTS5 sidecar（992000–992003 各 5,000 chunks），并在同一 116 条冻结集上完成 OFF/ON clean A/B。两轮均 `failed_sources=0`、`zero_ranked=0`，chunk Recall@10 `31.32%→36.74%`（`+5.42pp`），MRR `16.58%→17.03%`（`+0.45pp`）；完整快照与延迟观测见 `bm25_sqlite_final_acceptance_20260724` 报告。
-- 2026-07-25:从 `100.86.10.52` 停机前备份中的 `tolink_rag_eval_db` 只读迁移到 `runs/linkrag_eval.sqlite3`。六表计数和逐行内容摘要一致；正常运行不再连接 MySQL。
+原 Robust Fusion 的 R1／R2、Gate、相似度测量与仲裁流程属于历史研究协议，退出活动执行身份。原稿与证据保留在原路径，由[历史导航](../archive/robust-fusion/README.md)说明用途；保留历史证据不要求保留旧版本运行兼容。
 
-文档中的迁移路径保留为验收清单;每步最终仍需用固定数据集验证 `recall@10 ≈ 0.901`(±0.005)。
+## 迁移历史与版本恢复
 
-## 分步迁移路径(每步可验证,基线 recall@10 ≈ 0.901)
+原 Step 0–6 记录了替换生产写 pipeline、引入独立存储、收口 `ProductComputer`、独立装配召回及物理拆仓的迁移过程。早期曾计划使用远端 eval MySQL 和 Qdrant BM25，后续工程改为本地 SQLite 与 SQLite FTS5。旧四域 `recall@10 ≈ 0.901`（±0.005）仅是当时固定语料的迁移等价参考，不能用作新数据或新研究的统一验收阈值。
 
-- **Step 0(承重墙,先做)**:`LiveEvalChunkIndexer` 换 `EvalVectorIndexer`(走 `EvalVectorStore`,不再 import 三个写 pipeline),仍用 SQLite。验证:固定数据集重灌→`recall@10` 仍 ≈0.901(±0.005)。
-- **Step 1(历史路径,已被 2026-07-25 决策替代)**:曾迁入独立 MySQL；当前已回迁本地 SQLite，以彻底移除远端数据库依赖。
-- **Step 2**:抽 `ProductComputer` Protocol + `RagProductComputer`,收口散落 rag 直调,加契约测试。验证:`grep` 确认除 `rag_adapter.py`/`recall_factory.py` 外无 rag import;`recall@10` 不变。
-- **Step 3**:`build_eval_recall_pipeline` 系统 embedder + eval 前缀替换对 `get_recall_pipeline()` 单例的直接复用。验证:日志确认不再查 `llm_user_config`,`recall@10` 仍 ≈0.901。
-- **Step 4**:bm25 可插拔落地,P1 设 STUB。验证:三路重叠率符合 mode 预期。
-- **Step 5**:`git filter-repo` 抽 `src/evaluation/` 历史到本 repo,按上节重排,`pyproject.toml` 把 rag 声明 path/git 依赖,生产删 `src/evaluation/`。验证:`pip install -e .` 跑全套,`recall@10` ≈0.901;import-lint CI 对黑名单生效。
-- **Step 6(协同)**:生产剔 ES、迁 named-dense、落 Qdrant BM25 compute 后,bm25 切 `QDRANT_BM25`。验证:记录 bm25 接入 delta。
-
-## 风险与协同
-
-- **A. rag 包签名漂移**:契约测试(eval CI)对每个 `ProductComputer` 方法断言输出形状/维度;rag 依赖钉 git sha,升级走 PR 触发契约测试,漂移只需改 `rag_adapter.py` 一处。
-- **B. 同 host 清库误伤**:eval 前缀强制含 `eval`;生产清库脚本须显式排除 `eval*`;清库 PR 注明"不影响 eval_* 前缀",窗口后 eval 重跑基线确认。
-- **C. 系统 embedder vs per-user 偏差**:不强行对齐;把 `fingerprint`(dense 模型/sparse provider/bm25 mode)写进 `EvalRun.snapshot_json` 并在报告标注。**硬约束**:写入侧 `compute_dense` 与召回侧 query resolver 必须用同一系统 embedder,否则 eval 内部分布不一致比线上偏差更糟。
-
-## 采纳的默认决策
-
-1. bm25 P1 = **STUB**(只跑两路,不用 sparse 假装 bm25)。
-2. 枚举字段 = **String + 注释**(改值不需 migration)。
-3. **先在源 repo 内完成 Step 0–4 解耦,再 Step 5 物理拆 repo**(承重墙验证在源 repo 做,基线对比最干净)。
-
-> 注:本段是迁移计划的原始执行路径。当前仓库已完成 Step 5 的主体迁入,后续以"当前实现状态"与 AGENTS.md 为准推进验收和收尾。
+重构前完整架构原文保全于标签 `research-pre-restructure-20260906`（提交 `4d31f18`）；可用 `git show research-pre-restructure-20260906:docs/architecture/decoupling-plan.md` 只读查看，或在独立目录检出标签恢复核对。Git 忽略的历史证据另有独立备份，位置和核对清单见[执行记录](../plans/research-restructure-execution-2026-09-06.md)。

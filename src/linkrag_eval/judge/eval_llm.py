@@ -41,11 +41,12 @@ class EvalLLMConfigError(RuntimeError):
 
 @dataclass(frozen=True)
 class EvalChatResult:
-    """对齐生产 GenerateResult 的最小面:脚本只取 ``.content``。"""
+    """对齐生产 GenerateResult 的最小面，并保留调用级重试审计。"""
 
     content: str
     model: str
     raw: dict[str, Any]
+    retry_count: int = 0
 
 
 class EvalChatClient:
@@ -98,6 +99,8 @@ class EvalChatClient:
         system_prompt: str | None = None,
         temperature: float = 0.0,
         max_tokens: int | None = None,
+        thinking: bool | None = None,
+        json_object: bool = False,
     ) -> EvalChatResult:
         """单轮生成。瞬时错误(429 / 5xx / 超时 / 连接)内部指数退避重试;
         重试耗尽或 4xx(鉴权/请求错误)抛异常,由调用方决定是否容错。
@@ -116,6 +119,10 @@ class EvalChatClient:
         }
         if max_tokens:
             payload["max_tokens"] = max_tokens
+        if thinking is not None:
+            payload["thinking"] = {"type": "enabled" if thinking else "disabled"}
+        if json_object:
+            payload["response_format"] = {"type": "json_object"}
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
@@ -135,12 +142,21 @@ class EvalChatClient:
                         raise _Transient(f"HTTP {resp.status_code}")
                     resp.raise_for_status()  # 4xx(含 401)→ 硬失败,不重试
                     data = resp.json()
-                    content = (
-                        (data.get("choices") or [{}])[0].get("message", {}).get("content")
-                        or ""
+                    content = (data.get("choices") or [{}])[0].get("message", {}).get(
+                        "content"
+                    ) or ""
+                    return EvalChatResult(
+                        content=content,
+                        model=self.model,
+                        raw=data,
+                        retry_count=attempt,
                     )
-                    return EvalChatResult(content=content, model=self.model, raw=data)
-                except (_Transient, asyncio.TimeoutError, httpx.TimeoutException, httpx.ConnectError) as exc:
+                except (
+                    TimeoutError,
+                    _Transient,
+                    httpx.TimeoutException,
+                    httpx.ConnectError,
+                ) as exc:
                     last_exc = exc
                     if attempt == self.max_retries:
                         break
@@ -168,7 +184,7 @@ class EvalChatClient:
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-        except (ProviderUnavailable, httpx.HTTPError, asyncio.TimeoutError):
+        except (TimeoutError, ProviderUnavailable, httpx.HTTPError):
             return None
         return parse_llm_json(result.content or "")
 

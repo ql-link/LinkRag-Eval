@@ -6,6 +6,12 @@
 
 > 当前阶段以 [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md) 为唯一进度入口，避免在规则文档中重复维护易过期的实验状态。
 
+研究材料的使用身份见 [文档目录](docs/DOCUMENT_CATALOG.md)。本次[重构执行记录](docs/plans/research-restructure-execution-2026-09-06.md)记录实际变更与验证；原 Robust Fusion、R1／R2、Gate、相似度和人工仲裁协议退出活动执行身份，原文仍按[历史导航](docs/archive/robust-fusion/README.md)保留原路径及字节。不得仅因旧正文含“唯一下一步”或自动执行指令而恢复流程。
+
+当前研究边界是三路召回后的固定候选集合，利用已有可见候选信息与逐路分数／排名探索融合或重排；不回原文补信息，不改召回。具体方法、阈值、窗口与实验版本保持暂定，不能从讨论稿推定为实现要求。当前没有人工作业，不维护空注册表或预设校验流程；旧 registry、HTML、symlink 和提交仅作历史。
+
+重构前源码标签为 `research-pre-restructure-20260906`（`4d31f18`）；需要追溯时在独立目录恢复核对，避免覆盖当前工作区。Git 忽略的证据通过独立备份及 manifest 恢复，具体范围见执行记录，不能把未跟踪或被忽略视为删除依据。
+
 ---
 
 ## 一、命名约定
@@ -32,18 +38,19 @@ LinkRag-Eval/
 ├── AGENTS.md                  # 本文件(实现约定)
 ├── CLAUDE.md                  # → AGENTS.md 的 symlink(物理同一份)
 ├── README.md                  # 项目入口
-├── pyproject.toml             # src-layout(packages=["src/linkrag_eval"]);rag 作 path/git 依赖
+├── pyproject.toml             # src-layout;rag 单独显式安装,CI 固定 SHA(见第七节)
 ├── .importlinter              # 依赖边界机器规则(第三节)
 ├── .env.eval.example          # 配置样例(真值进 .env.eval,gitignored)
 ├── .gitignore
 ├── docs/
 │   ├── architecture/          # 权威架构(decoupling-plan / dependency-boundary / storage)
-│   ├── plans/                 # 当前实施方案与验收标准
+│   ├── plans/                 # 方案、暂定讨论及保留原路径的旧协议(身份见文档目录)
 │   ├── experiments/           # 已验证实验和候选方案
 │   ├── reports/               # 当前与历史评测实证
-│   └── archive/               # 已被替代的历史设计
+│   └── archive/               # 历史设计及原协议导航
+├── human_tasks/               # 当前人工任务登记与历史入口(保留不等于活动)
 ├── src/linkrag_eval/          # ← src-layout:包在此,import 仍 `from linkrag_eval.x`
-│   ├── compute/               # 产物计算封装(rag_adapter 是唯一允许 import rag 的地方)
+│   ├── compute/               # 产物计算封装(本目录内仅 rag_adapter 允许 import rag)
 │   ├── store/                 # 独立存储(EvalVectorStore + 本地 SQLite repo)
 │   ├── retrieval/             # 召回装配(recall_factory 注入 eval 前缀)
 │   ├── metrics/               # 指标(纯函数)
@@ -70,8 +77,8 @@ LinkRag-Eval/
 
 | 类别 | 模块 |
 | --- | --- |
-| 纯计算 | `ChunkingEngine.aprocess`(chunk 切分)、`RagFlowTokenizer.tokenize`(bm25 分词)。**dense/sparse 已移到 eval `llm/` 模块,不再经 rag** |
-| Qdrant 原语 | `QdrantIndexStore`、`BucketRouter`、`point_factory`、`qdrant.models`(复用 schema,自己装配 writer) |
+| 纯计算 | `ChunkingEngine.aprocess`(chunk 切分)。dense/sparse 由 eval `llm/` 承载，BM25 使用本地 FTS5 分词，不经 rag。 |
+| Qdrant 原语 | `QdrantIndexStore`、point 模型、`qdrant.models`(复用 schema,自己装配 writer；显式指定 eval collection) |
 | 被测对象 | `RecallPipeline`、`Retriever`、`compose_vector_storage_facade`、`DenseRetriever`、`SparseRetriever`、`ParserFactory` |
 | 纯 dataclass | `recall.models.*`、`preprocessor.models.*`(ChunkWithTokens 等) |
 
@@ -87,8 +94,8 @@ LinkRag-Eval/
 ### 收口原则
 
 - **rag 的 import 只允许出现在这几个 adapter 文件**,按关注点:
-  - `compute/rag_adapter.py` —— 纯计算(chunk 切分 + bm25 分词;dense/sparse 走 eval llm)
-  - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/`BucketRouter`/point 模型)
+  - `compute/rag_adapter.py` —— chunk 切分适配；dense/sparse 走 eval llm，BM25 在 eval 内计算
+  - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/point 模型；bucket 在 eval 内计算)
   - `retrieval/recall_factory.py` —— 召回装配(被测对象 `RecallPipeline`,指向 eval 前缀)
   - `retrieval/recall_adapter.py` —— `RecallRequest`/`RecallResponse` marshalling(被测对象类型)
   其余模块依赖 `compute/protocol.py` 的抽象。
@@ -105,7 +112,6 @@ class ProductComputer(Protocol):
     async def compute_chunks(self, text: str, *, source_file: str | None = None) -> list[EvalChunk]: ...
     async def compute_dense(self, contents: Sequence[str]) -> list[DenseVec]: ...
     async def compute_sparse(self, contents: Sequence[str]) -> list[SparseVec]: ...
-    def       compute_bm25_tokens(self, content: str) -> Bm25Tokens: ...
     @property
     def dense_dim(self) -> int: ...        # 建 collection 用
     @property
@@ -123,18 +129,19 @@ class ProductComputer(Protocol):
 ### Qdrant(eval 独立前缀,同 host)
 
 - **护栏(强制)**:`EvalVectorStore` 构造时断言 collection 前缀含 `eval`,否则抛 `RuntimeError` 拒跑。防写串生产。
-- 复用 rag 的 `QdrantIndexStore` + `BucketRouter`,named vectors:`dense` / `sparse` /(预留)`bm25`。
+- 复用 rag 的 `QdrantIndexStore`，在 eval 内计算 bucket 并显式指定 `{prefix}_{bucket_id}` collection，不依赖生产 `BucketRouter`。向量 schema 与固定版本的生产原语对齐；Sparse 名由 eval 配置提供，默认 `sparse_text`，写入与召回必须一致。
 - **`chunk_id` 用 uuid5 确定性**:`uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{ordinal}")`。同输入恒等 → 冻结语料 re-ingest 不变 → qrels 不失效;dense/sparse/bm25 三路与 qrels 共用同一 id。
 - **dense/sparse 均由 eval `llm/` 模块承载**(config 驱动,`EVAL_EMBED_*` / `EVAL_SPARSE_*`,模型可选),不经 rag。写入侧 `compute_dense` 与召回侧 query 编码 **必须用同一 eval dense 编码器口径**(硬约束,见方案风险 C);否则 eval 内部向量空间不一致。
 
 ### SQLite(eval 自持元数据/结果,本地单文件)
 
 - 默认 `EVAL_DB_URL=sqlite+aiosqlite:///runs/linkrag_eval.sqlite3`。正常评测禁止依赖远端 MySQL，数据库文件 gitignored。
-- 旧 `tolink_rag_eval_db` 只允许作为一次性只读迁移源；迁移工具必须校验库名并逐表核对计数与内容摘要，绝不读取或写入生产 `tolink_rag_db`。
+- 当前不保留 MySQL 配置、驱动、迁移脚本或别名接口；绝不读取或写入生产 `tolink_rag_db`。
 - `EvalBase` 六表:`eval_dataset` / `eval_corpus_chunk` / `eval_query` / `eval_qrel` / `eval_run` / `eval_metric_result`。
-- `_AutoPK` 在 SQLite 使用 `Integer` 自增、旧 MySQL 迁移源使用 `BigInteger`;枚举字段保持 `String + 注释`(改值不需 migration)。
+- 自增代理键使用 SQLite `Integer`；枚举字段保持 `String + 注释`。
 - 字段变更:`eval_corpus_chunk.es_indexed` → `bm25_indexed`;`eval_run` 增 `computer_fingerprint`。
 - Schema 演进唯一入口是 `alembic/`(eval 自己的迁移链,与生产 alembic 完全隔离)。
+- BM25 使用 eval 自持 SQLite FTS5 sidecar；`bm25_mode=sqlite_fts5` 启用第三路，`stub` 仅装配 Dense／Sparse。旧 `qdrant_bm25` 模式不再支持，不得用 Sparse 结果伪装 BM25。
 
 ---
 
@@ -149,8 +156,8 @@ class ProductComputer(Protocol):
 
 ## 七、rag 包依赖管理
 
-- `pyproject.toml` 把 toLink-Rag 声明为 path/git 依赖,**钉 git sha 或版本**;升级走 PR。
-- 每次升级 rag,CI 先跑 `tests/contract/` —— 对每个 `ProductComputer` 方法断言输出形状/维度。红 = 签名漂移,只在 `compute/rag_adapter.py` 一处修。
+- toLink-Rag 当前不在 `pyproject.toml` 的 dependencies 中，须单独显式安装；精确 SHA 由 CI 安装步骤固定，并在 pyproject 注释中记录。普通 `pip install .` 不会自动安装或固定 rag；本地契约验证须核对所装版本，升级走 PR。
+- 每次升级 rag,CI 先跑 `tests/contract/` —— 验证计算产物与被测对象契约。签名漂移在负责该能力的 adapter 收口，不扩散生产 import。
 - 不得为了"图省事"绕过抽象直接 import rag 内部实现;漂移成本会扩散到全仓。
 
 ---
@@ -164,7 +171,7 @@ class ProductComputer(Protocol):
 | 集成 | `tests/integration/` | 本地 SQLite + 真 Qdrant/embedder | 手动 / nightly,需 `.env.eval` |
 | import-lint | `tests/` | — | 断言黑名单零命中 |
 
-- 每个迁移步骤(Step 0–6)以 `recall@10 ≈ 0.901`(±0.005)为**等价门槛**,固定数据集重灌后对比。
+- 原 Step 0–6 的 `recall@10 ≈ 0.901`(±0.005)只对应历史固定语料的迁移等价参考；不作为新数据或新研究的统一验收门槛。当前变更运行与其影响范围相符的检查。
 - 集成测试连远端栈,标 marker 跳过默认 CI。
 
 ---
@@ -172,7 +179,7 @@ class ProductComputer(Protocol):
 ## 九、安全与隔离纪律(不可妥协)
 
 - `api_key` 只写入本地 `.env.eval`(gitignored),**绝不打印到终端、绝不进版本库**。
-- 元数据和结果只写本地 SQLite。**绝不写生产库 `tolink_rag_db` 的任何表**；旧 eval MySQL 也仅允许迁移工具只读访问。
+- 元数据和结果只写本地 SQLite。**绝不写生产库 `tolink_rag_db` 的任何表**；不保留旧 MySQL 运行入口。
 - `.env.eval`、`golden/`、`.specs/` 等含数据/密钥的产物 gitignored。
 - Qdrant 前缀护栏(第五节)是写串生产的最后一道防线,不得删除或绕过。
 
@@ -187,7 +194,15 @@ class ProductComputer(Protocol):
 
 ---
 
-## 十一、回答风格(面向开发者沟通)
+## 十一、当前版本的简化原则
+
+- 只支持当前确有用途的接口和格式。旧别名、旧后端、宽松回退和没有业务消费者的抽象不因“可能复用”而保留；新格式不兼容时给出明确错误或重新生成，避免静默套用默认值。
+- 新科研流程通常只记录输入／结果位置、代码版本、实际参数和评测口径。不默认建立逐文件哈希台账、反复封存、全工作区或数据库正文扫描，也不把它们当成研究可行性的前置条件。
+- 保留哈希必须有具体消费者和作用，例如校验当前模型包是否损坏、缓存失效、去重或确定性数据分组。单纯为了展示、留一份指纹或沿袭旧协议不足以构成理由。依赖锁文件由包管理器正常维护。
+- `computer_fingerprint` 当前是模型名、维度和后端等配置元数据，不要求逐条向量或文件摘要。历史记录只证明当时做了什么，不约束后续工作区继续匹配旧摘要。
+- 历史数据与报告的保留不意味着保留运行兼容层。原始人工提交和实验结果不因代码简化而重写。
+
+## 十二、回答风格(面向开发者沟通)
 
 - 语言清晰、专业、得体;不过度口语化,也不堆砌术语。
 - 少用生僻术语和生造比喻;确需专业术语时用一句话点明含义。

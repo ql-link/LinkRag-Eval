@@ -106,7 +106,7 @@ async def test_run_eval_snapshot_records_recall_fusion_config(tmp_path) -> None:
     golden.write_text(json.dumps(
         {"id": "q1", "query": "问", "user_id": 1, "dataset_ids": [990131], "expected_doc_ids": [1]}
     ), encoding="utf-8")
-    settings = EvalSettings(_env_file=None)
+    settings = EvalSettings(_env_file=None, bm25_sqlite_path=str(tmp_path / "bm25.sqlite3"))
     store = _Store()
 
     result = await run_eval(

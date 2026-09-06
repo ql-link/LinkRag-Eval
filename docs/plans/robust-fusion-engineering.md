@@ -1,11 +1,11 @@
 # 鲁棒融合研究：工程实施协议
 
 > 文档定位：本文件负责把[科研协议](robust-fusion-research.md)转化为可运行、可重放、无标签泄漏的实验系统；它不定义研究问题，也不判定论文结论。
-> 工程记录：`ROBUST-FUSION-ENGINEERING-2026-08-29-v10`。
-> 当前状态：真实 Python 3.11 环境与评测资产可用；Eval 薄适配已迁移到当前 LinkRag 契约并通过本地与 SSH 隧道真实栈检查，在线 Dense 重放的冻结数值容差与正式 v2 三路 preflight 已在 Gate A 前关闭，但 clean contract lock 与远端绿色 CI 尚未完成，研究专用候选快照和离线实验器尚未实现。
+> 工程记录：`ROBUST-FUSION-ENGINEERING-2026-08-30-v23`。
+> 当前状态：真实 Python 3.11 环境与评测资产可用；Eval 薄适配已迁移到当前 LinkRag 契约并通过本地与 SSH 隧道真实栈检查，历史正式 v2 三路 preflight 已关闭模型/schema/连通性证据。当前 provider-managed Dense/Sparse 不设数值重放门槛，改为单次生成、结构校验和哈希封存。Internal v6 的 30-family Dev 生成、不可覆盖恢复链、A/B 双审提交锁、机械校验和主持人裁定已落地，人工接纳 28/30。Dev-only 三路证据的 v2/v3 失败与 v4 完整性拒收均保留，修复后的独立 v5 已在真实 Dense、Learned Sparse、BM25、SQLite 与 Qdrant 上完成并独立核验。P2-01 v1 人工效度 PASS、共同支持 `INCONCLUSIVE` 的全部制品保持只读；唯一一次 72-family Dev 共同支持补充已完成四提交先锁后验和零仲裁单次终审。combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均为 `INCONCLUSIVE`，故 terminal `INCONCLUSIVE`、无正式数值冻结、P2/Gate 未完成且无第三轮。C2 边界补充包仍为空白规划。R2 当前等待一名新研究员完成 7 行关系与 96 行相似度仲裁，并已建立统一的 `human_tasks/<task-id>/` 浅入口；后续所有人工复核、仲裁、签署和独立评审均须在交付前通过同一入口门禁。clean contract lock、远端绿色 CI、正式研究候选快照和离线实验器仍未完成。
 > 项目级状态：[CURRENT_STATUS](../CURRENT_STATUS.md)是 LinkRag-Eval 全项目进度的唯一入口；本文件只维护本研究专属工程契约。
 > 配套入口：[科研协议](robust-fusion-research.md)、[研究推进清单](robust-fusion-todo.md)、[资产对账报告](../reports/sqlite_share_restore_and_asset_reconciliation_2026_08_28.md)。
-> 最近更新：2026-08-29。
+> 最近更新：2026-08-30。
 
 ## 0. 一页摘要
 
@@ -110,21 +110,17 @@ P4-00 是不依赖 P2/P3 研究样本的独立工程 preflight，可立即开始
 
 只有薄适配层修复、CI 精确 pin、绿色 run/report 和 clean `contract-lock.json` 四者同时存在，P4-00 才能完成。它是快照冻结的工程硬前置条件，但不构成 Gate A 科研证据。
 
-真实 route 另由 `scripts/probe_robust_fusion_route_contract.py` 拒绝错误配置。历史 v1 制品曾验证 `.env.eval` 为 Ark/`doubao-embedding-vision-251215`、`top_k=256`、SQLite FTS5，并用四条中英固定输入按正序/逆序在线重放得到逐条相同的 canonical Dense/Sparse float32 摘要；科研协议 v19 联动刷新时，Dense 的 `zh_short` 又发生一次只知 hash 不同、未保留幅度的 exact mismatch。该失败不自动重试，也不被事后改写成“已证明只是尾差”。
+真实 route 另由 `scripts/probe_robust_fusion_route_contract.py` 拒绝错误配置。历史 v1/v2 探针与 Dense 诊断制品原样保留：它们曾记录一次幅度未知的 Dense exact mismatch、一次四探针 exact 诊断，以及正式 v2 中 Dense/Sparse exact、BM25=`sqlite_fts5` 的结果。正式 v2 manifest SHA-256 为 `640e3d52a2f7cfc6f991cefe4d111ae18d09ba3260626a2e927988b5cd17a38a`。这些制品继续证明当时的模型、维度、接口、provider、BM25 backend 和无结果读取边界，但旧的五项 Dense 容差与 Sparse exact 重放不再是当前接纳条件；历史 manifest 不覆盖、不重写、不重新签名。
 
-研究负责人随后在 Gate A、候选、qrel 和排序结果均未读取的条件下，授权一次只测量的 Dense 诊断复放。`ROBUST-FUSION-DENSE-REPLAY-DIAGNOSTIC-2026-08-29-v1` 以同四条固定无敏感文本发出正序/逆序两次请求，`max_retries=0`；本次 4×1024 个 float32 分量全部逐位一致，最大绝对差、relative L2、归一化向量差和任一单位候选的余弦分数扰动上界均为 0。重新计算余弦时出现的 `2.22e-16` 只是本地 float64 舍入，不是 API 向量漂移。制品 SHA-256 为 `3606a60aca87d41f959214c121b402a1c0ea303d228629cfac622d5648ec9081`；它不保存原文、向量、端点或密钥，不读取实际候选及研究结果。
+现行在线路由治理固定为 `ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2`：
 
-在看到该次诊断结果前写死的数值界现正式冻结为 `ROBUST-FUSION-DENSE-REPLAY-POLICY-2026-08-29-v1`。正式 route preflight 对每条探针分别执行以下交并规则，不允许探针间平均抵消：float32 逐位一致直接通过；否则只有以下五项全部不超过上界才可记为 `WITHIN_FROZEN_NUMERIC_TOLERANCE`：
+1. provider-managed Dense 与 Learned Sparse 均不设置数值误差、跨请求 exact 或容差通过线；数值差异只能进入描述性诊断，不能改变接纳结论；
+2. 每个获授权的候选快照只调用一次在线 route，先校验 provider/model、输出数量、Dense 维度、Sparse index/value schema、非空、有限值、Chunk/Query ID、目标覆盖和路由失败状态；
+3. 结构校验通过后立即固化候选 ID、逐路原始分数/排名、请求/输出摘要、配置指纹与 tie-break，并以 manifest/content root 哈希封存；所有方法共用该快照；
+4. 不得因数值差异重跑，不得在多个成功运行中选择分数更稳定、排名更好或更符合预期的一个；transport/API/schema/空向量/NaN/Inf/维度/ID/目标覆盖/manifest 错误仍是硬失败；
+5. BM25、指标、bootstrap、文件生成和其他本地确定性计算继续要求精确复现。Gate A 离线运行不得再次调用在线编码服务。
 
-- 最大逐分量绝对差 `<= 1e-6`；
-- relative L2 差 `<= 1e-5`；
-- 归一化 Query 向量 L2 差 `<= 1e-5`；
-- 余弦距离 `<= 1e-8`；
-- 任一单位候选的余弦分数扰动数学上界 `<= 1e-5`。
-
-任一探针、任一上界超限即失败，禁止自动重试或临时改阈值；Learned Sparse 仍要求 canonical float32 摘要 exact。正式候选生成只调用一次在线 route 并立即冻结候选 ID、逐路分数、请求/输出摘要和 tie-break，Gate A 离线运行不得再次调用在线编码服务。上述策略关闭的是“如何判定 provider-managed 数值重放”的规则空缺，不证明先前未测量 mismatch 的实际幅度，也不替代双仓 clean 和绿色 CI。
-
-负责人随后授权正式 v2 三路 preflight，命令只执行一次且没有自动重试。`ROBUST-FUSION-ROUTE-CONTRACT-PREFLIGHT-2026-08-29-v2` 通过：Dense 四探针全部 float32 exact，`replay_acceptance=EXACT`；Ark/豆包 Sparse 四探针 canonical float32 摘要全部 exact；BM25 绑定 `sqlite_fts5`。manifest SHA-256 为 `640e3d52a2f7cfc6f991cefe4d111ae18d09ba3260626a2e927988b5cd17a38a`，不保存原文、向量、端点或密钥，且 `gate_a_executed=false`、`outcome_data_read=false`。因此在线三路重放阻塞已经关闭；P4-00 仍因双仓非 clean、缺当前版本远端绿色 CI 和正式 `contract-lock.json` 而未完成。
+该修订发生在观察 v6-Dev v4/v5 数值差异之后、Gate A 与 Reranker/M1 结果之前。它不改变候选池 estimand、效应阈值、数据分母或 Gate 规则，也不要求重跑已经通过结构与完整性核验的 v5。未来如执行 v3 route preflight，它只作当前模型/schema/结构探针，不生成第二份候选快照，也不提供数值接纳标准。P4-00 仍因双仓非 clean、缺当前版本远端绿色 CI 和正式 `contract-lock.json` 而未完成。
 
 > **概念解释｜CI pin 与契约重钉**：CI pin 是自动测试所绑定的代码版本。生产代码更新后，旧版本测试通过不能证明新版本仍兼容；契约重钉就是在准备正式实验时重新确认并记录双方实际版本和接口行为。
 
@@ -172,7 +168,31 @@ C-MTEB Cmedqa 只允许通过 `scripts/audit_cmedqa_corpus_provenance.py` 生成
 
 内部文档只允许一次性确定性切分，并保存 parser、chunker、参数、代码 SHA、原文位置和 Chunk 内容摘要。
 
-唯一内部数据协议为[Internal Stress v6 数据协议](robust-fusion-internal-stress-v6.md)。`scripts/initialize_robust_fusion_internal_v6.py` 已建立本地 gitignored 三分目录、独立 cohort manifest、GateA/Blind 方法访问锁、source/exposure 台账、四张最小摄取模板和全包摘要。当前 root 状态必须保持 `FORMALLY_ESTABLISHED_AWAITING_NEW_REAL_QUERY_INTAKE`、`gate_eligibility=NOT_ELIGIBLE`，因为分享包、旧 eval MySQL 与服务器均无 Query/qrel 行；任何 runner 都不得把“目录存在”解释为“人口已冻结”。
+唯一内部数据协议为[Internal Stress v13 数据协议](robust-fusion-internal-stress-v6.md)。`scripts/initialize_robust_fusion_internal_v6.py` 已建立本地 gitignored 三分目录、独立 cohort manifest、GateA/Blind 方法访问锁、source/exposure 台账、四张最小摄取模板和全包摘要。协议状态现为 `FORMALLY_ESTABLISHED_DEV_SYNTHETIC_REVIEW_ADJUDICATED_ROUTE_EVIDENCE_VERIFIED`，`gate_eligibility` 仍必须保持 `NOT_ELIGIBLE`；任何 runner 都不得把“目录存在”“Dev 生成成功”“结构提案 30/30”“Dev 人工接纳 28/30”或“Dev 三路证据已核验”解释为“确认性人口已冻结”。
+
+30-family DeepSeek 先导只能写入新的版本化 `runs/robust_fusion/internal_v6_deepseek_pilot_v2/`，不得覆盖 v1 规划包或当前 GateA/Blind 目录。调用只发送生成指令和自包含合成 schema，不上传内部文档、未公开语料或历史逐条数据。每次调用必须先保存提示词 hash，再保存原始响应、响应 hash、模型、时间、重试、token 用量和价格快照；全批次失败不得静默自动重跑。解析器对非法 JSON、缺字段、非原子冲突、证据锚点不逐字、重复 family ID 或来源缺失闭门拒绝。模型输出只能成为待人工复核的提案，不能写入 GateA/Blind 或标为人工真值。
+
+双审主持人入口固定为 `scripts/review_robust_fusion_internal_v6_human.py`。执行顺序只能是 `lock → review → finalize`：`lock` 在解析答案前快照六份 CSV 与冻结输入，`review` 只读取快照并将非逐字但可定位的证据写为警告，`finalize` 保存 A/B 原始值、条款级裁定、family 接纳台账与独立 manifest。当前提交锁 SHA-256 为 `72d8b77ca601c925ff3840afc4812ac1395019d1930548cd98836201adefbb00`，最终 manifest SHA-256 为 `654ff9ff1959aeb18895b8a872c34665c9a262510f13d79146aca6183650b99a`；所有输出仍是 gitignored Dev 制品。
+
+`scripts/materialize_robust_fusion_internal_v6_adjudicated_dev.py` 只读取最终接纳台账，确定性生成 28 条 Query、112 条单段文档、112 条证据标签和 28 条 family assignment。输出固定在 `data/robust_fusion/internal_stress_v6/dev/releases/adjudicated_synthetic_v1/`，release manifest SHA-256 为 `ad32fbb08a6b076dced1e438ff51060c46073b932cd259ff89beb157e5453bac`；旧空 manifest 不覆盖，追加 root manifest v9 SHA-256 为 `683e4967097e041a78fd7c5221c462ff4d75243127d8feb761cf7b0d40d7b2ab`。该 release 仅 `annotation_ready=true`，在真实重算 Dense/Learned Sparse/BM25 前仍为 `retrieval_route_evidence_ready=false`。
+
+`scripts/run_robust_fusion_internal_v6_route_evidence.py` 与 `linkrag_eval.robust_fusion.internal_v6_route_evidence` 提供 Dev-only 两阶段入口。`prepare` 只验证固定 release、真实运行配置和 28/112/112/28 闭合关系，并写脱敏计划；`execute` 需要精确确认 token，从第一次远端 collection 探测开始即把计划计为唯一执行尝试，失败写 `FAILED_NO_AUTORETRY`，不自动重试、不删除或覆盖远端状态。输出使用版本化 eval collection、独立 metadata/BM25 SQLite、同一 Dense/Sparse 编码器实例和当前 `candidate_hits/route_hits` 契约，物理分离 `method_view/` 与 `evaluation_view/`。
+
+执行谱系固定为：v1 在零尝试时 `SUPERSEDED_BEFORE_EXECUTION`；v2 plan SHA-256 `4e1e279b12e23436421b4b6166b261451000cd0e86817ada5d77ccd0cea98144` 因缺 SSH 转发在首次 Qdrant probe 超时，0 编码请求且 collection 不存在；v3 plan SHA-256 `14ee97c428b3a0ed460ff29cf2063e0cfd45c6d4969ebdac1d9d44feb5798818` 在健康隧道下因本地 `storage/` 父目录未创建而于 SQLite 打开阶段失败，未发出编码请求且 collection 不存在；v4 plan SHA-256 `98209247819b35304ab26af98befdbff0367fe0046b42f940b8a373132fbabe3` 完成三路物化，但 manifest 纳入运行时 `-wal/-shm`，进程退出后原 content root 不可复算，故原制品不改写、不重签并拒收；修复后另建 v5，plan SHA-256 `a7b159cc7f8f2d694e816b820971a8d3bce85c2f1fe392dde5c4c0003df7c03a`，一次执行完成。
+
+v5 manifest SHA-256 为 `a2ee6147a791903fa0aceae3be7f3b6a7f54277a58f5241cb62d1e944974734d`，content root 为 `1bae0b158a16f5d0aab161cff28245283fd487c9a5f41f23a6c4d02305c57550`。独立核验确认 28 Query、112 Chunk、3,056 行候选，三路各覆盖 28/28 Query，112/112 已标注候选及 28/28 gold target 入候选并集；metadata SQLite、FTS5 与 Qdrant 112 个点的 Chunk ID 完全一致。方法视图标签泄漏检查通过，Gate A/B 均为 false。跨 v4/v5 候选身份、Top-1、Top-10 和已标注候选排名稳定；在线 Dense 最大绝对分数抖动约 `2.46×10⁻⁴`，所以只声称集合与核心排名可复现，不声称全部浮点逐字节一致。详见[独立核验报告](../reports/internal_v6_dev_route_evidence_v5_verification_2026_08_29.md)。该 runner 仍明确 `formal_p4_02_snapshot=false`。
+
+[C2 三分边界最小补充方案](robust-fusion-c2-boundary-supplement.md)由 `scripts/initialize_robust_fusion_c2_boundary_supplement.py` 初始化为 8 个管理员规划槽和空摄取/标注模板，manifest SHA-256 为 `ff4e00d857641a2d48e0ece509c29bf357f28918757dc4a1980f9906a681f347`。当前 materialized case/candidate/pair 均为 0、人工未开始、无三路证据；管理员配额与目标类别不得进入后续 A/B 包。
+
+当前实现为 `scripts/run_robust_fusion_internal_v6_deepseek_pilot.py` 与 `linkrag_eval.robust_fusion.internal_v6_pilot`。首批因 DeepSeek V4 默认开启思考模式而有 6 条 `finish_reason=length`；失败批次没有覆盖或整批自动重跑。恢复调用显式发送 `thinking={"type":"disabled"}` 与 `response_format={"type":"json_object"}`，每次只从前一 manifest 的拒绝 ID 生成新版本化目录，并把技术变更、源 manifest、提示词 hash 和校验错误写入审计。五段链最终以 43 次调用得到 30 个结构合格提案；首批结构产率仍固定为 24/30，不能被恢复后的 30/30 覆盖。
+
+P2-01 相似度自动校准入口为 `scripts/run_robust_fusion_similarity_dev_calibration.py`，纯校验与统计位于 `linkrag_eval.robust_fusion.similarity_dev_calibration`。执行器只接受 v5 route manifest/content root 及其绑定的 adjudicated release，路径或 manifest 出现 GateA/Blind 即拒绝；它从 evaluation view 选择 `relevant_gold` 参照成员，从 method view 读取正文，并对禁止字段递归扫描。两个冻结编码器输出 112×768 与 112×512 的 float32 向量，84 个非参照候选按 (S_{qg}(c)) 计算双编码器相似度。正式制品 manifest SHA-256 为 `b44d13f5a5e4f6bea2225ec8c29588db10a37ad1da124eb2d8ff7fb09f08454c`；第二次完整编码对核心文件逐字节重放一致，verifier 复核 24 个受管文件与 112 条向量摘要。A/B 目录各含 24 行 opaque 文本对和空白提交表，不含 evaluation label、模型分数或答案键。提交审阅入口为 `scripts/review_robust_fusion_similarity_human_audit.py`：它验证 A/B 提交锁和仲裁锁、执行机械校验、计算 κ/±1 一致率与仲裁后效度，并封存最终 24 条人评分及 manifest。当前六项人工效度门槛全部 PASS，但共同支持 FAIL，状态为 `REVIEW_COMPLETE_FORMAL_FREEZE_BLOCKED`。
+
+唯一补充周期入口为 `scripts/run_robust_fusion_similarity_support_supplement.py` 与 `linkrag_eval.robust_fusion.similarity_support_supplement`。`prepare` 在任何新分数前锁定 72-family 固定样本量、两侧 100 固定分母、missing-as-miss、v1 全保留、人工双盲和唯一停止规则；lock SHA-256 为 `57179fbf…c6b2b`。`materialize` 生成 72 个确定性 Dev-only 配对微事实与 A/B 各 144 行关系包；`score` 只加载冻结的本地 E5/DistilUSE，生成 216×768/512 向量、144 个候选分数和 A/B 各 48 行相似度包，自动 manifest SHA-256 为 `1c8b0499…327d`。两组向量二次内存重放均 exact。构造角色预览不得代替关系真值。四份提交的后续入口是 `scripts/review_robust_fusion_similarity_support_supplement.py`：真实执行已严格按 `lock-submissions → validate` 完成，提交锁 `7a3ca434…2ae6`；关系 144/144、相似度 48/48 exact 且三类仲裁集合为空。
+
+锁后发现 CLI 缺少零仲裁 finalizer。该缺口以新模块 `linkrag_eval.robust_fusion.similarity_support_finalization` 补齐，性质只是不修改预注册的缺失执行器。真实运行前先执行 `seal-zero-finalizer-implementation`，封存 spec/code manifest `af35908b…499fb`；finalizer 对任一差异、不确定、lock/package/pre-review/ID/行数漂移 fail-closed，不解析 construction-role preview，且只写 append-only `human_review/facilitator/finalization_v1/`。代码封存后 `finalize-zero-adjudication` 单次成功，final manifest `ea40f4f0…f2b35`、receipt `3953e92e…13465`。combined 共同支持 96%/99% PASS；supplement-only/combined E5 overall Spearman 0.1775/0.3968 未达 0.50，二者人工效度均 `INCONCLUSIVE`，联合状态 `P2_TERMINAL_INCONCLUSIVE_GATE_A_UNAUTHORIZED`，不生成正式数值冻结文件。
+
+`scripts/materialize_robust_fusion_internal_v6_human_review.py` 按 generation ID 选择最早结构合格版本，复验五段 manifest、8/8/7/7 配额、跨 family ID/全文唯一性及历史 v5 精确全文 hash，再输出独立 `annotator_a/`、`annotator_b/` 与 `facilitator/`。标注员视图禁止出现 generation/source ID、origin、配额、模型关系标签或构造角色；A/B 各完成 30 条资格、90 条候选、90 条候选对，目录权限 `0700`、文件 `0600`。空白交付 manifest 保持不变，人工答案与最终裁定由主持人目录另行锁定；任何 loader 只能读取最终接纳台账中的 28 个 Dev family，且必须拒绝 GateA/Blind。
 
 ### 4.3 干扰构造
 
@@ -232,6 +252,17 @@ C-MTEB Cmedqa 只允许通过 `scripts/audit_cmedqa_corpus_provenance.py` 生成
 - 重放时先验证摘要和 schema version，再运行方法；
 - 同一快照、方法包和随机种子重复运行，确定性输出必须完全一致；
 - 快照不得依赖在线 Qdrant 才能被离线实验器读取。
+
+### 5.4 Internal v6-Dev 三路证据先导的边界
+
+当前 Dev 执行器只验证“冻结 release 能否通过真实三路形成可审计候选证据”，不能替代本章的正式 Candidate Snapshot Generator：
+
+- 输入只允许 release manifest `ad32fbb…` 对应的 28 个已仲裁 synthetic Dev family；
+- 候选并集保留逐路 raw score/rank/retrieved flag，方法视图不得出现 source ID、qrel、关系、冲突类型、裁决性、origin、family 或压力链字段；
+- 评价视图可以保存人工关系和 family，但不得被方法入口读取；
+- runner 拒绝既有输出目录、本地 SQLite 或同名 Qdrant collection，且不提供删除、覆盖或自动重试；
+- 单次执行得到的只是 Dev 测量校准制品，固定写 `formal_p4_02_snapshot=false`、`gate_eligibility=NOT_ELIGIBLE`；
+- P4-02 仍须等待 clean 双仓、绿色 CI、`contract-lock.json`、正式压力链 schema 与全部冻结数据人口。
 
 ## 6. 两条实验轨道的工程实现
 
@@ -319,6 +350,26 @@ runs/robust_fusion/
 
 具体文件格式和命名在 P4-01 冻结。任何产物不得包含 API Key、生产用户信息或未脱敏的敏感内容。
 
+### 9.1 人工作业浅入口
+
+版本化 `runs/` 路径是机器证据位置，不是人工操作界面。所有需要研究员、仲裁员、curator、研究负责人或独立审稿人直接读写文件的任务，必须额外建立项目根目录相对的 `human_tasks/<task-id>/` 浅入口，并遵守[人工作业浅入口规范](robust-fusion-human-task-entrypoints.md)。
+
+工程硬约束如下：
+
+- 人工指南与聊天交接只使用 `human_tasks/<task-id>/...`，不得要求参与者识别 canonical run ID 或日期目录；
+- 浅入口以相对符号链接指向唯一 canonical 包，不复制可编辑任务；
+- 不同评审角色使用不同 task ID，入口不能暴露其他评审者答案、facilitator key、模型分数或 Gate 结果；
+- canonical 包存在但浅入口未建立或未校验时，只能记录为“机器包完成”，不能记录为“可交付”；
+- 提交仍写入 canonical 包并按原始字节先锁后读；浅入口不改变固定分母、manifest 或 finalizer；
+- Blind 人工入口只能建立在独立 curator 工作区，主方法工作区只接收 opaque ID/hash 与资格状态，不能出现指向 Blind 正文的链接；
+- 项目外传递使用独立导出/回收包，不直接压缩包含符号链接的项目内入口。
+
+机器注册表为 `docs/plans/robust-fusion-human-task-registry.json`；交付前执行：
+
+```bash
+PYTHONPATH=src .venv/bin/python scripts/check_robust_fusion_human_task_entrypoints.py --before-handoff
+```
+
 ## 10. 验证与验收
 
 ### 10.1 单元与契约检查
@@ -331,7 +382,8 @@ runs/robust_fusion/
 - pooled 分析在修改数据集权重、改用 micro 聚合、混入非主 Stress population 或选择性缺失方法输出时拒绝 Gate 模式；
 - Top1 安全在任一基线×数据集共同风险集为空、低于 `F_min,flip/rho_min,flip` 或缺失任一主剂量时输出 `Inconclusive`，不得跳过该格；
 - 路由缺失、模型失败和截断不会静默变成空结果；
-- 本地确定性计算必须逐位一致；provider-managed Dense 按第 3.4 节的逐探针 `exact OR 五项冻结数值容差交集` 判定，Learned Sparse 仍须 exact，任何超界均拒绝且不自动重试。
+- 本地确定性计算必须逐位一致；provider-managed Dense/Sparse 只执行结构合法性与单次快照哈希封存，不设数值误差或跨请求 exact 门槛，也不得因数值差异重跑或择优。
+- 任何人工包必须先通过浅入口路径深度、链接目标、角色隔离、允许文件、行数、指南泄漏和预交付输出不存在性校验，才能标记为可交付。
 
 ### 10.2 真实栈冒烟
 
@@ -386,7 +438,7 @@ runs/robust_fusion/
 | 公共数据缺少本地实体 | 无法生成正式 Query/qrels | 下载、冻结 revision 并重新审计 |
 | SQLite 正文编码/内容与官方实体不一致 | 基于乱码生成 embedding、BM25 或候选，使语义快照失效 | 逐 ID/content hash 验证；未通过时从 pinned 官方文件重建，不修补或继承旧向量 |
 | 紧凑派生 corpus 混入其他数据集 | 数据集域角色和负例分布被误述，或反向破坏 DuRetrieval 完整性 | 正式 loader 绑定上游 provenance 与逐实体对账；DuRetrieval 三实体完整读取且 `rows_removed=0`；C-MTEB Cmedqa 只读四类 ID/hash crosswalk，不进入权威 cMedQA2 快照；`both_exact` 不强制归因，全部 `unresolved_neither` 统一留在仅审计类且不触发处理 |
-| 把 Internal v6 空骨架当作已封存 cohort | Gate A/B 运行在无真实 Query/真值或事后填充数据上 | root manifest 明示 `NOT_ELIGIBLE`；runner 要求非空、双审、family 零交集、功效分母与 seal 全部通过才解锁 |
+| 把 Internal v6 空骨架或 Dev 合成先导当作已封存 cohort | Gate A/B 运行在无独立自然来源/人工真值或事后填充数据上 | root manifest 明示 `NOT_ELIGIBLE`；Dev 输出物理隔离且 runner 拒绝读取；只有非空、自然配额、双审、family 零交集、功效分母与 seal 全部通过才解锁 |
 | cMedQA2 全文误入版本库或公开复现包 | 违反已确认的非商业本地使用治理并扩大数据暴露 | 原始 zip/正文只留在 gitignored 数据目录；版本化产物仅存 commit、ID、hash、派生标签、排除表和 loader；CI 检查禁止正文文件进入 seal |
 | 历史 collection 更“完整” | 容易误拼不同模型和版本 | 单快照只绑定一个冻结 collection/backend |
 | 历史 BGE-M3/Alt Embedding 被误接回正式研究 | route 口径错误，相似度不可复算 | Gate A preflight 对 BGE provider/model 直接拒绝；历史 sidecar 只读追溯，不复用、不重算 |
@@ -395,13 +447,26 @@ runs/robust_fusion/
 | 双仓 SHA 对应 dirty 工作区 | 相同 SHA 可能运行不同的未提交内容 | 预检记录 diff/untracked hash；正式快照只接受 `dirty=false` 的 commit/tag |
 | Seal、root hash 与时间戳互相引用 | 产物无法形成唯一无环指纹 | 先冻结 root manifest，再时间戳 root hash；receipt 只作不进入 root hash 的追加 sidecar |
 | evaluator 字段泄漏 | 方法结果虚高 | 物理视图隔离和置换不变性测试 |
-| 在线服务波动 | 部分 Query 缺路、超时或数值轻微变化 | route preflight 按第 3.4 节冻结容差逐探针判定且不自动重试；正式快照生成阶段显式失败或一次性固化，离线阶段不调用在线服务 |
+| 在线服务波动 | 部分 Query 缺路、超时或数值变化 | route preflight 只检验模型/schema/结构；正式快照单次生成后哈希固化。transport/API/schema/空向量/NaN/Inf/维度/ID/目标覆盖错误显式失败；数值差异不触发重跑或择优，离线阶段不调用在线服务 |
 | 计算预算超限 | 无法完成全矩阵 | 按科研协议的缩减顺序执行，不降低核心证据标准 |
 
 ## 13. 变更记录
 
 | 日期 | 版本 | 变更 |
 | --- | --- | --- |
+| 2026-08-30 | v23 | 将人工作业界面与机器证据目录正式分层：所有后续标注、双审、仲裁、签署和独立评审在交付前必须建立 `human_tasks/<task-id>/` 浅入口并通过机器校验；当前 R2 仲裁已落地。Blind 继续物理隔离，只能在 curator 独立工作区使用同样的浅入口，不向方法开发工作区暴露正文或链接 |
+| 2026-08-29 | v22 | 四份补充提交先锁后验且零仲裁；补齐已冻结 protocol 的零仲裁 finalizer，合成测试后先封存 post-lock spec/code、再单次真实执行。combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均 `INCONCLUSIVE`；terminal `INCONCLUSIVE`，无正式数值冻结、无第三轮，不授权或运行 readiness/Gate A/B |
+| 2026-08-29 | v21 | 永久保留 v1 `INCONCLUSIVE`；新增唯一一次 72-family Dev 共同支持补充执行器。预注册/样本量/分母/缺失/合并/停止规则先锁后算，本地双编码器 216 条向量 exact 重放，生成 144 分数、A/B 各 144 行关系包和各 48 行相似度包；状态 `AWAITING_HUMAN_SUBMISSIONS`，不授权 Gate A/B |
+| 2026-08-29 | v20 | 相似度仲裁提交按先锁后读完成 9/9 行机械核验；finalizer 形成 24 条唯一最终人评分，E5 overall/short/long、DistilUSE overall 与最高主分带两项人工指标全部 PASS。新增仲裁锁漂移拒绝、最终 manifest 和 11/11 谬误扫描；共同支持仍 FAIL，联合冻结 `INCONCLUSIVE`，不完成 P2-01/P2-04 或 Gate A/B |
+| 2026-08-29 | v19 | 新增 P2-01 人工提交审阅器；A/B 两份真实提交先锁后比，24/24 行机械校验通过，κ=0.9484、±1=100%。生成 9 行无模型分数/关系标签的最小真实人工仲裁包；状态为 `AWAITING_HUMAN_ADJUDICATION`，不执行人工代填、正式分带或 Gate A/B |
+| 2026-08-29 | v18 | 新增 P2-01 Dev-only 相似度执行器、参照集合/向量/分数封存、长短与关系分层、共同支持/分带 provisional 规则、双次确定性重放及 A/B 无答案键正式包。当前共同支持覆盖未过 60% 门禁且人工未提交，状态保持 `AWAITING_HUMAN_SUBMISSIONS`；不完成 P2-01/P2-04/P4-02，不授权或运行 Gate A/B |
+| 2026-08-29 | v17 | 以 `ROBUST-FUSION-PROVIDER-ROUTE-SNAPSHOT-POLICY-2026-08-29-v2` 取代现行 Dense 五项容差/Sparse exact 重放 Gate：在线 Dense/Sparse 单次生成、结构校验、哈希封存，数值差异只作描述且禁止据此重跑或择优；本地确定性计算仍须 exact。旧 v1/v2/诊断制品保持不可变历史证据，v5 无需重跑；未改变科学 estimand、阈值或人口 |
+| 2026-08-29 | v16 | 保留 v2/v3 失败与 v4 manifest 完整性拒收，修复 storage 预建、SQLite checkpoint/瞬态 sidecar 排除及 completed state content-root 记录；独立 v5 一次执行并通过 plan/manifest/root、双视图、SQLite/FTS5、Qdrant 112 点和三路覆盖核验。Dev-only、`NOT_ELIGIBLE` 与 `formal_p4_02_snapshot=false` 边界不变 |
+| 2026-08-29 | v15 | 记录获确认的 v2 唯一执行在首次 Qdrant existence probe 因直连 `ReadTimeout` 失败并封存：0 Dense/Sparse 请求、0 collection、无重试。只读诊断确认 Qdrant 仅在 `linkcv` 本机监听；恢复本地 36333 SSH 隧道并通过 healthz，另备 v3 `PREPARED` 计划等待新确认，不复用 v2 |
+| 2026-08-29 | v14 | 新增 Internal v6-Dev 两阶段三路证据执行器：固定 release、隔离 eval collection/SQLite、同编码器写读、当前候选契约、双视图泄漏门禁、从首次远端探测计入唯一尝试及失败不重试；冻结唯一 `PREPARED` v2 计划但尚未执行。另初始化 8 槽 C2 Dev-only 空白补充包；两者均不完成正式 P4-02 或解锁 Gate |
+| 2026-08-29 | v13 | 新增 Internal v6 双审主持人锁定/比较/最终化入口；六份提交先锁后比，机械错误 0，候选级标签全一致、候选对 89/90 一致。保存唯一分歧裁定、模型构造角色偏差和 28/30 人工接纳台账；GateA/Blind 仍 `NOT_ELIGIBLE` |
+| 2026-08-29 | v12 | 执行 v11 冻结的 30-family Dev 先导：加入逐调用重试计数、显式非思考 JSON 模式、只补拒绝 ID 的不可覆盖恢复链、逐字锚点/原子替换闭门校验、历史精确全文重合审计和 A/B 隔离盲审包。固定首批结构产率 24/30、全链 43 次调用与恢复后 30 个待审提案；不写 GateA/Blind，不产生人工真值 |
+| 2026-08-29 | v11 | 同步科研协议 v20 与 Internal 协议 v7：P2-05 通过后允许新的 v2 运行目录执行 30-family DeepSeek 受控合成 Dev 先导；冻结“不上传私有语料、逐调用审计、闭门 schema/原子性校验、模型不是真值、Dev 与 GateA/Blind 物理隔离”工程契约，Gate 资格继续为 `NOT_ELIGIBLE` |
 | 2026-08-29 | v10 | 在一次获授权、无自动重试且 outcome-blind 的 Dense 诊断复放中，四条探针全部 float32 exact；保留 v19 未测量 mismatch 的历史边界，并在结果前写死的五项上界基础上冻结 `exact OR 数值容差交集` 重放策略。随后获授权的正式 v2 三路 preflight 一次通过，Dense/Sparse 均走 exact；P4-00 仅继续受 clean 双仓、远端绿色 CI 与正式 lock 阻塞 |
 | 2026-08-28 | v9 | 同步科研协议 v18；冻结真实三路为 `text-embedding-v4`、Ark/豆包 Learned Sparse、SQLite FTS5；BGE-M3 退出当前研究；记录 Eval 薄适配、CI pin、本地全测、LTR 固定向量和 SSH 隧道真实栈已通过，但 clean lock/远端绿色 CI 仍未完成 |
 | 2026-08-28 | v8 | 同步科研协议 v17；把 pinned C-MTEB DuRetrieval 的 100,001/2,000/9,839 完整性、零重合扣除和辅助分析角色写入 loader 拒绝条件；C-MTEB Cmedqa 的 2,536 条 `unresolved_neither` 固定为不分 qrel 子类、不回配、不专项标注、不删除、不作正式语义输入 |

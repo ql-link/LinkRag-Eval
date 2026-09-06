@@ -35,10 +35,6 @@ dependencies = [
 golden-data = [
     "pyarrow>=17,<24",
 ]
-mysql-migration = [
-    "PyMySQL>=1.1.0",
-    "cryptography>=42.0.0",
-]
 ltr = [
     "lightgbm>=4.3,<5",
     "scikit-learn>=1.4,<2",

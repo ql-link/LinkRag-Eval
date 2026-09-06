@@ -14,7 +14,22 @@ pytest.importorskip("src.core", reason="需安装 toLink-Rag(pip install -e <pat
 pytestmark = pytest.mark.contract
 
 from linkrag_eval.config import EvalSettings
+from linkrag_eval.retrieval.recall_adapter import execute_candidate_contract_once
 from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline
+
+
+@pytest.fixture(autouse=True)
+def _disable_qdrant_compatibility_check(monkeypatch):
+    from qdrant_client import AsyncQdrantClient
+
+    original_init = AsyncQdrantClient.__init__
+
+    def offline_init(self, *args, **kwargs):
+        # 保留真实客户端及装配接口，仅关闭构造时的后台联网检查。
+        kwargs["check_compatibility"] = False
+        original_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(AsyncQdrantClient, "__init__", offline_init)
 
 
 class _FakeDense:
@@ -69,7 +84,6 @@ def _settings(prefix="eval_kb_bucket") -> EvalSettings:
         qdrant_host="http://localhost:36333",
         recall_dense_score_threshold=0.11,
         recall_sparse_score_threshold=0.30,
-        qdrant_bm25_collection="eval_bm25",
         user_id=990001,
     )
 
@@ -83,7 +97,7 @@ def test_assembles_two_route_pipeline() -> None:
     from src.core.pipeline.recall.pipeline import RecallPipeline
 
     assert isinstance(pipe, RecallPipeline)
-    # dense + sparse 两路(bm25 P1 stub)
+    # 未启用 BM25，只装配 dense + sparse。
     assert len(pipe._retrievers) == 2
     assert pipe._readiness_gate.__class__.__name__ == "_EvalReadinessGate"
     assert pipe._retrievers[0]._score_threshold == 0.11
@@ -91,18 +105,6 @@ def test_assembles_two_route_pipeline() -> None:
     assert pipe._retrievers[1]._score_threshold == 0.30
     assert pipe._retrievers[1]._backend._sparse_vector_service.vector_name == "eval_sparse_for_test"
     assert pipe._retrievers[0]._backend.qdrant_store.collection_name == "eval_kb_bucket_9"
-
-
-def test_removed_qdrant_bm25_route_is_rejected() -> None:
-    settings = _settings()
-    settings.bm25_mode = "qdrant_bm25"
-    with pytest.raises(NotImplementedError, match="sqlite_fts5"):
-        build_eval_recall_pipeline(
-            settings=settings,
-            dense_encoder=_FakeDense(),
-            sparse_encoder=_FakeSparse(),
-            bm25_tokenizer=_FakeTokenizer(),
-        )
 
 
 def test_assembles_sqlite_bm25_route_when_enabled(tmp_path) -> None:
@@ -164,8 +166,8 @@ async def test_current_candidate_and_route_contract_preserves_untruncated_pool()
             bm25_top_k=10,
             sparse_top_k=10,
             dense_top_k=10,
-            candidate_contract_version="robust-fusion-p4-00-v1",
-            candidate_profile="gate-a-preflight",
+            candidate_contract_version="eval-candidate-contract-v1",
+            candidate_profile="contract-test",
             required_sources=["dense", "sparse", "bm25"],
         )
     )
@@ -178,3 +180,40 @@ async def test_current_candidate_and_route_contract_preserves_untruncated_pool()
     assert response.route_hits["bm25"] == []
     assert response.per_source_counts == {"dense": 2, "sparse": 2, "bm25": 0}
     assert response.failed_sources == []
+
+
+async def test_execute_candidate_contract_once_sets_required_research_fields() -> None:
+    class _Pipeline:
+        def __init__(self):
+            self.requests = []
+
+        async def execute(self, request):
+            self.requests.append(request)
+            return "response"
+
+    pipeline = _Pipeline()
+    response = await execute_candidate_contract_once(
+        pipeline,
+        query="一次性候选契约",
+        user_id=990001,
+        dataset_ids=[996601],
+        top_k=112,
+        bm25_top_k=100,
+        dense_top_k=150,
+        sparse_top_k=50,
+        dense_score_threshold=0.3,
+        sparse_score_threshold=0.2,
+        enabled_sources=["dense", "sparse", "bm25"],
+        required_sources=["dense", "sparse", "bm25"],
+        fusion_weights={"dense": 0.7, "sparse": 0.15, "bm25": 0.15},
+        candidate_contract_version="contract-v1",
+        candidate_profile="dev-profile-v1",
+    )
+
+    assert response == "response"
+    assert len(pipeline.requests) == 1
+    request = pipeline.requests[0]
+    assert request.strict_override is True
+    assert request.required_sources == ["dense", "sparse", "bm25"]
+    assert request.candidate_contract_version == "contract-v1"
+    assert request.candidate_profile == "dev-profile-v1"

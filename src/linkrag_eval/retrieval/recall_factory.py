@@ -186,7 +186,7 @@ def build_eval_recall_pipeline(
     if getattr(settings, "bm25_mode", "stub") == "qdrant_bm25":
         raise NotImplementedError(
             "EVAL_BM25_MODE=qdrant_bm25 依赖的生产模块已删除；"
-            "Gate A 研究请使用 sqlite_fts5。"
+            "当前 eval BM25 适配请使用 sqlite_fts5。"
         )
     elif getattr(settings, "bm25_mode", "stub") == "sqlite_fts5":
         retrievers.append(_build_sqlite_bm25_retriever(settings, tokenizer=bm25_tokenizer))

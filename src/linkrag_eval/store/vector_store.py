@@ -204,7 +204,7 @@ class EvalVectorStore:
             ]
         raise NotImplementedError(
             "EVAL_BM25_MODE=qdrant_bm25 依赖的生产模块已删除；"
-            "Gate A 研究固定使用 eval 自持 sqlite_fts5。"
+            "当前 eval BM25 适配使用自持 sqlite_fts5。"
         )
 
     def _ensure_bm25_store(self):

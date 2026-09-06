@@ -165,8 +165,8 @@ class BgeM3HttpDenseEmbedder:
     """历史 Golden V2 的 BGE-M3 HTTP dense 兼容客户端。
 
     ``POST {endpoint}`` body ``{"texts":[...],"return_dense":true,"return_sparse":false}``,
-    响应 ``{"dense":[[...], ...]}``。当前 Robust Fusion 研究已淘汰 BGE-M3；本类只允许
-    解释或重放历史 Golden/Alt 资产，不得装配为 Gate A route、实验相似度或独立审计编码器。
+    响应 ``{"dense":[[...], ...]}``。保留此类支持历史 Golden/Alt 配置；历史资产应按
+    原 run fingerprint 解释，不能用该兼容客户端推断当前三路实际使用的编码器。
     """
 
     def __init__(

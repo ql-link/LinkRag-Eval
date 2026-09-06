@@ -87,3 +87,18 @@ S2 版本：`eb5f4d6`（`refactor(restructure): 抽离通用证据工具并收�
 退役后验证：保留单元测试与生产 import 边界 **399 passed**，固定生产依赖契约 **19 passed**；仅有既有 SWIG 弃用警告。`lint-imports --no-cache` 可执行并通过；其配置当前没有自定义 forbidden contract，实际生产白／黑名单由已通过的 `tests/test_import_boundary.py` 强制，不能把 0 broken 单独当作边界证明。运行目录、CLI／CI／保留源码中没有旧工作流运行导入。
 
 为使这些保留检查与活栈隔离，本阶段同时修复两处测试：vector-store 配置测试不再读取 `.env.eval`，并注入 fake 底层 store；召回装配契约保留真实 Qdrant 客户端类型，但关闭构造时的兼容性后台联网检查。未改生产客户端行为。
+
+S3 版本：`0db80e8`（`refactor(restructure): 退役旧研究流程并保留隔离契约验证`）。
+
+## S4：低风险去重与共享说明
+
+按 D01／D02 删除两个 ignored 文件；两者均已在 S0 的独立 tar 中逐字节保全。Git 不跟踪其删除，因此本记录和最终逐项台账保存确切身份，不能宣称仅靠 Git 可恢复这些文件。
+
+| 已删除路径 | 字节数 | 删除前 SHA-256 |
+| --- | ---: | --- |
+| `docs/.DS_Store` | 8196 | `1b32429e16d4967af07b3e5244630353a9ad8f14052d6dd65cb4669c4fc7e6d9` |
+| `docs/papers/Language Model Re-rankers are Fooled by Lexical Similarities〔重复副本〕.pdf` | 604585 | `1e80e5bfc6352d932f7ccbd72e9b9ac13bfedda501bf0a52256c5c745cbe95d6` |
+
+保留的主 PDF `docs/papers/Language Model Re-rankers are Fooled by Lexical Similarities.pdf` 仍为 604,585 字节，SHA-256 为 `1e80e5bfc6352d932f7ccbd72e9b9ac13bfedda501bf0a52256c5c745cbe95d6`。文献卡只修正副本链接、增加去重说明；历史 48 文件预检／OCR 计数仍标为 2026-08-28 快照，当前 47 PDF／45 实体，不重新解释论文结果。其他正式版／预印本版本对不删除。
+
+共享实现只去除过时 Gate 用语、解释不再支持的 Qdrant BM25 配置；Dense／Sparse 兼容客户端保留。现有 38 维特征、冻结模型、候选适配、依赖 pin、CI 和存储接口未回退。

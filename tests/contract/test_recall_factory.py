@@ -25,6 +25,7 @@ def _disable_qdrant_compatibility_check(monkeypatch):
     original_init = AsyncQdrantClient.__init__
 
     def offline_init(self, *args, **kwargs):
+        assert kwargs.get("trust_env") is False
         # 保留真实客户端及装配接口，仅关闭构造时的后台联网检查。
         kwargs["check_compatibility"] = False
         original_init(self, *args, **kwargs)
@@ -121,6 +122,22 @@ def test_assembles_sqlite_bm25_route_when_enabled(tmp_path) -> None:
     assert [r.source for r in pipe._retrievers] == ["bm25", "dense", "sparse"]
     signature = inspect.signature(pipe._retrievers[0].recall)
     assert "dataset_contexts" in signature.parameters
+
+
+def test_factory_reuses_explicit_qdrant_client_without_creating_another(monkeypatch):
+    import qdrant_client
+
+    def unexpected_client(**_):
+        raise AssertionError("injected client must not create a second connection")
+
+    client = object()
+    monkeypatch.setattr(qdrant_client, "AsyncQdrantClient", unexpected_client)
+    pipe = build_eval_recall_pipeline(
+        settings=_settings(), dense_encoder=_FakeDense(), sparse_encoder=_FakeSparse(),
+        qdrant_client=client,
+    )
+    assert pipe._retrievers[0]._backend.qdrant_store._client is client
+    assert pipe._retrievers[1]._backend.qdrant_store._client is client
 
 
 def test_prefix_guard_rejects_non_eval() -> None:

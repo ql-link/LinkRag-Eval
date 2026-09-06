@@ -68,6 +68,27 @@ class SQLiteBm25Store:
             top_k,
         )
 
+    async def fetch_indexed_rows(
+        self, *, dataset_id: int, chunk_ids: Sequence[str], user_id: int
+    ) -> dict[str, int]:
+        """只读核对本批已索引 ID；调用前由写入初始化负责确保 schema 2。"""
+        ids = list(dict.fromkeys(chunk_ids))
+        if not ids:
+            return {}
+        return await asyncio.to_thread(
+            self._fetch_indexed_rows_sync, int(dataset_id), ids, int(user_id)
+        )
+
+    async def verify_dataset_count(
+        self, *, dataset_id: int, user_id: int, expected_count: int
+    ) -> None:
+        """入库末尾只读核对独立库的实际范围与映射；不用于逐批续接。"""
+        if type(expected_count) is not int or expected_count < 0:
+            raise ValueError("expected_count 必须是非负整数")
+        await asyncio.to_thread(
+            self._verify_dataset_count_sync, int(dataset_id), int(user_id), expected_count
+        )
+
     async def identity(self) -> dict[str, object]:
         """返回 sidecar 的路径、schema、数量和权重，不扫描正文计算指纹。"""
         return await asyncio.to_thread(
@@ -102,15 +123,50 @@ class SQLiteBm25Store:
                 """
             )
             con.execute("CREATE TABLE IF NOT EXISTS bm25_meta(version INTEGER NOT NULL)")
-            if con.execute("SELECT COUNT(*) FROM bm25_meta").fetchone()[0] == 0:
-                con.execute("INSERT INTO bm25_meta(version) VALUES (1)")
+            version_row = con.execute(
+                "SELECT version FROM bm25_meta ORDER BY rowid DESC LIMIT 1"
+            ).fetchone()
+            if version_row == (2,):
+                return
+
+            # 升级只扫描一次已有 ID，不重建 FTS。锁内重查版本，避免并发重复回填。
+            con.execute("BEGIN IMMEDIATE")
+            version_row = con.execute(
+                "SELECT version FROM bm25_meta ORDER BY rowid DESC LIMIT 1"
+            ).fetchone()
+            if version_row == (2,):
+                return
+            if version_row is not None and version_row != (1,):
+                raise ValueError(f"不支持的 BM25 schema version: {version_row[0]}")
+            con.execute(
+                """
+                CREATE TABLE bm25_chunk_rows(
+                    fts_rowid INTEGER PRIMARY KEY,
+                    chunk_id TEXT NOT NULL
+                )
+                """
+            )
+            con.execute("CREATE INDEX bm25_chunk_rows_chunk_id ON bm25_chunk_rows(chunk_id)")
+            con.execute(
+                "INSERT INTO bm25_chunk_rows(fts_rowid, chunk_id) SELECT rowid, chunk_id FROM bm25_fts"
+            )
+            if version_row is None:
+                con.execute("INSERT INTO bm25_meta(version) VALUES (2)")
+            else:
+                con.execute("UPDATE bm25_meta SET version = 2")
 
     def _upsert_sync(self, points: list[SQLiteBm25Point]) -> None:
         self._ensure_schema_sync()
         with self._connect() as con:
+            con.execute("BEGIN IMMEDIATE")
             for p in points:
-                con.execute("DELETE FROM bm25_fts WHERE chunk_id = ?", (p.chunk_id,))
-                con.execute(
+                # chunk_id 在 FTS 中是 UNINDEXED；先走普通索引定位，再按 rowid 删除。
+                rowids = con.execute(
+                    "SELECT fts_rowid FROM bm25_chunk_rows WHERE chunk_id = ?", (p.chunk_id,)
+                ).fetchall()
+                con.executemany("DELETE FROM bm25_fts WHERE rowid = ?", rowids)
+                con.executemany("DELETE FROM bm25_chunk_rows WHERE fts_rowid = ?", rowids)
+                cursor = con.execute(
                     """
                     INSERT INTO bm25_fts(
                         chunk_id, doc_id, user_id, dataset_id, chunk_type, coarse, fine
@@ -126,6 +182,59 @@ class SQLiteBm25Store:
                         p.tokens.fine,
                     ),
                 )
+                con.execute(
+                    "INSERT INTO bm25_chunk_rows(fts_rowid, chunk_id) VALUES (?, ?)",
+                    (cursor.lastrowid, p.chunk_id),
+                )
+
+    def _fetch_indexed_rows_sync(
+        self, dataset_id: int, chunk_ids: list[str], user_id: int
+    ) -> dict[str, int]:
+        resolved = self.path.resolve()
+        if not resolved.is_file():
+            return {}
+        con = sqlite3.connect(resolved.as_uri() + "?mode=ro", uri=True)
+        try:
+            tables = {
+                row[0]
+                for row in con.execute(
+                    "SELECT name FROM sqlite_master "
+                    "WHERE type = 'table' AND name IN ('bm25_meta', 'bm25_chunk_rows')"
+                )
+            }
+            if tables != {"bm25_meta", "bm25_chunk_rows"}:
+                raise ValueError("BM25 sidecar 尚未初始化至 schema 2；请先调用 ensure_collection")
+            version_row = con.execute(
+                "SELECT version FROM bm25_meta ORDER BY rowid DESC LIMIT 1"
+            ).fetchone()
+            if version_row != (2,):
+                raise ValueError("BM25 sidecar 需要 schema 2；请先调用 ensure_collection")
+            indexed: dict[str, int] = {}
+            for offset in range(0, len(chunk_ids), 256):
+                batch = chunk_ids[offset : offset + 256]
+                placeholders = ",".join("?" for _ in batch)
+                # CROSS JOIN 保持 ID 索引在外层，FTS 每次只按已定位的 rowid 读取。
+                rows = con.execute(
+                    f"""
+                    SELECT m.chunk_id, f.doc_id
+                    FROM bm25_chunk_rows AS m
+                    CROSS JOIN bm25_fts AS f
+                    WHERE m.chunk_id IN ({placeholders})
+                      AND f.rowid = m.fts_rowid
+                      AND f.chunk_id = m.chunk_id
+                      AND f.dataset_id = ?
+                      AND f.user_id = ?
+                    """,
+                    [*batch, dataset_id, user_id],
+                )
+                for chunk_id, doc_id in rows:
+                    doc_id = int(doc_id)
+                    if chunk_id in indexed and indexed[chunk_id] != doc_id:
+                        raise ValueError(f"BM25 chunk_id={chunk_id!r} 对应多个 doc_id")
+                    indexed[chunk_id] = doc_id
+            return indexed
+        finally:
+            con.close()
 
     def _search_sync(
         self,
@@ -176,6 +285,47 @@ class SQLiteBm25Store:
             SQLiteBm25Hit(chunk_id=str(chunk_id), doc_id=int(row_doc_id), score=float(score))
             for chunk_id, row_doc_id, score in rows
         ]
+
+    def _verify_dataset_count_sync(
+        self, dataset_id: int, user_id: int, expected_count: int
+    ) -> None:
+        resolved = self.path.resolve()
+        if not resolved.is_file():
+            raise FileNotFoundError(resolved)
+        con = sqlite3.connect(resolved.as_uri() + "?mode=ro", uri=True)
+        try:
+            con.execute("BEGIN")  # 两项计数使用同一只读快照。
+            version_row = con.execute(
+                "SELECT version FROM bm25_meta ORDER BY rowid DESC LIMIT 1"
+            ).fetchone()
+            if version_row != (2,):
+                raise ValueError("BM25 sidecar 需要 schema 2；请先调用 ensure_collection")
+            total, matching, invalid_mappings = con.execute(
+                """
+                SELECT COUNT(*),
+                       COALESCE(SUM(CASE WHEN f.dataset_id = ? AND f.user_id = ?
+                                         THEN 1 ELSE 0 END), 0),
+                       COALESCE(SUM(CASE WHEN m.fts_rowid IS NULL OR m.chunk_id IS NOT f.chunk_id
+                                         THEN 1 ELSE 0 END), 0)
+                FROM bm25_fts AS f
+                LEFT JOIN bm25_chunk_rows AS m ON m.fts_rowid = f.rowid
+                """,
+                (dataset_id, user_id),
+            ).fetchone()
+            mapping_count = con.execute("SELECT COUNT(*) FROM bm25_chunk_rows").fetchone()[0]
+            if (
+                total != expected_count
+                or matching != expected_count
+                or mapping_count != expected_count
+                or invalid_mappings
+            ):
+                raise ValueError(
+                    "BM25 范围核对失败: "
+                    f"expected={expected_count}, total={total}, matching={matching}, "
+                    f"mapping_rows={mapping_count}, invalid_mappings={invalid_mappings}"
+                )
+        finally:
+            con.close()
 
 
 _TOKEN_RE = re.compile(r"[\w\u4e00-\u9fff]+", re.UNICODE)

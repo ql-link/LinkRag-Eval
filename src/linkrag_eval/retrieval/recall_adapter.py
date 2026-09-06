@@ -42,7 +42,7 @@ async def execute_candidate_contract_once(
     """执行一次保留 ``candidate_hits/route_hits`` 的候选契约请求。
 
     本入口没有自动重试；研究 runner 可以把一次性执行与失败状态完整封存。rag 类型的构造
-    继续收口在允许的 adapter 文件内，Robust Fusion 模块无需直接 import ``src.*``。
+    继续收口在允许的 adapter 文件内，调用方无需直接 import ``src.*``。
     """
 
     from src.core.pipeline.recall.models import RecallRequest

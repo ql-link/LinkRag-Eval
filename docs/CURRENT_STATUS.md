@@ -6,7 +6,11 @@
 
 负责人先要求全面盘点、暂不删除，随后授权按清单推进删除／重构，并为每一步做好版本管理。原[盘点清单](plans/research-restructure-inventory-2026-09-06.md)与[509 路径台账](plans/research-restructure-inventory-2026-09-06.json)保留盘点时身份；实际执行另记于[重构执行记录](plans/research-restructure-execution-2026-09-06.md)。
 
-已完成重构前保全提交 `4d31f18` 和本地标签 `research-pre-restructure-20260906`；仓库外 Git bundle 与 922 个研究证据文件／符号链接备份均已校验。正在整理当前入口、抽离通用工具和退役旧流程。阶段版本、删除明细及验证结果见执行记录。
+本轮重构已完成：整理当前／历史入口，抽离四个通用工具模块，退役 86 个旧流程文件及 10 个被抽离替代的旧入口，删除 2 个已核对的低风险 ignored 文件。21 份原协议、历史报告、冻结模型与原始人工证据保留；具体算法未实现或冻结。
+
+保全提交为 `4d31f18`，本地标签为 `research-pre-restructure-20260906`；仓库外 Git bundle 与 922 个成员的证据备份已校验。执行后 919 个成员的字节／链接目标不变，仅两项清理和顶层人工作业 README 为已记录差异。[509 路径实际处置台账](plans/research-restructure-disposition-2026-09-06.json)记录删除、抽离、改写和保留；阶段提交与恢复位置见[执行记录](plans/research-restructure-execution-2026-09-06.md)。
+
+本地验证：单元与导入边界 399 passed，生产依赖契约 19 passed，报告索引和当前空人工注册表检查通过。未运行真实活栈或正式研究评测；提交仅保存在本地，未 push，不声称远端 CI 已验证当前重构版本。
 
 ## 研究定位：问题明确，方法暂定
 

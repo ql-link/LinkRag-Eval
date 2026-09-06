@@ -38,7 +38,7 @@ LinkRag-Eval/
 ├── AGENTS.md                  # 本文件(实现约定)
 ├── CLAUDE.md                  # → AGENTS.md 的 symlink(物理同一份)
 ├── README.md                  # 项目入口
-├── pyproject.toml             # src-layout(packages=["src/linkrag_eval"]);rag 作 path/git 依赖
+├── pyproject.toml             # src-layout;rag 单独显式安装,CI 固定 SHA(见第七节)
 ├── .importlinter              # 依赖边界机器规则(第三节)
 ├── .env.eval.example          # 配置样例(真值进 .env.eval,gitignored)
 ├── .gitignore
@@ -157,7 +157,7 @@ class ProductComputer(Protocol):
 
 ## 七、rag 包依赖管理
 
-- `pyproject.toml` 把 toLink-Rag 声明为 path/git 依赖,**钉 git sha 或版本**;升级走 PR。
+- toLink-Rag 当前不在 `pyproject.toml` 的 dependencies 中，须单独显式安装；精确 SHA 由 CI 安装步骤固定，并在 pyproject 注释中记录。普通 `pip install .` 不会自动安装或固定 rag；本地契约验证须核对所装版本，升级走 PR。
 - 每次升级 rag,CI 先跑 `tests/contract/` —— 验证计算产物与被测对象契约。签名漂移在负责该能力的 adapter 收口，不扩散生产 import。
 - 不得为了"图省事"绕过抽象直接 import rag 内部实现;漂移成本会扩散到全仓。
 

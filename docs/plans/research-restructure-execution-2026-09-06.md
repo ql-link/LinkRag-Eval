@@ -102,3 +102,28 @@ S3 版本：`0db80e8`（`refactor(restructure): 退役旧研究流程并保留�
 保留的主 PDF `docs/papers/Language Model Re-rankers are Fooled by Lexical Similarities.pdf` 仍为 604,585 字节，SHA-256 为 `1e80e5bfc6352d932f7ccbd72e9b9ac13bfedda501bf0a52256c5c745cbe95d6`。文献卡只修正副本链接、增加去重说明；历史 48 文件预检／OCR 计数仍标为 2026-08-28 快照，当前 47 PDF／45 实体，不重新解释论文结果。其他正式版／预印本版本对不删除。
 
 共享实现只去除过时 Gate 用语、解释不再支持的 Qdrant BM25 配置；Dense／Sparse 兼容客户端保留。现有 38 维特征、冻结模型、候选适配、依赖 pin、CI 和存储接口未回退。
+
+S4 版本：`f040ae1`（`chore(restructure): 清理重复资产并更新共享实现说明`）。
+
+## S5：最终对账与验证
+
+[实际处置台账](research-restructure-disposition-2026-09-06.json)覆盖原盘点的 **509 个路径**，记录每项原分类、实际处置、保全／当前指纹和恢复位置；原盘点文件未改。96 个 tracked 退役路径均可由 S0 找回，2 个 ignored 删除项由独立 tar 找回。实际保留不是漏做：依赖 pin、CI、共享 judge、数据库／sidecar、模型缓存和历史研究原始资产没有删除或回退理由。
+
+保护资产复核：S0 的 922 个成员中 **919 个文件哈希／链接目标不变**；其余三项恰为两项低风险清理和顶层 `human_tasks/README.md` 的活动入口改写。原 R2 registry、HTML、三个浅入口链接、人工提交和锁均未变化。21 份 A01 原协议、16 个 K02 基线／模型／核心测试路径和 54 份未修改的 K01 历史证据与 S0 一致；文献地图唯一变化是 S4 的副本映射说明。
+
+独立终审未发现保留代码中的旧模块导入或退役脚本调用。终审另纠正 AGENTS 对依赖安装的旧描述：rag 实际由显式安装和 CI 固定 SHA，不在 pyproject dependencies 中；候选适配器只将旧调用方名称改为通用描述，没有改变接口或行为。
+
+| 检查 | 结果／范围 |
+| --- | --- |
+| `PYTHONDONTWRITEBYTECODE=1 RUN_EVAL_INTEGRATION=0 .venv/bin/python -m pytest tests/unit tests/test_import_boundary.py -q -p no:cacheprovider` | 399 passed；含通用抽离后的 64 个测试及真实生产 import 边界扫描。 |
+| `PYTHONDONTWRITEBYTECODE=1 LINKRAG_EVAL_REQUIRE_RAG=1 RUN_EVAL_INTEGRATION=0 .venv/bin/python -m pytest tests/contract -q -p no:cacheprovider` | 19 passed；保留固定依赖的计算、召回与 LTR-v3 模型契约，缺包强制失败；未运行集成活栈。 |
+| `PYTHONDONTWRITEBYTECODE=1 .venv/bin/lint-imports --no-cache` | 可执行，162 files / 726 dependencies；当前 0 自定义 contract，不能代替已通过的源码边界测试。 |
+| 新增／修改 Python 的 Ruff 与 `git diff --check` | 通过；历史原文的既有格式不被重新改写。 |
+| 报告索引与当前人工作业 registry | 通过；活动任务、计划接触点、输入读取数量均为 0。 |
+| 导入与保护资产核验 | 96 个退役路径不存在；无保留运行依赖，原历史资产指纹保持上述一致。 |
+
+测试只出现已有 SWIG 弃用警告。未训练、未运行编码 API／旧 Gate／readiness／finalizer／正式研究评测，未 push；没有获得或声称当前版本的远端绿色 CI。研究仍停留在明确边界下的暂定方法讨论，后续先讨论有限的评测与方法选择，不以完成旧 R2 仲裁作为前置条件。
+
+S5 的最终文档与对账作为单独本地提交保存；其提交号可由 `git log --oneline -- docs/plans/research-restructure-disposition-2026-09-06.json` 获取，避免在提交内容中自引用尚未生成的哈希。
+
+最终补充核对：安装的 `tolink-rag` 分发元数据为非 editable Git 安装，commit 与 requested revision 均是 `861f24810c3482ec0d86768a24f952b1e08ae675`。13 份本轮新增／修改 Markdown 的 221 个本地链接全部存在；最终报告索引和空 registry 再次检查通过。最终适配器注释更正前后可执行 AST 一致，因此没有因文案变化重跑整套代码测试。

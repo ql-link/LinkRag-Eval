@@ -1,6 +1,7 @@
 """Alembic 运行环境(LinkRag-Eval 独立评测库)。
 
-DB URL 解析(同步 driver):``ALEMBIC_DATABASE_URL`` 环境变量优先,否则读取 ``EVAL_DB_URL``，
+DB URL 解析(同步 driver):程序化 ``config.attributes['database_url']`` 优先，
+其次 ``ALEMBIC_DATABASE_URL`` 环境变量，否则读取 ``EVAL_DB_URL``，
 并把异步 driver 换成同步 driver。``target_metadata``
 取 ``EvalBase.metadata``——评测库 schema 演进的唯一权威源,绝不碰生产 ``tolink_rag_db``。
 
@@ -12,15 +13,20 @@ from __future__ import annotations
 import os
 from logging.config import fileConfig
 
-from alembic import context
 from sqlalchemy import engine_from_config, pool
 
+from alembic import context
 from linkrag_eval.store.models import EvalBase
 
 config = context.config
 
 
 def _resolve_url() -> str | None:
+    explicit_url = config.attributes.get("database_url")
+    if explicit_url is not None:
+        if not explicit_url.startswith(("sqlite+aiosqlite:///", "sqlite:///")):
+            raise ValueError("程序化迁移只允许显式本地 SQLite URL")
+        return explicit_url.replace("sqlite+aiosqlite://", "sqlite://", 1)
     url = os.environ.get("ALEMBIC_DATABASE_URL")
     if url:
         return url

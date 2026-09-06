@@ -32,6 +32,7 @@ class DenseVec:
     """稠密向量产物。"""
 
     values: list[float]
+    input_chars: int | None = None  # 成功请求实际发送的 Unicode 码点数；None 表示未知。
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,7 @@ class SparseVec:
 
     indices: list[int]
     values: list[float]
+    input_chars: int | None = None  # 成功请求实际发送的 Unicode 码点数；None 表示未知。
 
 
 @dataclass(frozen=True)
@@ -56,6 +58,9 @@ class SparseEncoder(Protocol):
 
     async def aencode(self, texts: Sequence[str]) -> list[SparseVec]: ...
 
+    @property
+    def input_length_policy(self) -> str: ...
+
 
 @runtime_checkable
 class DenseEncoder(Protocol):
@@ -66,6 +71,8 @@ class DenseEncoder(Protocol):
 
     async def aembed(self, texts: Sequence[str]) -> list[list[float]]: ...
 
+    async def aembed_with_metadata(self, texts: Sequence[str]) -> list[DenseVec]: ...
+
     async def aembed_query(self, text: str) -> list[float]: ...
 
     @property
@@ -73,6 +80,9 @@ class DenseEncoder(Protocol):
 
     @property
     def model_name(self) -> str: ...
+
+    @property
+    def input_length_policy(self) -> str: ...
 
 
 @runtime_checkable

@@ -55,7 +55,7 @@ class EvalVectorIndexer:
     async def index_passages(self, dataset_id: int, passages: Sequence[EvalPassage]) -> int:
         """算产物 → 写 Qdrant → 落本地 SQLite。返回写入 chunk 数。
 
-        失败上抛、不落库——避免"库里标已索引、实则没进 Qdrant"的静默假成功。
+        三路覆盖前先撤销已有完成标记；成功后全文与本次输入长度原子落库。
         """
         items = list(passages)
         if not items:
@@ -82,6 +82,14 @@ class EvalVectorIndexer:
         rows: list[CorpusChunkRow] = []
         for i, p in enumerate(items):
             cid = eval_chunk_id(dataset_id, p.doc_id, p.ordinal)
+            dense_chars = dense[i].input_chars
+            sparse_chars = sparse[i].input_chars if sparse is not None else None
+            for input_chars in (dense_chars, sparse_chars):
+                if input_chars is not None and (
+                    type(input_chars) is not int or not 0 <= input_chars <= len(p.content)
+                    or (bool(p.content) and input_chars == 0)
+                ):
+                    raise ValueError("编码输入长度必须是原文长度范围内的整数或未知")
             points.append(
                 EvalPoint(
                     chunk_id=cid,
@@ -101,6 +109,8 @@ class EvalVectorIndexer:
                     source_passage_id=p.source_passage_id,
                     ordinal=p.ordinal,
                     char_len=len(p.content),
+                    dense_input_chars=dense_chars,
+                    sparse_input_chars=sparse_chars,
                     dense_indexed=True,
                     sparse_indexed=sparse is not None,
                     bm25_indexed=bm25_tokens is not None,
@@ -108,6 +118,9 @@ class EvalVectorIndexer:
                 )
             )
 
+        await self._repo.mark_chunks_pending(
+            dataset_id=dataset_id, chunk_ids=[row.chunk_id for row in rows]
+        )
         await self._vstore.upsert(dataset_id=dataset_id, points=points)
         await self._repo.upsert_chunks(rows)
         return len(items)

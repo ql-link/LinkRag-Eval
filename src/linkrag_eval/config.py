@@ -55,6 +55,7 @@ class EvalSettings(BaseSettings):
     embed_batch_size: int = Field(default=10)  # text-embedding-v4 单批上限 10
     embed_concurrency: int = Field(default=4)
     embed_timeout_ms: int = Field(default=60000)
+    embed_input_length_policy: Literal["reject", "prefix_on_length_error"] = "reject"
 
     # —— 候选池专用 alt embedding(独立于当前被测 dense,不写正式 Qdrant)——
     alt_embed_provider: Literal["openai"] = "openai"
@@ -75,6 +76,7 @@ class EvalSettings(BaseSettings):
     sparse_min_weight: float = Field(default=0.0)
     sparse_timeout_ms: int = Field(default=60000)
     sparse_concurrency: int = Field(default=8)
+    sparse_input_length_policy: Literal["reject", "prefix_on_length_error"] = "reject"
 
     # —— 召回装配阈值(过滤低质量分路命中;默认来自 2026-07-02 活栈网格搜索)——
     recall_dense_score_threshold: float = Field(default=0.30)

@@ -68,6 +68,8 @@ class EvalCorpusChunkDB(EvalBase):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     char_len: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    dense_input_chars: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sparse_input_chars: Mapped[int | None] = mapped_column(Integer, nullable=True)
     token_len: Mapped[int | None] = mapped_column(Integer, nullable=True)
     dense_indexed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     sparse_indexed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

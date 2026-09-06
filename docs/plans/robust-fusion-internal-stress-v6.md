@@ -3,7 +3,7 @@
 > 记录：`ROBUST-FUSION-INTERNAL-STRESS-2026-08-29-v13`
 > 日期：2026-08-29
 > 状态：数据身份、三分目录、访问锁、摄取 schema 与来源资格台账已正式建立；P2-05 已通过；受控合成 30-family v6-Dev 已完成 A/B 双审、提交锁定与主持人仲裁，人工接纳 28/30。Dev 三路执行的 v2/v3 失败与 v4 完整性拒收均原样保留；独立 v5 已在真实三路和 Qdrant 上完成并核验。C2 三分边界补充仍为空白规划包；GateA/Blind 人口仍为空且不得解锁。
-> 上位协议：[科研协议](robust-fusion-research.md)、[工程实施协议](robust-fusion-engineering.md)、[研究推进清单](robust-fusion-todo.md)。
+> 上位协议：[科研协议](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/robust-fusion-research.md)、[工程实施协议](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/robust-fusion-engineering.md)、[研究推进清单](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/robust-fusion-todo.md)。
 
 ## 1. 当前结论
 

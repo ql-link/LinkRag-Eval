@@ -1,8 +1,10 @@
+> 本文件是随上游保留的历史提示；LinkRag-Eval 当前实现规范以[仓库 AGENTS](../../AGENTS.md)为准，文档入口见[文档目录](../../docs/DOCUMENT_CATALOG.md)。
+
 # toLink-Rag
 
 `toLink-Rag` 是基于 FastAPI 的 RAG 后端，负责文档解析、分块、向量化索引，并通过 MQ 与 Java 业务系统集成。
 
-本文件是**项目使用入口**，覆盖运行与开发的最小必要信息。文档导航与按角色查阅路线见 [docs/README.md](docs/README.md)。
+本文件是**项目使用入口**，覆盖运行与开发的最小必要信息。文档导航与按角色查阅路线见 [LinkRag-Eval 文档目录](../../docs/DOCUMENT_CATALOG.md)。
 
 > 面向用户的产品介绍与完整快速开始见 [README.md](README.md)。
 
@@ -59,7 +61,7 @@ docs/
 | 运维 / 部署方 | [docs/ops/](docs/ops/) |
 | 贡献者 | [docs/contributing.md](docs/contributing.md) |
 
-详细导航见 [docs/README.md](docs/README.md)。
+详细导航见 [LinkRag-Eval 文档目录](../../docs/DOCUMENT_CATALOG.md)。
 
 ---
 
@@ -81,7 +83,7 @@ docs/
 
 ## 五、工作规则（Agent / 开发者）
 
-- **改动前**：按角色看 [docs/README.md](docs/README.md) 找到最小必要文档；查第四节确认本次会触发的同步规则。
+- **改动前**：按角色看 [LinkRag-Eval 文档目录](../../docs/DOCUMENT_CATALOG.md) 找到最小必要文档；查第四节确认本次会触发的同步规则。
 - **实现中**：优先复用现有模块边界、配置入口、错误处理；不为业务需求轻易改动 framework 层。
 - **改动后**：同步更新受影响的对外契约文档；内部模块文档按需更新。
 - **提交前**：运行 `python scripts/quality/check_docs_sync.py --staged` 自检；pre-commit hook 会自动执行。

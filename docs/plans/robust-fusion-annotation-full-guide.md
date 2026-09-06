@@ -25,10 +25,10 @@
 
 标注相关信息此前分散在下列位置：
 
-- 核心科研定义：[科研协议](robust-fusion-research.md)；
+- 核心科研定义：[科研协议](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/robust-fusion-research.md)；
 - 详细语义规则：[事实关系与冲突标注手册](robust-fusion-annotation-handbook.md)；
 - v6 数据资格：[Internal Stress v6 数据协议](robust-fusion-internal-stress-v6.md)；
-- C2 类别平衡补充：[C2 三分边界最小补充方案](robust-fusion-c2-boundary-supplement.md)；
+- C2 类别平衡补充：[C2 三分边界最小补充方案](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/robust-fusion-c2-boundary-supplement.md)；
 - 实际空白字段表：`data/robust_fusion/derived/p2_calibration_v2/` 下的三份 CSV；
 - 正式双人人工工作副本：`runs/robust_fusion/p2_human_calibration_v2/`。
 - 当前 v6-Dev 双人盲审包：`runs/robust_fusion/internal_v6_deepseek_pilot_v2_human_review_v1/`。

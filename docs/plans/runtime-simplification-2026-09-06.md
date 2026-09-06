@@ -76,3 +76,13 @@
 - 20 个受 Git 跟踪的移出文件逐项确认位于上述废纸篓目录；旧 `robust_fusion` 字节码目录已离开仓库。当前冻结模型目录没有修改。
 
 当前版本有意停止支持已移除的旧配置、旧快照字段和专用命令；历史文件保留不等于新版可以直接重放。具体研究方法继续暂定，本次没有新增排序算法、训练或正式实验。
+
+
+<a id="recovery"></a>
+
+## 版本与备份恢复
+
+- 本地重构前源码：标签 `research-pre-restructure-20260906`，提交 `4d31f18`；在独立目录查看或恢复，避免覆盖正在工作的分支。首次移除旧执行链路的提交为 `0db80e8`，后续运行链路简化为 `b92e460`；远端工程基线已由 [PR #5](https://github.com/ql-link/LinkRag-Eval/pull/5) 收录。
+- 既有独立备份：`/Users/kawauso/Documents/Projects/LinkRag-Eval-restructure-backups/20260906-122751/`。`source-before-restructure.bundle` 保存当时的源码与本地标签；`protected-research-artifacts.tar` 保存研究运行、derived、Internal Dev、人工作业链接及当时纳入的论文副本；原 `manifest.json` 记录范围。需要完整恢复时使用该备份，不在本轮重新生成清单。
+- 原备份未复制数据库、公共下载、模型缓存及密钥等资产；它们仍在原位置，不能仅靠 Git 或上述 tar 恢复全部本地环境。
+- 本次移除的 21 份旧计划、清理台账和重复入口，可以从[文档清理前的 Git 版本](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/)查看，或用 `git show 50f3a9b0ead581fb17fc3e4080c70361c9f24475:相对路径` 在本地读取。原协议与旧执行记录不要求继续占据当前工作树。

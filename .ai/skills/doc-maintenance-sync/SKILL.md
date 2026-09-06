@@ -52,7 +52,7 @@ when_to_use: "当用户要求更新/维护项目文档，或代码/配置/数据
 2. 按“文档映射”读取最少必要文档。
 3. 对照真实代码或真实配置，不从记忆补写不确定内容。
 4. 只更新失效段落，保持原文档结构和粒度。
-5. 新增文档时，同步更新 `docs/README.md` 的入口。
+5. 新增文档时，同步更新 `docs/DOCUMENT_CATALOG.md` 的入口。
 6. 若新增、删除、移动非 `docs/` 核心目录或 Skill，同时检查 `docs/internals/project_structure.md`。
 7. 完成后用 `rg` 或 `git diff` 检查是否仍有旧名称、旧 topic、旧路径或旧字段残留。
 

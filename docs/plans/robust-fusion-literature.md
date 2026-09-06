@@ -1,9 +1,9 @@
 # 高相似度干扰下检索增强生成的多路来源感知鲁棒融合方法研究：文献地图
 
-> 证据更新至 2026-08-28。本文档主体是对 [`docs/papers/`](../papers/) 当时本地全文快照的逐篇阅读与跨文献综合；页码均指链接所指本地 PDF 的文件页码。第 4.4 节另列两项只完成官方元数据与摘要核验、尚未纳入本地 PDF 快照的近邻工作，并明确限制证据范围。
-> 证据收束：[主张—证据—空缺表](robust-fusion-evidence.md)把本地图转换为引言、研究空缺和结论措辞的可审计台账。
+> 证据更新至 2026-08-28。本文档主体是对 [`docs/papers/`](../papers/) 当时本地全文快照的逐篇阅读与跨文献综合；页码均指链接所指本地 PDF 的文件页码。第 4.4 节另列未纳入本地 PDF 快照的外部来源，各项分别说明既有核验范围。
+> 使用身份：这是历史阅读记录，原稿中的研究设想不作为当前方法或实验约束。2026-09-06 将旧证据表独有的 15 个出版链接并入既有卡片及 E03；本次未重新核验论文。旧表中的项目来源结论已有[数据来源审计](../reports/robust_fusion_gate_a_data_coverage_audit_2026_08_28.md)和[资产对账报告](../reports/sqlite_share_restore_and_asset_reconciliation_2026_08_28.md)承载，不重复建立证据表。
 
-> 2026-09-06 文件去重说明：仅删除 016 的字节级重复 PDF，主文件哈希不变。当前目录为 47 个 PDF、45 个论文实体；第 1 节和第 5 节仍记录 2026-08-28 的 48 文件历史盘点，不改写当时预检／OCR 结果。本次未重新阅读或核验论文内容，删除与恢复依据见[重构执行记录](research-restructure-execution-2026-09-06.md)。
+> 2026-09-06 文件去重说明：仅删除 016 的字节级重复 PDF，主文件哈希不变。当前目录为 47 个 PDF、45 个论文实体；第 1 节和第 5 节仍记录 2026-08-28 的 48 文件历史盘点，不改写当时预检／OCR 结果。本次未重新阅读或核验论文内容，删除与恢复依据见[重构执行记录](runtime-simplification-2026-09-06.md#recovery)。
 
 ## 1. 历史状态与覆盖（2026-08-28）
 
@@ -108,6 +108,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 001
 
 - **题名**：[An Analysis of Fusion Functions for Hybrid Retrieval](<../papers/An Analysis of Fusion Functions for Hybrid Retrieval.pdf>)
+- **官方来源**：[出版页](https://doi.org/10.1145/3596512)
 - **逻辑链**：词法与语义检索的分数尺度不同，混合排序首先需要可比较的融合函数。论文把归一化凸组合的敏感性转化为 rank-equivalence 与相对扩张率问题，并把 RRF 的折扣参数与离散名次跳变显式化。主实验中，理论 min-max 归一化的凸组合以少量验证查询即可调到较强结果，但附录显示这种优势不对所有检索器配对成立。因此函数选择取决于分数可校准性、验证预算与候选构造，而不是脱离条件的算法名次。
 - **创新/价值亮点**：给出“归一化改变能否由权重变化吸收”的充分条件，并用连续性、齐次性、可解释性和样本效率评价融合函数；Smooth RRF 还提供从离散名次到平滑近似的机制检验路径。
 - **证据边界与 PDF 页码**：只覆盖二路融合、有限候选并集和深截断指标；未证明线性融合逐查询最优，平滑也并非越强越好。候选构造与主结果见 pp. 4–6、15–16，归一化理论见 pp. 10–14，RRF 参数和平滑见 pp. 17–25，配对反例见 pp. 29–36。
@@ -115,6 +116,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 002
 
 - **题名**：[Balancing the Blend: An Experimental Analysis of Trade-offs in Hybrid Search](<../papers/Balancing the Blend: An Experimental Analysis of Trade-offs in Hybrid Search.pdf>)
+- **官方来源**：[出版页](https://www.vldb.org/pvldb/vol19/p1715-gao.pdf)
 - **逻辑链**：真实混合检索可同时包含全文、学习式稀疏、单向量稠密和 token-level tensor 路径；增加路径既可能补充召回，也可能加入高排噪声。全组合实验发现“路径越多越好”不成立，弱路径会形成 weakest-link；效果还受最慢路径、索引体积和查询内存约束。TRF 将 MaxSim 限定在小候选集上，以低于全库 tensor 检索的成本执行细粒度重排，但仍不能消除语义近似难负例。
 - **创新/价值亮点**：完整覆盖四类路径的 15 种配置，并把准确率、P99 延迟、QPS、内存和建索引成本纳入同一框架；将 late interaction 从全库路径重定位为候选重排器，是清晰的架构创新。
 - **证据边界与 PDF 页码**：TRF 并非处处优于 RRF，query length 也只是一项数据集级线索；没有端到端生成质量和动态路径选择实验。weakest-link 见 pp. 7–9，效果—成本与 TRF 见 pp. 8–10，单查询 hard negative 案例见 pp. 10–11，外推边界见 pp. 11–12。
@@ -129,6 +131,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 004
 
 - **题名**：[Contextual Relevance and Adaptive Sampling for LLM-Based Document Reranking](<../papers/Contextual Relevance and Adaptive Sampling for LLM-Based Document Reranking.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2026.acl-long.94/)
 - **逻辑链**：Setwise LLM 对同一文档的判断会随批次组成、顺序和采样改变，因此单次比较不是稳定标签。论文把目标改为跨上下文分布的期望判断概率，并用 Beta–Bernoulli 后验聚合重复观察。Uniform sampling 提供上下文平均，Thompson Sampling 在有限预算下更快聚焦高潜力或高不确定候选，但预算增大后差距缩小；分主题结果中部分集合仍由原始 BM25 或 Uniform 最佳。
 - **创新/价值亮点**：把候选上下文从“待消除偏差”提升为明确估计对象，并把 LLM 调用预算写成 combinatorial semi-bandit 的序贯分配问题；Intrinsic、Positional、Total 三条件分开诊断内在采样、位置与组成变异。
 - **证据边界与 PDF 页码**：理论遗憾界只针对独立 Bernoulli arms 和线性代理奖励，不保证 nDCG；自适应采样还会改变它试图平均的上下文分布。相关文档判断准确率仅约 0.26–0.28，核心实证又只使用 Qwen2.5-7B-Instruct，不能直接外推到一般 LLM reranker。定义与算法见 pp. 2–4，方差和主结果见 pp. 6–7，预算与并行性见 pp. 7–8，逐主题退化及适用边界见 pp. 9、13–14。
@@ -136,6 +139,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 005
 
 - **题名**：[DocReRank: Single-Page Hard Negative Query Generation for Training Multi-Modal RAG Rerankers](<../papers/DocReRank: Single-Page Hard Negative Query Generation for Training Multi-Modal RAG Rerankers.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2025.emnlp-main.436/)
 - **逻辑链**：传统 hard-negative mining 固定 query、从语料找负页面，候选受语料和首阶段检索器限制，还可能把未标相关页面当作负例。DocReRank 反转采样轴：固定页面，在 query 轴生成主题和句式相近但无法由页面回答的负例，再用独立 VLM 双提示过滤。通过只修改年份、实体、数值或业务分部，方法定向制造单属性最小反事实；同规模消融显示与传统负页面混合优于只用传统负页面。最强 Full 结果还包含更多训练数据，不能全部归因于负例类型。
 - **创新/价值亮点**：负 query 比完整负页面更容易生成和控制，使错误类型从检索器偶然决定变为可指定；“语言生成—视觉可回答性验证”的任务解耦与非对称共识过滤规则具有可复查性。
 - **证据边界与 PDF 页码**：人工检查仍发现 8.2% 残余假阴性，Full 模型又混入更大数据量；生成成本、跨生成器稳定性和端到端答案质量均未证明。方法见 pp. 1–5，训练与同规模消融见 pp. 6–8，人工验证见 p. 9，prompts 与失败案例见 pp. 15–18。
@@ -143,6 +147,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 006
 
 - **题名**：[DuReader-Retrieval: A Large-scale Chinese Benchmark for Passage Retrieval from Web Search Engine](<../papers/DuReader_retrieval: A Large-scale Chinese Benchmark for Passage Retrieval from Web Search Engine.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2022.emnlp-main.357/)
 - **逻辑链**：大规模中文检索评测同时受假阴性、训练—测试语义重复和单一域内切面影响。论文用多检索器池化加人工复标补充相关段落，删除与开发/测试近义的训练查询，并加入医学域外与英问中段跨语言测试。域内 dense 与 cross-encoder 明显胜过 BM25，但该优势在医学域和跨语言设置中大幅收缩；失败集中于实体、数字、修饰语、句法方向和词法重叠干扰。指标上升的一部分来自 qrels 修正，而非模型变化。
 - **创新/价值亮点**：把 qrels 漏标作为测量误差，并用标签修正前后的同模型变化直接展示评测偏差；错误分类具体到约束槽位，比笼统“语义不足”更可操作。
 - **证据边界与 PDF 页码**：人工池化仍受贡献系统和 top-5 深度限制，失败案例中还有 14.8% 残余假阴性；两个 OOD 集都属医学域。数据治理见 pp. 3–5，域内与域外结果见 pp. 6–8，错误类型和残余漏标见 pp. 7、12–13。
@@ -171,6 +176,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 010
 
 - **题名**：[Hard Negatives, Hard Lessons: Revisiting Training Data Quality for Robust Information Retrieval with LLMs](<../papers/Hard Negatives, Hard Lessons: Revisiting Training Data Quality for Robust Information Retrieval with LLMs.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2025.findings-emnlp.481/)
 - **逻辑链**：多源训练数据的某些来源会造成负迁移，hard-negative 集合中还可能混入未标相关 passage。论文先做来源级 leave-one-out 剪枝，再用 GPT-4o-mini→GPT-4o 级联识别 false hard negatives，并比较保留、删除和重标为 positive。重标通常优于保留或删除，且修复标签后增加 hard-negative 数量仍继续提升，说明问题在标签错误而不是困难负例本身。OOD 汇总收益更突出，但不同数据集仍有下降，CE distillation 也未被全面击败。
 - **创新/价值亮点**：来源级筛查与样本级修复构成双尺度数据审计；“停止错误负监督”与“回收正监督”被清楚拆开，同一修复数据又跨 encoder retriever、decoder retriever 和 reranker 验证。
 - **证据边界与 PDF 页码**：剪枝在 BEIR 上选择又在 BEIR 上报告，存在选择偏差；judge 与人工的 κ 仅 .320/.390，E5 汇总效应区间包含 0。框架及计数见 pp. 1–5，retriever/reranker 与负例数消融见 pp. 6–7，人工审计见 pp. 8–9，效应区间见 pp. 19–20。
@@ -178,6 +184,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 011
 
 - **题名**：[Hybrid and Collaborative Passage Reranking](<../papers/Hybrid and Collaborative Passage Reranking.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2023.findings-acl.880/)
 - **逻辑链**：逐 passage reranker 忽略候选列表内部的相似结构，而相关 passages 在部分任务中会围绕共同实体和关系成簇。HybRank 把 query 与每个候选表示成它们对共同 anchors 的稀疏—稠密相似度序列，再用列方向交互和行方向聚合学习列表级协作。多种上游列表均获单次运行增益，但完整协作和 hybrid 特征并非每个 cutoff 都优于消融或最佳单路；较弱上游和浅 cutoff 通常获益更大，强 reranker 后边际收益收缩。
 - **创新/价值亮点**：共同 anchors 将列表上下文变成可学习关系矩阵，轴向注意力把全矩阵交互复杂度降为可管理形式；只有 0.22M 参数且能接在已有 reranker 后继续增益，使插件主张有直接证据。
 - **证据边界与 PDF 页码**：协作假设不适合多意图、覆盖和多样性排序，相似簇也可能只是重复；主结果均为 single run，缺少在线延迟。表示和模型见 pp. 2–5，主结果见 p. 6，协作与特征反例见 pp. 7–8，复杂度及任务边界见 pp. 9–10、14–17。
@@ -213,6 +220,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 016
 
 - **题名**：[Language Model Re-rankers are Fooled by Lexical Similarities](<../papers/Language Model Re-rankers are Fooled by Lexical Similarities.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2025.fever-1.2/)
 - **逻辑链**：LM reranker 成本高于 BM25，但整体 P@1 无法说明它在何种候选关系上失效。论文以 gold 与最强 non-gold 的 BM25 分离度刻画 lexical distractor 压力；低分离组中，BGE 跨三个数据集、六个 LM 在 DRUID 上都一致更易失准。标题和任务化 prompt 只在结构规整或任务语义明确时有效，生成式上下文在长科学文献上还可能退化。
 - **创新/价值亮点**：ΔP@1 同时观察 gold alignment 与 BM25 alignment，揭示绝对准确率略升时模型仍可能复现词法排序偏好；`D_BM25` 提供简单、可替换相似度函数的离线难例坐标。
 - **证据边界与 PDF 页码**：`D_BM25` 依赖 gold，不能在线路由；低分离度与失败只是关联，阈值没有敏感性分析，因而 `fooled` 仍是偏强措辞。定义和主结果见 pp. 1–4，数据、运行与分组结果见 pp. 5–10，替代相似度见 pp. 11–13，具体干扰案例见 pp. 14–16。历史快照另有一个字节级重复副本，其 604,585 bytes、16 页和 SHA-256 均与主文件完全相同；2026-09-06 保全后已去重，现使用上方主文件链接。副本 OCR 缺失不改变实体内容。
@@ -236,6 +244,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 019｜MoR
 
 - **题名**：[MoR: Better Handling Diverse Queries with a Mixture of Sparse, Dense, and Human Retrievers](<../papers/MoR: Better Handling Diverse Queries with a Mixture of Sparse, Dense, and Human Retrievers.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2025.emnlp-main.601/)
 - **逻辑链**：同一领域内不同 query 对 sparse、dense 和粒度配置的偏好不同，固定检索器或固定权重会浪费这种互补性。MoR 用召回前 query–corpus familiarity 与召回后结果结构，为八个检索器及四类语义粒度做零样本逐 query 软加权。四个英语科学检索集上的宏平均优于最佳组件与两种 7B 基线，但 SciFact 上仍明显落后于 GritLM。
 - **创新/价值亮点**：把 resource selection、query performance prediction、粒度选择和 rank fusion 写进同一混合公式；子集穷举与预拒绝实验揭示互补组合比简单堆叠全部检索器更重要。
 - **证据边界与 PDF 页码**：默认方案仍执行全部检索器和多粒度索引；`Human` 只是域内 oracle、域外随机的模拟，固定权重、显著性和真实总成本不透明。互补动机与 oracle 见 pp. 3–4，方法 pp. 4–6，主结果 pp. 6–8，消融与效率 pp. 16–19。
@@ -257,6 +266,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 022｜QuDAR
 
 - **题名**：[QuDAR: Query-Wise Dual-Perspective Adaptive Retrieval](<../papers/QuDAR: Query-Wise Dual-Perspective Adaptive Retrieval.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2026.acl-long.1791/)
 - **逻辑链**：稀疏/稠密配比与原始/扩展查询配比都会随 query 改变，而且两个适应轴存在交互。QuDAR 构造原始–稀疏、原始–稠密、扩展–稀疏、扩展–稠密四路结果，再用等权、分数间隔或 LLM 可答性评分逐 query 融合。多数主实验指标提升，但 Climate-FEVER Recall 和若干替换组件设置仍由最佳单视角胜出。
 - **创新/价值亮点**：在给出可部署启发式前，先用静态与逐 query oracle 网格量化双轴适应空间；confidence、LLM、RRF 与 Equal 形成清晰的效果—成本退化路径。
 - **证据边界与 PDF 页码**：top-1 代表整路质量、分数间隔未校准，关键温度与归一化细节缺失；`training-free` 仍需查询扩展与 LLM 评分成本。双轴动机见 pp. 2–5，方法 pp. 5–7，主结果 pp. 7–9，oracle 细节 pp. 12–14，组件替换 pp. 15–18。
@@ -264,6 +274,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 023｜Redundancy-Aware RARE
 
 - **题名**：[RARE: Redundancy-Aware Retrieval Evaluation Framework for High-Similarity Corpora](<../papers/RARE: Redundancy-Aware Retrieval Evaluation Framework for High-Similarity Corpora〔ACL 2026〕.pdf>)（另见 [arXiv 2604.19047v2](<../papers/RARE: Redundancy-Aware Retrieval Evaluation Framework for High-Similarity Corpora〔arXiv 2604.19047〕.pdf>)）
+- **官方来源**：[出版页](https://aclanthology.org/2026.acl-long.923/)
 - **逻辑链**：高相似企业语料中，同一事实可散布于多个近重复 passage，单一 canonical qrel 会误罚等价证据并掩盖多跳覆盖瓶颈。RARE 将 chunk 拆为 atomic facts、追踪跨 chunk 等价关系，先执行有效性与零容忍逻辑过滤，再由 CRRF 分别排序 atomic units 和候选问题；多跳问题由 LLM 另行生成。结果显示企业域多跳 PerfRecall@10 急剧下降；相似度更像混淆源，而冗余既会占位也可能提供替代路径。
 - **创新/价值亮点**：把 similarity、fact redundancy、等价证据 qrels 与多跳完美覆盖放入同一 benchmark 构造框架；数据流程、成本、通过率、prompt 和逐 hop 结果披露较完整。
 - **证据边界与 PDF 页码**：等价链接未做独立人工 precision/recall 审计，四域比较也不是控制实验；hop 增加本身会机械降低全部证据同时命中的概率。定义与流程见 pp. 1–6，检索与 RAG 结果 pp. 6–9，限制 p. 10，构造统计 pp. 12–14，逐 hop 与 CRRF pp. 17–19。两版均 26 页且预检 `PASS`，但 SHA-256 不同；正式版带 ACL 页眉、版权和印刷页码，arXiv 版带 arXiv 侧栏。
@@ -299,6 +310,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 028｜Regulatory DOC2DOC IR
 
 - **题名**：[Regulatory Compliance through Doc2Doc Information Retrieval: A case study in EU/UK legislation where text similarity has limitations](<../papers/Regulatory Compliance through Doc2Doc Information Retrieval: A case study in EU／UK legislation where text similarity has limitations.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2021.eacl-main.305/)
 - **逻辑链**：法律转置关系要求恢复正式制度关联，而主题相似、修订相关或事实有用的文档仍可能是严格负例。论文构造 EU2UK/UK2EU 长文档检索集，并比较 BM25、法律 BERT、EUROVOC 辅助训练 C-BERT、融合与神经重排。C-BERT+BM25 的点估计明显提高首阶段召回，但神经重排常被相似文本的相反标签牵制；年份过滤只在较难的 EU2UK 方向明显有效。
 - **创新/价值亮点**：明确建立 DOC2DOC regulatory IR 任务，并以真实法律转置关系而非主题相似度作真值；将非文本时间结构、监督冲突和关系方向非对称性纳入检索诊断。
 - **证据边界与 PDF 页码**：EU/UK 转置只是企业 control–regulation 匹配的代理，标题对齐可能残留噪声，年份窗口也可能删去真实提前或延迟转置。任务与数据见 pp. 2–4，方法 pp. 4–6，预取结果 pp. 6–7，重排与时间过滤 pp. 8–9，清洗 pp. 12–13。
@@ -334,6 +346,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 033｜The Distracting Effect
 
 - **题名**：[The Distracting Effect: Understanding Irrelevant Passages in RAG](<../papers/The Distracting Effect: Understanding Irrelevant Passages in RAG.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2025.acl-long.892/)
 - **逻辑链**：“无关 passage”不是同质类别：有些文本虽不含答案，却会强烈诱使回答模型不拒答或误答。论文定义 `DE=1-P(NO-RESPONSE|q,p)`，并从标准检索、答案偏斜检索、重排和四类合成修辞中寻找硬干扰。高位与重排后的错误通常更具干扰性；金证据加入硬干扰后七个模型下降约 6–11 点，硬干扰微调主要改善无 gold 场景。
 - **创新/价值亮点**：将干扰连续化且只需读取拒答首 token 概率，随后用金证据+硬/弱干扰验证分数的下游区分效度；多源候选的互补胜出率说明单一 hard-negative 生成方式覆盖不足。
 - **证据边界与 PDF 页码**：DE 混入指令遵循、参数记忆与首 token 校准，跨模型相关最低仅 0.47；微调还对部分 grounded 样本有小幅代价。定义见 p. 3，候选构造 pp. 4–5，主分布与相关性 pp. 6–7，下游验证 pp. 7–9，模型差异与训练细节 pp. 12–14。
@@ -355,6 +368,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 #### 036｜Towards Robust Ranker
 
 - **题名**：[Towards Robust Ranker for Text Retrieval](<../papers/Towards Robust Ranker for Text Retrieval.pdf>)
+- **官方来源**：[出版页](https://aclanthology.org/2023.findings-acl.332/)
 - **逻辑链**：Cross-encoder 无法在全集按自身分布挖负例，只能依赖外部 retriever；单一路 hard negatives 对高容量排序器又常不够多样。R²ANKER 联合 BM25、dense coCondenser 与 learned-sparse SPLADE 的 top 候选，采样 40 个负例训练 ERNIE-base 排序器。MS MARCO/TREC DL 结果领先多项表列基线，但堆叠更多生成器、更强单体或近似 ranker-aware 采样均没有继续提升。
 - **创新/价值亮点**：把 hard-negative 来源的匹配范式多样性变成可控变量，并用组合矩阵同时检查训练负例与测试候选分布；进一步把 ranker 蒸馏回 bi-encoder，展示跨阶段教师价值。
 - **证据边界与 PDF 页码**：“开放集噪声提高鲁棒性”主要是分类理论类比，未实测假负例率或操纵模型容量；实验集中于英语 MS MARCO 且只有点估计。问题与理论见 pp. 1–5，主结果 pp. 5–8，案例与限制 p. 9，噪声形式化与训练细节 pp. 11–13。
@@ -424,7 +438,7 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 - **创新/价值亮点**：将真实检索重新纳入上下文利用研究，并用充分/四类方向性不足/反驳标签保留现实证据的连续结构；ACU 区分“答案变化”与“变化方向符合证据”，使上下文利用成为独立于最终正确率的被测层。
 - **证据边界与 PDF 页码**：结论限于英语事实核查、单条证据和两种 7B/8B 模型，商业检索快照、来源/时间泄漏与提示调优影响外推；ACU 主文 `[-1,1]` 与附录 `[-3,3]` 尺度不一致。数据与特征见 pp. 1–6，ACU 和主结果 pp. 7–10，检索/标注细节 pp. 16–21，提示 pp. 22–23，尺度矛盾 pp. 24–28，完整相关热图 pp. 29–30。两版均 40 页且预检 `PASS`，SHA-256 不同；正式版带 ACL 页眉、版权和 19691–19730 印刷页码，arXiv 版带 arXiv 侧栏。
 
-### 4.4 外部近邻证据卡 E01–E02（尚未纳入本地 PDF）
+### 4.4 外部来源 E01–E03（尚未纳入本地 PDF）
 
 #### E01｜Temporal Validity in Retrieval Memory
 
@@ -437,6 +451,12 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 - **题名/DOI**：*FinSAgent: Corpus-Aligned Multi-Agent RAG Framework for Evidence-Grounded SEC Filing Question Answering*；DOI `10.48550/arXiv.2607.18102`。
 - **已核验逻辑链**：官方摘要将 prior-corpus misalignment 表述为问题驱动的 query generation 与 semantic ranking 共同造成的管线级错位，明确指出 semantic reranking 会偏爱主题相近但 evidentially invalid 的 false-positive Chunk，并提出 multi-path retrieval 与 learned feature-gated reranker。摘要未足以支持对具体特征类型、训练细节或消融设计的进一步描述。
 - **对本研究的边界**：它压缩“首次观察主题相似但证据无效候选被重排晋升”以及同类 feature-gated remedy 的主张；当前摘要未证明本文的等价—冲突受控交互、固定池因果隔离、可识别性分区，或相对 LTR-v3/D3/A0 的同题增量。未逐页阅读前不引用摘要以外细节。
+
+#### E03｜Risk–Reward Trade-offs in Rank Fusion
+
+- **来源**：[Risk–Reward Trade-offs in Rank Fusion](https://doi.org/10.1145/3166072.3166084)。
+- **原记录范围**：旧证据表 C12 将其作为融合的查询级风险依据，提醒总体平均可能掩盖部分查询的损失。
+- **阅读与使用边界**：旧表没有附逐页阅读记录，本次仅迁移已有来源，没有重新核验全文；它不证明当前候选方法有效，也不替当前研究确定指标或实验门槛。
 
 ## 5. 覆盖与版本附录
 
@@ -464,4 +484,4 @@ RRF、归一化分数凸组合等方法只解决异构排序如何合并，不�
 - 023 与 045 各对应 2 个不同版本 PDF。
 - 合计 `42 + 2 + 2 + 2 = 48` 个物理文件；证据卡为连续的 001–045，共 45 个实体。
 - 当时快照没有未映射 PDF、缺卡实体、引用不存在 PDF、未说明的重复文件或被误拆成两项证据的版本对。
-- E01/E02 不属于上述本地快照，故不改变 `48 个物理文件 / 45 个本地实体` 的覆盖分母；待取得全文并完成逐页核验后，再决定是否并入本地编号卡和覆盖统计。
+- E01/E02/E03 不属于上述本地快照，故不改变 `48 个物理文件 / 45 个本地实体` 的覆盖分母；待取得全文并完成逐页核验后，再决定是否并入本地编号卡和覆盖统计。

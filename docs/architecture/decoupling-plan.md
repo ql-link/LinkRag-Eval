@@ -1,6 +1,6 @@
 # LinkRag-Eval 解耦架构
 
-本文件说明当前工程边界与组件职责；强制规则见 [AGENTS.md](../../AGENTS.md)，实施进度和待办只在 [CURRENT_STATUS.md](../CURRENT_STATUS.md) 维护。旧 Step 0–6 的迁移计划已成为历史，不再作为本次研究的执行清单。重构范围和版本记录见[执行记录](../plans/research-restructure-execution-2026-09-06.md)。
+本文件说明当前工程边界与组件职责；强制规则见 [AGENTS.md](../../AGENTS.md)，实施进度和待办只在 [CURRENT_STATUS.md](../CURRENT_STATUS.md) 维护。旧 Step 0–6 的迁移计划已成为历史，不再作为本次研究的执行清单。版本与备份见[恢复说明](../plans/runtime-simplification-2026-09-06.md#recovery)。
 
 ## 项目边界
 
@@ -52,10 +52,10 @@ BM25 由 eval 的 SQLite FTS5 sidecar 承载，使用预分词 token 和 FTS5 `b
 
 当前研究仅在三路召回后的固定候选集合上探索融合／重排，不回原文补信息，不改召回。具体候选方法保持暂定，不能把局部窗口、比较器、关系结构、阈值或实验版本写成架构硬约束。新增兼容或校验机制必须有当前用途；不预设哈希台账和多阶段准入流程。
 
-原 Robust Fusion 的 R1／R2、Gate、相似度测量与仲裁流程属于历史研究协议，退出活动执行身份。原稿与证据保留在原路径，由[历史导航](../archive/robust-fusion/README.md)说明用途；保留历史证据不要求保留旧版本运行兼容。
+原 Robust Fusion 的 R1／R2、Gate、相似度测量与仲裁流程属于历史研究协议，退出活动执行身份。已移除的原稿通过 Git 历史追溯，保留的数据定义与证据由[历史导航](../archive/robust-fusion/README.md)说明用途；保留历史证据不要求保留旧版本运行兼容。
 
 ## 迁移历史与版本恢复
 
 原 Step 0–6 记录了替换生产写 pipeline、引入独立存储、收口 `ProductComputer`、独立装配召回及物理拆仓的迁移过程。早期曾计划使用远端 eval MySQL 和 Qdrant BM25，后续工程改为本地 SQLite 与 SQLite FTS5。旧四域 `recall@10 ≈ 0.901`（±0.005）仅是当时固定语料的迁移等价参考，不能用作新数据或新研究的统一验收阈值。
 
-重构前完整架构原文保全于标签 `research-pre-restructure-20260906`（提交 `4d31f18`）；可用 `git show research-pre-restructure-20260906:docs/architecture/decoupling-plan.md` 只读查看，或在独立目录检出标签恢复核对。Git 忽略的历史证据另有独立备份，位置和核对清单见[执行记录](../plans/research-restructure-execution-2026-09-06.md)。
+重构前完整架构原文保全于标签 `research-pre-restructure-20260906`（提交 `4d31f18`）；可用 `git show research-pre-restructure-20260906:docs/architecture/decoupling-plan.md` 只读查看，或在独立目录检出标签恢复核对。Git 忽略的历史证据另有独立备份，范围与恢复方式见[恢复说明](../plans/runtime-simplification-2026-09-06.md#recovery)。

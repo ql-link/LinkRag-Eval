@@ -38,7 +38,7 @@
 | E1 | [LTR 报告 §2.1](../experiments/ltr-fusion-v1.md#21-第一阶段qwen3-rerank-文本重排)：Top60 Clean 对照，Chunk Recall@10 39.73% → 25.74%，下降 13.99pp | 该次固定候选的直接覆盖式文本重排明显退化 | 所有文本模型或所有接入方式都无效；报告中的机制解释也不等于每个原因都被单独实验识别 |
 | E2 | [LTR 报告 §8.4](../experiments/ltr-fusion-v1.md#84-cross-encoder-作为-lambdamart-特征历史失败实验)：旧 LTR 初排 Top50 加入原始分、归一化分、倒数排名和未打分标记；Tune OOF Recall@10 44.90% → 45.60%，Blind v3 30.67% → 30.00% | “保留 LambdaMART、只补文本评分”也已经尝试过，未支持默认采用 | 当前38维v3与任何新模型组合必然失败；把 Tune 改善当作独立验证成功 |
 | E3 | [v3 特征代码](../../src/linkrag_eval/retrieval/learning_to_rank/experiment.py)：38维含三路证据、字符二／三元组覆盖、条件覆盖和候选池统计 | v3并非纯词袋或简单固定加权；已经有部分词序与候选上下文 | 这些聚合特征能保留任意关系绑定 |
-| E4 | [2026-09-05草案 §3](post-recall-relational-fusion-concept-2026-09-05.md#3-代码核查与已完成的小检查)：手工固定三路输入并交换版本—年份—权限对应关系后，38维矩阵完全不变 | 存在一个具体的表示不可区分案例；同一确定性模型不能对相同表示作不同响应 | 自然数据碰撞率、真实错误率、任意新表示或融合的收益 |
+| E4 | [既有特征表示检查](#feature-collision-check)：手工固定三路输入并交换版本—年份—权限对应关系后，38维矩阵完全不变 | 存在一个具体的表示不可区分案例；同一确定性模型不能对相同表示作不同响应 | 自然数据碰撞率、真实错误率、任意新表示或融合的收益 |
 | E5 | [LTR 报告 §5.5](../experiments/ltr-fusion-v1.md#55-候选差异特征-v2)：v2.1加入稀有词权重与Top30近邻相似度，Tune Hit@10 50.86%，外部48.28%；报告拒绝采用 | 相邻的“再加候选差异特征”方向已有泛化不佳的历史，不能当作完全空白路线 | 当前更精确的位置表示必然失败；不能将该外部回归集重新当作未触碰Blind |
 
 不同历史阶段的查询、标签、模型、候选深度和数据角色不同，不能跨行比较绝对值或合并效应。E2针对历史 `candidate_difference_v2`；活动实现为 `candidate_difference_v3`。本次读取的是已有报告，没有重跑历史实验，也没有补齐或恢复已删除的原始制品。
@@ -500,3 +500,59 @@ monoBERT／duoBERT 和 HybRank 分别提供了逐候选／成对重排、候选�
 所以，我接受这份审查对原方案的纠偏，但暂不采纳它提出的新方法作为定案。当前证据足以保留研究问题，**还不足以确定一个值得正式投入的方法方案**。
 
 </details>
+
+
+<a id="feature-collision-check"></a>
+
+## 附录 D：特征表示盲点的既有检查与复现
+
+以下从 2026-09-05 草案第 3 节与附录迁入，保留当时的例子、观察与限制；本次整理没有新增实验，也不继承原稿的文本比较器、四版本融合或局部交换方案。
+
+核查对象是 [v3 特征构造](../../src/linkrag_eval/retrieval/learning_to_rank/experiment.py) 和 [在线排序](../../src/linkrag_eval/retrieval/learning_to_rank/online.py)。v3 有 38 个特征，已经使用三路分数／排名／缺失标记、整路前两名差距、数字与条件覆盖、整池词频、同文档相似度等。因此不能声称“现有方法完全不看候选上下文”。
+
+它没有直接表示的是：**这一对候选在哪个对象／条件上不同，这个差异与双方的逐路优势怎样关联。** 缺少显式表示不等于模型完全不能间接利用相关信号。
+
+### 已执行：手工构造的特征表示检查
+
+Query：`标准版在2026年是否允许离线导出？`
+
+| 文本 | 正文 |
+| --- | --- |
+| A | 标准版：2026年适用，允许离线导出。专业版：2025年适用，不允许离线导出。 |
+| B | 标准版：2025年适用，不允许离线导出。专业版：2026年适用，允许离线导出。 |
+
+A 明确提供“标准版—2026年—允许”的对应关系；B 的 2026 年描述属于专业版，不能直接回答标准版在该年的权限。
+
+在两个候选的 ID、各路分数和排名固定时，交换 A/B 正文后，`build_online_features` 返回的整个矩阵完全相同：38 个特征中变化数为 0。同一确定性 v3 模型因此无法仅从这些特征对这次正文交换作出不同响应。
+
+**这个结果只证明特征表示存在一个具体盲点。** 分数是手工固定的，实际召回器可能对正文变化产生不同分数；没有运行真实检索或模型效果评测。它也不能证明成对机制优于单候选条件分析，更不能证明关系与三路证据的交互有效。
+
+### 复现代码
+
+在仓库根目录使用 `.venv/bin/python -B` 执行以下代码；只构造内存数据，不访问数据库、召回服务或模型。它不属于正式效果实验。
+
+```python
+import numpy as np
+from linkrag_eval.retrieval.learning_to_rank.experiment import (
+    FEATURE_NAMES, build_online_features,
+)
+
+query = "标准版在2026年是否允许离线导出？"
+a = "标准版：2026年适用，允许离线导出。专业版：2025年适用，不允许离线导出。"
+b = "标准版：2025年适用，不允许离线导出。专业版：2026年适用，允许离线导出。"
+routes = {
+    route: [
+        dict(chunk_id="toy-a", doc_id=1, dataset_id=1, score=score, source=route),
+        dict(chunk_id="toy-b", doc_id=2, dataset_id=1, score=score-0.1, source=route),
+    ]
+    for route, score in [("dense", 0.8), ("sparse", 5.0), ("bm25", 8.0)]
+}
+ids1, x1 = build_online_features(
+    query=query, routes=routes, candidate_contents={"toy-a": a, "toy-b": b},
+)
+ids2, x2 = build_online_features(
+    query=query, routes=routes, candidate_contents={"toy-a": b, "toy-b": a},
+)
+print(len(FEATURE_NAMES), ids1 == ids2, np.array_equal(x1, x2))
+# 核查时输出：38 True True
+```

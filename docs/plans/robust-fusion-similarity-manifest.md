@@ -1,8 +1,8 @@
 # Gate A 实验相似度 manifest
 
-> 记录：`ROBUST-FUSION-SIMILARITY-MANIFEST-2026-08-28-v5`
-> 对应科研协议：`ROBUST-FUSION-RESEARCH-2026-08-28-v19`
-> 状态：字段与计算对象已冻结；研究负责人已淘汰 BGE-M3，并在结果不可见时冻结 Qwen3 0.6B 与 Jina v2 multilingual 两个 Reranker 家族。两个非 BGE 相似度编码器已完成资格预选，但 Dev 人工/双编码器效度、数据源内统计量和分带仍未冻结，因此本文件当前**不能**授权 Gate A。
+> 记录：`ROBUST-FUSION-SIMILARITY-MANIFEST-2026-08-29-v10`
+> 对应科研协议：`ROBUST-FUSION-RESEARCH-2026-08-29-v29`
+> 状态：v1 的 28 个 Dev 参照集合、84 个双编码器分数、A/B 与仲裁全部只读封存；人工效度 PASS、共同支持 17.86%/57.14% 的正式结论永久为 `INCONCLUSIVE`。唯一一次 72-family pre-Gate Dev 共同支持补充已完成四提交先锁后验与零仲裁单次终审；combined 共同支持 96%/99% PASS，但 supplement-only/combined 人工效度均为 `INCONCLUSIVE`，故联合结论 terminal `INCONCLUSIVE`。正式标准化/分带数值未冻结，本文件当前**不能**授权 Gate A，且 P2 不得第三轮补充。
 > 结果边界：Gate A/B 均未运行；所有待填项必须由 Dev/外部制品确定。
 > `GATE_A_AUTHORIZATION: false`
 
@@ -22,16 +22,23 @@ S_{qg}(c)=\max_{h\in A_{qg}}\cos(z(c),z(h)),
 
 | 项 | 当前值 | 冻结状态 |
 | --- | --- | --- |
-| 主实验编码器 | `intfloat/multilingual-e5-base@d128750597153bb5987e10b1c3493a34e5a4502a` | `QUALIFIED_PRESELECTED_PENDING_DEV_CALIBRATION`；不得用于 Gate A 结果读取 |
+| 主实验编码器 | `intfloat/multilingual-e5-base@d128750597153bb5987e10b1c3493a34e5a4502a` | `DEV_HUMAN_VALIDITY_PASS_FORMAL_FREEZE_BLOCKED`；不得用于 Gate A 结果读取 |
 | 已淘汰候选 | BGE-M3、本地 BGE 服务与既有 BGE sidecar | 禁止进入 Gate A route、\(S_{qg}(c)\) 或独立审计 |
 | 既有 Alt Embedding | 20,772 条历史 BGE-M3 向量；model key 仅记录模型名、服务 URL、维度 | 只作历史资产解释，不合格用于确认性逐值重放或候选筛选 |
-| 独立相似性审计编码器 | `sentence-transformers/distiluse-base-multilingual-cased-v2@bfe45d0732ca50787611c0fe107ba278c7f3f889` | `QUALIFIED_PRESELECTED_PENDING_DEV_CALIBRATION`；128-token 上限，必须按长度分层报告 |
+| 独立相似性审计编码器 | `sentence-transformers/distiluse-base-multilingual-cased-v2@bfe45d0732ca50787611c0fe107ba278c7f3f889` | `DEV_HUMAN_VALIDITY_PASS_FORMAL_FREEZE_BLOCKED`；128-token 上限，已按长度分层报告 |
 | 无标签资格制品 | `ROBUST-FUSION-SIMILARITY-ENCODER-QUALIFICATION-2026-08-28-v3`，manifest SHA-256 `931946bd244d794bf390d5c37f166308d010870b429919b1167131fd0ceb1f2a` | 两个模型均 PASS；只同步已冻结的 Reranker 独立性口径，不是 Gate A 解锁证据 |
 | 两个被测 Reranker 家族 | `Qwen/Qwen3-Reranker-0.6B@e61197ed…`（生成式）与 `jinaai/jina-reranker-v2-base-multilingual@9cfeff2d…`（跨编码器） | `ROBUST-FUSION-RERANKER-QUALIFICATION-2026-08-28-v2` 已冻结选择，manifest SHA-256 `96c49a3e58ff167bf675c413e32336c659f6899aca2f7351faa59e1c2ef26f43`；P3-05 仍待资源与 Dev 契约完成 |
 | Learned Sparse route | `ark / doubao-embedding-vision-251215` 在线 API | 只提供检索路分数/排名，不定义实验相似度 |
-| 数据源内均值/标准差 | `UNFROZEN_UNTIL_DEV` | P5 冻结 |
-| 共同支持区间与最低覆盖 | `UNFROZEN_UNTIL_DEV` | P5 冻结 |
-| 低/高/模糊分带 | `UNFROZEN_UNTIL_DEV` | P5 冻结 |
+| Dev 自动校准制品 | `ROBUST-FUSION-SIMILARITY-DEV-CALIBRATION-2026-08-29-v1`，manifest SHA-256 `b44d13f5…454c` | 不可变基础制品保留当时的 `AWAITING_HUMAN_SUBMISSIONS`；后续最终审阅另行封存，Gate A/B=false |
+| 数据源内均值/标准差 | provisional `0.9841916433456961 / 0.01442102645074964`，`ddof=1` | 人工效度 PASS 已满足；共同支持 FAIL，当前未冻结 |
+| 共同支持区间与最低覆盖 | 观测范围交集 `[0.9843160362038024, 0.9955983802559442]`；两侧最低 60% | 等价/冲突覆盖 17.86%/57.14%，自动 FAIL；不得放宽 |
+| 低/高/模糊分带 | provisional pooled q25/q75：low `≤0.9770479717675954`、high `≥0.9951423425431406` | 人工效度已通过，但共同支持未通过；正式数值未冻结 |
+| 正式人工包 | A/B 各 24 行；manifest `6a4ca9b0…3e9` / `3b9e1626…92db` | 两份真实提交已锁定，机械校验 PASS |
+| 双人一致性 | 二次加权 κ=`0.9484240688`；±1 分一致率=`100%` | 均通过 `0.60/90%` 冻结门槛 |
+| 仲裁与最终人工分数 | 8 条强制项 + 1 条其余非一致项，共 9 行；仲裁锁 `631d9281…61cf`；最终 manifest `463c31cb…647d` | 9/9 机械校验 PASS；24 条最终分数齐备 |
+| 仲裁后人工效度 | E5 overall/short/long=`0.6320/0.5741/0.5811`；DistilUSE overall=`0.4873`；最高带中位数/≥4 比例=`4.0/100%` | 六项冻结门槛全部 PASS；`human_measurement_decision=PASS` |
+| 联合冻结判定 | 人工效度 PASS + 共同支持 FAIL | `INCONCLUSIVE`；P2-01/P2-04 未完成 |
+| 唯一共同支持补充 | 72 个新成对 family；v1+补充总 family=100；预注册 lock `57179fbf…c6b2b`；自动 manifest `1c8b0499…327d`；final manifest `ea40f4f0…f2b35` | A/B 关系 144/144、相似度 48/48 exact，零仲裁。combined 共同支持 96%/99% PASS；supplement-only/combined E5 overall=`0.1775/0.3968` 未达 0.50，人工效度均 `INCONCLUSIVE`；terminal `INCONCLUSIVE`，无正式数值冻结 |
 
 Learned Sparse 是被研究系统的一条召回路，实验相似度则是用于刻画压力条件的独立测量工具。两者不能因都叫“embedding”而混为同一变量，也不能用豆包 sparse 权重代替候选—正确参照的 dense cosine。
 
@@ -197,7 +204,7 @@ candidate_similarity:
 
 ## 7. 数据源内 Dev 冻结项
 
-对每个候选主数据集，Dev 上合并事实等价与事实冲突候选后填写：
+对每个候选主数据集，Dev 上合并事实等价与事实冲突候选后填写。Internal v6-Dev 的自动部分和人工效度已经实例化，但正式数值仍受共同支持门禁约束：
 
 ```text
 dataset_calibration:
@@ -223,6 +230,10 @@ dataset_calibration:
 
 等价与冲突共用同一数据源内分带；阈值不能按 Reranker、LTR-v3 或 Gate A 结果分别调整。共同支持以关系两侧均有真实覆盖为前提，排除尾部和覆盖率必须报告。
 
+Internal v6-Dev 的结果前规则现固定为：均值/标准差使用合并后的 56 条 eligible 候选及 `ddof=1`；共同支持取两类观测范围交集，并要求两侧覆盖率均不低于 60%；主分带取合并 eligible 候选的 q25/q75，q30/q70 与 q20/q80 为相邻敏感性。关系内 q10–q90 交集的首次自动尝试为空，失败目录保留；它发生在任何人工提交和 Gate 结果之前。改用观测范围交集并不把覆盖不足改写为通过，60% 独立门禁已经在本批明确失败。
+
+盲人工抽样固定为 24 对：`target_relation × relative-length` 六格各 4 条，格内覆盖两个编码器 percentile-rank gap 的低/高端，并保证四类冲突总体覆盖。两名研究员均使用 1–5 相似度量表；分差至少 2 或任一 `uncertain=yes` 必须仲裁。二次加权 κ 下限 0.60、±1 分一致率下限 0.90；最终模型效度还需满足 E5 overall Spearman≥0.50、长短各≥0.30、DistilUSE overall≥0.40，以及最高主分带人工中位数≥4、至少 70% 得分≥4。全部细则和失败/不确定后果由自动制品 `human_audit_rules.json` 封存。
+
 ## 8. 重放与合格判定
 
 正式 manifest 只有同时满足下列条件才合格：
@@ -237,9 +248,45 @@ dataset_calibration:
 
 ## 9. 下一步
 
-研究负责人已在 Gate A/B 未运行、Dev 排序效果未读取时确认 `Qwen3-Reranker-0.6B@e61197ed…`（生成式）与 `jina-reranker-v2-base-multilingual@9cfeff2d…`（跨编码器）。Jina 的学术采用依据包括独立 FEVER 2025 多 Reranker 研究（DOI `10.18653/v1/2025.fever-1.2`）；这支持其作为可辩护的独立家族，不证明它天然最优，也不预先证明本文 C1。下一步只在 Dev 上完成资源契约、1024-token 覆盖与重放，以及长度分层的独立编码器—盲人工相似性效度、数据源内标准化、共同支持、覆盖下限和分带；不得按 Dev 效果更换两个 Reranker。完成这些步骤并封存参照集合、输入、向量、代码和配置摘要前，保持 `GATE_A_AUTHORIZATION: false`。
+研究负责人已在 Gate A/B 未运行、Dev 排序效果未读取时确认 `Qwen3-Reranker-0.6B@e61197ed…`（生成式）与 `jina-reranker-v2-base-multilingual@9cfeff2d…`（跨编码器）。P2-01 v1 自动、A/B、双人一致性和 9 行真实仲裁均已完成；六项人工效度门槛全部 PASS，但共同支持失败，v1 永久为 `INCONCLUSIVE`。唯一一次补充也已终审：共同支持 PASS，supplement-only/combined 人工效度 `INCONCLUSIVE`，联合状态 terminal `INCONCLUSIVE`。不得冻结 provisional 数值、再扩 P2 样本、换编码器或降低门槛；P2-01/P2-04 保持未完成，`GATE_A_AUTHORIZATION: false`。下一动作只能由研究负责人决定是否以新研究 ID 重设研究方案或停止当前 Gate 主线，当前协议下不得进入 readiness/Gate。
 
 ## 10. 变更记录
+
+### v10
+
+- 四份真实补充提交先锁后验：关系 144/144、相似度 48/48 完全一致且零仲裁；提交锁 `7a3ca434…2ae6`；
+- 锁后发现零仲裁 finalizer 缺失；以不修改预注册的 post-lock executor 补齐，合成测试后先封存 implementation manifest `af35908b…499fb`，再单次运行；
+- supplement-only 共同支持 66.67%/75.00%，combined 96.00%/99.00%，均通过 60%；但 supplement-only/combined E5 overall Spearman 0.1775/0.3968 未达 0.50，人工效度均为 `INCONCLUSIVE`；
+- 联合结论 terminal `INCONCLUSIVE`；final manifest `ea40f4f0…f2b35`，不生成正式标准化/分带数值，P2-01/P2-04 与 Gate 未完成，无第三轮。
+
+### v9
+
+- 永久保留 v1 的 17.86%/57.14% 与正式 `INCONCLUSIVE`，不覆盖、筛除或重新仲裁；
+- 在任何补充分数和人工结果前锁定唯一一次 72-family pre-Gate Dev 补充：总 family=100、每侧 combined 分母=100，缺失/无效按 miss，不早停、不扩第三轮；
+- 本地冻结 E5/DistilUSE 生成 216×768/512 向量和 144 个候选分数，二次内存重放 exact；形成 A/B 各 144 行关系包与各 48 行相似度包；
+- 构造角色预览只作诊断，不能替代人工关系真值或冻结数值；当前 `AWAITING_HUMAN_SUBMISSIONS`，Gate A/B 未授权。
+
+### v8
+
+- 在读取仲裁内容前锁定 9 行真实提交，仲裁 SHA-256 `888f0915…163d`、仲裁锁 SHA-256 `631d9281…61cf`；机械校验确认 ID 集合、唯一性、1–5 枚举、仲裁员标识和理由全部合法；
+- 形成 24 条唯一最终人工分数；E5 overall/short/long、DistilUSE overall、最高主分带中位数与高分比例六项冻结阈值全部 PASS，人工测量效度判为 `PASS`；
+- 共同支持覆盖仍为 17.86%/57.14%，低于双方 60% 下限，故联合冻结判为 `INCONCLUSIVE`，provisional 标准化与分带不升级，P2-01/P2-04 和 Gate 授权仍未完成；
+- 完成描述性统计边界与 11/11 谬误扫描；不作总体人口、因果或确认性效果声称。
+
+### v7
+
+- 在读取评分内容前锁定 A/B 两份真实提交，保留文件大小、角色包 manifest 与提交 SHA-256；
+- 机械校验确认 A/B 各 24/24 行、ID/枚举/不确定说明均合法；二次加权 κ=0.9484240688、±1 分一致率=100%，双人一致性门禁 PASS；
+- 生成 9 行盲化人工仲裁包：覆盖全部 8 条强制仲裁项及其余 1 条非一致项，以形成唯一最终人评分；Codex/模型/工具不得代填；
+- 状态转为 `AWAITING_HUMAN_ADJUDICATION`；人工效度、正式标准化/分带和 Gate 授权仍未完成。
+
+### v6
+
+- 只读绑定经核验的 Internal v6-Dev route evidence v5 与其 adjudicated release，封存 28 个唯一目标参照集合；
+- 用冻结 E5/DistilUSE 对 112 条 Chunk 编码并计算 84 个非参照候选的目标组最大余弦，保存输入、向量、代码与配置摘要；
+- 冻结数据源内标准化、共同支持最低覆盖、q25/q75 主分带、相邻敏感性和 24 对盲人工审计的结果前规则；
+- 透明记录共同支持覆盖为 17.86%/57.14%，低于双方 60% 下限，因此 provisional 数值不能正式冻结；
+- 生成 A/B 各 24 行、物理隔离且无答案键的正式包，状态固定为 `AWAITING_HUMAN_SUBMISSIONS`；不完成 P2-01/P2-04，不授权 Gate A。
 
 ### v5
 

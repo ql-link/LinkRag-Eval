@@ -20,8 +20,6 @@ def test_recall_threshold_defaults() -> None:
     assert settings.recall_dense_weight == 0.70
     assert settings.recall_sparse_weight == 0.15
     assert settings.recall_bm25_weight == 0.15
-    assert settings.qdrant_bm25_collection == "eval_bm25"
-    assert settings.qdrant_bm25_vector_name == "bm25_text"
     assert settings.bm25_sqlite_path == "runs/bm25_eval.sqlite3"
     assert settings.alt_embed_provider == "openai"
     assert settings.alt_embed_base_url == ""
@@ -54,3 +52,15 @@ def test_multi_route_weights_remain_configured() -> None:
     _normalize_single_route_weight(settings, _parse_enabled_sources("dense,bm25"))
 
     assert settings.recall_bm25_weight == 0.15
+
+
+@pytest.mark.parametrize("field,value", [
+    ("bm25_mode", "qdrant_bm25"),
+    ("bm25_mode", "sparse_proxy"),
+    ("alt_embed_provider", "bge_m3_http"),
+    ("alt_embed_provider", "bgem3"),
+    ("sparse_provider", "bge_m3"),
+])
+def test_config_rejects_unsupported_backends(field, value) -> None:
+    with pytest.raises(ValueError):
+        EvalSettings(_env_file=None, **{field: value})

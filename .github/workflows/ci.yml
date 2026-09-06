@@ -48,11 +48,10 @@ jobs:
           from pathlib import Path
 
           from src.core.pipeline.recall.pipeline import RecallPipeline
-          from src.core.preprocessor.ragflow_tokenizer import RagFlowTokenizer
           from src.core.splitter.chunking_engine import ChunkingEngine
 
           pinned_root = Path("vendor/toLink-Rag").resolve()
-          for dependency in (RecallPipeline, RagFlowTokenizer, ChunkingEngine):
+          for dependency in (RecallPipeline, ChunkingEngine):
               dependency_path = Path(getfile(dependency)).resolve()
               assert dependency_path.is_relative_to(pinned_root), (
                   f"{dependency.__name__} loaded outside pinned checkout: {dependency_path}"

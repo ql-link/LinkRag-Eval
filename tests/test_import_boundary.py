@@ -16,7 +16,7 @@ PKG_ROOT = Path(__file__).resolve().parent.parent / "src" / "linkrag_eval"
 
 # 允许 import toLink-Rag(src.*)的 adapter 文件(相对 PKG_ROOT),按关注点:
 #   compute/rag_adapter      —— 纯计算(chunk 切分 + bm25 分词)
-#   store/vector_store       —— Qdrant 原语(QdrantIndexStore/BucketRouter/point 模型)
+#   store/vector_store       —— Qdrant 原语(QdrantIndexStore/显式 collection/point 模型)
 #   retrieval/recall_factory —— 召回装配(被测对象 RecallPipeline,指向 eval 前缀)
 #   retrieval/recall_adapter —— RecallRequest/Response marshalling(被测对象类型)
 #   cleaning/adapter         —— ParserFactory(CLEANING 层被测对象:清洗/解析那一步)

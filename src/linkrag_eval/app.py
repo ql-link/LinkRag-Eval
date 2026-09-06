@@ -6,19 +6,19 @@
 
 from __future__ import annotations
 
-from collections import Counter
-import hashlib
-from pathlib import Path
 import subprocess
-from typing import Any, Awaitable, Callable
+from collections import Counter
+from collections.abc import Awaitable, Callable
+from pathlib import Path
+from typing import Any
 
 from linkrag_eval.golden.corpus_io import load_manifest, read_tsv_collection
 from linkrag_eval.golden.loader import load_golden, precheck, require_chunk_references
 from linkrag_eval.metrics.retrieval import DEFAULT_K_VALUES
 from linkrag_eval.models import EvalResult, Layer, Snapshot
 from linkrag_eval.runners import RunContext, run_stage
-from linkrag_eval.store.indexer import EvalPassage
 from linkrag_eval.store.ids import content_hash
+from linkrag_eval.store.indexer import EvalPassage
 
 
 async def run_ingest(
@@ -139,6 +139,8 @@ def _minimal_snapshot(
             "bm25": getattr(settings, "recall_bm25_weight", 0.0),
         }
         bm25_mode = getattr(settings, "bm25_mode", "stub")
+        if bm25_mode not in {"stub", "sqlite_fts5"}:
+            raise ValueError(f"不支持的 BM25 模式: {bm25_mode!r}")
         computer_fingerprint = {
             "dense": {
                 "model": getattr(settings, "embed_model", None),
@@ -167,12 +169,12 @@ def _minimal_snapshot(
             )
     if enabled_sources is None:
         enabled_sources = ["dense", "sparse"]
-        if getattr(settings, "bm25_mode", "stub") in {"qdrant_bm25", "sqlite_fts5"}:
+        if bm25_mode == "sqlite_fts5":
             enabled_sources = ["bm25", "dense", "sparse"]
-    git_sha, git_dirty, git_worktree_sha256 = _git_state()
+    git_sha, git_dirty = _git_state()
     return Snapshot(
         run_id=run_id, git_sha=git_sha, sparse_vector_provider=sparse_provider, top_k=top_k,
-        score_threshold=sparse_threshold, enabled_sources=enabled_sources, rrf_k=60, rerank_top_n=None,
+        enabled_sources=enabled_sources, rrf_k=60, rerank_top_n=None,
         chat_model="", judge_model="", generator_model="", token_budget=0, prompt_version="v1",
         route_score_thresholds={"dense": dense_threshold, "sparse": sparse_threshold},
         route_top_ks={"bm25": bm25_top_k, "dense": dense_top_k, "sparse": sparse_top_k},
@@ -183,11 +185,10 @@ def _minimal_snapshot(
         computer_fingerprint=computer_fingerprint,
         feature_version="recall_pipeline_v1",
         git_dirty=git_dirty,
-        git_worktree_sha256=git_worktree_sha256,
     )
 
 
-def _git_state() -> tuple[str, bool, str]:
+def _git_state() -> tuple[str, bool]:
     """抓取当前仓库提交和 dirty 状态；失败时显式返回 unknown。"""
     cwd = Path(__file__).resolve().parents[2]
     try:
@@ -198,39 +199,15 @@ def _git_state() -> tuple[str, bool, str]:
             capture_output=True,
             text=True,
         ).stdout.strip()
-        changed_raw = subprocess.run(
-                [
-                    "git",
-                    "ls-files",
-                    "--modified",
-                    "--deleted",
-                    "--others",
-                    "--exclude-standard",
-                    "-z",
-                ],
-                cwd=cwd,
-                check=True,
-                capture_output=True,
-            ).stdout
-        changed = sorted(path for path in changed_raw.split(b"\0") if path)
-        digest = hashlib.sha256()
-        for raw_path in changed:
-            relative = raw_path.decode("utf-8", errors="surrogateescape")
-            path = cwd / relative
-            digest.update(raw_path)
-            digest.update(b"\0")
-            if path.is_symlink():
-                digest.update(b"symlink\0")
-                digest.update(path.readlink().as_posix().encode("utf-8"))
-            elif path.is_file():
-                digest.update(b"file\0")
-                digest.update(path.read_bytes())
-            else:
-                digest.update(b"deleted\0")
-            digest.update(b"\0")
-        return sha, bool(changed), digest.hexdigest() if changed else ""
+        status = subprocess.run(
+            ["git", "status", "--porcelain", "-z"],
+            cwd=cwd,
+            check=True,
+            capture_output=True,
+        ).stdout
+        return sha, bool(status)
     except (OSError, subprocess.CalledProcessError):
-        return "unknown", True, "unknown"
+        return "unknown", True
 
 
 async def run_eval(

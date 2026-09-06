@@ -1,8 +1,8 @@
 # Gate A 事实关系与冲突标注手册
 
-> 记录：`ROBUST-FUSION-ANNOTATION-HANDBOOK-2026-08-28-v1`
-> 对应科研协议：`ROBUST-FUSION-RESEARCH-2026-08-28-v19`
-> 状态：P2-02 工作草案；无类别提示的 12 案例 v2 盲化桌面校准包及正式人工交付副本已生成，须完成双人独立人工标注、仲裁与重放后才能冻结为正式标注版本。
+> 记录：`ROBUST-FUSION-ANNOTATION-HANDBOOK-2026-08-29-v2`
+> 对应科研协议：`ROBUST-FUSION-RESEARCH-2026-08-29-v20`
+> 状态：P2-05 双人独立校准、受影响案例重放、主持人仲裁与机器复核均已通过；本版是后续 Dev/构造率标注使用的正式冻结版本。
 > 结果边界：本手册形成时 Gate A/B 均未运行；不得用确认性排序结果反向修改标签。
 
 ## 1. 目的与适用范围
@@ -193,6 +193,8 @@ candidate_pair_relation:
 
 不能因为人类拥有常识就标 `conditionally_adjudicable`。必须指出 method view 中哪一个字段或文本片段使正确侧可被规则化选择。
 
+对 Query 或候选正文中**已经明示的字段**执行冻结、确定性的算术、单位换算或日历规则，不属于外部核证；若该计算能够唯一推出正确值，可以标为 `conditionally_adjudicable`。只能发现候选可疑、过时或互相矛盾，却仍无法推出正确值时，必须标为 `detectable_only`，不能因为“可以拒绝一个不可靠来源”而升级为可裁决。
+
 ## 5. 候选对标注流程
 
 候选对顺序先按确定性 ID 排序，界面不显示哪个候选排名更高。
@@ -335,7 +337,7 @@ unresolved 不进入 C1/C2 确认性主分析，不得为凑足每 Query 的 20 
 
 最初的 `ROBUST-FUSION-P2-CALIBRATION-2026-08-28-v1` 只保留为历史开发包。后续盲化审计发现其 `annotation_cases.jsonl` 暴露了 `quota_cell`，该字段与待判类别过度对应；同时，旧工作目录中的已填表来自模型/工具先导，而非两名团队成员的人工提交。因此 v1 和这些试填结果均不得用于 P2-05 准入或一致性统计。
 
-当前正式人工输入固定为 `ROBUST-FUSION-P2-CALIBRATION-REPLAY-2026-08-29-v2`：
+正式校准先使用 `ROBUST-FUSION-P2-CALIBRATION-REPLAY-2026-08-29-v2`：
 
 - 管理员包：`data/robust_fusion/derived/p2_calibration_v2/`，manifest SHA-256 为 `a8eee3dba3e0a7fa5822039ce1f39b7a6b917dec0025d2b83e854ec3a4cb0df2`；
 - 冻结构建器：[prepare_robust_fusion_p2_calibration_replay.py](../../scripts/prepare_robust_fusion_p2_calibration_replay.py)，文件 SHA-256 为 `1fd421ca7cfa9f315352166660d6f81cadb6917ee2a4f157c0838aa98234929f`；
@@ -344,9 +346,15 @@ unresolved 不进入 C1/C2 确认性主分析，不得为凑足每 Query 的 20 
 - 输出仍为 12 条案例资格、13 条候选级和 1 条候选对空白记录，不增加团队标注量；
 - A/B 交付目录均不含 `facilitator_key.jsonl`，旧模型/工具试填被明确标记为无资格。
 
-v2 的盲化 `annotation_cases.jsonl` 只保留稳定案例 ID、包版本、Query 正文、目标参照、候选正文和视图契约；`quota_cell`、数据集/split/原始 ID、目标组管理员 ID、origin、qrel/stance、变换和期望标签均只留在 facilitator 层。两位真实标注员必须各自使用正式空白副本独立作答，初始提交锁定前不得读取 facilitator key。
+v2 的盲化 `annotation_cases.jsonl` 只保留稳定案例 ID、包版本、Query 正文、目标参照、候选正文和视图契约；`quota_cell`、数据集/split/原始 ID、目标组管理员 ID、origin、qrel/stance、变换和期望标签均只留在 facilitator 层。两位真实标注员各自使用隔离副本独立作答，原始提交和首轮失败审查均已保留。
 
 12 个案例仍覆盖：两个版本/时间冲突、一个单位换算等价与一个真正数字冲突、两个否定/方向冲突、两个适用条件冲突、一个自然等价、一个主题相关普通错误、一个公开 qrel 疑似漏标，以及一个错误共识候选对。该包只校准通用关系 schema，不进入 Gate A/B。
+
+首轮审查发现 5 个案例存在目标唯一性、原子性或可裁决措辞缺陷，因此没有事后修改答案键，而是保留首轮失败记录，并用 `ROBUST-FUSION-P2-CALIBRATION-PATCH-2026-08-29-v3` 一对一替换受影响案例。补包 manifest SHA-256 为 `19807a373e6dee0f15fd747819a82fdde1334d5f6437adf5ce4a65b694f783bd`；两名标注员在隔离目录中重新盲标 5 个替换案例。
+
+最终合并审查使用 v2 保留 7 例与 v3 替换 5 例，共 12 例、13 条候选、9 条事实冲突和 1 条候选对：资格字段 12/12、`target_relation` 13/13、冲突类型 9/9 均为 A–B–key 一致；冲突可裁决性 A–B 为 8/9，A–key 为 9/9，B–key 为 8/9，超过冻结的 7/9 准入线；关键构念错误、格式错误均为 0。唯一遗留分歧 `RF-P2R2-02/C1` 按上文确定性算术规则裁定为 `conditionally_adjudicable`，B 的原始答案与冻结 key 均未被覆盖。
+
+最终决定记录为 `ROBUST-FUSION-P2-FACILITATOR-PATCH-REVIEW-2026-08-29-v2`；本地机器结论 SHA-256 为 `fe906b9e755135cfe4fe6607297aec5c5a0c2b2c0a0a5118e4c38ada9a01ef1c`，提交锁 SHA-256 为 `9d743fb23d4d88d128229a81d381aab444550e2663e11eacbe296cad0c722f82`。主持人创建了 v3 补包和 key，因此不声称主持人盲态；可成立的独立性主张仅为 A/B 角色目录隔离、输入相同且不含答案键、提交在内容比较前完成锁定。
 
 ## 11. 机器校验规则
 
@@ -362,6 +370,8 @@ v2 的盲化 `annotation_cases.jsonl` 只保留稳定案例 ID、包版本、Que
 
 ## 12. 版本与冻结
 
-本手册 v1 只冻结 schema、判断顺序、unknown 边界和校准包结构。校准输入包升级为 v2 是为了移除盲化字段泄漏并换用未复用案例，不表示手册已通过人工校准；手册只有在正式双人人工校准通过后才升级为 v2。任何会改变已标样本类别的修订必须记录时间、原因、是否看过相关结果、受影响案例清单，并重标受影响的全部 Dev 案例。
+本手册 v2 已在双人校准、五例替换重放、条款级仲裁和机器复核全部通过后冻结。相对 v1 的语义澄清只包括：确定性算术/单位/日历规则可以使用 Query 与候选正文中明示的字段；仅能识别风险但不能推出正确值仍属于 `detectable_only`。该澄清在 v3 补包发放前完成，没有根据补包结果修改类别或准入线。
+
+任何会改变已标样本类别的后续修订必须记录时间、原因、是否看过相关结果、受影响案例清单，并重标受影响的全部 Dev 案例。
 
 Gate A 快照封存后，手册不得因 Gate A 点估计或显著性结果修改。若发现未覆盖的语义缺陷，按预注册规则判定排除、Inconclusive 或新研究周期，不能回写标签挽救本研究。

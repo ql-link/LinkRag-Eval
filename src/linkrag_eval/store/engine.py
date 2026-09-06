@@ -1,7 +1,7 @@
 """评测自持库的异步引擎与建表入口。
 
 默认后端是本地 ``runs/linkrag_eval.sqlite3``。它不依赖远端 MySQL，不复用
-``src.database``，也不读生产 ``Settings``。旧 MySQL 仅可作为一次性只读迁移源。
+``src.database``，也不读生产 ``Settings``。
 
 schema 演进权威入口是 alembic/(``EvalBase.metadata``)。:func:`init_eval_schema` 的
 ``create_all`` 仅供单测 / 本地快速起库——生产环境用 alembic upgrade。
@@ -30,7 +30,7 @@ def eval_database_url(url: str | None = None) -> str:
 
         url = get_settings().database_url()
     if not url.startswith("sqlite+aiosqlite:///"):
-        raise RuntimeError("评测运行库只允许本地 SQLite；旧 MySQL 请使用专用迁移脚本。")
+        raise RuntimeError("评测运行库只允许本地 SQLite。")
     return url
 
 

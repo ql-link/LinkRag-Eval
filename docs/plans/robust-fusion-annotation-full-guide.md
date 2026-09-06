@@ -1,9 +1,9 @@
 # 鲁棒融合研究标注全量操作手册
 
-> 记录：`ROBUST-FUSION-ANNOTATION-FULL-GUIDE-2026-08-29-v2`
+> 记录：`ROBUST-FUSION-ANNOTATION-FULL-GUIDE-2026-08-29-v8`
 > 日期：2026-08-29
 > 语言：简体中文
-> 当前阶段：P2 标注构念校准；Gate A/B 均未运行
+> 当前阶段：P2-05 校准已通过；v6-Dev 30-family 已完成 A/B 双审、提交锁定与主持人仲裁，人工接纳 28/30；Gate A/B 均未运行
 > 用途：团队标注工作的单一执行入口
 > 保密边界：本文不包含 `facilitator_key.jsonl` 中的案例答案
 
@@ -12,10 +12,12 @@
 | 项目 | 内容 |
 | --- | --- |
 | 制品类型 | 人工标注协议与操作手册 |
-| 主要上游 | 科研协议 v19、标注手册 v1、Internal Stress v6 数据协议、P2 校准包 v2 |
-| 当前标注 schema | `ROBUST-FUSION-ANNOTATION-HANDBOOK-2026-08-28-v1` |
-| 当前 P2 包 | `ROBUST-FUSION-P2-CALIBRATION-REPLAY-2026-08-29-v2` |
-| P2 manifest SHA-256 | `a8eee3dba3e0a7fa5822039ce1f39b7a6b917dec0025d2b83e854ec3a4cb0df2` |
+| 主要上游 | 科研协议 v26、标注手册 v2、Internal Stress v13 数据协议、C2 三分边界补充 v1、P2 v2 保留案例与 v3 五例替换包、Internal v6 Dev 双人盲审包 v1 |
+| 当前标注 schema | `ROBUST-FUSION-ANNOTATION-HANDBOOK-2026-08-29-v2` |
+| 当前 P2 组合 | v2 保留 7 例 + `ROBUST-FUSION-P2-CALIBRATION-PATCH-2026-08-29-v3` 替换 5 例 |
+| 当前 v6-Dev 组合 | 30 个结构合格 family 全部双审；28 个接纳、2 个拒绝；A/B 各 30 条资格、90 条候选、90 条候选对 |
+| C2 边界补充 | 8 个 Dev-only 管理员规划槽；当前 0 正文、0 答案键、0 人工标签，尚未发包 |
+| v3 补包 manifest SHA-256 | `19807a373e6dee0f15fd747819a82fdde1334d5f6437adf5ce4a65b694f783bd` |
 | Gate 资格 | 本文和 P2 校准结果均不构成 Gate A/B 证据 |
 | 核验状态 | 已与当前字段模板、机器合法组合和 P2 准入线逐项对账 |
 
@@ -26,8 +28,10 @@
 - 核心科研定义：[科研协议](robust-fusion-research.md)；
 - 详细语义规则：[事实关系与冲突标注手册](robust-fusion-annotation-handbook.md)；
 - v6 数据资格：[Internal Stress v6 数据协议](robust-fusion-internal-stress-v6.md)；
+- C2 类别平衡补充：[C2 三分边界最小补充方案](robust-fusion-c2-boundary-supplement.md)；
 - 实际空白字段表：`data/robust_fusion/derived/p2_calibration_v2/` 下的三份 CSV；
 - 正式双人人工工作副本：`runs/robust_fusion/p2_human_calibration_v2/`。
+- 当前 v6-Dev 双人盲审包：`runs/robust_fusion/internal_v6_deepseek_pilot_v2_human_review_v1/`。
 
 本文将规则、字段、合法组合、填写顺序、双人复核、仲裁、P2 准入线、v6 合成样本边界、文件位置和示例整合在一起。团队成员只需先读本文，再打开分配给自己的标注目录。
 
@@ -252,7 +256,7 @@ Query × candidate_id_a × candidate_id_b
 | `reviewer_id` | 当前校准使用 `A` / `B` |
 | `confidence` | `high` / `medium` / `low`；只表示把握度，不改变类别 |
 | `adjudication_status` | `single` / `agreed` / `disputed` / `adjudicated` / `unresolved` |
-| `handbook_version` | 当前为 `ROBUST-FUSION-ANNOTATION-HANDBOOK-2026-08-28-v1` |
+| `handbook_version` | 当前为 `ROBUST-FUSION-ANNOTATION-HANDBOOK-2026-08-29-v2` |
 
 `single` 由标注员初始填写；`agreed`、`disputed`、`adjudicated` 和最终 `unresolved` 由主持人或仲裁流程在两份初始结果锁定后写入。科研协议中偶见的 `adjudicated_status` 不是当前 P2 CSV 字段；当前唯一可执行字段名是 `adjudication_status`，不得自行新增同义列。
 
@@ -426,7 +430,15 @@ adjudicability=not_applicable
 - 最高相似候选、全部等价、全部冲突、模型/规则分歧、unresolved 和疑似 false negative 必须双审；
 - 合成反事实一次只能改变一个事实单元；
 - 生成样本必须与自然语料一样重新计算 Dense、Learned Sparse、BM25，不得手填分数、排名或命中路；
-- Dev 先导不得进入 GateA/Blind。v6 合成 Query 路径虽已获研究负责人确认，但在正式生成前仍须完成权威协议的文字对齐。
+- Dev 先导不得进入 GateA/Blind。v6 合成 Query 路径已写入科研协议 v26 与 Internal Stress v13；30-family 已得到 28/30 的双审人工接纳率，但仍只估计受控合成 family 的构造流程，不估计自然候选产率，也不自动获得确认性资格。三路执行的 v2/v3 失败与 v4 完整性拒收均原样保留；独立 v5 已完成 28 Query/112 Chunk/3,056 候选的真实三路物化，112/112 已标注候选和 28/28 gold target 均进入候选并集。该结果只关闭 Dev route-evidence 缺口，不改变人工标签、不完成正式 P4-02，也不授予 Gate 资格。
+
+### 13.7 C2 三分边界补充包
+
+- 本包固定为 8 个 Dev-only 微案例：numeric/version 各一条 `conditionally_adjudicable → detectable_only → unidentifiable` 匹配链，另加 direction 与 applicability 两个条件可裁决案例；
+- 当前管理员包只有 slot 与空模板，标注员不得据此开始填写；必须等待主持人完成正文生成、结构复核和新盲化目录分配；
+- `quota_plan`、目标 `adjudicability`、matched-chain 身份、构造角色、origin 和 facilitator key 都是管理员字段，不进入 A/B 包；
+- A/B 各固定填写 8 条案例资格、16 条候选和 8 条候选对；先锁后比，任何无法由具体 method-view 字段和确定性规则选边的条件可裁决案例必须拒绝，不得降类补数；
+- 通过只表示 Dev 测量边界获得更均衡校准，不进入 C2 的 held-out 10 项比较家族，也不授权 Gate A/B。
 
 ## 14. 双人复核、仲裁和一致性统计
 
@@ -465,9 +477,9 @@ adjudicability=not_applicable
 
 ### 15.1 包内容
 
-当前校准包：
+校准先从 v2 无类别提示包开始；首轮主持人审查发现 5 个案例的目标唯一性、原子性或可裁决措辞缺陷后，保留首轮失败记录，并使用 v3 五例补包一对一替换受影响案例，没有事后改 key 回算通过。
 
-历史 v1 因盲化输入包含与答案类别过度对应的 `quota_cell` 已退出正式入口；旧 DeepSeek/工具目录中的已填表只作流程试演，不能计入人工一致性或 P2-05。以下 v2 管理员包和独立空白交付目录才是当前唯一入口。
+历史 v1 因盲化输入包含与答案类别过度对应的 `quota_cell` 已退出正式入口；旧 DeepSeek/工具目录中的已填表只作流程试演，不能计入人工一致性或 P2-05。v2 是首轮正式输入，v3 只替换首轮被主持人判定为制品缺陷的 5 例；两轮原始结果均保留。
 
 ```text
 data/robust_fusion/derived/p2_calibration_v2/
@@ -569,6 +581,59 @@ runs/robust_fusion/p2_human_calibration_v2/
 
 P2 通过只说明“标注构念可操作”，允许进入 30-family 可构造率先导；它不是 Gate A 证据。
 
+### 16.1 本轮最终校准结果
+
+| 项目 | A–B | A–key | B–key | 结论 |
+| --- | ---: | ---: | ---: | --- |
+| 资格字段 | 12/12 | 12/12 | 12/12 | 通过 |
+| `target_relation` | 13/13 | 13/13 | 13/13 | 通过 |
+| 9 条冲突的 `conflict_type` | 9/9 | 9/9 | 9/9 | 通过 |
+| 9 条冲突的 `adjudicability` | 8/9 | 9/9 | 8/9 | 通过，准入线为 7/9 |
+| 唯一候选对 `same_fact` | 1/1 | 1/1 | 1/1 | 通过 |
+| 格式与零容忍构念错误 | 0 | 0 | 0 | 通过 |
+
+唯一分歧是 `RF-P2R2-02/C1` 的 `adjudicability`。Query 和候选正文已经明示 `102×0.55`，冻结的确定性算术规则可仅凭 method view 推出 `56.1`，因此最终标签为 `conditionally_adjudicable`。该规则在 v3 补包发放前完成澄清；B 的原始 `unidentifiable` 与冻结 key 均原样保存。
+
+最终 `P2-05=PASS`。主持人因创建 v3 补包而预先知道 key，所以不声称主持人盲态；A/B 独立盲标、提交先锁后比的审计主张成立。最终机器结论 SHA-256 为 `fe906b9e755135cfe4fe6607297aec5c5a0c2b2c0a0a5118e4c38ada9a01ef1c`，提交锁 SHA-256 为 `9d743fb23d4d88d128229a81d381aab444550e2663e11eacbe296cad0c722f82`。
+
+### 16.2 Internal v6 Dev 当前双人盲审包
+
+当前正式人工入口为：
+
+```text
+runs/robust_fusion/internal_v6_deepseek_pilot_v2_human_review_v1/
+├── annotator_a/
+│   ├── annotation_cases.jsonl
+│   ├── case_qualification.csv          # 30 行
+│   ├── candidate_annotation.csv        # 90 行
+│   ├── pair_annotation.csv             # 90 行
+│   └── 标注说明.md
+├── annotator_b/                         # 同样结构，案例/候选显示顺序独立打乱
+├── facilitator/                         # 只允许主持人读取
+└── facilitator_review/
+    ├── locked_submissions/              # A/B 六份原始提交快照
+    ├── frozen_inputs/                    # 发包输入与构造映射快照
+    ├── analysis_v3/                     # 机械校验、一致性与构造偏差
+    └── final_v1/                         # 最终标签、仲裁、接纳台账与 manifest
+```
+
+本轮 30 个 family 全部是自包含的虚构微型事实世界。包内 T1 是 evaluation view 中待复核的目标参照；不联网核实，也不把现实常识带入真值判断。Query、C1/C2/C3 和空的 method-view 元数据用于 `adjudicability`；判这个字段时不得用 T1 选正确侧。
+
+标注员看不到 generation ID、候选构造角色、冲突配额、origin、模型关系标签或源批次。A/B 的 case ID 和 candidate ID 集合相同，显示顺序不同，便于锁定后逐行比较。两人必须依次完成资格 → 候选 → 候选对，不能先读取 `pair_annotation.csv` 倒推候选类别，也不能进入另一人的目录或 `facilitator/`。
+
+交付 manifest SHA-256 为 `b5ad4ac4663e670be02e8e71eca5257e1106d420ac3153a8ac1fe155dd514db3`。该 hash 对应空白发包版本，人工填写没有重写它。主持人于比较答案前另建只读提交锁，SHA-256 为 `72d8b77ca601c925ff3840afc4812ac1395019d1930548cd98836201adefbb00`；最终裁定 manifest SHA-256 为 `654ff9ff1959aeb18895b8a872c34665c9a262510f13d79146aca6183650b99a`。
+
+### 16.3 Internal v6 Dev 最终双审结果
+
+- 两位标注员的资格字段与候选级四字段全部一致；候选对 89/90 一致；唯一分歧 `RF-V6HR-2A5D398D4D/C1-C3` 最终裁定为 `factual_conflict`。
+- 资格字段和四个候选字段的原始一致率、macro-F1、Krippendorff nominal alpha 与 Cohen kappa 均为 1.0。候选对的原始一致率为 0.9889、alpha 为 0.9767、kappa 为 0.9766；macro-F1 为 0.6617，因为唯一分歧恰好落在只出现一次的稀有 `same_fact` 类，故同时保留逐例审计而不以该宏平均单点否定整体一致性。
+- 原始提交的机械错误、非法组合和 unresolved 均为 0。B 有 26 条可凭 ID 定位但引号内不是完全逐字的省略/缩写式定位，作为格式警告原样保留；最终表采用逐字定位，最终警告为 0。
+- 模型构造角色不是答案键。`RF-V6HR-2A5D398D4D` 与 `RF-V6HR-E7058C1EB3` 的表面控制实际构成同槽事实冲突，两个 family 均拒绝；`RF-V6HR-0E6E7C8889/C2` 和 `RF-V6HR-2A5D398D4D/C2` 的预设类型由人工一致改判为 `numeric`。
+- 最终接纳 28/30（93.33%）。接纳后的主冲突类型为 numeric 9、version/time 8、negation/direction 7、applicability/condition 4。
+- 28 个主冲突的 `adjudicability` 全部为 `detectable_only`：本批能用于 Dev 冲突检测与压力构造校准，但不能单独验证 C2 三分边界。
+- 主持人创建过包与构造映射，所以不声称主持人盲态；只主张 A/B 角色隔离、输入无答案键、提交先锁后比。
+- 接纳项已经由 `scripts/materialize_robust_fusion_internal_v6_adjudicated_dev.py` 物化为 28 Query、112 文档、112 证据标签和 28 family assignment；release manifest SHA-256 为 `ad32fbb08a6b076dced1e438ff51060c46073b932cd259ff89beb157e5453bac`。这一步不生成三路分数，也不改变 Dev-only/Gate 禁入边界。
+
 ## 17. 两条完整示例
 
 以下为虚构示例，不来自正式 P2 校准包，也不泄露 facilitator key。
@@ -612,7 +677,7 @@ P2 通过只说明“标注构念可操作”，允许进入 30-family 可构造
 
 ## 18. 提交前检查清单
 
-标注员提交前逐项确认：
+P2 校准包标注员提交前逐项确认：
 
 - [ ] 只填写了自己的目录；
 - [ ] 没有查看另一人的文件或 facilitator key；
@@ -628,6 +693,23 @@ P2 通过只说明“标注构念可操作”，允许进入 30-family 可构造
 - [ ] 表头、ID、行数、行顺序和手册版本未被修改；
 - [ ] CSV 仍为 UTF-8 编码。
 
+Internal v6 Dev 标注员除遵守上述语义与格式规则外，另须确认：
+
+- [ ] 只进入了自己的 `annotator_a/` 或 `annotator_b/`；
+- [ ] 没有读取 `facilitator/`、另一标注员目录或任何模型原始响应；
+- [ ] 已填写 30 条案例资格、90 条候选和 90 条候选对；
+- [ ] 把包内 T1 用于资格/事实关系，但判 `adjudicability` 时没有用 T1 选边；
+- [ ] 没有联网核证虚构实体，也没有根据候选编号、顺序或风格猜构造角色；
+- [ ] 三张 CSV 的 ID、表头、行数、`reviewer_id`、`single` 状态和手册版本均未修改。
+
+C2 边界补充标注员只有收到主持人新分配的盲化目录后才开始，并须确认：
+
+- [ ] 自己的包恰含 8 条案例资格、16 条候选和 8 条候选对；
+- [ ] 包内没有 `quota_plan`、目标类别、matched-chain ID、构造角色、origin 或 facilitator key；
+- [ ] `conditionally_adjudicable` 的理由指出了具体 method-view 字段与确定性规则，而不是使用 T1 身份选边；
+- [ ] `detectable_only` 只声称能发现风险，`unidentifiable` 不声称能从 method view 识别真值；
+- [ ] 没有读取当前空白管理员目录或根据 slot 命名猜测答案。
+
 主持人验收前逐项确认：
 
 - [ ] A/B 两份提交均已记录 SHA-256 和时间；
@@ -640,8 +722,8 @@ P2 通过只说明“标注构念可操作”，允许进入 30-family 可构造
 
 ## 19. 版本、冻结与变更纪律
 
-1. 当前 schema 版本为 `ROBUST-FUSION-ANNOTATION-HANDBOOK-2026-08-28-v1`；
-2. 只有 P2 校准通过且所有分歧完成仲裁后，才可升级到 v2；
+1. 当前 schema 版本为 `ROBUST-FUSION-ANNOTATION-HANDBOOK-2026-08-29-v2`；
+2. P2 双人校准、五例替换重放、仲裁和机器复核已经通过；v2 已正式冻结；
 3. 任何改变既有样本类别的修订，必须记录日期、原因、是否看过相关结果和受影响案例，并重标全部受影响 Dev 记录；
 4. Gate A 快照封存后，不得因点估计、显著性或方法表现修改手册；
 5. 未覆盖的语义缺陷只能按预注册规则排除、记为 Inconclusive，或进入新的研究周期；
@@ -649,11 +731,14 @@ P2 通过只说明“标注构念可操作”，允许进入 30-family 可构造
 
 ## 20. 当前状态与下一步
 
-截至 2026-08-28：
+截至 2026-08-29：
 
-- 标注字段、操作定义、合法组合和 P2 准入线已经冻结在 v1；
-- 12 案例盲化包和两份独立工作副本已经存在；
-- 尚未产生 A/B 的人工标注结果；
+- 标注字段、操作定义、合法组合和 P2 准入线已经冻结在标注手册 v2；
+- A/B 双人独立校准、五例替换重放、主持人仲裁与机器复核已完成，`P2-05=PASS`；
+- 所有原始提交、失败首轮、锁定快照和最终裁定均已保留；
 - Gate A/B 均未运行；
-- 当前唯一需要团队执行的动作，是由 A/B 分别完成各自目录中的三份 CSV；
-- 两份提交锁定并通过 P2 后，才启动 Internal Stress v6 的 30-family DeepSeek 开发集先导。
+- Internal Stress v6 的 30-family 首批机械结构产率为 24/30；不可覆盖恢复链补足 30 个结构合格提案；
+- A/B 双人盲审、提交锁定、机械校验和主持人仲裁均已完成；最终接纳 28/30，未解决分歧为 0；接纳项已完成四张 Dev 摄取表物化；
+- Dev 三路证据 v5 已独立核验：三路各覆盖 28/28 Query，112/112 已标注候选入并集；该运行没有新增或修改人工标签，evaluation view 仍只来源于既有双审与仲裁；
+- 28 个接纳 family 只允许进入 `internal-v6-dev` 校准，任何一条都不得迁入 GateA/Blind；GateA/Blind 仍为空并保持 `NOT_ELIGIBLE`。
+- C2 三分边界 8 槽补充已完成空白管理员初始化，但案例正文、答案键和 A/B 标注均未开始；不得把“规划槽已存在”写成标注完成。

@@ -8,7 +8,6 @@ import os
 from collections import Counter, defaultdict
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "docs/reports/REPORT_INDEX.md"
 REPORT_ROOTS = (ROOT / "runs/golden_v2", ROOT / "docs/reports")
@@ -64,6 +63,11 @@ def _stage(path: Path) -> str:
 def _purpose(path: Path) -> str:
     rel = path.relative_to(ROOT).as_posix().lower()
     name = path.name.lower()
+
+    if name == "robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md":
+        return "历史 R2：四份提交先锁后验、机械预审和 relation 7 / similarity 96 待仲裁；退役不等于仲裁完成。"
+    if name == "robust_fusion_r2_similarity_failure_diagnostic_2026_08_29.md":
+        return "历史 R1 相似度失败诊断；文件名含 R2 表示后续重设计背景，不是 R2 最终测量结果。"
 
     rules = (
         (("acceptance_report", "acceptance_summary"), "汇总阶段验收指标、结论、风险与待办。"),
@@ -146,6 +150,7 @@ def render_index(reports: list[Path], output: Path = DEFAULT_OUTPUT) -> str:
         "",
         "> 本索引覆盖 `runs/golden_v2/` 与 `docs/reports/` 下的阶段报告。",
         "> 历史报告必须保留原路径；新一轮测试使用新的 run/batch 目录或带时间戳文件名，禁止覆盖旧报告。",
+        "> 本索引提供证据导航，不授权重跑或继续旧流程。当前工作见 [CURRENT_STATUS](../CURRENT_STATUS.md)，旧协议见[历史索引](../archive/robust-fusion/README.md)。",
         "",
         f"当前共收录 **{len(reports)}** 个报告及机器可读配套产物：{summary}。",
         "",

@@ -1,7 +1,7 @@
 """rag 纯函数契约(防签名漂移)。
 
-eval 对 rag 的依赖只剩 **chunk 切分** 与 **bm25 分词**(dense/sparse 已移到 eval llm 模块)。
-只验这两处白名单纯函数存在且签名未变——轻量,不触发网络/模型推理。需 toLink-Rag 可 import,
+eval 的产物计算仅复用 rag 的 **chunk 切分**，BM25 分词由 eval 的 SQLite FTS5 模块负责。
+验证 chunk 接口存在且签名未变——轻量,不触发网络/模型推理。需 toLink-Rag 可 import,
 故标 ``contract``；普通本地环境缺依赖时跳过，CI 设置 ``LINKRAG_EVAL_REQUIRE_RAG=1``
 后会在收集前直接失败。
 """
@@ -27,10 +27,3 @@ def test_chunking_engine_aprocess_signature() -> None:
 
     params = inspect.signature(ChunkingEngine.aprocess).parameters
     assert "text" in params and "source_file" in params
-
-
-def test_ragflow_tokenizer_contract() -> None:
-    from src.core.preprocessor.ragflow_tokenizer import RagFlowTokenizer, TokenizedText
-
-    assert hasattr(RagFlowTokenizer, "tokenize")
-    assert {"coarse_tokens", "fine_tokens"} <= set(TokenizedText.__dataclass_fields__)

@@ -560,20 +560,6 @@ def _add_golden_v2(sub: argparse._SubParsersAction) -> None:
     )
     scale.add_argument("--no-markdown", action="store_true", help="只输出 JSON,不输出 Markdown")
 
-    blind_freeze = v2.add_parser("blind-freeze", help="冻结 Blind v4 与全部参数文件")
-    blind_freeze.add_argument("--samples", required=True)
-    blind_freeze.add_argument("--tune", action="append", required=True)
-    blind_freeze.add_argument("--config", action="append", required=True)
-    blind_freeze.add_argument("--out-dir", required=True)
-    blind_freeze.add_argument("--min-samples", type=int, default=500)
-
-    blind_claim = v2.add_parser("blind-claim", help="原子占用 Blind v4 唯一运行机会")
-    blind_claim.add_argument("--out-dir", required=True)
-    blind_claim.add_argument("--run-id", required=True)
-
-    blind_seal = v2.add_parser("blind-seal", help="封存 Blind v4 最终结果 hash")
-    blind_seal.add_argument("--out-dir", required=True)
-    blind_seal.add_argument("--result", required=True)
 
 
 def _add_cleaning(sub: argparse._SubParsersAction) -> None:
@@ -970,9 +956,8 @@ async def _do_bm25_backfill(args) -> int:
     identity = await store.identity()
     print(f"\nBM25 SQLite FTS5 回填完成:{total} chunks → {path}")
     print(
-        "sidecar identity: "
-        f"datasets={identity['dataset_counts']} "
-        f"sha256={identity['content_sha256']}"
+        f"sidecar: schema={identity['schema_version']} "
+        f"datasets={identity['dataset_counts']}"
     )
     return 0
 
@@ -1092,7 +1077,6 @@ async def _do_query_rewrite(args) -> int:
 
 
 async def _do_ltr(args) -> int:
-    import hashlib
     import json
     from pathlib import Path
 
@@ -1184,14 +1168,16 @@ async def _do_ltr(args) -> int:
             contents.get("contents", contents),
             out_dir=Path(args.registry_dir) / args.model_version,
             model_version=args.model_version,
-            training_data_sha256=hashlib.sha256(cache_path.read_bytes()).hexdigest(),
             short_fallback_config=short_config,
             n_estimators=args.n_estimators,
             latency_budget_ms=args.latency_budget_ms,
             timeout_ms=args.timeout_ms,
             seed=args.seed,
         )
-        print(json.dumps(manifest.__dict__, ensure_ascii=False, indent=2))
+        print(
+            f"已保存 LambdaMART {manifest.model_version} → "
+            f"{Path(args.registry_dir) / args.model_version}"
+        )
         return 0
 
     if args.ltr_command == "activate":
@@ -1809,40 +1795,6 @@ async def _do_golden_v2(args) -> int:
             f"chunks={len(chunks)} → {cache.path}"
         )
         return 0
-    if args.golden_v2_command == "blind-freeze":
-        from linkrag_eval.golden_v2.blind_v4 import freeze_blind_v4
-
-        report = freeze_blind_v4(
-            args.samples,
-            tune_paths=args.tune,
-            frozen_config_paths=args.config,
-            out_dir=args.out_dir,
-            min_samples=args.min_samples,
-        )
-        print(json.dumps(report, ensure_ascii=False, indent=2))
-        return 0
-    if args.golden_v2_command == "blind-claim":
-        from linkrag_eval.golden_v2.blind_v4 import claim_blind_v4_run
-
-        print(
-            json.dumps(
-                claim_blind_v4_run(args.out_dir, run_id=args.run_id),
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
-        return 0
-    if args.golden_v2_command == "blind-seal":
-        from linkrag_eval.golden_v2.blind_v4 import seal_blind_v4_result
-
-        print(
-            json.dumps(
-                seal_blind_v4_result(args.out_dir, result_path=args.result),
-                ensure_ascii=False,
-                indent=2,
-            )
-        )
-        return 0
     print("错误:缺少 golden-v2 子命令", file=sys.stderr)
     return 2
 
@@ -1972,7 +1924,6 @@ def main(argv: list[str] | None = None) -> int:
         print(f"qdrant_host     = {s.qdrant_host}")
         print(f"qdrant_prefix   = {s.qdrant_prefix}")
         print(f"qdrant_buckets  = {s.qdrant_bucket_count}")
-        print(f"qdrant_bm25     = {s.qdrant_bm25_collection}/{s.qdrant_bm25_vector_name}")
         print(f"sqlite_bm25     = {s.bm25_sqlite_path}")
         print(f"database        = {s.database_url()}")
         print(f"judge_model     = {s.judge_model or '(空)'}  api_key={masked}")

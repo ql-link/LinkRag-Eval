@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from linkrag_eval.golden.schema import GoldenSample
 from linkrag_eval.app import format_retrieval_summary
+from linkrag_eval.golden.schema import GoldenSample
 from linkrag_eval.metrics.retrieval import RecallAtK
 from linkrag_eval.models import Layer, QuestionType, RankedHit, Snapshot, StageOutput
 from linkrag_eval.runners import RunContext, run_stage
@@ -14,7 +14,7 @@ from linkrag_eval.runners import RunContext, run_stage
 def _snapshot() -> Snapshot:
     return Snapshot(
         run_id="r1", git_sha="abc", sparse_vector_provider="ark", top_k=10,
-        score_threshold=0.0, enabled_sources=["dense", "sparse"], rrf_k=60,
+        route_score_thresholds={"dense": 0.0, "sparse": 0.0}, enabled_sources=["dense", "sparse"], rrf_k=60,
         rerank_top_n=None, chat_model="", judge_model="", generator_model="",
         token_budget=0, prompt_version="v1",
     )

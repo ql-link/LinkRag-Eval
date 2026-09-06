@@ -18,7 +18,7 @@ def _snapshot(run_id: str) -> Snapshot:
         git_sha="abc1234",
         sparse_vector_provider="ark:bge-m3",
         top_k=10,
-        score_threshold=0.0,
+        route_score_thresholds={"dense": 0.0, "sparse": 0.0},
         enabled_sources=["dense", "sparse"],
         rrf_k=60,
         rerank_top_n=None,
@@ -28,11 +28,10 @@ def _snapshot(run_id: str) -> Snapshot:
         token_budget=0,
         prompt_version="v1",
         bm25_mode="sqlite_fts5",
-        bm25_sidecar_identity={"content_sha256": "sidecar-sha", "chunk_count": 2},
+        bm25_sidecar_identity={"schema_version": 1, "chunk_count": 2},
         computer_fingerprint={"dense": {"model": "dense-v1"}},
         feature_version="recall_pipeline_v1",
         git_dirty=True,
-        git_worktree_sha256="worktree-sha",
     )
 
 
@@ -82,9 +81,8 @@ async def test_db_result_store_saves_and_loads_baseline() -> None:
         assert json.loads(run.computer_fingerprint) == {"dense": {"model": "dense-v1"}}
         saved_snapshot = json.loads(run.snapshot_json)
         assert saved_snapshot["bm25_mode"] == "sqlite_fts5"
-        assert saved_snapshot["bm25_sidecar_identity"]["content_sha256"] == "sidecar-sha"
+        assert saved_snapshot["bm25_sidecar_identity"] == {"schema_version": 1, "chunk_count": 2}
         assert saved_snapshot["git_dirty"] is True
-        assert saved_snapshot["git_worktree_sha256"] == "worktree-sha"
         assert run.run_quality == "non-clean"
         assert run.failed_samples == 1
         assert run.failed_sources_json == '{"dense": 1, "sparse": 1}'

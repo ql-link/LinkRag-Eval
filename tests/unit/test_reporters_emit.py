@@ -28,7 +28,7 @@ from linkrag_eval.reporters.emit import (
 def _snapshot(run_id: str) -> Snapshot:
     return Snapshot(
         run_id=run_id, git_sha="abc", sparse_vector_provider="bge_m3", top_k=10,
-        score_threshold=0.0, enabled_sources=["dense", "sparse"], rrf_k=60,
+        route_score_thresholds={"dense": 0.0, "sparse": 0.0}, enabled_sources=["dense", "sparse"], rrf_k=60,
         rerank_top_n=None, chat_model="", judge_model="", generator_model="",
         token_budget=0, prompt_version="v1",
     )

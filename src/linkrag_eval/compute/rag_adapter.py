@@ -1,22 +1,20 @@
-""":class:`ProductComputer` 的默认实现——**唯一允许 import toLink-Rag(src.*)的文件**。
+""":class:`ProductComputer` 的默认实现——compute 目录内唯一的生产计算 adapter。
 
 把 rag 的纯计算函数封装成产物级接口:
 - chunk 切分 → ``ChunkingEngine.aprocess``(rag)
-- bm25 分词 → ``RagFlowTokenizer.tokenize``(rag)
 - dense / sparse 向量 → 注入的 :class:`DenseEncoder` / :class:`SparseEncoder`(eval 自带 llm 模块,
   EVAL_EMBED_* / EVAL_SPARSE_* 配置)。生产 dense 系统工厂读 src.config、sparse 无系统工厂(只
   per-user),为统一与彻底解耦,二者均由 eval 的 llm 模块承载,**不经 rag**。
 
-故本文件对 rag 的依赖只剩 chunk 切分与 bm25 分词两处。rag 改了这两处签名,只打穿本文件
-+ 契约测试,在一处修。
+本文件仅复用 rag 的 chunk 切分能力，接口变化在本 adapter 与契约测试内收口。
 """
 
 from __future__ import annotations
 
-from typing import Any, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 from linkrag_eval.compute.protocol import (
-    Bm25Tokens,
     DenseEncoder,
     DenseVec,
     EvalChunk,
@@ -34,12 +32,12 @@ class DenseEncoderNotConfigured(RuntimeError):
 
 
 class RagProductComputer:
-    """默认产物计算器。chunk/bm25 复用 rag 纯函数;dense/sparse 由 eval llm 注入缝提供。
+    """默认产物计算器。chunk 复用 rag 纯计算；dense/sparse 由 eval llm 注入。
 
     Args:
         dense_encoder / sparse_encoder: eval 自带编码器(按 EVAL_EMBED_* / EVAL_SPARSE_* 配置);
             缺省自动装配,未配置则延迟到调用时报清晰错误。
-        chunking_engine_factory / tokenizer_factory: 测试可注入 fake。
+        chunking_engine_factory: 测试可注入 fake。
     """
 
     def __init__(
@@ -48,13 +46,10 @@ class RagProductComputer:
         dense_encoder: DenseEncoder | None = None,
         sparse_encoder: SparseEncoder | None = None,
         chunking_engine_factory: Any | None = None,
-        tokenizer_factory: Any | None = None,
     ) -> None:
         self._dense_encoder = dense_encoder if dense_encoder is not None else _try_build_dense()
         self._sparse_encoder = sparse_encoder if sparse_encoder is not None else _try_build_sparse()
         self._chunker_factory = chunking_engine_factory or _default_chunking_engine
-        self._tokenizer_factory = tokenizer_factory or _default_tokenizer
-        self._tokenizer = None
 
     # —— chunk 切分(rag)——
     async def compute_chunks(
@@ -99,12 +94,6 @@ class RagProductComputer:
             raise ValueError(f"sparse 数量不符:got {len(vecs)}, expected {len(contents)}")
         return list(vecs)
 
-    # —— bm25 分词(rag)——
-    def compute_bm25_tokens(self, content: str) -> Bm25Tokens:
-        tok = self._ensure_tokenizer()
-        t = tok.tokenize(content)
-        return Bm25Tokens(coarse=t.coarse_tokens, fine=t.fine_tokens)
-
     @property
     def dense_dim(self) -> int:
         return self._dense_encoder.dim if self._dense_encoder is not None else 0
@@ -116,40 +105,29 @@ class RagProductComputer:
             "sparse_encoder": getattr(self._sparse_encoder, "model_name", None),
         }
 
-    def _ensure_tokenizer(self):
-        if self._tokenizer is None:
-            self._tokenizer = self._tokenizer_factory()
-        return self._tokenizer
-
 
 # —— eval llm 编码器缺省装配(未配置不在构造期失败;调用时再报)——
 def _try_build_dense():
-    from linkrag_eval.llm.dense_client import build_dense_embedder
+    from linkrag_eval.llm.dense_client import DenseEncodeError, build_dense_embedder
 
     try:
         return build_dense_embedder()
-    except Exception:
+    except DenseEncodeError:
         return None
 
 
 def _try_build_sparse():
-    from linkrag_eval.llm.sparse_client import build_sparse_encoder
+    from linkrag_eval.llm.sparse_client import SparseEncodeError, build_sparse_encoder
 
     try:
         return build_sparse_encoder()
-    except Exception:
+    except SparseEncodeError:
         return None
 
 
-# —— rag 纯函数(chunk 切分 / bm25 分词):此处(且仅此处)触碰 rag,惰性 import ——
+# —— rag chunk 切分：惰性 import ——
 def _default_chunking_engine():
     from src.core.splitter.factory import _create_structured_chunking_engine
     from src.core.splitter.llm_embedding_client import create_lazy_system_embedding_client
 
     return _create_structured_chunking_engine(embedder=create_lazy_system_embedding_client())
-
-
-def _default_tokenizer():
-    from src.core.preprocessor.ragflow_tokenizer import RagFlowTokenizer
-
-    return RagFlowTokenizer()

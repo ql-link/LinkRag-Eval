@@ -1,0 +1,49 @@
+{
+  "artifact_version": "ROBUST-FUSION-HUMAN-ANNOTATION-VERIFICATION-2026-08-29-v1",
+  "verified_on": "2026-08-29",
+  "verification_authority": "research_lead",
+  "verification_scope": "P2 calibration and Internal Stress v6 Dev formal annotation provenance",
+  "privacy": {
+    "personal_identifiers_recorded": false,
+    "role_identifiers_only": true
+  },
+  "p2_calibration": {
+    "decision": "PASS",
+    "formal_human_annotation": true,
+    "human_annotator_count": 2,
+    "annotator_roles": [
+      "A",
+      "B"
+    ],
+    "independent_blind_submissions": true,
+    "model_or_tool_generated_submission_used": false,
+    "all_disagreements_adjudicated": true,
+    "machine_validation_error_count": 0,
+    "facilitator_blindness_claimed": false,
+    "final_decision_sha256": "fe906b9e755135cfe4fe6607297aec5c5a0c2b2c0a0a5118e4c38ada9a01ef1c",
+    "submission_lock_sha256": "9d743fb23d4d88d128229a81d381aab444550e2663e11eacbe296cad0c722f82",
+    "gate_a_evidence": false,
+    "gate_b_evidence": false
+  },
+  "internal_v6_dev": {
+    "formal_human_annotation": true,
+    "human_annotator_count": 2,
+    "annotator_roles": [
+      "A",
+      "B"
+    ],
+    "independent_blind_submissions": true,
+    "model_or_tool_generated_submission_used": false,
+    "all_disagreements_adjudicated": true,
+    "machine_validation_error_count": 0,
+    "reviewed_family_count": 30,
+    "accepted_family_count": 28,
+    "rejected_family_count": 2,
+    "human_truth_status": "ADJUDICATED_DEV_ONLY",
+    "final_result_sha256": "32bb4c8d3740919ded2ffdab89f5848c10ef766941a10f1a2e0afca10627fa27",
+    "final_manifest_sha256": "654ff9ff1959aeb18895b8a872c34665c9a262510f13d79146aca6183650b99a",
+    "submission_lock_sha256": "72d8b77ca601c925ff3840afc4812ac1395019d1930548cd98836201adefbb00",
+    "release_manifest_sha256": "ad32fbb08a6b076dced1e438ff51060c46073b932cd259ff89beb157e5453bac",
+    "gate_eligibility": "NOT_ELIGIBLE"
+  }
+}

@@ -6,11 +6,10 @@
 
 不经 ``ChunkRecordDB``:payload 只需 ``chunk_id/user_id/set_id/doc_id``,直接构点(见 point_factory._payload)。
 dense 是 named ``dense`` 向量、sparse 是 named(名取自 ``EVAL_SPARSE_VECTOR_NAME``,默认
-``sparse_text``)。BM25 使用 eval 自持 SQLite FTS5 sidecar；当前 LinkRag 已删除的旧
-``qdrant_bm25`` 模块不会在这里恢复。
+``sparse_text``)。BM25 使用 eval 自持 SQLite FTS5 sidecar。
 
 护栏:前缀必须含 ``eval``,否则构造期拒跑——防写串生产 collection。
-本文件是允许 import toLink-Rag 的三个 adapter 之一(Qdrant 原语)。rag import 全部惰性,
+本文件是允许 import toLink-Rag 的四个 adapter 之一(Qdrant 原语)。rag import 全部惰性,
 使包在无 rag 环境仍可导入;注入 ``index_store`` fake 即可单测编排,不连真 Qdrant。
 """
 
@@ -37,7 +36,7 @@ class EvalPoint:
 
 
 class EvalVectorStore:
-    """把 eval 点写进 eval 前缀 Qdrant collection(dense unnamed + sparse named)。"""
+    """把 eval 点写进 eval collection 的 named dense／sparse，BM25 写本地 FTS5。"""
 
     def __init__(
         self,
@@ -49,24 +48,18 @@ class EvalVectorStore:
         api_key: str | None = None,
         index_store: Any | None = None,
         sparse_vector_name: str | None = None,
-        qdrant_bm25_store: Any | None = None,
-        bm25_encoder: Any | None = None,
-        bm25_mode: str = "qdrant_bm25",
-        bm25_collection: str | None = None,
-        bm25_vector_name: str | None = None,
+        bm25_store: Any | None = None,
+        bm25_mode: str = "stub",
         bm25_sqlite_path: str | None = None,
         bm25_sqlite_coarse_weight: float = 2.0,
         bm25_sqlite_fine_weight: float = 1.0,
-        bm25_k1: float = 1.2,
-        bm25_b: float = 0.75,
-        bm25_avgdl: float = 200.0,
-        bm25_avgdl_fine: float = 220.0,
-        bm25_coarse_boost: float = 2.0,
     ) -> None:
         if "eval" not in prefix:
             raise RuntimeError(
                 f"EvalVectorStore 前缀 {prefix!r} 不含 'eval';为防写串生产,拒绝构造。"
             )
+        if bm25_mode not in {"stub", "sqlite_fts5"}:
+            raise ValueError(f"不支持的 BM25 模式: {bm25_mode!r}")
         self._prefix = prefix
         self._user_id = user_id
         self._bucket_id = _route_bucket(bucket_count, user_id)
@@ -75,25 +68,11 @@ class EvalVectorStore:
             self._collection_name, qdrant_host, api_key
         )
         self._sparse_name = sparse_vector_name or "sparse_text"
-        if bm25_collection is not None and "eval" not in bm25_collection:
-            raise RuntimeError(
-                f"Qdrant BM25 collection {bm25_collection!r} 不含 'eval';为防写串生产,拒绝构造。"
-            )
-        self._bm25_store = qdrant_bm25_store
-        self._bm25_encoder = bm25_encoder
+        self._bm25_store = bm25_store
         self._bm25_mode = bm25_mode
-        self._bm25_collection = bm25_collection
-        self._bm25_vector_name = bm25_vector_name or "bm25_text"
         self._bm25_sqlite_path = bm25_sqlite_path
         self._bm25_sqlite_coarse_weight = bm25_sqlite_coarse_weight
         self._bm25_sqlite_fine_weight = bm25_sqlite_fine_weight
-        self._bm25_k1 = bm25_k1
-        self._bm25_b = bm25_b
-        self._bm25_avgdl = bm25_avgdl
-        self._bm25_avgdl_fine = bm25_avgdl_fine
-        self._bm25_coarse_boost = bm25_coarse_boost
-        self._qdrant_host = qdrant_host
-        self._api_key = api_key
         self._collection_ready = False
         self._sparse_ready = False
         self._bm25_ready = False
@@ -115,6 +94,7 @@ class EvalVectorStore:
         pts = list(points)
         if not pts:
             return
+        bm25_points = self._bm25_points(dataset_id, pts)
         vector_size = len(pts[0].dense)
         if vector_size <= 0:
             raise ValueError("dense 向量维度为 0,无法建 collection。")
@@ -137,7 +117,6 @@ class EvalVectorStore:
                 points=[self._sparse_point(p, dataset_id) for p in sparse_pts],
             )
 
-        bm25_points = self._bm25_points(dataset_id, pts)
         if bm25_points:
             bm25_store = self._ensure_bm25_store()
             if not self._bm25_ready:
@@ -202,10 +181,7 @@ class EvalVectorStore:
                 for p in bm25_items
                 if p.bm25_tokens is not None
             ]
-        raise NotImplementedError(
-            "EVAL_BM25_MODE=qdrant_bm25 依赖的生产模块已删除；"
-            "Gate A 研究固定使用 eval 自持 sqlite_fts5。"
-        )
+        raise ValueError("写入 BM25 tokens 需要启用 sqlite_fts5。")
 
     def _ensure_bm25_store(self):
         if self._bm25_mode == "sqlite_fts5":
@@ -218,18 +194,15 @@ class EvalVectorStore:
                     fine_weight=self._bm25_sqlite_fine_weight,
                 )
             return self._bm25_store
-        raise NotImplementedError(
-            "EVAL_BM25_MODE=qdrant_bm25 依赖的生产模块已删除；请使用 sqlite_fts5。"
-        )
+        raise ValueError("BM25 存储仅在 sqlite_fts5 模式下启用。")
 
 
 # —— 默认装配:此处(允许的 adapter 文件)惰性触碰 rag / qdrant-client ——
 def _route_bucket(bucket_count: int, user_id: int) -> int:
-    """重放历史 eval collection 的固定路由，不依赖已删除的生产 BucketRouter。
+    """按 eval 的固定 routing 常量计算 bucket，供当前写入与召回共用。
 
-    旧契约的公开规则就是 ``crc32(str(user_id)) % bucket_count``。这里保留该数据布局
-    兼容性，但只把结果解析成现行 ``QdrantIndexStore(collection_name=...)`` 所需的
-    显式 collection 名；不会在生产仓库恢复旧抽象。
+    两端必须使用相同规则，才能访问同一 collection。这里只计算存储位置，
+    不依赖生产 BucketRouter，也不读取用户配置。
     """
 
     if bucket_count <= 0:
@@ -287,14 +260,7 @@ def build_eval_vector_store(settings=None) -> EvalVectorStore:
         qdrant_host=settings.qdrant_host,
         sparse_vector_name=settings.sparse_vector_name,
         bm25_mode=settings.bm25_mode,
-        bm25_collection=settings.qdrant_bm25_collection,
-        bm25_vector_name=settings.qdrant_bm25_vector_name,
         bm25_sqlite_path=settings.bm25_sqlite_path,
         bm25_sqlite_coarse_weight=settings.bm25_sqlite_coarse_weight,
         bm25_sqlite_fine_weight=settings.bm25_sqlite_fine_weight,
-        bm25_k1=settings.bm25_k1,
-        bm25_b=settings.bm25_b,
-        bm25_avgdl=settings.bm25_avgdl,
-        bm25_avgdl_fine=settings.bm25_avgdl_fine,
-        bm25_coarse_boost=settings.bm25_coarse_boost,
     )

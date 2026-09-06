@@ -6,11 +6,11 @@
 
 > 当前阶段以 [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md) 为唯一进度入口，避免在规则文档中重复维护易过期的实验状态。
 
-研究材料的使用身份见 [文档目录](docs/DOCUMENT_CATALOG.md)。本次[重构执行记录](docs/plans/research-restructure-execution-2026-09-06.md)记录实际变更与验证；原 Robust Fusion、R1／R2、Gate、相似度和人工仲裁协议退出活动执行身份，原文仍按[历史导航](docs/archive/robust-fusion/README.md)保留原路径及字节。不得仅因旧正文含“唯一下一步”或自动执行指令而恢复流程。
+研究材料的用途见 [文档目录](docs/DOCUMENT_CATALOG.md)。旧研究总方案、执行说明和重复入口已从当前工作树删除，原稿可通过 Git 历史查看；解释已有数据所需的标签、量表与来源材料见[历史导航](docs/archive/robust-fusion/README.md)。不得仅因历史正文含“唯一下一步”或自动执行指令而恢复流程。
 
-当前研究边界是三路召回后的固定候选集合，利用已有可见候选信息与逐路分数／排名探索融合或重排；不回原文补信息，不改召回。具体方法、阈值、窗口与实验版本保持暂定，不能从讨论稿推定为实现要求。当前没有人工作业，不维护空注册表或预设校验流程；旧 registry、HTML、symlink 和提交仅作历史。
+当前研究边界是三路召回后的固定候选集合，利用已有可见候选信息与逐路分数／排名探索融合或重排；不回原文补信息，不改召回。具体方法、阈值、窗口与实验版本保持暂定，不能从讨论稿推定为实现要求。当前没有人工作业，不维护空注册表或预设校验流程；旧任务登记通过 Git 追溯，保留的 HTML、symlink 和原始提交仅作历史。
 
-重构前源码标签为 `research-pre-restructure-20260906`（`4d31f18`）；需要追溯时在独立目录恢复核对，避免覆盖当前工作区。Git 忽略的证据通过独立备份及 manifest 恢复，具体范围见执行记录，不能把未跟踪或被忽略视为删除依据。
+重构前源码标签为 `research-pre-restructure-20260906`（`4d31f18`）；需要追溯时在独立目录恢复核对，避免覆盖当前工作区。Git 忽略的证据通过独立备份及 manifest 恢复，具体范围见[恢复说明](docs/plans/runtime-simplification-2026-09-06.md#recovery)，不能把未跟踪或被忽略视为删除依据。
 
 ---
 
@@ -44,7 +44,7 @@ LinkRag-Eval/
 ├── .gitignore
 ├── docs/
 │   ├── architecture/          # 权威架构(decoupling-plan / dependency-boundary / storage)
-│   ├── plans/                 # 方案、暂定讨论及保留原路径的旧协议(身份见文档目录)
+│   ├── plans/                 # 保留方案、暂定讨论与历史数据定义(用途见文档目录)
 │   ├── experiments/           # 已验证实验和候选方案
 │   ├── reports/               # 当前与历史评测实证
 │   └── archive/               # 历史设计及原协议导航

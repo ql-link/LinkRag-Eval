@@ -29,7 +29,7 @@ submission lock 位于：
 
 仓库此前没有 R2 人工提交的正式审阅/finalizer 入口。该缺口被记录为冻结协议的缺失执行实现，不是 protocol、estimand、分母、编码器、统计口径或门槛变更。解析真实答案前，独立封存 spec、代码、CLI 与不使用真实结果的合成测试：
 
-- spec: `docs/plans/robust-fusion-r2-human-review-finalization-v1.md`
+- spec: [docs/plans/robust-fusion-r2-human-review-finalization-v1.md](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/robust-fusion-r2-human-review-finalization-v1.md)
 - preparation manifest: `94fd5cafe6e0d23dbef3884eea45f97eaff171d3441cf4e6b7e5d9aa2ad08e77`
 - preparation receipt: `eab99acea6a32b18940fbcaccf759f783877f961eb4f3531f5b23dbdd9cb4b02`
 - seal 明确 `submission_answers_parsed_by_seal=false`

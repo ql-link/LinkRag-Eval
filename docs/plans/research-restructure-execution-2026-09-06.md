@@ -48,3 +48,15 @@
 新 `human_tasks/registry.json` 的活动任务和计划接触点均为空；旧 registry、HTML 与三个链接保留。顶层人工作业说明和 R2 目录新 README 提醒历史身份，R2 仍为待仲裁。报告索引明确历史证据用途，并校正文件名含 R2 的失败诊断实际分析 R1 的说明；原报告未改。
 
 验证：12 份当前入口共 168 个本地链接存在，21 份原协议与 S0 逐字节一致；报告索引单测 2 passed；当前空 registry 检查 PASS，读取输入数为 0。该检查不读取历史注册表或人工提交。
+
+S1 版本：`329cdcd`（`docs(restructure): 分离当前研究入口与历史协议`）。
+
+## S2：通用能力抽离
+
+新增四个叶子模块及其测试，不增加方法框架：`compute/similarity.py` 保留文本规范化、float32 指纹及 float64 余弦；`compute/vector_diagnostics.py` 保留描述性向量诊断，去除旧流程 policy ID；`retrieval/candidate_evidence.py` 只投影候选证据和校验已知评价字段；`human_task_entrypoints.py` 与新 checker 使用显式注册表。
+
+候选工具显式接收语料允许集和完整路由列表，不读取 release、标签、模型或存储。候选与逐路顺序、分数、缺失值及并集检查保留；摘要 `route_hit_counts` 明确统计当前 `route_hits`，不同于生产响应中过滤前的同名来源计数。字段名护栏不是自由文本泄漏检测器。
+
+独立复核发现原人工校验器会跟随工作区内的文件链接，因此迁出时补充角色目录归属检查：所有输入和已有／断链输出先验证，再读取任何 CSV 行数。checker 不仲裁答案，但显式指定非空 registry 时会读取对应指南和输入 CSV；默认空 registry 不触及历史数据。
+
+验证：四份新单测 **64 passed**；数值模块原有 12 个函数在抽离时 AST 一致，人工校验器的上述隔离修复另有临时目录负测。迁移前后工具均未运行编码器或旧研究阶段。

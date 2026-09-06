@@ -189,14 +189,18 @@ def test_bm25_collection_guard_rejects_non_eval() -> None:
         )
 
 
-def test_build_eval_vector_store_uses_eval_sparse_vector_name() -> None:
+def test_build_eval_vector_store_uses_eval_sparse_vector_name(monkeypatch) -> None:
     fake = _FakeIndexStore()
+    monkeypatch.setattr(
+        "linkrag_eval.store.vector_store._build_index_store", lambda *_args: fake
+    )
     settings = EvalSettings(
+        _env_file=None,
         qdrant_prefix="eval_kb_bucket",
         sparse_vector_name="eval_sparse_text",
     )
     store = build_eval_vector_store(settings=settings)
-    # build_eval_vector_store 不暴露 index_store 注入;这里直测配置字段到构造参数的默认口径。
+    # 只替换底层存储构造，保留配置字段到 EvalVectorStore 的真实装配。
     configured = EvalVectorStore(
         prefix=settings.qdrant_prefix,
         bucket_count=settings.qdrant_bucket_count,
@@ -204,5 +208,6 @@ def test_build_eval_vector_store_uses_eval_sparse_vector_name() -> None:
         index_store=fake,
         sparse_vector_name=settings.sparse_vector_name,
     )
+    assert store._store is fake
     assert configured._sparse_name == "eval_sparse_text"
     assert store._sparse_name == "eval_sparse_text"

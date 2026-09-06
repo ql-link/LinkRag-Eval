@@ -18,6 +18,20 @@ from linkrag_eval.retrieval.recall_adapter import execute_candidate_contract_onc
 from linkrag_eval.retrieval.recall_factory import build_eval_recall_pipeline
 
 
+@pytest.fixture(autouse=True)
+def _disable_qdrant_compatibility_check(monkeypatch):
+    from qdrant_client import AsyncQdrantClient
+
+    original_init = AsyncQdrantClient.__init__
+
+    def offline_init(self, *args, **kwargs):
+        # 保留真实客户端及装配接口，仅关闭构造时的后台联网检查。
+        kwargs["check_compatibility"] = False
+        original_init(self, *args, **kwargs)
+
+    monkeypatch.setattr(AsyncQdrantClient, "__init__", offline_init)
+
+
 class _FakeDense:
     dim = 1024
     model_name = "fake-dense"

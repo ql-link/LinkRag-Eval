@@ -60,3 +60,30 @@ S1 版本：`329cdcd`（`docs(restructure): 分离当前研究入口与历史协
 独立复核发现原人工校验器会跟随工作区内的文件链接，因此迁出时补充角色目录归属检查：所有输入和已有／断链输出先验证，再读取任何 CSV 行数。checker 不仲裁答案，但显式指定非空 registry 时会读取对应指南和输入 CSV；默认空 registry 不触及历史数据。
 
 验证：四份新单测 **64 passed**；数值模块原有 12 个函数在抽离时 AST 一致，人工校验器的上述隔离修复另有临时目录负测。迁移前后工具均未运行编码器或旧研究阶段。
+
+S2 版本：`eb5f4d6`（`refactor(restructure): 抽离通用证据工具并收紧人工入口隔离`）。
+
+## S3：旧流程依赖组退役
+
+已退役 D10–D14 共 86 个源码／脚本／测试，以及 H01／H02 中被抽离替代的 10 个旧入口，共 **96 个 tracked 文件**。逐文件路径由原清单及本次 Git 删除记录完整保存，所有删除前字节均与 S0 一致。完整逐项处置台账在 S5 汇总。
+
+新增退役的 10 个 H01／H02 旧路径：
+
+- `scripts/check_robust_fusion_human_task_entrypoints.py`
+- `scripts/diagnose_robust_fusion_dense_replay.py`
+- `scripts/probe_robust_fusion_route_contract.py`
+- `src/linkrag_eval/robust_fusion/__init__.py`
+- `src/linkrag_eval/robust_fusion/human_task_entrypoints.py`
+- `src/linkrag_eval/robust_fusion/replay_contract.py`
+- `src/linkrag_eval/robust_fusion/similarity.py`
+- `tests/unit/test_robust_fusion_human_task_entrypoints.py`
+- `tests/unit/test_robust_fusion_replay_contract.py`
+- `tests/unit/test_robust_fusion_similarity.py`
+
+两个 probe／diagnose 包装随旧运行流程退役，只保留其通用向量诊断能力；旧 `__init__` 不保留 facade。相似度、向量诊断和人工入口的旧模块／测试由 S2 新路径替代。候选证据只抽离序列化及字段检查，不携带 Internal release、构造、标注或数据资格流程。
+
+删除前全仓 Python AST 检查确认：保留 src／scripts／tests 没有导入待退役模块；旧版本间依赖按完整组处理。此阶段没有调用旧 finalizer／readiness／measurement，也未恢复任何已撤回制品。
+
+退役后验证：保留单元测试与生产 import 边界 **399 passed**，固定生产依赖契约 **19 passed**；仅有既有 SWIG 弃用警告。`lint-imports --no-cache` 可执行并通过；其配置当前没有自定义 forbidden contract，实际生产白／黑名单由已通过的 `tests/test_import_boundary.py` 强制，不能把 0 broken 单独当作边界证明。运行目录、CLI／CI／保留源码中没有旧工作流运行导入。
+
+为使这些保留检查与活栈隔离，本阶段同时修复两处测试：vector-store 配置测试不再读取 `.env.eval`，并注入 fake 底层 store；召回装配契约保留真实 Qdrant 客户端类型，但关闭构造时的兼容性后台联网检查。未改生产客户端行为。

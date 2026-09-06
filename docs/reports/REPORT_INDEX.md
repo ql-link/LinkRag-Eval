@@ -2,6 +2,7 @@
 
 > 本索引覆盖 `runs/golden_v2/` 与 `docs/reports/` 下的阶段报告。
 > 历史报告必须保留原路径；新一轮测试使用新的 run/batch 目录或带时间戳文件名，禁止覆盖旧报告。
+> 本索引提供证据导航，不授权重跑或继续旧流程。当前工作见 [CURRENT_STATUS](../CURRENT_STATUS.md)，旧协议见[历史索引](../archive/robust-fusion/README.md)。
 
 当前共收录 **30** 个报告及机器可读配套产物：HTML 4，MD 25，JSON 1，CSV 0。
 
@@ -35,9 +36,9 @@
 | [docs/reports/robust_fusion_candidate_snapshot_field_gap_audit_2026_08_28.md](<robust_fusion_candidate_snapshot_field_gap_audit_2026_08_28.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/robust_fusion_gate_a_data_coverage_audit_2026_08_28.md](<robust_fusion_gate_a_data_coverage_audit_2026_08_28.md>) | `md` | 记录正确 Chunk 在各召回通道和候选深度中的覆盖情况。 |
 | [docs/reports/robust_fusion_human_annotation_verification_2026_08_29.json](<robust_fusion_human_annotation_verification_2026_08_29.json>) | `json` | 机器可读阶段产物，保留测试参数、统计结果和复现依据。 |
-| [docs/reports/robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md](<robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md>) | `md` | 记录四份提交的先锁后验、机械预审和 relation 7 / similarity 96 待仲裁清单。 |
+| [docs/reports/robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md](<robust_fusion_r2_human_review_pre_adjudication_2026_08_29.md>) | `md` | 历史 R2：四份提交先锁后验、机械预审和 relation 7 / similarity 96 待仲裁；退役不等于仲裁完成。 |
 | [docs/reports/robust_fusion_r2_preregistration_and_eligibility_2026_08_29.md](<robust_fusion_r2_preregistration_and_eligibility_2026_08_29.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
-| [docs/reports/robust_fusion_r2_similarity_failure_diagnostic_2026_08_29.md](<robust_fusion_r2_similarity_failure_diagnostic_2026_08_29.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
+| [docs/reports/robust_fusion_r2_similarity_failure_diagnostic_2026_08_29.md](<robust_fusion_r2_similarity_failure_diagnostic_2026_08_29.md>) | `md` | 历史 R1 相似度失败诊断；文件名含 R2 表示后续重设计背景，不是 R2 最终测量结果。 |
 | [docs/reports/robust_fusion_r2_source_v7_automatic_handoff_2026_08_29.md](<robust_fusion_r2_source_v7_automatic_handoff_2026_08_29.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/robust_fusion_similarity_dev_calibration_2026_08_29.md](<robust_fusion_similarity_dev_calibration_2026_08_29.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |
 | [docs/reports/robust_fusion_similarity_human_review_2026_08_29.md](<robust_fusion_similarity_human_review_2026_08_29.md>) | `md` | 阶段说明或人读版结果摘要，保留口径、结论和决策依据。 |

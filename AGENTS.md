@@ -6,6 +6,12 @@
 
 > 当前阶段以 [docs/CURRENT_STATUS.md](docs/CURRENT_STATUS.md) 为唯一进度入口，避免在规则文档中重复维护易过期的实验状态。
 
+研究材料的使用身份见 [文档目录](docs/DOCUMENT_CATALOG.md)。本次[重构执行记录](docs/plans/research-restructure-execution-2026-09-06.md)记录实际变更与验证；原 Robust Fusion、R1／R2、Gate、相似度和人工仲裁协议退出活动执行身份，原文仍按[历史导航](docs/archive/robust-fusion/README.md)保留原路径及字节。不得仅因旧正文含“唯一下一步”或自动执行指令而恢复流程。
+
+当前研究边界是三路召回后的固定候选集合，利用已有可见候选信息与逐路分数／排名探索融合或重排；不回原文补信息，不改召回。具体方法、阈值、窗口与实验版本保持暂定，不能从讨论稿推定为实现要求。人工作业以 `human_tasks/registry.json` 为当前登记，使用 `scripts/check_human_task_entrypoints.py` 校验；旧 registry、HTML、symlink 和提交保留作历史，不表示活动任务。
+
+重构前源码标签为 `research-pre-restructure-20260906`（`4d31f18`）；需要追溯时在独立目录恢复核对，避免覆盖当前工作区。Git 忽略的证据通过独立备份及 manifest 恢复，具体范围见执行记录，不能把未跟踪或被忽略视为删除依据。
+
 ---
 
 ## 一、命名约定
@@ -38,12 +44,13 @@ LinkRag-Eval/
 ├── .gitignore
 ├── docs/
 │   ├── architecture/          # 权威架构(decoupling-plan / dependency-boundary / storage)
-│   ├── plans/                 # 当前实施方案与验收标准
+│   ├── plans/                 # 方案、暂定讨论及保留原路径的旧协议(身份见文档目录)
 │   ├── experiments/           # 已验证实验和候选方案
 │   ├── reports/               # 当前与历史评测实证
-│   └── archive/               # 已被替代的历史设计
+│   └── archive/               # 历史设计及原协议导航
+├── human_tasks/               # 当前人工任务登记与历史入口(保留不等于活动)
 ├── src/linkrag_eval/          # ← src-layout:包在此,import 仍 `from linkrag_eval.x`
-│   ├── compute/               # 产物计算封装(rag_adapter 是唯一允许 import rag 的地方)
+│   ├── compute/               # 产物计算封装(本目录内仅 rag_adapter 允许 import rag)
 │   ├── store/                 # 独立存储(EvalVectorStore + 本地 SQLite repo)
 │   ├── retrieval/             # 召回装配(recall_factory 注入 eval 前缀)
 │   ├── metrics/               # 指标(纯函数)
@@ -71,7 +78,7 @@ LinkRag-Eval/
 | 类别 | 模块 |
 | --- | --- |
 | 纯计算 | `ChunkingEngine.aprocess`(chunk 切分)、`RagFlowTokenizer.tokenize`(bm25 分词)。**dense/sparse 已移到 eval `llm/` 模块,不再经 rag** |
-| Qdrant 原语 | `QdrantIndexStore`、`BucketRouter`、`point_factory`、`qdrant.models`(复用 schema,自己装配 writer) |
+| Qdrant 原语 | `QdrantIndexStore`、point 模型、`qdrant.models`(复用 schema,自己装配 writer；显式指定 eval collection) |
 | 被测对象 | `RecallPipeline`、`Retriever`、`compose_vector_storage_facade`、`DenseRetriever`、`SparseRetriever`、`ParserFactory` |
 | 纯 dataclass | `recall.models.*`、`preprocessor.models.*`(ChunkWithTokens 等) |
 
@@ -88,7 +95,7 @@ LinkRag-Eval/
 
 - **rag 的 import 只允许出现在这几个 adapter 文件**,按关注点:
   - `compute/rag_adapter.py` —— 纯计算(chunk 切分 + bm25 分词;dense/sparse 走 eval llm)
-  - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/`BucketRouter`/point 模型)
+  - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/point 模型；bucket 在 eval 内计算)
   - `retrieval/recall_factory.py` —— 召回装配(被测对象 `RecallPipeline`,指向 eval 前缀)
   - `retrieval/recall_adapter.py` —— `RecallRequest`/`RecallResponse` marshalling(被测对象类型)
   其余模块依赖 `compute/protocol.py` 的抽象。
@@ -123,7 +130,7 @@ class ProductComputer(Protocol):
 ### Qdrant(eval 独立前缀,同 host)
 
 - **护栏(强制)**:`EvalVectorStore` 构造时断言 collection 前缀含 `eval`,否则抛 `RuntimeError` 拒跑。防写串生产。
-- 复用 rag 的 `QdrantIndexStore` + `BucketRouter`,named vectors:`dense` / `sparse` /(预留)`bm25`。
+- 复用 rag 的 `QdrantIndexStore`，在 eval 内计算 bucket 并显式指定 `{prefix}_{bucket_id}` collection，不依赖生产 `BucketRouter`。向量 schema 与固定版本的生产原语对齐；Sparse 名由 eval 配置提供，默认 `sparse_text`，写入与召回必须一致。
 - **`chunk_id` 用 uuid5 确定性**:`uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{ordinal}")`。同输入恒等 → 冻结语料 re-ingest 不变 → qrels 不失效;dense/sparse/bm25 三路与 qrels 共用同一 id。
 - **dense/sparse 均由 eval `llm/` 模块承载**(config 驱动,`EVAL_EMBED_*` / `EVAL_SPARSE_*`,模型可选),不经 rag。写入侧 `compute_dense` 与召回侧 query 编码 **必须用同一 eval dense 编码器口径**(硬约束,见方案风险 C);否则 eval 内部向量空间不一致。
 
@@ -135,6 +142,7 @@ class ProductComputer(Protocol):
 - `_AutoPK` 在 SQLite 使用 `Integer` 自增、旧 MySQL 迁移源使用 `BigInteger`;枚举字段保持 `String + 注释`(改值不需 migration)。
 - 字段变更:`eval_corpus_chunk.es_indexed` → `bm25_indexed`;`eval_run` 增 `computer_fingerprint`。
 - Schema 演进唯一入口是 `alembic/`(eval 自己的迁移链,与生产 alembic 完全隔离)。
+- BM25 使用 eval 自持 SQLite FTS5 sidecar；`bm25_mode=sqlite_fts5` 启用第三路，`stub` 仅装配 Dense／Sparse。旧 `qdrant_bm25` 模式不再支持，不得用 Sparse 结果伪装 BM25。
 
 ---
 
@@ -150,7 +158,7 @@ class ProductComputer(Protocol):
 ## 七、rag 包依赖管理
 
 - `pyproject.toml` 把 toLink-Rag 声明为 path/git 依赖,**钉 git sha 或版本**;升级走 PR。
-- 每次升级 rag,CI 先跑 `tests/contract/` —— 对每个 `ProductComputer` 方法断言输出形状/维度。红 = 签名漂移,只在 `compute/rag_adapter.py` 一处修。
+- 每次升级 rag,CI 先跑 `tests/contract/` —— 验证计算产物与被测对象契约。签名漂移在负责该能力的 adapter 收口，不扩散生产 import。
 - 不得为了"图省事"绕过抽象直接 import rag 内部实现;漂移成本会扩散到全仓。
 
 ---
@@ -164,7 +172,7 @@ class ProductComputer(Protocol):
 | 集成 | `tests/integration/` | 本地 SQLite + 真 Qdrant/embedder | 手动 / nightly,需 `.env.eval` |
 | import-lint | `tests/` | — | 断言黑名单零命中 |
 
-- 每个迁移步骤(Step 0–6)以 `recall@10 ≈ 0.901`(±0.005)为**等价门槛**,固定数据集重灌后对比。
+- 原 Step 0–6 的 `recall@10 ≈ 0.901`(±0.005)只对应历史固定语料的迁移等价参考；不作为新数据或新研究的统一验收门槛。当前变更运行与其影响范围相符的检查。
 - 集成测试连远端栈,标 marker 跳过默认 CI。
 
 ---

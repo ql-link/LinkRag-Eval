@@ -84,5 +84,5 @@ jobs:
                   down[rev.group(1)] = parent.group(1) if parent else None
           children = {p for p in down.values() if p}
           heads = sorted(set(revisions) - children)
-          assert heads == ["0003"], f"unexpected alembic heads: {heads}"
+          assert heads == ["0004"], f"unexpected alembic heads: {heads}"
           PY

@@ -23,6 +23,8 @@ LinkRag-Eval 是独立评测／质检项目。它复用 toLink-Rag 的纯计算�
 
 `ProductComputer` 定义 `compute_chunks`、`compute_dense`、`compute_sparse`、`dense_dim` 和 `fingerprint`。计算方法只产出 chunk／向量，不写存储。测试可注入 fake；契约测试验证真实依赖的接口。写入侧与 query 侧须使用同一编码口径，快照记录模型与实际配置。
 
+Dense 的 `aembed_with_metadata` 返回 `DenseVec`，Sparse 的 `aencode` 返回 `SparseVec`；产物的 `input_chars` 是成功请求所发送文本的 Unicode 码点数，`None` 表示未知。现有召回所需的 Dense `aembed` 仍返回向量值。两路客户端分别支持 `reject` 和 `prefix_on_length_error`，后者只响应各端点已核实的明确长度错误，缩短本条请求副本；普通错误不会改变文本。Dense 批长度错误先逐条原样检查。查询使用相同策略，但当前逐查询产物不持久化发送长度，不能由策略记录反推其实际长度。
+
 ## 独立存储
 
 `EvalVectorStore` 校验前缀包含 `eval`，并在 eval 内按固定 routing 常量计算 bucket，显式构造 `{prefix}_{bucket_id}` collection 名。它不依赖生产 `BucketRouter` 或用户表。向量 schema 与固定版本的生产 Qdrant 原语保持一致，Sparse 名由 eval 配置提供，默认 `sparse_text`；写入与召回必须使用相同名称和编码口径。
@@ -31,11 +33,23 @@ chunk ID 使用 `uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{
 
 `EvalCorpusRepo` 与结果台账使用 `runs/linkrag_eval.sqlite3`。`EvalBase` 包含 `eval_dataset`、`eval_corpus_chunk`、`eval_query`、`eval_qrel`、`eval_run`、`eval_metric_result` 六表；schema 演进经仓库根目录 `alembic/` 完成，与生产迁移隔离。当前不保留旧 MySQL 配置、驱动或迁移入口，禁止访问生产库。
 
+迁移 `0004` 给 corpus 行新增可空整数 `dense_input_chars`、`sparse_input_chars`，旧行保留 NULL，不推定为全文编码。入库始终从原文分别生成两路编码和全文 BM25，正文、原始 `char_len`、ID 不随编码截短改变。重写已有行时，先撤销旧的三路完成标记和长度回执，再写索引；最终将全文、两路回执与完成标记同次写入 SQLite。跨存储失败后该行需重新核对，不继承旧完成状态。长度回执用于接入记录、续接完整性核验与汇总，不加入排序候选字段。
+
+完整 T2 接入通过 `runners/t2_workflow.py` 绑定运行目录内独立的 `corpus.sqlite3`、`bm25.sqlite3` 和专用 eval Qdrant collection，不改全局环境配置。独立语料库仍使用同一 Alembic 迁移链，程序化显式 SQLite URL 优先于默认库。正文流式分批处理，续接按原始身份与正文核对实际索引；状态说明见研究计划，不凭本地写入标记断言远端数据存在。
+
 BM25 由 eval 的 SQLite FTS5 sidecar 承载，使用预分词 token 和 FTS5 `bm25()` 排序，不依赖生产 ES。`bm25_mode=sqlite_fts5` 启用第三路；`stub` 仅运行 Dense／Sparse。旧 `qdrant_bm25` 模式明确拒绝运行，不是兼容后端；不得用 Sparse 结果伪装 BM25。
+
+FTS sidecar 的 schema 2 用普通索引表 `bm25_chunk_rows` 将 chunk ID 关联到 FTS rowid，更新时先定位 rowid，避免按 FTS 的未索引 ID 列反复扫描。现有 schema 1 在初始化时一次迁移，保留 FTS 正文、rowid 和排序口径；正常读批次不执行迁移。该 sidecar 版本由 `SQLiteBm25Store` 管理，不属于六表的 Alembic schema。
 
 ## 检索与评测职责
 
 `build_eval_recall_pipeline` 装配生产检索被测对象，显式注入 eval collection、eval 编码器和选定的 BM25 后端。查询权重、阈值、候选深度与融合配置属于运行配置，必须随快照记录，不能仅依赖文档中的历史默认值复现。
+
+探索采集使用 `open_eval_recall_pipeline` 异步上下文，由 factory 显式关闭本次创建的 Dense、Sparse 和 Qdrant 客户端；正常结束、失败和取消均走同一释放路径。eval Qdrant 客户端使用显式配置的端点直连，不继承系统 HTTP 代理。
+
+向量写入侧同时给 `QdrantIndexStore` 和实际注入的 `AsyncQdrantClient` 设置 60 秒超时，避免只配置原语对象而实际 HTTP 请求仍使用默认 5 秒。入库失败记录保留有限的异常因果类型链、可取得的 HTTP 状态及 Sparse 固定失败类别，包含 SDK 包装的传输错误；不记录任意服务错误代码、异常正文、请求文本或凭证。Sparse 仅将精确的 HTTP 403 与 `AccountOverdueError` 映射为账户欠费，其他普通 4xx 保留一般 HTTP 错误类别；这些诊断字段不改变重试或输入长度处理规则。
+
+`EvalVectorStore` 对原语未识别的 SDK 网络包装异常，在 Dense／Sparse 各自的写入调用周围最多尝试 3 次，间隔为 1、2 秒。每次复用本路已经构造的向量和 ID；一条向量写入成功后，另一条的重试不会再次调用编码器或覆盖已成功的命名向量。重试判断只沿显式异常因果与 SDK 的 `source` 识别已知传输类型，普通 HTTP 响应、参数错误和取消按原路径退出；原语已有的重试不会在此叠加。这里的尝试次数针对一次原语写入调用，该调用内部可能包含多个 HTTP 请求。
 
 候选路由、现有 38 维 `candidate_difference_v3` LambdaMART、在线模型加载与回退属于 eval 已有工程能力。保留这些实现不代表新研究已选择某种方法，也不改变已有生产接入结论；结果与适用范围见[实验记录](../experiments/ltr-fusion-v1.md)和[报告索引](../reports/REPORT_INDEX.md)。
 

@@ -30,6 +30,98 @@ def _add_ingest(sub: argparse._SubParsersAction) -> None:
     p.add_argument("--init-schema", action="store_true", help="先 create_all 建表(无 alembic 时用)")
 
 
+def _add_exploration(sub: argparse._SubParsersAction) -> None:
+    p = sub.add_parser("exploration", help="固定三路候选与独立官方标签的探索接入")
+    commands = p.add_subparsers(dest="exploration_command", required=True)
+    ingest = commands.add_parser("ingest", help="完整原始 T2 分批写入独立三路语料库，可续接")
+    ingest.add_argument("--collection", required=True, help="完整原始 T2 collection.tsv")
+    ingest.add_argument("--dataset-id", type=int, required=True)
+    ingest.add_argument("--doc-id-base", type=int, required=True)
+    ingest.add_argument("--expected-passages", type=int, required=True, help="原始语料的总段落数")
+    ingest.add_argument("--qdrant-prefix", required=True, help="新的专用 eval collection 前缀")
+    ingest.add_argument("--out-dir", required=True, help="独立语料目录，已有匹配配置可续接")
+    ingest.add_argument("--batch-size", type=int, default=25)
+    candidates = commands.add_parser("candidates", help="不读取标签，保存完整三路候选与正文")
+    candidates.add_argument("--queries", required=True, help="原始 T2 queries TSV")
+    source = candidates.add_mutually_exclusive_group(required=True)
+    source.add_argument("--corpus-run", help="exploration ingest 完成的独立语料目录")
+    source.add_argument("--dataset-id", type=int, help="手工指定已有子集，用于工程检查")
+    candidates.add_argument("--collection", help="手工模式必填；声明路径不证明全量入库")
+    candidates.add_argument("--sample-size", type=int, required=True, help="本次探索查询数，无默认规模")
+    candidates.add_argument("--seed", type=int, required=True)
+    candidates.add_argument("--out-dir", required=True, help="新建输出目录，拒绝覆盖已有结果")
+    coverage = commands.add_parser("coverage", help="离线统计已判断/未判断覆盖，不计算排序质量")
+    coverage.add_argument("--inputs", required=True, help="exploration candidates 产生的 inputs.jsonl")
+    coverage.add_argument("--queries", required=True, help="与输入来源一致的完整 T2 queries TSV")
+    coverage.add_argument("--qrels", required=True, help="原始四列四级 qrels TSV")
+    coverage.add_argument("--out", required=True, help="新的覆盖报告 JSON，拒绝覆盖")
+    coverage.add_argument("--model-dir", default=None, help="显式冻结模型目录，采用其现有回退策略")
+    coverage.add_argument("--k", type=int, default=None, help="与 --model-dir 同时提供；仅指覆盖检查深度")
+
+
+async def _do_exploration(args) -> int:
+    import json
+    from pathlib import Path
+
+    from linkrag_eval.runners.exploration_workflow import (
+        prepare_exploration_candidates,
+        write_exploration_coverage,
+    )
+
+    if args.exploration_command == "ingest":
+        from linkrag_eval.config import get_settings
+        from linkrag_eval.runners.t2_workflow import ingest_t2_corpus
+
+        progress = await ingest_t2_corpus(
+            collection_path=Path(args.collection), dataset_id=args.dataset_id,
+            doc_id_base=args.doc_id_base, expected_passages=args.expected_passages,
+            qdrant_prefix=args.qdrant_prefix, out_dir=Path(args.out_dir),
+            batch_size=args.batch_size, settings=get_settings(),
+        )
+        print(json.dumps(progress, ensure_ascii=False, indent=2))
+        return 0 if progress["status"] == "completed" else 1
+    if args.exploration_command == "candidates":
+        from linkrag_eval.config import get_settings
+
+        settings = get_settings()
+        if args.corpus_run:
+            if args.collection is not None:
+                raise ValueError("--corpus-run 与手工 --collection 不能同时提供")
+            from linkrag_eval.runners.t2_workflow import bind_completed_t2_corpus
+
+            settings, collection, dataset_id = bind_completed_t2_corpus(
+                Path(args.corpus_run), settings,
+            )
+        else:
+            if args.collection is None:
+                raise ValueError("手工 --dataset-id 模式还需提供 --collection")
+            collection, dataset_id = Path(args.collection), args.dataset_id
+        summary = await prepare_exploration_candidates(
+            queries_path=Path(args.queries), collection_path=collection,
+            dataset_id=dataset_id, sample_size=args.sample_size, seed=args.seed,
+            out_dir=Path(args.out_dir), settings=settings,
+            corpus_run=Path(args.corpus_run) if args.corpus_run else None,
+        )
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
+        return 0 if not any(
+            count for state, count in summary["input_status_counts"].items()
+            if state not in {"ready", "empty"}
+        ) else 1
+    report = await write_exploration_coverage(
+        inputs_path=Path(args.inputs), queries_path=Path(args.queries), qrels_path=Path(args.qrels),
+        out=Path(args.out), model_dir=Path(args.model_dir) if args.model_dir else None, k=args.k,
+    )
+    print(json.dumps({
+        "report": str(Path(args.out).resolve()),
+        "input_status_counts": report["input_status_counts"],
+        "observed_candidate_coverage": report["observed_candidate_coverage"]["overall"],
+        "baseline_coverage": report["baseline_coverage"]["overall"] if report["baseline_coverage"] else None,
+        "baseline_unavailable_queries": len(report["baseline_unavailable"]),
+    }, ensure_ascii=False, indent=2))
+    incomplete = any(state not in {"ready", "empty"} for state in report["input_status_counts"])
+    return 1 if incomplete or report["baseline_unavailable"] else 0
+
+
 def _add_golden_gen(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser(
         "golden-gen", help="反向合成黄金集:eval 语料 → 采样 → LLM 生成 →(门禁)→ jsonl"
@@ -1904,6 +1996,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command")
     sub.add_parser("config", help="打印已解析配置(脱敏)做自检")
     _add_ingest(sub)
+    _add_exploration(sub)
     _add_golden_gen(sub)
     _add_golden_opensource(sub)
     _add_golden_v2(sub)
@@ -1952,6 +2045,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "ingest":
         return asyncio.run(_run_with_cleanup(_do_ingest(args)))
+    if args.command == "exploration":
+        return asyncio.run(_run_with_cleanup(_do_exploration(args)))
     if args.command == "golden-gen":
         return asyncio.run(_run_with_cleanup(_do_golden_gen(args)))
     if args.command == "golden-opensource":

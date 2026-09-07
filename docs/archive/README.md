@@ -1,10 +1,10 @@
 # 历史文档归档
 
-本目录保存已被当前架构或实施方案替代的历史设计，只用于追溯决策背景，不作为当前实现依据。
+本目录提供历史设计索引，只用于追溯决策背景，不作为当前实现依据。已清理的正文通过 Git 历史查看。
 
 ## design-v1
 
-`design-v1/` 来自 monorepo 时期的 `.specs/rag-quality-eval/`，包含早期框架、存储、灌库、
+`design-v1/` 的正文已从工作树清理，见[清理前版本](https://github.com/ql-link/LinkRag-Eval/tree/6adc4e247e116abf51870d1ac45fe6b90c8eb88f/docs/archive/design-v1)。它来自 monorepo 时期的 `.specs/rag-quality-eval/`，包含早期框架、存储、灌库、
 MinIO、Phase 0-3 和趋势看板设计。其中部分内容依赖生产写 pipeline、生产存储或旧数据模型，
 与独立评测仓库的当前边界不一致。
 

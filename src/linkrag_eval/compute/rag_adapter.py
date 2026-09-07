@@ -76,10 +76,10 @@ class RagProductComputer:
             )
         if not contents:
             return []
-        vecs = await self._dense_encoder.aembed(list(contents))
+        vecs = await self._dense_encoder.aembed_with_metadata(list(contents))
         if len(vecs) != len(contents):
             raise ValueError(f"dense 数量不符:got {len(vecs)}, expected {len(contents)}")
-        return [DenseVec(values=list(v)) for v in vecs]
+        return list(vecs)
 
     # —— sparse 向量(eval llm 注入缝)——
     async def compute_sparse(self, contents: Sequence[str]) -> list[SparseVec]:
@@ -103,6 +103,12 @@ class RagProductComputer:
         return {
             "dense_model": getattr(self._dense_encoder, "model_name", None),
             "sparse_encoder": getattr(self._sparse_encoder, "model_name", None),
+            "dense_input_length_policy": (
+                self._dense_encoder.input_length_policy if self._dense_encoder is not None else None
+            ),
+            "sparse_input_length_policy": (
+                self._sparse_encoder.input_length_policy if self._sparse_encoder is not None else None
+            ),
         }
 
 

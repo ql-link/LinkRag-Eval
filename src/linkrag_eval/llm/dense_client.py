@@ -11,13 +11,50 @@
 from __future__ import annotations
 
 import asyncio
+import re
 from collections.abc import Sequence
+from typing import Literal
 
 import httpx
+
+from linkrag_eval.compute.protocol import DenseVec
 
 
 class DenseEncodeError(RuntimeError):
     """dense 编码失败:未配置 key/model、连接/超时/5xx 重试耗尽、响应非法。"""
+
+
+class DenseInputLengthError(DenseEncodeError):
+    """当前端点明确拒绝输入长度；报告范围不作为本地 token 计数契约。"""
+
+    def __init__(self, reported_limit: int) -> None:
+        self.reported_limit = reported_limit
+        super().__init__(f"embeddings 服务拒绝输入长度，报告范围上限为 {reported_limit}。")
+
+
+def _reported_length_limit(response: httpx.Response) -> int | None:
+    """只识别已经实测的 HTTP 400 / InvalidParameter 长度错误结构。"""
+    if response.status_code != 400:
+        return None
+    try:
+        body = response.json()
+    except ValueError:
+        return None
+    error = body.get("error") if isinstance(body, dict) else None
+    if not isinstance(error, dict) or (
+        error.get("code") != "InvalidParameter"
+        or error.get("type") != "InvalidParameter"
+        or "param" not in error
+        or error.get("param") is not None
+        or not isinstance(error.get("message"), str)
+    ):
+        return None
+    match = re.fullmatch(
+        r"<400> InternalError\.Algo\.InvalidParameter: "
+        r"Range of input length should be \[1, ([1-9][0-9]*)\]",
+        error["message"],
+    )
+    return int(match[1]) if match else None
 
 
 class OpenAIDenseEmbedder:
@@ -34,6 +71,7 @@ class OpenAIDenseEmbedder:
         concurrency: int = 4,
         timeout_ms: int = 60000,
         max_retries: int = 3,
+        input_length_policy: Literal["reject", "prefix_on_length_error"] = "reject",
         http_client: httpx.AsyncClient | None = None,
     ) -> None:
         if not (api_key or "").strip():
@@ -42,6 +80,8 @@ class OpenAIDenseEmbedder:
             raise DenseEncodeError("EVAL_EMBED_MODEL 未配置。")
         if not (base_url or "").strip():
             raise DenseEncodeError("EVAL_EMBED_BASE_URL 未配置。")
+        if input_length_policy not in {"reject", "prefix_on_length_error"}:
+            raise DenseEncodeError("不支持的 Dense 输入长度策略。")
         self._api_key = api_key
         self._model = model
         # base 自动补 /embeddings(已带则不重复)
@@ -52,6 +92,7 @@ class OpenAIDenseEmbedder:
         self._concurrency = max(1, concurrency)
         self._timeout_ms = timeout_ms
         self._max_retries = max_retries
+        self._input_length_policy = input_length_policy
         self._client = http_client
 
     @property
@@ -61,6 +102,10 @@ class OpenAIDenseEmbedder:
     @property
     def dim(self) -> int:
         return self._dim
+
+    @property
+    def input_length_policy(self) -> str:
+        return self._input_length_policy
 
     # —— 生产召回 facade 期望的属性形状(被当 resolved embedding_pipeline 用)——
     @property
@@ -74,18 +119,30 @@ class OpenAIDenseEmbedder:
         return self
 
     async def aembed(self, texts: Sequence[str]) -> list[list[float]]:
-        """批量编码,返回与输入同序、等长的向量列表(按 batch_size 分批)。"""
+        """批量编码；沿用 detailed 入口的同一发送策略，只返回向量值。"""
+        return [vector.values for vector in await self.aembed_with_metadata(texts)]
+
+    async def aembed_with_metadata(self, texts: Sequence[str]) -> list[DenseVec]:
+        """返回向量及成功发送的字符数；原始输入不变，不推断服务端内部处理。"""
         items = list(texts)
         if not items:
             return []
         batches = [items[start : start + self._batch_size] for start in range(0, len(items), self._batch_size)]
         semaphore = asyncio.Semaphore(self._concurrency)
 
-        async def encode(batch: list[str]) -> list[list[float]]:
+        async def encode(batch: list[str]) -> list[DenseVec]:
             async with semaphore:
                 return await self._embed_batch(batch)
 
-        encoded = await asyncio.gather(*(encode(batch) for batch in batches))
+        tasks = [asyncio.create_task(encode(batch)) for batch in batches]
+        try:
+            encoded = await asyncio.gather(*tasks)
+        except BaseException:
+            # 单批失败或调用方取消后，不能遗留兄弟任务继续发出模型请求。
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+            raise
         return [vector for batch in encoded for vector in batch]
 
     async def aembed_query(self, text: str) -> list[float]:
@@ -101,7 +158,27 @@ class OpenAIDenseEmbedder:
         """
         return await self.aembed_query(text), None
 
-    async def _embed_batch(self, batch: list[str]) -> list[list[float]]:
+    async def _embed_batch(self, batch: list[str]) -> list[DenseVec]:
+        working = batch
+        while True:
+            try:
+                return await self._request_batch(working)
+            except DenseInputLengthError:
+                if self._input_length_policy == "reject":
+                    raise
+                if len(working) > 1:
+                    # 批错误没有给出超长项位置；每条先原样发送，避免连带截短短文本。
+                    vectors = []
+                    for text in working:
+                        vectors.extend(await self._embed_batch([text]))
+                    return vectors
+                text = working[0]
+                if len(text) <= 1:
+                    raise
+                # 仅缩短网络传输副本；每次严格减半，到单字符仍拒绝则上抛。
+                working = [text[:len(text) // 2]]
+
+    async def _request_batch(self, batch: list[str]) -> list[DenseVec]:
         data = await self._post({"model": self._model, "input": batch})
         rows = data.get("data") if isinstance(data, dict) else None
         if not isinstance(rows, list) or len(rows) != len(batch):
@@ -109,16 +186,18 @@ class OpenAIDenseEmbedder:
                 f"embeddings 响应 data 数量不符:got {len(rows) if isinstance(rows, list) else 'N/A'}, "
                 f"expected {len(batch)}。"
             )
-        # 按 index 排序回原序(OpenAI 规范返回 index;缺省按返回序)
-        rows_sorted = sorted(rows, key=lambda r: r.get("index", 0)) if all(
-            isinstance(r, dict) and "index" in r for r in rows
-        ) else rows
-        vecs: list[list[float]] = []
-        for r in rows_sorted:
+        # 字符数须与同一输入的向量对应；当前 OpenAI 接口要求完整且唯一的 index。
+        if not all(isinstance(row, dict) and type(row.get("index")) is int for row in rows):
+            raise DenseEncodeError("embeddings 响应缺少有效输入 index。")
+        if sorted(row["index"] for row in rows) != list(range(len(batch))):
+            raise DenseEncodeError("embeddings 响应 index 重复或与输入不对应。")
+        rows_sorted = sorted(rows, key=lambda row: row["index"])
+        vecs: list[DenseVec] = []
+        for r, text in zip(rows_sorted, batch, strict=True):
             emb = r.get("embedding") if isinstance(r, dict) else None
             if not isinstance(emb, list) or not emb:
-                raise DenseEncodeError(f"embeddings 项缺少 embedding:{r!r}。")
-            vecs.append([float(x) for x in emb])
+                raise DenseEncodeError("embeddings 项缺少有效 embedding。")
+            vecs.append(DenseVec(values=[float(x) for x in emb], input_chars=len(text)))
         return vecs
 
     async def _post(self, payload: dict, attempt: int = 0) -> dict:
@@ -145,7 +224,10 @@ class OpenAIDenseEmbedder:
                 return await self._post(payload, attempt + 1)
             raise DenseEncodeError(f"embeddings 服务端错误 {resp.status_code}。")
         if 400 <= resp.status_code < 500:
-            raise DenseEncodeError(f"embeddings 客户端错误 {resp.status_code}:{resp.text[:200]!r}。")
+            reported_limit = _reported_length_limit(resp)
+            if reported_limit is not None:
+                raise DenseInputLengthError(reported_limit)
+            raise DenseEncodeError(f"embeddings 客户端错误 {resp.status_code}。")
         try:
             return resp.json()
         except ValueError as exc:
@@ -175,6 +257,7 @@ def build_dense_embedder(settings=None) -> OpenAIDenseEmbedder:
         batch_size=settings.embed_batch_size,
         concurrency=settings.embed_concurrency,
         timeout_ms=settings.embed_timeout_ms,
+        input_length_policy=settings.embed_input_length_policy,
     )
 
 

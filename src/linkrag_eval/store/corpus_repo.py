@@ -4,15 +4,17 @@
 ``eval_dataset`` / ``eval_corpus_chunk``(本地独立库,绝不碰生产表)。索引动作
 不在此(由 EvalVectorIndexer 编排),本类只负责"把已索引的 chunk 元数据 + 编目落库"。
 
-幂等 ``merge``(按主键覆盖),便于重灌刷新。
+编目使用幂等 ``merge``；语料按主键批量 upsert，便于重灌刷新。
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Any, Sequence
+from collections.abc import Sequence
+from dataclasses import asdict, dataclass
+from typing import Any
 
-from sqlalchemy import select, update
+from sqlalchemy import and_, case, func, or_, select, tuple_, update
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from linkrag_eval.store.engine import get_eval_sessionmaker, init_eval_schema
 from linkrag_eval.store.models import EvalCorpusChunkDB, EvalDatasetDB
@@ -30,6 +32,8 @@ class CorpusChunkRow:
     source_passage_id: str | None = None
     ordinal: int = 0
     char_len: int | None = None
+    dense_input_chars: int | None = None
+    sparse_input_chars: int | None = None
     token_len: int | None = None
     dense_indexed: bool = False
     sparse_indexed: bool = False
@@ -83,6 +87,68 @@ class EvalCorpusRepo:
             ).all()
         return {(int(doc_id), int(ordinal)): str(digest) for doc_id, ordinal, digest in rows}
 
+    async def fetch_ingest_rows(
+        self, dataset_id: int, chunk_ids: Sequence[str]
+    ) -> list[CorpusChunkRow]:
+        """仅取当前批次 ID 的续接信息，保留未完成三路写入的记录。
+
+        ``dataset_id`` 是待灌数据集；查询不按它过滤，以免隐藏全局 chunk_id
+        已属于其他数据集的冲突。调用方须核对返回行的实际身份、正文与三路标记。
+        缺失 ID 不补行，不加载整个数据集的位置或正文。
+        """
+        ids = list(dict.fromkeys(str(chunk_id) for chunk_id in chunk_ids))
+        if not ids:
+            return []
+        async with self._sm() as s:
+            rows = (
+                await s.execute(
+                    select(EvalCorpusChunkDB).where(EvalCorpusChunkDB.chunk_id.in_(ids))
+                )
+            ).scalars().all()
+        return [
+            CorpusChunkRow(
+                chunk_id=r.chunk_id,
+                dataset_id=r.dataset_id,
+                doc_id=r.doc_id,
+                content=r.content,
+                content_hash=r.content_hash,
+                source_passage_id=r.source_passage_id,
+                ordinal=r.ordinal,
+                char_len=r.char_len,
+                dense_input_chars=r.dense_input_chars,
+                sparse_input_chars=r.sparse_input_chars,
+                token_len=r.token_len,
+                dense_indexed=r.dense_indexed,
+                sparse_indexed=r.sparse_indexed,
+                bm25_indexed=r.bm25_indexed,
+                ingest_run_id=r.ingest_run_id,
+            )
+            for r in rows
+        ]
+
+    async def verify_dataset_count(self, *, dataset_id: int, expected_count: int) -> None:
+        """核对完整 T2 独立语料库的实际行数与归属，不适用于共享语料库。
+
+        全表总数和指定 dataset 数量都必须等于预期；只聚合计数，不读取正文、
+        全量行或索引标记。逐行身份及三路完整性由入库 runner 的批次核查负责。
+        """
+        async with self._sm() as s:
+            total_count, dataset_count = (
+                await s.execute(
+                    select(
+                        func.count(),
+                        func.count(case((EvalCorpusChunkDB.dataset_id == dataset_id, 1))),
+                    ).select_from(EvalCorpusChunkDB)
+                )
+            ).one()
+        if total_count != expected_count or dataset_count != expected_count:
+            raise ValueError(
+                "独立语料库数量或归属不一致："
+                f"expected_count={expected_count}, total_count={total_count}, "
+                f"dataset_id={dataset_id}, dataset_count={dataset_count}, "
+                f"other_dataset_count={total_count - dataset_count}"
+            )
+
     async def fetch_chunks_for_datasets(
         self, dataset_ids: Sequence[int], *, min_content_chars: int = 0
     ) -> list[CorpusChunkRow]:
@@ -115,6 +181,8 @@ class EvalCorpusRepo:
                     source_passage_id=r.source_passage_id,
                     ordinal=r.ordinal,
                     char_len=r.char_len,
+                    dense_input_chars=r.dense_input_chars,
+                    sparse_input_chars=r.sparse_input_chars,
                     token_len=r.token_len,
                     dense_indexed=r.dense_indexed,
                     sparse_indexed=r.sparse_indexed,
@@ -123,6 +191,33 @@ class EvalCorpusRepo:
                 )
             )
         return out
+
+    async def fetch_candidate_rows(
+        self, candidate_keys: Sequence[tuple[int, str]]
+    ) -> list[dict[str, Any]]:
+        """按候选的 dataset/chunk 复合键取已有正文及来源；保留空正文和空来源。
+
+        缺失键不补行，调用方对照请求键保留缺口。不读父文档、不按来源 PID 扩展。
+        """
+        keys = list(dict.fromkeys((int(did), str(cid)) for did, cid in candidate_keys))
+        if not keys:
+            return []
+        async with self._sm() as s:
+            rows = (
+                await s.execute(
+                    select(
+                        EvalCorpusChunkDB.dataset_id,
+                        EvalCorpusChunkDB.chunk_id,
+                        EvalCorpusChunkDB.doc_id,
+                        EvalCorpusChunkDB.content,
+                        EvalCorpusChunkDB.source_passage_id,
+                        EvalCorpusChunkDB.ordinal,
+                    ).where(
+                        tuple_(EvalCorpusChunkDB.dataset_id, EvalCorpusChunkDB.chunk_id).in_(keys)
+                    )
+                )
+            ).mappings().all()
+        return [dict(row) for row in rows]
 
     async def fetch_contents_by_ids(self, chunk_ids: Sequence[str]) -> dict[str, str]:
         """按输入 chunk_id 批量回填正文，仅查询 eval 自持语料表。
@@ -196,31 +291,98 @@ class EvalCorpusRepo:
             await s.commit()
 
     async def upsert_chunks(self, rows: Sequence[CorpusChunkRow]) -> int:
-        """批量落 ``eval_corpus_chunk``(幂等 merge),返回写入行数。"""
-        rows = list(rows)
-        if not rows:
+        """单批事务按主键覆盖全部输入字段，保留已有 ``created_at``。"""
+        values = [asdict(row) for row in rows]
+        if not values:
+            return 0
+        statement = sqlite_insert(EvalCorpusChunkDB.__table__)
+        statement = statement.on_conflict_do_update(
+            index_elements=["chunk_id"],
+            set_={
+                name: statement.excluded[name]
+                for name in values[0]
+                if name != "chunk_id"
+            },
+        )
+        async with self._sm() as s:
+            await s.execute(statement, values)
+            await s.commit()
+        return len(values)
+
+    async def mark_chunks_pending(self, *, dataset_id: int, chunk_ids: Sequence[str]) -> int:
+        """覆盖三路之前使旧完成标记失效；不新增行或改写原文、来源 ID。"""
+        ids = list(dict.fromkeys(chunk_ids))
+        if not ids:
             return 0
         async with self._sm() as s:
-            for r in rows:
-                await s.merge(
-                    EvalCorpusChunkDB(
-                        chunk_id=r.chunk_id,
-                        dataset_id=r.dataset_id,
-                        doc_id=r.doc_id,
-                        source_passage_id=r.source_passage_id,
-                        ordinal=r.ordinal,
-                        content=r.content,
-                        content_hash=r.content_hash,
-                        char_len=r.char_len,
-                        token_len=r.token_len,
-                        dense_indexed=r.dense_indexed,
-                        sparse_indexed=r.sparse_indexed,
-                        bm25_indexed=r.bm25_indexed,
-                        ingest_run_id=r.ingest_run_id,
-                    )
+            result = await s.execute(
+                update(EvalCorpusChunkDB)
+                .where(
+                    EvalCorpusChunkDB.dataset_id == dataset_id,
+                    EvalCorpusChunkDB.chunk_id.in_(ids),
                 )
+                .values(
+                    dense_indexed=False, sparse_indexed=False, bm25_indexed=False,
+                    dense_input_chars=None, sparse_input_chars=None,
+                )
+            )
             await s.commit()
-        return len(rows)
+        return result.rowcount
+
+    async def summarize_encoding_inputs(self, *, dataset_id: int) -> dict[str, Any]:
+        """按唯一 chunk 行汇总成功索引的输入长度，不读取正文或正文摘要。
+
+        只统计三路均完成的行。缺少请求长度或全文 char_len 是未知，不补为未缩短；
+        两路任一已知缩短即计入一次 either_route_shortened，不因重编码累计重复。
+        """
+        model = EvalCorpusChunkDB
+        complete = and_(model.dense_indexed.is_(True), model.sparse_indexed.is_(True),
+                        model.bm25_indexed.is_(True))
+        expressions = {"completed_rows": complete}
+        invalid = []
+        shortened = []
+        unchanged = []
+        for route in ("dense", "sparse"):
+            length = getattr(model, f"{route}_input_chars")
+            known = and_(length.is_not(None), model.char_len.is_not(None))
+            is_shortened = and_(known, length < model.char_len)
+            is_unchanged = and_(known, length == model.char_len)
+            expressions[f"{route}_shortened"] = and_(complete, is_shortened)
+            expressions[f"{route}_unchanged"] = and_(complete, is_unchanged)
+            expressions[f"{route}_unknown"] = and_(complete, ~known)
+            invalid.append(and_(complete, or_(
+                length < 0, model.char_len < 0, and_(known, length > model.char_len),
+                and_(known, length == 0, model.char_len > 0),
+            )))
+            shortened.append(is_shortened)
+            unchanged.append(is_unchanged)
+        expressions["either_route_shortened"] = and_(complete, or_(*shortened))
+        expressions["both_routes_unchanged"] = and_(complete, and_(*unchanged))
+        expressions["invalid_rows"] = or_(*invalid)
+        statement = select(
+            func.count().label("total_rows"),
+            *(func.coalesce(func.sum(case((condition, 1), else_=0)), 0).label(name)
+              for name, condition in expressions.items()),
+        ).where(model.dataset_id == dataset_id)
+        async with self._sm() as s:
+            row = (await s.execute(statement)).mappings().one()
+        if row["invalid_rows"]:
+            raise ValueError("完成索引行的编码输入长度超出原文 char_len 范围")
+        completed = int(row["completed_rows"])
+        affected = int(row["either_route_shortened"])
+        unchanged_count = int(row["both_routes_unchanged"])
+        return {
+            "dataset_id": dataset_id,
+            "total_rows": int(row["total_rows"]),
+            "completed_rows": completed,
+            "incomplete_rows": int(row["total_rows"]) - completed,
+            **{route: {state: int(row[f"{route}_{state}"])
+                       for state in ("shortened", "unchanged", "unknown")}
+               for route in ("dense", "sparse")},
+            "either_route_shortened": affected,
+            "both_routes_unchanged": unchanged_count,
+            "affected_status_unknown": completed - affected - unchanged_count,
+        }
 
     async def mark_bm25_indexed(self, chunk_ids: Sequence[str], *, indexed: bool = True) -> int:
         """批量更新 BM25 索引状态。"""

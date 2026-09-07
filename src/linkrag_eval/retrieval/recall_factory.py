@@ -17,6 +17,7 @@
 
 from __future__ import annotations
 
+from contextlib import AsyncExitStack, asynccontextmanager
 from types import SimpleNamespace
 from typing import Any
 
@@ -114,27 +115,53 @@ class _EvalBm25Retriever:
         return [tok for tok in tokenized.coarse_tokens.split() if tok]
 
 
-def build_eval_recall_pipeline(
-    *,
-    settings: Any | None = None,
-    dense_encoder: Any | None = None,
-    sparse_encoder: Any | None = None,
-    dense_score_threshold: float | None = None,
-    sparse_score_threshold: float | None = None,
-    bm25_tokenizer: Any | None = None,
-    strict: bool = False,
-):
-    """装配指向 eval 前缀、用 eval 编码器的 RecallPipeline。"""
-    if settings is None:
-        from linkrag_eval.config import get_settings
-
-        settings = get_settings()
+def _validate_recall_settings(settings: Any) -> None:
     if "eval" not in settings.qdrant_prefix:
         raise RuntimeError(
             f"召回装配前缀 {settings.qdrant_prefix!r} 不含 'eval';为防打到生产 collection,拒绝装配。"
         )
     if settings.bm25_mode not in {"stub", "sqlite_fts5"}:
         raise ValueError(f"不支持的 BM25 模式: {settings.bm25_mode!r}")
+
+
+@asynccontextmanager
+async def open_eval_recall_pipeline(*, settings: Any):
+    """在本次异步调用内创建并关闭三路召回所持有的网络客户端。"""
+    from qdrant_client import AsyncQdrantClient
+
+    from linkrag_eval.llm.dense_client import build_dense_embedder
+    from linkrag_eval.llm.sparse_client import build_sparse_encoder
+
+    _validate_recall_settings(settings)
+    async with AsyncExitStack() as resources:
+        dense = build_dense_embedder(settings)
+        resources.push_async_callback(dense.aclose)
+        sparse = build_sparse_encoder(settings)
+        resources.push_async_callback(sparse.aclose)
+        client = AsyncQdrantClient(url=settings.qdrant_host, api_key=None, trust_env=False)
+        resources.push_async_callback(client.close)
+        yield build_eval_recall_pipeline(
+            settings=settings, dense_encoder=dense, sparse_encoder=sparse, qdrant_client=client,
+        )
+
+
+def build_eval_recall_pipeline(
+    *,
+    settings: Any | None = None,
+    dense_encoder: Any | None = None,
+    sparse_encoder: Any | None = None,
+    qdrant_client: Any | None = None,
+    dense_score_threshold: float | None = None,
+    sparse_score_threshold: float | None = None,
+    bm25_tokenizer: Any | None = None,
+    strict: bool = False,
+):
+    """装配 RecallPipeline；注入客户端由调用方持有，短期调用宜用 open 入口。"""
+    if settings is None:
+        from linkrag_eval.config import get_settings
+
+        settings = get_settings()
+    _validate_recall_settings(settings)
     if dense_encoder is None:
         from linkrag_eval.llm.dense_client import build_dense_embedder
 
@@ -162,7 +189,10 @@ def build_eval_recall_pipeline(
         bucket_count=settings.qdrant_bucket_count,
         user_id=settings.user_id,
     )
-    client = AsyncQdrantClient(url=settings.qdrant_host, api_key=None)
+    # 显式 eval 端点直连；本机系统代理可能无法访问 Tailscale 私网。
+    client = qdrant_client if qdrant_client is not None else AsyncQdrantClient(
+        url=settings.qdrant_host, api_key=None, trust_env=False,
+    )
     store = QdrantIndexStore(client=client, collection_name=collection_name)
 
     _sparse_service = _EvalSparseQueryService(

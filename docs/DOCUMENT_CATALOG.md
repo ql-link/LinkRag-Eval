@@ -10,8 +10,8 @@
 | [实现约定](../AGENTS.md) | 依赖边界、存储隔离、配置与测试规则 |
 | [当前状态](CURRENT_STATUS.md) | 项目进度、研究边界和下一步的唯一入口 |
 | [解耦架构](architecture/decoupling-plan.md) | 当前工程组件及生产依赖方式 |
-| [研究思路与暂定计划](plans/post-recall-research-plan.md) | 当前问题、候选假设、评测与对照逻辑、未决事项；本轮只写文档，不是冻结算法 |
-| [独立审查与回应](plans/research-direction-review-2026-09-06.md) | 研究讨论、项目证据与未决问题；附录 D 保存特征盲点检查和复现代码 |
+| [研究思路与暂定计划](plans/post-recall-research-plan.md) | 当前问题、候选假设、数据用途、评测与对照逻辑、未决事项；算法尚未冻结，实现进度另见当前状态 |
+| [独立审查与回应](plans/research-direction-review-2026-09-06.md) | 研究讨论、项目证据与未决问题；附录 D 保存表示盲点，附录 E 保存问题复现阶段的对齐原文 |
 | [运行链路简化与恢复](plans/runtime-simplification-2026-09-06.md) | 工程简化结果、必要保留项和版本恢复位置 |
 
 研究限定在三路召回后的固定候选集合。具体方法、窗口、阈值和实验版本保持暂定；讨论稿不构成实现要求。

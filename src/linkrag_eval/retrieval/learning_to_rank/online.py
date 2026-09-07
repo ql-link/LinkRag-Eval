@@ -8,20 +8,22 @@ import json
 import math
 import time
 from collections import Counter, deque
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
-from linkrag_eval.retrieval.learning_to_rank.experiment import (
+from linkrag_eval.retrieval.learning_to_rank.experiment import _candidate_features
+from linkrag_eval.retrieval.learning_to_rank.features import (
     BASELINE_THRESHOLDS,
     BASELINE_WEIGHTS,
     FEATURE_NAMES,
     FEATURE_VERSION,
     ROUTES,
-    _candidate_features,
+    FeatureContractError,
     build_online_features,
+    rules_version,
 )
 from linkrag_eval.retrieval.learning_to_rank.short_query_gate import (
     ShortQueryFallbackConfig,
@@ -31,10 +33,14 @@ from linkrag_eval.retrieval.learning_to_rank.short_query_gate import (
 WEIGHTED_SCORE_BASELINE = "weighted-score-baseline"
 
 
-def feature_signature() -> str:
+def feature_signature(feature_version: str = FEATURE_VERSION) -> str:
+    rule = rules_version(feature_version)
+    contract = {"feature_version": feature_version, "feature_names": FEATURE_NAMES}
+    if feature_version != FEATURE_VERSION:
+        contract["feature_rules_version"] = rule
     return hashlib.sha256(
         json.dumps(
-            {"feature_version": FEATURE_VERSION, "feature_names": FEATURE_NAMES},
+            contract,
             ensure_ascii=False,
             sort_keys=True,
         ).encode("utf-8")
@@ -59,10 +65,16 @@ class ModelManifest:
     model_file_sha256: str = ""
     short_fallback_version: str = ""
     short_fallback_sha256: str = ""
+    feature_rules_version: str | None = None
 
     def validate(self) -> None:
-        if self.feature_version != FEATURE_VERSION or self.feature_signature != feature_signature():
+        if self.feature_signature != feature_signature(self.feature_version):
             raise ValueError("LambdaMART feature signature mismatch")
+        expected_rules = rules_version(self.feature_version)
+        if self.feature_rules_version != expected_rules and not (
+            self.feature_version == FEATURE_VERSION and self.feature_rules_version is None
+        ):
+            raise ValueError("LambdaMART feature rules version mismatch")
         if self.feature_names != FEATURE_NAMES:
             raise ValueError("LambdaMART feature order mismatch")
         if self.timeout_ms <= 0 or self.latency_budget_ms <= 0:
@@ -144,14 +156,32 @@ class LambdaMartOnlineRanker:
         *,
         monitor: RankerMonitor | None = None,
         shadow_model_dir: str | Path | None = None,
+        prediction_num_threads: int | None = None,
+        feature_version: str = FEATURE_VERSION,
     ):
+        if prediction_num_threads is not None and (
+            type(prediction_num_threads) is not int or prediction_num_threads <= 0
+        ):
+            raise ValueError("prediction_num_threads must be a positive integer")
+        self.prediction_num_threads = prediction_num_threads
+        self._prediction_kwargs = (
+            {"num_threads": prediction_num_threads} if prediction_num_threads is not None else {}
+        )
         self.model_dir = Path(model_dir)
         self.manifest = _load_manifest(self.model_dir)
+        rules_version(feature_version)
+        if self.manifest.feature_version != feature_version:
+            raise FeatureContractError("requested feature version does not match model package")
+        self.feature_version = feature_version
         self.model = _load_booster(self.model_dir, self.manifest)
         self.short_fallback = _load_short_fallback(self.model_dir, self.manifest)
         self.monitor = monitor or RankerMonitor()
         self.shadow = (
-            LambdaMartOnlineRanker(shadow_model_dir, monitor=RankerMonitor())
+            LambdaMartOnlineRanker(
+                shadow_model_dir, monitor=RankerMonitor(),
+                prediction_num_threads=prediction_num_threads,
+                feature_version=feature_version,
+            )
             if shadow_model_dir
             else None
         )
@@ -164,6 +194,7 @@ class LambdaMartOnlineRanker:
         *,
         monitor: RankerMonitor | None = None,
         shadow_version: str | None = None,
+        feature_version: str = FEATURE_VERSION,
     ) -> "LambdaMartOnlineRanker":
         root = Path(registry_dir)
         state = json.loads((root / "active.json").read_text(encoding="utf-8"))
@@ -174,7 +205,17 @@ class LambdaMartOnlineRanker:
             root / active,
             monitor=monitor,
             shadow_model_dir=root / shadow_version if shadow_version else None,
+            feature_version=feature_version,
         )
+
+    def predict_features(self, features: np.ndarray, *, feature_version: str) -> np.ndarray:
+        """Raw prediction for an explicitly versioned matrix; cannot silently cross versions."""
+        if feature_version != self.feature_version:
+            raise FeatureContractError("feature matrix version does not match model")
+        if (features.ndim != 2 or features.shape[1] != len(FEATURE_NAMES)
+                or features.dtype != np.float32 or not np.isfinite(features).all()):
+            raise FeatureContractError("invalid LTR matrix schema/dtype/values")
+        return np.asarray(self.model.predict(features, **self._prediction_kwargs))
 
     async def rank(
         self,
@@ -182,14 +223,17 @@ class LambdaMartOnlineRanker:
         candidate_contents: dict[str, str],
     ) -> OnlineRankResult:
         started = time.perf_counter()
+        if row.get("feature_version", self.feature_version) != self.feature_version:
+            raise FeatureContractError("request feature version does not match model")
         chunk_ids, features = build_online_features(
             query=str(row["query"]),
             routes=row["routes"],
             candidate_contents=candidate_contents,
+            feature_version=self.feature_version,
         )
         try:
             scores = await asyncio.wait_for(
-                asyncio.to_thread(self.model.predict, features),
+                asyncio.to_thread(self.model.predict, features, **self._prediction_kwargs),
                 timeout=self.manifest.timeout_ms / 1000,
             )
             ranked = _rank(chunk_ids, scores)
@@ -295,19 +339,28 @@ def load_active_ranker(
     *,
     monitor: RankerMonitor | None = None,
     shadow_version: str | None = None,
+    feature_version: str = FEATURE_VERSION,
 ) -> LambdaMartOnlineRanker | WeightedScoreOnlineRanker:
     """Load the active model, degrading to weighted fusion on any startup validation error."""
     root = Path(registry_dir)
+    rules_version(feature_version)
     try:
         state = json.loads((root / "active.json").read_text(encoding="utf-8"))
         if state.get("active") == WEIGHTED_SCORE_BASELINE:
+            if feature_version != FEATURE_VERSION:
+                raise FeatureContractError("English model requested but registry selects legacy baseline")
             return WeightedScoreOnlineRanker(monitor=monitor, reason="baseline_active")
         return LambdaMartOnlineRanker.from_registry(
             root,
             monitor=monitor,
             shadow_version=shadow_version,
+            feature_version=feature_version,
         )
+    except FeatureContractError:
+        raise
     except Exception as exc:
+        if feature_version != FEATURE_VERSION:
+            raise
         fallback = WeightedScoreOnlineRanker(monitor=monitor, reason=type(exc).__name__)
         fallback.monitor.counters["startup_fallback"] += 1
         return fallback
@@ -325,7 +378,6 @@ def freeze_model(
     timeout_ms: int = 350,
     seed: int = 20260724,
 ) -> ModelManifest:
-    import lightgbm
     from lightgbm import LGBMRanker
 
     prepared = [_candidate_features(row, candidate_contents) for row in rows]
@@ -348,11 +400,79 @@ def freeze_model(
     model = LGBMRanker(
         **training_params,
     )
-    model.fit(train_x, train_y, group=groups)
+    model.fit(train_x, train_y, group=groups, feature_name=list(FEATURE_NAMES))
+    return export_trained_booster(
+        model.booster_,
+        out_dir=out_dir,
+        model_version=model_version,
+        num_iteration=min(n_estimators, model.booster_.current_iteration()),
+        training_params=training_params,
+        short_fallback_config=short_fallback_config,
+        latency_budget_ms=latency_budget_ms,
+        timeout_ms=timeout_ms,
+    )
+
+
+def export_trained_booster(
+    booster: Any,
+    *,
+    out_dir: str | Path,
+    model_version: str,
+    num_iteration: int,
+    training_params: dict[str, Any],
+    short_fallback_config: dict[str, Any] | None = None,
+    latency_budget_ms: int = 250,
+    timeout_ms: int = 350,
+    feature_version: str = FEATURE_VERSION,
+) -> ModelManifest:
+    """Export an already selected LambdaMART tree prefix without fitting again.
+
+    The serialized prefix also produces the contract vectors, so early-stopping
+    patience trees cannot leak into either the exported model or its expectations.
+    """
+    import lightgbm
+
+    if not isinstance(booster, lightgbm.Booster):
+        raise TypeError("export requires a fitted lightgbm.Booster")
+    if booster.num_feature() != len(FEATURE_NAMES) or booster.feature_name() != FEATURE_NAMES:
+        raise ValueError("export feature count/order mismatch")
+    if booster.params.get("objective") != "lambdarank" or booster.num_model_per_iteration() != 1:
+        raise ValueError("export requires a single-output lambdarank Booster")
+    if type(num_iteration) is not int or not 1 <= num_iteration <= booster.current_iteration():
+        raise ValueError("num_iteration must select an existing positive tree prefix")
+    if short_fallback_config is not None:
+        policy = ShortQueryFallbackConfig(**short_fallback_config)
+        if (
+            not isinstance(policy.version, str) or not policy.version
+            or policy.confidence_feature != "ltr_top12_margin" or policy.fallback != "hybrid"
+            or type(policy.max_query_chars) is not int or policy.max_query_chars < 0
+            or type(policy.confidence_threshold) not in (int, float)
+            or not math.isfinite(policy.confidence_threshold) or policy.confidence_threshold < 0
+        ):
+            raise ValueError("unsupported or invalid short fallback policy")
+    # Constructing a Booster from its text does not retrain or consume supervision.
+    model_text = booster.model_to_string(num_iteration=num_iteration)
+    selected = lightgbm.Booster(model_str=model_text)
+    manifest = ModelManifest(
+        model_version=model_version,
+        feature_version=feature_version,
+        feature_signature=feature_signature(feature_version),
+        feature_rules_version=rules_version(feature_version),
+        feature_names=list(FEATURE_NAMES),
+        training_data_sha256="",
+        n_estimators=selected.num_trees(),
+        latency_budget_ms=latency_budget_ms,
+        timeout_ms=timeout_ms,
+        lightgbm_version=lightgbm.__version__,
+        training_params=dict(training_params),
+    )
+    manifest.validate()
     out = Path(out_dir)
+    if out.exists() and (not out.is_dir() or any(out.iterdir())):
+        raise FileExistsError(f"model output must be absent or empty: {out}")
     out.mkdir(parents=True, exist_ok=True)
     model_path = out / "model.txt"
-    model.booster_.save_model(str(model_path), num_iteration=n_estimators)
+    model_path.write_text(model_text, encoding="utf-8")
     model_sha = hashlib.sha256(model_path.read_bytes()).hexdigest()
     short_version = ""
     short_sha = ""
@@ -364,17 +484,8 @@ def freeze_model(
         )
         short_version = str(short_fallback_config.get("version") or "")
         short_sha = hashlib.sha256(short_path.read_bytes()).hexdigest()
-    manifest = ModelManifest(
-        model_version=model_version,
-        feature_version=FEATURE_VERSION,
-        feature_signature=feature_signature(),
-        feature_names=list(FEATURE_NAMES),
-        training_data_sha256="",
-        n_estimators=n_estimators,
-        latency_budget_ms=latency_budget_ms,
-        timeout_ms=timeout_ms,
-        lightgbm_version=lightgbm.__version__,
-        training_params=training_params,
+    manifest = replace(
+        manifest,
         model_file_sha256=model_sha,
         short_fallback_version=short_version,
         short_fallback_sha256=short_sha,
@@ -384,7 +495,8 @@ def freeze_model(
     )
     _write_production_contract(
         out,
-        predictor=model.predict,
+        predictor=lambda features: selected.predict(features, num_threads=1),
+        feature_version=feature_version,
     )
     _write_sha256sums(out)
     return manifest
@@ -394,10 +506,12 @@ def _write_production_contract(
     out: Path,
     *,
     predictor: Any,
+    feature_version: str = FEATURE_VERSION,
 ) -> None:
     contract = {
-        "feature_version": FEATURE_VERSION,
-        "feature_signature": feature_signature(),
+        "feature_version": feature_version,
+        "feature_signature": feature_signature(feature_version),
+        "feature_rules_version": rules_version(feature_version),
         "feature_names": FEATURE_NAMES,
         "required_request_fields": {
             "query": "string",
@@ -419,10 +533,20 @@ def _write_production_contract(
 
     vectors = []
     for index, online_input in enumerate(_contract_inputs(), 1):
+        if feature_version != FEATURE_VERSION:
+            online_input["query"] = ["Which item isn't approved?", "Which item costs 3.14?",
+                                     "Dr. Lee is ready. Which item is not approved?"][index - 1]
+            online_input["candidate_contents"] = {
+                cid: ["Dr. Lee is ready. The item is not approved; cost 3.14.",
+                      "Dr. Lee is ready. The item is approved; cost 13.14.",
+                      "The item cannot be approved; cost 1,234.50."][i]
+                for i, cid in enumerate(online_input["candidate_contents"])
+            }
         chunk_ids, features = build_online_features(
             query=online_input["query"],
             routes=online_input["routes"],
             candidate_contents=online_input["candidate_contents"],
+            feature_version=feature_version,
         )
         scores = predictor(features)
         vectors.append(
@@ -433,6 +557,7 @@ def _write_production_contract(
                     "candidate_chunk_ids": chunk_ids,
                     "feature_matrix_sha256": hashlib.sha256(features.tobytes()).hexdigest(),
                     "ltr_ranked_chunk_ids": _rank(chunk_ids, scores),
+                    "ltr_scores": [float(score) for score in scores],
                     "weighted_score_ranked_chunk_ids": _hybrid_fallback(chunk_ids, features),
                 },
             }
@@ -521,6 +646,13 @@ def validate_production_bundle(model_dir: str | Path) -> dict[str, Any]:
     contract = json.loads((root / "feature_contract.json").read_text(encoding="utf-8"))
     if contract.get("feature_signature") != manifest.feature_signature:
         raise ValueError("production feature contract signature mismatch")
+    for key in ("feature_version", "feature_names"):
+        if contract.get(key) != getattr(manifest, key):
+            raise ValueError(f"production feature contract mismatch: {key}")
+    if contract.get("feature_rules_version") != rules_version(manifest.feature_version) and not (
+        manifest.feature_version == FEATURE_VERSION and contract.get("feature_rules_version") is None
+    ):
+        raise ValueError("production feature rules mismatch")
     if contract.get("alias_enabled") is not False:
         raise ValueError("production bundle must keep Alias disabled")
 
@@ -536,12 +668,16 @@ def validate_production_bundle(model_dir: str | Path) -> dict[str, Any]:
             query=str(online_input["query"]),
             routes=online_input["routes"],
             candidate_contents=online_input["candidate_contents"],
+            feature_version=manifest.feature_version,
         )
         if hashlib.sha256(features.tobytes()).hexdigest() != expected["feature_matrix_sha256"]:
             raise ValueError(f"feature vector mismatch: {vector['id']}")
         if chunk_ids != expected["candidate_chunk_ids"]:
             raise ValueError(f"candidate order mismatch: {vector['id']}")
-        if _rank(chunk_ids, model.predict(features)) != expected["ltr_ranked_chunk_ids"]:
+        scores = model.predict(features, num_threads=1)
+        if "ltr_scores" in expected and not np.array_equal(scores, expected["ltr_scores"]):
+            raise ValueError(f"LambdaMART score mismatch: {vector['id']}")
+        if _rank(chunk_ids, scores) != expected["ltr_ranked_chunk_ids"]:
             raise ValueError(f"LambdaMART ranking mismatch: {vector['id']}")
         if _hybrid_fallback(chunk_ids, features) != expected["weighted_score_ranked_chunk_ids"]:
             raise ValueError(f"weighted fallback mismatch: {vector['id']}")
@@ -688,7 +824,20 @@ def _load_booster(model_dir: Path, manifest: ModelManifest):
     from lightgbm import Booster
 
     manifest.validate()
-    return Booster(model_file=str(model_dir / "model.txt"))
+    model = Booster(model_file=str(model_dir / "model.txt"))
+    known_legacy_columns = (
+        manifest.feature_version == FEATURE_VERSION
+        and manifest.model_version == "candidate-difference-v3-20260728-final33"
+        and manifest.model_file_sha256 == "1de4d9380ae16b26e210a67280335c5ed6976001fc23641c54241e13da82de41"
+        and model.feature_name() == [f"Column_{i}" for i in range(len(FEATURE_NAMES))]
+    )
+    if model.num_feature() != len(FEATURE_NAMES) or (
+        model.feature_name() != FEATURE_NAMES and not known_legacy_columns
+    ):
+        raise FeatureContractError("Booster feature columns do not match declared contract")
+    if model.num_trees() != manifest.n_estimators:
+        raise FeatureContractError("Booster tree count does not match declared contract")
+    return model
 
 
 def _load_short_fallback(

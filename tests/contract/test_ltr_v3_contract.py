@@ -36,7 +36,7 @@ EXPECTED_FEATURE_SIGNATURE = (
 def _contract_bundle() -> Path:
     # 评测仓中的六个文件是生产 bundle 的冻结镜像；CI 安装 production package 时
     # 未必把仓库级 models/ 一并打入 site-packages，因此契约不能依赖偶然的 checkout 路径。
-    bundle = Path(__file__).resolve().parents[2] / "models" / MODEL_VERSION
+    bundle = Path(__file__).resolve().parents[2] / "models" / "chinese-baseline"
     if not bundle.is_dir():
         pytest.fail(f"冻结 LTR-v3 契约 bundle 不存在: {bundle}")
     return bundle

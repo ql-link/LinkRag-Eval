@@ -18,8 +18,9 @@ LinkRag-Eval 是独立评测／质检项目。它复用 toLink-Rag 的纯计算�
 | 向量存储 | `store/vector_store.py` 复用 `QdrantIndexStore` 和 point 模型，显式指定 eval collection |
 | 检索装配 | `retrieval/recall_factory.py` 复用 `RecallPipeline`、Dense／Sparse Retriever 及 storage facade，注入 eval 存储和编码器 |
 | 请求／响应适配 | `retrieval/recall_adapter.py` 转换生产被测对象类型 |
+| 清洗／解析评测 | `cleaning/adapter.py` 复用被测对象 `ParserFactory`，将渲染件解析为文本 |
 
-生产 import 只允许出现在上述四个 adapter 文件，其他模块依赖 eval 抽象；具体白名单和黑名单由 AGENTS、import-lint 与 `tests/test_import_boundary.py` 约束。
+生产 import 只允许出现在上述五个 adapter 文件，其他模块依赖 eval 抽象；白名单和黑名单由 AGENTS 定义，`tests/test_import_boundary.py` 在 CI 执行。`lint-imports` 当前未配置独立的边界 contract，不代替该测试。
 
 `ProductComputer` 定义 `compute_chunks`、`compute_dense`、`compute_sparse`、`dense_dim` 和 `fingerprint`。计算方法只产出 chunk／向量，不写存储。测试可注入 fake；契约测试验证真实依赖的接口。写入侧与 query 侧须使用同一编码口径，快照记录模型与实际配置。
 
@@ -52,6 +53,16 @@ FTS sidecar 的 schema 2 用普通索引表 `bm25_chunk_rows` 将 chunk ID 关�
 `EvalVectorStore` 对原语未识别的 SDK 网络包装异常，在 Dense／Sparse 各自的写入调用周围最多尝试 3 次，间隔为 1、2 秒。每次复用本路已经构造的向量和 ID；一条向量写入成功后，另一条的重试不会再次调用编码器或覆盖已成功的命名向量。重试判断只沿显式异常因果与 SDK 的 `source` 识别已知传输类型，普通 HTTP 响应、参数错误和取消按原路径退出；原语已有的重试不会在此叠加。这里的尝试次数针对一次原语写入调用，该调用内部可能包含多个 HTTP 请求。
 
 候选路由、现有 38 维 `candidate_difference_v3` LambdaMART、在线模型加载与回退属于 eval 已有工程能力。保留这些实现不代表新研究已选择某种方法，也不改变已有生产接入结论；结果与适用范围见[实验记录](../experiments/ltr-fusion-v1.md)和[报告索引](../reports/REPORT_INDEX.md)。
+
+无标签全池特征核心在 `retrieval/learning_to_rank/features.py`；`experiment.py` 保留历史带标签包装和交叉验证。默认 `candidate_difference_v3` 为 legacy；显式英文版 `candidate_difference_v3_en_v1` 通过同一框架调用 `english_rules.py` 的 `english_basic_v1`，保持 38 列顺序，不做自动语言识别。模型 manifest／特征契约绑定版本、列序与规则版本，加载和预测均检查版本。历史无规则字段的包只接受明确的已知 legacy 契约；冻结 A 的旧位置列名仅对已核实的模型包兼容，不推定未知 38 列模型合法。新包不覆盖旧包或自动修改 active registry。
+
+`pairwise_training.py` 复用全池特征核心，仅提取合法指定候选进入损失；训练／开发的特征版本必须相同。默认历史网格保留，显式配置 ID 限定一次拟合，英文训练要求显式单配置。`scripts/nevir_compare_feature_versions.py` 只负责本轮保存 Train／开发快照的两组比较，不把研究编排嵌入在线路径。`cache.py` 只保存原始召回候选；本轮每组重新计算特征，版本独立的 NPZ 是运行输出，没有跨版本矩阵读取入口。
+
+`retrieval/learning_to_rank/nevir_diagnostics.py` 是开发快照上的离线编排入口；`diagnostic_features.py` 按显式特征版本调用同一全池函数并旁路记录 legacy／英文中间态，`diagnostic_trees.py` 核对现有 Booster 的路径与叶输出。`scripts/nevir_english_diagnostics.py` 复用这些模块，为原 A 和英文版分别计算绑定版本的矩阵并重放保存分数；旧 `nevir_diagnostics` 入口仍用于 legacy 同版本比较。这些诊断模块不被在线排序器调用，不改变预测接口、38 列公式、模型或生产依赖边界。监督只用于计算后的目标关联；复核缺失正文不会回填预测输入，人工层不覆盖官方层。
+
+模型训练与模型包导出分开：`retrieval/learning_to_rank/online.py` 的 `export_trained_booster()` 接收已训练 Booster 和明确树前缀，生成沿用现有校验格式的模型包，不重新拟合；`freeze_model()` 在旧训练后复用该导出。导出拒绝特征列漂移、超范围树数、不支持的回退配置及非空输出目录，manifest 记录实际保存树数，契约向量也由同一保存前缀计算。此接口不切换 active registry，不改变召回或 38 维计算语义。
+
+`LambdaMartOnlineRanker(..., prediction_num_threads=...)` 可在本地对照中显式控制预测线程，直接传给 Booster 的实际预测调用；省略时保留原调用行为。该运行资源参数不改模型包、特征或回退阈值，不能把模型文件中的训练线程数当作已生效的推理参数。
 
 `run` 同时保留文件产物与 SQLite 台账，记录输入／结果位置、实际配置、Git 提交及未提交状态、特征版本和运行质量；不逐次扫描工作区或 BM25 正文计算摘要。历史报告保留原路径，新一轮使用独立目录或时间戳；报告是否存在与方法是否有效是两件事。
 

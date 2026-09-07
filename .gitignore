@@ -7,9 +7,39 @@
 .specs/
 /golden/
 data/
+# 只纳入根数据目录的导航，数据本体与子目录继续忽略。
+!/data/
+/data/*
+!/data/README.md
 *.jsonl
 *.tsv
+# 英文基线从 runs 移入 models 后，仍按本地实验产物忽略。
+/models/english-baseline/
 runs/
+# 实验入口白名单；其余运行产物保持忽略。
+!/runs/
+/runs/*
+!/runs/post_recall/
+/runs/post_recall/*
+!/runs/post_recall/README.md
+!/runs/post_recall/nevir-english-features-20260907/
+/runs/post_recall/nevir-english-features-20260907/*
+!/runs/post_recall/nevir-english-features-20260907/README.md
+!/runs/post_recall/nevir-english-features-20260907/checks/
+/runs/post_recall/nevir-english-features-20260907/checks/*
+!/runs/post_recall/nevir-english-features-20260907/checks/README.md
+!/runs/post_recall/nevir-english-diagnostic-20260907/
+/runs/post_recall/nevir-english-diagnostic-20260907/*
+!/runs/post_recall/nevir-english-diagnostic-20260907/README.md
+!/runs/post_recall/nevir-english-diagnostic-20260907/checks/
+/runs/post_recall/nevir-english-diagnostic-20260907/checks/*
+!/runs/post_recall/nevir-english-diagnostic-20260907/checks/README.md
+!/runs/post_recall/nevir-ltr-validation-20260907/
+/runs/post_recall/nevir-ltr-validation-20260907/*
+!/runs/post_recall/nevir-ltr-validation-20260907/README.md
+!/runs/post_recall/nevir-offline-diagnostic-20260907/
+/runs/post_recall/nevir-offline-diagnostic-20260907/*
+!/runs/post_recall/nevir-offline-diagnostic-20260907/README.md
 reports/*.html
 /linkrag-eval-sqlite-share-20260827/
 /docs/papers/*

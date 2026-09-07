@@ -39,7 +39,7 @@ jobs:
 
       - name: Install LinkRag-Eval
         run: |
-          python -m pip install -e ".[dev]"
+          python -m pip install -e ".[dev,ltr]"
 
       - name: Verify production dependency is importable
         run: |

@@ -84,5 +84,5 @@
 
 - 本地重构前源码：标签 `research-pre-restructure-20260906`，提交 `4d31f18`；在独立目录查看或恢复，避免覆盖正在工作的分支。首次移除旧执行链路的提交为 `0db80e8`，后续运行链路简化为 `b92e460`；远端工程基线已由 [PR #5](https://github.com/ql-link/LinkRag-Eval/pull/5) 收录。
 - 既有独立备份：`/Users/kawauso/Documents/Projects/LinkRag-Eval-restructure-backups/20260906-122751/`。`source-before-restructure.bundle` 保存当时的源码与本地标签；`protected-research-artifacts.tar` 保存研究运行、derived、Internal Dev、人工作业链接及当时纳入的论文副本；原 `manifest.json` 记录范围。需要完整恢复时使用该备份，不在本轮重新生成清单。
-- 原备份未复制数据库、公共下载、模型缓存及密钥等资产；它们仍在原位置，不能仅靠 Git 或上述 tar 恢复全部本地环境。
+- 原备份未纳入根级工作数据库、公共下载、下载模型缓存及密钥；旧 Internal v6 的四个 SQLite 文件随其运行目录归档，不代表备份了全部数据库。后续文件保留与清理、当前英文实验未覆盖的范围见[存放总览](../WORKSPACE_MAP.md)，不能仅靠 Git 或上述 tar 恢复全部本地环境。
 - 本次移除的 21 份旧计划、清理台账和重复入口，可以从[文档清理前的 Git 版本](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/)查看，或用 `git show 50f3a9b0ead581fb17fc3e4080c70361c9f24475:相对路径` 在本地读取。原协议与旧执行记录不要求继续占据当前工作树。

@@ -30,7 +30,7 @@
 - 三份 SQLite、旧 eval MySQL 和远端检索资产的一致性证明这条工程谱系真实存在，可用于可行性、成本和重建范围评估；
 - 已验证的 ID/provenance、索引覆盖、模型与运行指纹，以及逐数据集正文复核通过的材料，可作为新候选快照的工程底座。
 
-它的证据边界不是“无科研价值”，而是“有重要的发现性/溯源价值，没有确认性真值资格”。两端 `query/qrel=0`，历史 Blind 已曝光，聚合结果无法恢复逐 Query 候选和关系标签；因此分享包不能直接进入 Gate A/B 分母，也不能把历史增量升级为 C1/C2/C3。该分层已写入科研协议 v17 和 [Internal Stress v6 数据协议](../plans/robust-fusion-internal-stress-v6.md)。
+它的证据边界不是“无科研价值”，而是“有重要的发现性/溯源价值，没有确认性真值资格”。两端 `query/qrel=0`，历史 Blind 已曝光，聚合结果无法恢复逐 Query 候选和关系标签；因此分享包不能直接进入 Gate A/B 分母，也不能把历史增量升级为 C1/C2/C3。该分层已写入科研协议 v17 和 [Internal Stress v6 数据协议（历史版本）](https://github.com/ql-link/LinkRag-Eval/blob/6adc4e247e116abf51870d1ac45fe6b90c8eb88f/docs/plans/robust-fusion-internal-stress-v6.md)。
 
 ## 恢复记录
 

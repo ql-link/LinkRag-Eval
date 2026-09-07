@@ -8,7 +8,7 @@
 
 研究材料的用途见 [文档目录](docs/DOCUMENT_CATALOG.md)。旧研究总方案、执行说明和重复入口已从当前工作树删除，原稿可通过 Git 历史查看；解释已有数据所需的标签、量表与来源材料见[历史导航](docs/archive/robust-fusion/README.md)。不得仅因历史正文含“唯一下一步”或自动执行指令而恢复流程。
 
-当前研究边界是三路召回后的固定候选集合，利用已有可见候选信息与逐路分数／排名探索融合或重排；不回原文补信息，不改召回。具体方法、阈值、窗口与实验版本保持暂定，不能从讨论稿推定为实现要求。当前没有人工作业，不维护空注册表或预设校验流程；旧任务登记通过 Git 追溯，保留的 HTML、symlink 和原始提交仅作历史。
+当前研究边界是三路召回后的固定候选集合，利用已有可见候选信息与逐路分数／排名探索融合或重排；不回原文补信息，不改召回。具体方法、阈值、窗口与实验版本保持暂定，不能从讨论稿推定为实现要求。当前没有人工作业，不维护空注册表或预设校验流程；旧任务登记与指南通过 Git 追溯，原始提交通过既有归档追溯，三个失效人工入口链接已清理。
 
 重构前源码标签为 `research-pre-restructure-20260906`（`4d31f18`）；需要追溯时在独立目录恢复核对，避免覆盖当前工作区。Git 忽略的证据通过独立备份及 manifest 恢复，具体范围见[恢复说明](docs/plans/runtime-simplification-2026-09-06.md#recovery)，不能把未跟踪或被忽略视为删除依据。
 
@@ -51,6 +51,7 @@ LinkRag-Eval/
 ├── human_tasks/               # 当前人工任务登记与历史入口(保留不等于活动)
 ├── src/linkrag_eval/          # ← src-layout:包在此,import 仍 `from linkrag_eval.x`
 │   ├── compute/               # 产物计算封装(本目录内仅 rag_adapter 允许 import rag)
+│   ├── cleaning/              # 清洗/解析评测(adapter 复用生产 ParserFactory)
 │   ├── store/                 # 独立存储(EvalVectorStore + 本地 SQLite repo)
 │   ├── retrieval/             # 召回装配(recall_factory 注入 eval 前缀)
 │   ├── metrics/               # 指标(纯函数)
@@ -71,7 +72,7 @@ LinkRag-Eval/
 
 ## 三、依赖边界(机器强制,最高优先级)
 
-这是本项目存在的理由。**任何违反都视为破坏解耦**,由 import-lint 在 CI 拦截。
+这是本项目存在的理由。**任何违反都视为破坏解耦**,由 `tests/test_import_boundary.py` 在 CI 检查；`lint-imports` 当前保留工具入口，未配置独立的边界 contract。
 
 ### 白名单 — 允许 import 的 rag 模块
 
@@ -98,6 +99,7 @@ LinkRag-Eval/
   - `store/vector_store.py` —— Qdrant 原语(`QdrantIndexStore`/point 模型；bucket 在 eval 内计算)
   - `retrieval/recall_factory.py` —— 召回装配(被测对象 `RecallPipeline`,指向 eval 前缀)
   - `retrieval/recall_adapter.py` —— `RecallRequest`/`RecallResponse` marshalling(被测对象类型)
+  - `cleaning/adapter.py` —— 清洗/解析评测适配，复用被测对象 `ParserFactory` 将渲染件解析为文本
   其余模块依赖 `compute/protocol.py` 的抽象。
 - 新增对 rag 的任何 import,必须先问:这是纯计算 / 被测对象 / Qdrant 原语吗?能否走抽象?默认答案是"走抽象"。允许的 adapter 文件清单由 `tests/test_import_boundary.py` 强制。
 
@@ -169,7 +171,7 @@ class ProductComputer(Protocol):
 | 单元 | `tests/unit/` | 注入 fake,零活栈 | 默认 CI |
 | 契约 | `tests/contract/` | 真 rag 包,无远端 | rag 升级 / 默认 CI |
 | 集成 | `tests/integration/` | 本地 SQLite + 真 Qdrant/embedder | 手动 / nightly,需 `.env.eval` |
-| import-lint | `tests/` | — | 断言黑名单零命中 |
+| 依赖边界 | `tests/test_import_boundary.py` | 源码扫描 | 断言 adapter 白名单与黑名单零违规 |
 
 - 原 Step 0–6 的 `recall@10 ≈ 0.901`(±0.005)只对应历史固定语料的迁移等价参考；不作为新数据或新研究的统一验收门槛。当前变更运行与其影响范围相符的检查。
 - 集成测试连远端栈,标 marker 跳过默认 CI。

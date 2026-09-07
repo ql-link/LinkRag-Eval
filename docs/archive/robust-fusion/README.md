@@ -1,6 +1,6 @@
 # Robust Fusion 历史材料
 
-旧研究总方案、任务清单、专用执行说明与登记已退出当前工作树。需要原稿时使用[文档清理前的 Git 版本](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/)；本页只索引解释历史数据和结果所需的材料，不提供旧流程执行顺序。下面的旧定义与指南已从当前工作树清理，链接固定到清理前的 Git 版本；原始数据与提交保留原有本地位置。
+旧研究总方案、任务清单、专用执行说明与登记已退出当前工作树。需要原稿时使用[文档清理前的 Git 版本](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/)；本页只索引解释历史数据和结果所需的材料，不提供旧流程执行顺序。下面的旧定义与指南已从当前工作树清理，链接固定到清理前的 Git 版本；仍在工作树的数据保留原位，已移出的 R2 原始材料通过[既有备份](../../plans/runtime-simplification-2026-09-06.md#recovery)追溯。
 
 当前工作见 [CURRENT_STATUS](../../CURRENT_STATUS.md)，研究讨论见[独立审查与回应](../../plans/research-direction-review-2026-09-06.md)，备份位置见[恢复说明](../../plans/runtime-simplification-2026-09-06.md#recovery)。
 
@@ -22,5 +22,5 @@
 
 - 实际结果与失败诊断见[报告索引](../../reports/REPORT_INDEX.md)；Qwen 负收益等既有实证保留在[LambdaMART 记录](../../experiments/ltr-fusion-v1.md)及原报告中。
 - 文献来源统一见[文献地图](../../plans/robust-fusion-literature.md)，不再维护旧主张—证据—空缺表。
-- 当前没有人工任务；原始提交和锁保留作历史。旧指南及已删除的任务登记通过 Git 追溯；遗留软链接不构成当前可执行入口。
+- 当前没有人工任务；原始提交和锁只作历史。旧指南及已删除的任务登记通过 Git 追溯；三个失效人工入口链接已清理，具体去向见[人工材料说明](../../../human_tasks/r2-adjudication/README.md)。
 - Git 不包含被忽略的研究数据。[恢复说明](../../plans/runtime-simplification-2026-09-06.md#recovery)记录既有独立备份的覆盖范围与位置。

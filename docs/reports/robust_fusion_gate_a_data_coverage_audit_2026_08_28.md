@@ -529,7 +529,7 @@ candidate_pair_relation:
 
 其中 `candidate_pair_relation` 只服务 Top-M 成对代理效度；候选级 `LocalConflictRisk` 才是 C2 检测主任务。原始 qrel 永不覆盖，人工层另存 `adjudicated_status`、`evidence_locator`、`rationale`、`reviewer_id`、`confidence`、`adjudication_status` 与手册版本。
 
-该 schema 已进入[科研协议 v19](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/robust-fusion-research.md)和[标注手册 v1](../plans/robust-fusion-annotation-handbook.md)。P2-01 仍不标记完成：两个非 BGE 编码器的身份与确定性资格、Qwen/Jina 两个 Reranker 家族选择已经通过，但 Dev 长短文本分层人工效度、标准化/分带/共同支持实值和正式参照集合尚未冻结。
+该 schema 已进入[科研协议 v19](https://github.com/ql-link/LinkRag-Eval/blob/50f3a9b0ead581fb17fc3e4080c70361c9f24475/docs/plans/robust-fusion-research.md)和[标注手册 v1（历史版本）](https://github.com/ql-link/LinkRag-Eval/blob/6adc4e247e116abf51870d1ac45fe6b90c8eb88f/docs/plans/robust-fusion-annotation-handbook.md)。P2-01 仍不标记完成：两个非 BGE 编码器的身份与确定性资格、Qwen/Jina 两个 Reranker 家族选择已经通过，但 Dev 长短文本分层人工效度、标准化/分带/共同支持实值和正式参照集合尚未冻结。
 
 ## 9. 相似度 manifest：已冻结字段，未填实值
 
@@ -549,7 +549,7 @@ manifest 至少必须固定：
 - 向量文件 hash 与数据集内标准化统计；
 - 低/高/模糊带、共同支持规则及敏感性边界的 Dev 时间戳。
 
-现有 Alt Embedding 是 `BAAI/bge-m3 + 1024 dim` 的历史 sidecar，只能解释旧资产，禁止进入当前研究。[相似度 manifest v4](../plans/robust-fusion-similarity-manifest.md)已经冻结测量对象、字段和 Gate A 拒绝条件，并在不读取研究数据时预选 `multilingual-e5-base@d1287505…` 为主编码器、multilingual DistilUSE `@bfe45d07…` 为独立审计编码器。v2 资格制品已核验精确 revision/许可/权重与 tokenizer 摘要、输入规则、维度、范数和正逆序逐值重放；这只关闭模型身份和确定性。Reranker 独立性、长度分层的人机效度、均值/标准差、分带、共同支持、覆盖阈值和参照集合仍须在 Dev 校准并封存，不能在 Gate A 结果之后补写。
+现有 Alt Embedding 是 `BAAI/bge-m3 + 1024 dim` 的历史 sidecar，只能解释旧资产，禁止进入当前研究。[相似度 manifest v4（历史版本）](https://github.com/ql-link/LinkRag-Eval/blob/6adc4e247e116abf51870d1ac45fe6b90c8eb88f/docs/plans/robust-fusion-similarity-manifest.md)已经冻结测量对象、字段和 Gate A 拒绝条件，并在不读取研究数据时预选 `multilingual-e5-base@d1287505…` 为主编码器、multilingual DistilUSE `@bfe45d07…` 为独立审计编码器。v2 资格制品已核验精确 revision/许可/权重与 tokenizer 摘要、输入规则、维度、范数和正逆序逐值重放；这只关闭模型身份和确定性。Reranker 独立性、长度分层的人机效度、均值/标准差、分带、共同支持、覆盖阈值和参照集合仍须在 Dev 校准并封存，不能在 Gate A 结果之后补写。
 
 ## 10. 下一步与解锁条件
 

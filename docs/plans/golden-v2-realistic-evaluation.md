@@ -2,7 +2,7 @@
 
 > 状态:主链路、候选覆盖、标注修正和未曝光 Blind v3 验收已完成;当前进入生产化准备。项目级进度见 [CURRENT_STATUS.md](../CURRENT_STATUS.md)。
 > 适用范围:检索层黄金集、召回指标、调参/验收数据拆分。
-> 上游:[phase1_5_golden_gen_design.md](../archive/design-v1/phase1_5_golden_gen_design.md) 是历史方案,其中"开源数据集 doc 粒度主力"不再作为主评测口径。本文覆盖黄金集 v2 的当前目标态。
+> 上游:[phase1_5_golden_gen_design.md（历史版本）](https://github.com/ql-link/LinkRag-Eval/blob/6adc4e247e116abf51870d1ac45fe6b90c8eb88f/docs/archive/design-v1/phase1_5_golden_gen_design.md) 是历史方案,其中"开源数据集 doc 粒度主力"不再作为主评测口径。本文覆盖黄金集 v2 的当前目标态。
 
 ## 一、结论
 

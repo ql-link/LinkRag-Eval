@@ -34,6 +34,8 @@ alembic upgrade head
 
 `init_eval_schema()` 的 `create_all` 仅供测试／本地快速起库；正式 schema 演进使用 Alembic revision。配置真值只存于被 Git 忽略的 `.env.eval`。
 
+安装固定版本的生产依赖后，用 `python3 -m pip install -e ".[dev,ltr]"` 安装检查依赖（与 CI 一致）；`ltr` 包含 LambdaMART 训练所需的 LightGBM 和 scikit-learn。
+
 默认检查不连接真实活栈：
 
 ```bash

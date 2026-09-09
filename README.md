@@ -9,6 +9,7 @@
 | 你要做什么 | 去哪里 |
 | --- | --- |
 | 看当前进度与下一步 | [当前状态](docs/CURRENT_STATUS.md) |
+| 逐项回顾实验、记录新实验 | [实验台账](docs/experiments/EXPERIMENT_LOG.md) |
 | 看各类文件存在哪、Git 与备份覆盖什么 | [存放总览](docs/WORKSPACE_MAP.md) |
 | 找输入与基线模型 | [数据入口](data/README.md) · [模型入口](models/README.md) |
 | 选择脚本或命令 | [使用目录](scripts/README.md) |
@@ -57,6 +58,6 @@ T2 接入目前暂停，已保留 `exploration ingest/candidates/coverage` 接�
 
 ## 历史与恢复
 
-阶段报告、标签、原始提交、锁和运行证据保留原路径；新报告使用独立目录或带时间戳的文件名。生成报告后运行 `python3 scripts/build_report_index.py`，交付前用同一脚本的 `--check` 校验索引。
+阶段报告、标签、原始提交、锁和运行证据保留原路径；新报告使用独立目录或带时间戳的文件名。每次已执行实验按[记录规则](docs/experiments/EXPERIMENT_LOG.md#记录规则)留存，并在台账追加入口，负结果、失败和中止同样登记。生成报告后运行 `python3 scripts/build_report_index.py`，交付前用同一脚本的 `--check` 校验索引。
 
 重构前源码保全于标签 `research-pre-restructure-20260906`（提交 `4d31f18`）。可用 `git show research-pre-restructure-20260906:相对路径` 查看旧文件，或在独立目录检出该标签进行恢复核对，避免覆盖当前工作区。Git 忽略的证据另有既有备份；其位置、范围与恢复方式见[恢复说明](docs/plans/runtime-simplification-2026-09-06.md#recovery)。保留证据或退役流程均不改变历史实验结论。

@@ -40,6 +40,9 @@ runs/
 !/runs/post_recall/nevir-offline-diagnostic-20260907/
 /runs/post_recall/nevir-offline-diagnostic-20260907/*
 !/runs/post_recall/nevir-offline-diagnostic-20260907/README.md
+!/runs/post_recall/subject-binding-pilot-20260908/
+/runs/post_recall/subject-binding-pilot-20260908/*
+!/runs/post_recall/subject-binding-pilot-20260908/README.md
 reports/*.html
 /linkrag-eval-sqlite-share-20260827/
 /docs/papers/*

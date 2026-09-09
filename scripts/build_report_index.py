@@ -17,6 +17,10 @@ EXCLUDED_NAMES = {"REPORT_INDEX.md"}
 # 只维护已读报告的选读信息；不复制指标或动态进度。
 # 同 stem 的 MD/HTML 是同一题目的格式入口，原文件均保留。
 REPORT_GUIDES = {
+    "nevir_subject_binding_pilot_2026_09_08": (
+        "英文研究与 NevIR", "同一自动事实上的主体聚合是否提供增量？",
+        "五组开发探索、原型覆盖与两份原盲审包；人工待审，未独立确认。",
+    ),
     "nevir_offline_diagnostic_2026_09_07": (
         "英文研究与 NevIR", "开发快照中，基线评分与特征响应是什么？",
         "§1–6 为历史 A/B，§7 为中文／英文基线；机械诊断，不是语义归因结论。",
@@ -254,6 +258,7 @@ def render_index(reports: list[Path], output: Path = DEFAULT_OUTPUT) -> str:
     topic_count = sum(len(families) for families in grouped.values())
     status = _link(output, ROOT / "docs/CURRENT_STATUS.md")
     catalog = _link(output, ROOT / "docs/DOCUMENT_CATALOG.md")
+    experiment_log = _link(output, ROOT / "docs/experiments/EXPERIMENT_LOG.md")
     runs = _link(output, ROOT / "runs/post_recall/README.md")
     stages = sorted(grouped, key=lambda stage: (
         GUIDE_STAGES.index(stage) if stage in GUIDE_STAGES else len(GUIDE_STAGES), stage,
@@ -262,6 +267,7 @@ def render_index(reports: list[Path], output: Path = DEFAULT_OUTPUT) -> str:
         "# 实验报告选读",
         "",
         f"先按要核对的问题选择。当前工作安排见[当前状态]({status})，其他文档见[文档目录]({catalog})。",
+        f"按次回顾实验（含长报告中的多轮对照、失败与中止）或登记新实验，见[实验台账]({experiment_log})。",
         "下表说明报告所属实验的口径；历史报告中的下一步不自动成为当前任务。",
         "",
         f"当前共收录 **{len(reports)}** 个产物，按 **{topic_count}** 个题目展示：{summary}。",

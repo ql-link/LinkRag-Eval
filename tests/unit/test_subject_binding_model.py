@@ -8,6 +8,10 @@ import pytest
 
 from linkrag_eval.retrieval.learning_to_rank.features import ENGLISH_FEATURE_VERSION, FEATURE_NAMES
 from linkrag_eval.retrieval.learning_to_rank.online import LambdaMartOnlineRanker
+from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+    REPAIRED_RULE_VERSION,
+    RULE_VERSION,
+)
 from linkrag_eval.retrieval.learning_to_rank.subject_binding_model import (
     OfflineBindingModel,
     augment,
@@ -34,21 +38,27 @@ def test_arms_share_status_columns_and_missing_not_zero():
         augment(base, rows, arm="E3", base_feature_version="candidate_difference_v3")
 
 
-def test_offline_model_roundtrip_rejects_version_and_column_mismatch(tmp_path):
+@pytest.mark.parametrize("version", [RULE_VERSION, REPAIRED_RULE_VERSION])
+def test_offline_model_roundtrip_rejects_version_and_column_mismatch(tmp_path, version):
     import lightgbm as lgb
-    schema = contract("E3")
+    schema = contract("E3", rules_version=version)
     x = np.random.default_rng(1).random((30, 41)).astype(np.float32)
     booster = lgb.train({"objective": "regression", "num_threads": 1, "verbosity": -1,
                          "min_data_in_leaf": 2},
                         lgb.Dataset(x, label=x[:, -1].copy(), feature_name=schema["feature_names"]), num_boost_round=2)
     path = tmp_path / "model"
-    save_bundle(path, booster.model_to_string(), arm="E3", fit={"purpose": "synthetic unit test"})
+    save_bundle(path, booster.model_to_string(), arm="E3", fit={"purpose": "synthetic unit test"}, rules_version=version)
     model = OfflineBindingModel(path, expected_contract=schema)
     assert np.array_equal(model.predict(x, feature_contract=schema), booster.predict(x, num_threads=1))
     with pytest.raises(ValueError, match="contract"):
         OfflineBindingModel(path, expected_contract=contract("E1"))
     with pytest.raises(ValueError, match="contract"):
         model.predict(x[:, :38], feature_contract=schema)
+    other_version = RULE_VERSION if version == REPAIRED_RULE_VERSION else REPAIRED_RULE_VERSION
+    with pytest.raises(ValueError, match="contract"):
+        OfflineBindingModel(path, expected_contract=contract("E3", rules_version=other_version))
+    with pytest.raises(ValueError, match="contract"):
+        model.predict(x, feature_contract=contract("E3", rules_version=other_version))
     changed = copy.deepcopy(schema)
     changed["feature_names"].reverse()
     with pytest.raises(ValueError, match="contract"):
@@ -60,3 +70,16 @@ def test_offline_model_roundtrip_rejects_version_and_column_mismatch(tmp_path):
     (path / "manifest.json").write_text(json.dumps(manifest))
     with pytest.raises(ValueError, match="contract"):
         OfflineBindingModel(path, expected_contract=schema)
+
+
+def test_score_cache_cannot_cross_extraction_versions():
+    base = np.zeros((1, 38), dtype=np.float32)
+    row = {"query_structure_supported": 1, "extraction_incomplete": 0,
+           "loose": 1., "sentence": .5, "entity": 1.}
+    v2 = {**row, "rules_version": REPAIRED_RULE_VERSION}
+    for score, version in ((row, REPAIRED_RULE_VERSION), (v2, RULE_VERSION)):
+        with pytest.raises(ValueError, match="cache extraction rules mismatch"):
+            augment(base, [score], arm="E3", base_feature_version=ENGLISH_FEATURE_VERSION,
+                    rules_version=version)
+    assert augment(base, [v2], arm="E3", base_feature_version=ENGLISH_FEATURE_VERSION,
+                   rules_version=REPAIRED_RULE_VERSION)[0, -1] == 1.

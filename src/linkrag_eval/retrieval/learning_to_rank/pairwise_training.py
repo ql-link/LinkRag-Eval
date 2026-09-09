@@ -524,12 +524,18 @@ def _fit_candidate(
     dev_x,
     layout: _MetricLayout,
     params: dict[str, Any],
+    feature_names: Sequence[str] | None = None,
+    *,
     progress: Callable[[dict[str, Any]], None],
 ) -> tuple[str, dict[str, Any]]:
     """One fit only; the returned model string contains the chosen prefix."""
     import lightgbm as lgb
 
     started = time.monotonic()
+    names = list(FEATURE_NAMES if feature_names is None else feature_names)
+    if (len(set(names)) != len(names) or train_x.shape[1] != len(names)
+            or dev_x.shape[1] != len(names)):
+        raise ValueError("training feature names/width mismatch")
 
     def on_iteration(env):
         if len(env.evaluation_result_list) != 1:
@@ -557,7 +563,7 @@ def _fit_candidate(
         eval_group=[[2] * len(layout.sources)],
         eval_names=["development"],
         eval_metric=_evaluation_function(layout),
-        feature_name=list(FEATURE_NAMES),
+        feature_name=names,
         callbacks=[
             on_iteration,
             lgb.early_stopping(PATIENCE, first_metric_only=True, min_delta=0.0, verbose=False),

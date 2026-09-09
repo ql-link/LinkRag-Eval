@@ -194,3 +194,32 @@ def test_paragraph_uncertainty_reaches_human_disagreement_queue(packets, tmp_pat
     rows = json.loads((out / "disagreements.json").read_text())
     assert len(rows) == 4
     assert all("uncertainty_or_ambiguity_retained" in r["mechanical_flags"] for r in rows)
+
+
+def test_partial_review_keeps_available_disagreements_and_uncertainty():
+    from linkrag_eval.retrieval.learning_to_rank.review_handoff import comparison_flags
+
+    a = {'incomplete': True, 'pair_preference': 'X', 'query_ambiguity': None,
+         'pair_reason_code': None, 'adjudication_status': '独立复核',
+         'paragraphs': [{'applicability': '支持所问条件', 'reason_types': []},
+                        {'applicability': '相关但证据不足', 'reason_types': ['entity', 'polarity']}]}
+    b = copy.deepcopy(a)
+    b.update(incomplete=False, pair_preference='undetermined', query_ambiguity='yes', pair_reason_code='other')
+    b['paragraphs'][0]['reason_types'] = ['action_relation']
+    b['paragraphs'][1]['reason_types'].reverse()
+    assert comparison_flags([a, b]) == ['missing_or_incomplete_human_review',
+                                        'human_choices_disagree', 'uncertainty_or_ambiguity_retained']
+
+
+def test_tie_is_not_uncertainty_and_review_status_is_not_semantic_disagreement():
+    from linkrag_eval.retrieval.learning_to_rank.review_handoff import comparison_flags
+
+    a = {'incomplete': False, 'pair_preference': 'tie', 'query_ambiguity': 'no',
+         'pair_reason_code': 'both_support', 'adjudication_status': '独立复核',
+         'paragraphs': [{'applicability': '支持所问条件', 'reason_types': ['entity']}] * 2}
+    b = copy.deepcopy(a)
+    assert comparison_flags([a, b]) == ['tie_preference_present']
+    b.update(adjudication_status='争议保留')
+    flags = comparison_flags([a, b])
+    assert 'review_status_differs' in flags and 'human_choices_disagree' not in flags
+    assert 'uncertainty_or_ambiguity_retained' in flags

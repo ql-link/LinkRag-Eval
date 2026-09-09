@@ -21,6 +21,7 @@ from linkrag_eval.retrieval.learning_to_rank.review_schema import (
     PAIR_REASON_CODES,
     REASON_LOGIC_JS,
     REASON_TYPES,
+    VALIDATION_POLICY_VERSION,
     structured_errors,
     structured_missing,
 )
@@ -111,11 +112,11 @@ def test_every_pair_reason_and_paragraph_branch_receives_without_inferred_prefer
 
 def test_missing_rules_are_identical_in_python_form_and_tutorial_js():
     rows=[]
-    for app,kind,has_evidence,note,code,pref in itertools.product(
+    for app,kind,has_evidence,note,code,pref,ambiguity in itertools.product(
             ['支持所问条件','明确不满足必要条件','相关但证据不足','无法裁定'],
             [[],['entity'],['missing_information'],['other_unclear']], [False,True],['','specific'],
-            PAIR_REASON_CODES,['X','tie','undetermined']):
-        rows.append({'answer_schema_version':2,'query_ambiguity':'no','pair_preference':pref,'pair_reason_code':code,'pair_reason':note,
+            PAIR_REASON_CODES,['X','tie','undetermined'],['no','yes','uncertain',None]):
+        rows.append({'answer_schema_version':2,'query_ambiguity':ambiguity,'pair_preference':pref,'pair_reason_code':code,'pair_reason':note,
                      'paragraphs':[{'display_id':s,'applicability':app,'reason_types':kind,'reason':note,'evidence_spans':[{'quote':'x','start':0,'end':1}] if has_evidence else []} for s in ('X','Y')]})
     code='const reasonContract='+json.dumps(CONTRACT)+';'+REASON_LOGIC_JS+';process.stdout.write(JSON.stringify(JSON.parse(require("fs").readFileSync(0,"utf8")).map(structuredMissing)));'
     result=subprocess.run(['node','-e',code],input=json.dumps(rows),capture_output=True,text=True,check=True)
@@ -123,6 +124,88 @@ def test_missing_rules_are_identical_in_python_form_and_tutorial_js():
     assert REASON_LOGIC_JS in structured_html('reviewer_1',CASES) and REASON_LOGIC_JS in tutorial_html()
     a=rows[0]
     assert 'X.reason_types' in structured_missing(a) and 'X.evidence' in structured_missing(a)
+
+
+def ambiguity_export():
+    page=structured_html('reviewer_1',CASES[:1])
+    actions=[inp('reviewer','QA ONLY'),inp('reviewer-type','human'),*answer_actions(CASES[0],6)]
+    actions += [check(side+'-basis-'+kind,False) for side in ('X','Y') for kind in REASON_TYPES]
+    _,payload=exported(page,actions)
+    # Mutations below target answers; omit redundant raw drafts so imports use those answers.
+    payload.pop('drafts')
+    return page,payload
+
+
+@pytest.mark.parametrize('ambiguity',['yes','uncertain'])
+def test_ambiguity_abstention_accepts_old_export_without_filling_categories(ambiguity):
+    page,payload=ambiguity_export()
+    payload.pop('validation_policy_version')
+    payload['completion']['complete_cases']=0  # Historical page used stricter completeness rules.
+    payload['answers'][0]['query_ambiguity']=ambiguity
+    for claimed in (None,'untrusted_future_policy'):
+        old=copy.deepcopy(payload)
+        if claimed is not None:
+            old['validation_policy_version']=claimed
+        result=validate_submission(old,CASES[:1],'reviewer_1',expected_schema_version=2)
+        assert result['complete'] and not result['errors']
+        assert result['validation_policy_version']==VALIDATION_POLICY_VERSION
+        _,again=exported(page,[{'kind':'import','value':old}])
+        assert again['answers']==old['answers']
+        assert again['completion']['complete_cases']==1
+        assert all(p['reason_types']==[] and p['evidence_spans']==[] for p in again['answers'][0]['paragraphs'])
+
+
+@pytest.mark.parametrize('mutation,missing',[
+    ('not_ambiguous','X.reason_types'),('no_ambiguity_answer','query_ambiguity'),
+    ('blank_note','X.specific_uncertainty'),('missing_pair_note','pair_specific_note'),
+    ('missing_pair_code','pair_reason_code'),('other_paragraph','Y.reason_types'),
+    ('supports','X.evidence'),('fails','X.evidence'),
+])
+def test_ambiguity_exception_does_not_remove_other_requirements(mutation,missing):
+    page,payload=ambiguity_export()
+    a=payload['answers'][0]
+    p=a['paragraphs'][0]
+    if mutation=='not_ambiguous': a['query_ambiguity']='no'
+    elif mutation=='no_ambiguity_answer': a['query_ambiguity']=None
+    elif mutation=='blank_note': p['reason']=' \t '
+    elif mutation=='missing_pair_note': a['pair_reason']=''
+    elif mutation=='missing_pair_code': a['pair_reason_code']=None
+    elif mutation=='other_paragraph': a['paragraphs'][1]['applicability']='相关但证据不足'
+    else: p['applicability']='支持所问条件' if mutation=='supports' else '明确不满足必要条件'
+    result=validate_submission(payload,CASES[:1],'reviewer_1')
+    assert not result['complete'] and not result['errors']
+    assert missing in result['normalized'][0]['missing']
+    _,again=exported(page,[{'kind':'import','value':payload}])
+    assert again['completion']['complete_cases']==0
+
+
+@pytest.mark.parametrize('mutation',['missing_types','null_types','unknown_types','duplicate_types','unicode'])
+def test_ambiguity_abstention_still_rejects_invalid_fields(mutation):
+    page,payload=ambiguity_export()
+    p=payload['answers'][0]['paragraphs'][0]
+    if mutation=='missing_types': p.pop('reason_types')
+    elif mutation=='null_types': p['reason_types']=None
+    elif mutation=='unknown_types': p['reason_types']=['invented']
+    elif mutation=='duplicate_types': p['reason_types']=['entity','entity']
+    else: p['evidence_spans']=[{'quote':'😀','start':1,'end':3}]  # Codepoint end must be 2.
+    result=validate_submission(payload,CASES[:1],'reviewer_1')
+    assert result['errors'] and not result['complete']
+    form=run(page,actions=[{'kind':'import','value':payload}])
+    assert '导入失败' in form['nodes']['notice']['text']
+
+
+def test_tutorial_ambiguity_exception_keeps_empty_categories_and_requires_own_note():
+    actions=[]
+    for i,c in enumerate(PRACTICES):
+        actions+=answer_actions(c,[0,2,6][i],prefix=f'p{i+1}-')
+    actions += [check('p3-'+side+'-basis-'+kind,False) for side in ('X','Y') for kind in REASON_TYPES]
+    page=tutorial_html()
+    result=run(page,actions=[*actions,click('reveal')])
+    assert not result['nodes']['references']['hidden']
+    for side in ('X','Y'):
+        assert all(not result['nodes']['p3-'+side+'-basis-'+kind]['checked'] for kind in REASON_TYPES)
+    broken=run(page,storage=result['storage'],actions=[inp('p3-Y-reason',' '),click('reveal')])
+    assert broken['nodes']['references']['hidden']
 
 
 @pytest.mark.parametrize('kind',['unknown',['entity','entity'],[{}]])

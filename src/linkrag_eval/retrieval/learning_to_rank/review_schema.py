@@ -5,6 +5,8 @@ import html
 
 ANSWER_SCHEMA_VERSION = 2
 REASON_SCHEMA_VERSION = "structured_reasons_v1"
+# Completeness policy changes independently of the unchanged answer/storage format.
+VALIDATION_POLICY_VERSION = "query_ambiguity_abstention_v1"
 STORAGE_SUFFIX = "-structured-v2"
 REASON_TYPES = {
     "entity": "人物或对象——说的是不是查询要求的人或东西",
@@ -27,6 +29,7 @@ PAIR_REASON_CODES = {
 }
 CONTRACT = {
     "answer_schema_version": ANSWER_SCHEMA_VERSION, "reason_schema_version": REASON_SCHEMA_VERSION,
+    "validation_policy_version": VALIDATION_POLICY_VERSION,
     "reason_types": REASON_TYPES, "pair_reason_codes": PAIR_REASON_CODES,
     "content_types": ["entity", "action_relation", "polarity", "time_quantity_comparison"],
     "evidence_required_for": ["支持所问条件", "明确不满足必要条件"],
@@ -36,6 +39,8 @@ CONTRACT = {
     "pair_note_required_codes": ["evidence_quality_difference", "ambiguity_incomparable", "other"],
     "same_level_pair_codes": ["both_support", "both_insufficient", "both_fail"],
     "asymmetric_pair_codes": ["one_evidence_other_insufficient", "one_meets_other_fails"],
+    "reason_types_optional_query_ambiguity": ["yes", "uncertain"],
+    "reason_types_optional_applicability": "无法裁定",
 }
 
 
@@ -45,7 +50,12 @@ def structured_missing(answer: dict) -> list[str]:
     for p in answer.get("paragraphs", []):
         side, kinds = p["display_id"], p.get("reason_types") or []
         note = p.get("reason") or ""
-        if not kinds:
+        ambiguity_abstention = (
+            answer.get("query_ambiguity") in CONTRACT["reason_types_optional_query_ambiguity"]
+            and p.get("applicability") == CONTRACT["reason_types_optional_applicability"]
+            and bool(note.strip())
+        )
+        if not kinds and not ambiguity_abstention:
             missing.append(f"{side}.reason_types")
         if p.get("applicability") in CONTRACT["evidence_required_for"] and not p.get("evidence_spans"):
             missing.append(f"{side}.evidence")
@@ -84,8 +94,8 @@ def structured_errors(answer: dict) -> list[str]:
 
 
 def reason_controls(prefix: str) -> str:
-    return ('<fieldset><legend>你主要根据哪些内容作出判断？（必填，可多选）</legend>'
-            '<p class="note">只选与你的判断有关的类别；类别不表示条件已满足，也不要求每题选择相同类别。</p>'
+    return ('<fieldset><legend>你主要根据哪些内容作出判断？（可多选，见下方例外）</legend>'
+            '<p class="note">通常至少选一类。若查询有歧义／无法判断、本段无法裁定，且已在本段补充说明中写明疑点，类别可以留空；不要强行选。类别不表示条件已满足。</p>'
             + "".join(f'<label><input type="checkbox" id="{prefix}-basis-{key}" value="{key}"> '
                       f'{html.escape(label)}</label>' for key, label in REASON_TYPES.items()) + '</fieldset>')
 
@@ -102,7 +112,9 @@ function structuredMissing(a){
  const missing=[];
  for(const p of a.paragraphs){
   const s=p.display_id,kinds=p.reason_types||[],note=(p.reason||'').trim();
-  if(!kinds.length)missing.push(s+'.reason_types');
+  const ambiguityAbstention=reasonContract.reason_types_optional_query_ambiguity.includes(a.query_ambiguity)
+   &&p.applicability===reasonContract.reason_types_optional_applicability&&!!note;
+  if(!kinds.length&&!ambiguityAbstention)missing.push(s+'.reason_types');
   if(reasonContract.evidence_required_for.includes(p.applicability)&&!p.evidence_spans.length)missing.push(s+'.evidence');
   if((reasonContract.paragraph_note_required_for.includes(p.applicability)||kinds.some(k=>reasonContract.paragraph_note_required_types.includes(k)))&&!note)missing.push(s+'.specific_uncertainty');
   if(p.applicability===reasonContract.insufficient_applicability&&!kinds.some(k=>reasonContract.content_types.includes(k))&&!note)missing.push(s+'.missing_information_type_or_note');

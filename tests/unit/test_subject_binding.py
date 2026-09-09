@@ -158,3 +158,102 @@ def test_parser_cache_refuses_wrong_contract_or_unicode_offset():
     parsed["tokens"][1]["start"] += 1
     with pytest.raises(ValueError, match="offsets"):
         extract(text, parsed)
+
+
+@pytest.mark.parametrize("opening,closing", [('"', '"'), ('“', '”')])
+@pytest.mark.parametrize("negative", [False, True])
+def test_nominal_title_quotes_preserve_predicate_and_polarity(opening, closing, negative):
+    from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+        REPAIRED_RULE_VERSION,
+        extract,
+    )
+    words = [
+        ("Mira", "mira", "PROPN", "NNP", "nsubj", 1),
+        ("likes", "like", "VERB", "VBZ", "ROOT", 1),
+        (opening, opening, "PUNCT", "``", "punct", 4),
+        ("Blue", "blue", "ADJ", "JJ", "amod", 4),
+        ("Moon", "moon", "NOUN", "NN", "dobj", 1),
+        (closing, closing, "PUNCT", "''", "punct", 4),
+    ]
+    if negative:
+        words.append(("never", "never", "ADV", "RB", "neg", 1))
+    text, parsed = parsed_sentence(words)
+    assert extract(text, parsed)["facts"] == []
+    repaired = extract(text, parsed, rules_version=REPAIRED_RULE_VERSION)
+    assert not repaired["extraction_incomplete"]
+    result, = repaired["facts"]
+    assert result["predicate"] == "like"
+    assert result["arguments"] == [{"role": "object", "lemmas": ["blue", "moon"]}]
+    assert result["polarity"] == ("negative" if negative else "positive")
+    assert result["subject_key"] == "name:mira"
+    assert all(text[s["start"]:s["end"]] == s["quote"] for s in result["evidence_offsets"])
+    # Identical sentence without nominal quotation has identical lexical fact content.
+    plain, plain_parsed = parsed_sentence([
+        ("Mira", "mira", "PROPN", "NNP", "nsubj", 1),
+        ("likes", "like", "VERB", "VBZ", "ROOT", 1),
+        ("Blue", "blue", "ADJ", "JJ", "amod", 3),
+        ("Moon", "moon", "NOUN", "NN", "dobj", 1),
+        *([( "never", "never", "ADV", "RB", "neg", 1)] if negative else []),
+    ])
+    old = extract(plain, plain_parsed)["facts"][0]
+    assert {k: v for k, v in result.items() if k != "evidence_offsets"} == {
+        k: v for k, v in old.items() if k != "evidence_offsets"}
+
+
+@pytest.mark.parametrize("closing", ['"', '”', None])
+def test_quoted_statement_and_broken_quotes_stay_unsupported(closing):
+    from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+        REPAIRED_RULE_VERSION,
+        extract,
+    )
+    words = [
+        ('"', '"', "PUNCT", "``", "punct", 2),
+        ("Mira", "mira", "PROPN", "NNP", "nsubj", 2),
+        ("sings", "sing", "VERB", "VBZ", "ROOT", 2),
+    ]
+    if closing:
+        words.append((closing, closing, "PUNCT", "''", "punct", 2))
+    text, parsed = parsed_sentence(words)
+    for query_mode in (False, True):
+        result = extract(text, parsed, query=query_mode, rules_version=REPAIRED_RULE_VERSION)
+        assert result["issues"][0]["reason"] == "quoted_statement_scope"
+        assert not result.get("facts", result.get("conditions"))
+
+
+def test_extractor_version_is_explicit_and_matching_versions_required():
+    from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+        REPAIRED_RULE_VERSION,
+        extract,
+    )
+    text, parsed = parsed_sentence([
+        ("Mira", "mira", "PROPN", "NNP", "nsubj", 1),
+        ("sings", "sing", "VERB", "VBZ", "ROOT", 1),
+    ])
+    with pytest.raises(ValueError, match="rules version"):
+        extract(text, parsed, rules_version="unknown")
+    with pytest.raises(ValueError, match="rules mismatch"):
+        score_conditions(extract(text, parsed, query=True),
+                         extract(text, parsed, rules_version=REPAIRED_RULE_VERSION))
+
+
+def test_multisentence_quotation_protects_middle_sentence_without_quote_tokens():
+    from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+        REPAIRED_RULE_VERSION,
+        extract,
+    )
+    text, parsed = parsed_sentence([
+        ('"', '"', "PUNCT", "``", "punct", 2),
+        ("Mira", "mira", "PROPN", "NNP", "nsubj", 2),
+        ("sings", "sing", "VERB", "VBZ", "ROOT", 2),
+        (".", ".", "PUNCT", ".", "punct", 2),
+        ("Nora", "nora", "PROPN", "NNP", "nsubj", 5),
+        ("dances", "dance", "VERB", "VBZ", "ROOT", 5),
+        (".", ".", "PUNCT", ".", "punct", 5),
+        ("Ada", "ada", "PROPN", "NNP", "nsubj", 8),
+        ("reads", "read", "VERB", "VBZ", "ROOT", 8),
+        ('"', '"', "PUNCT", "''", "punct", 8),
+    ])
+    for t in parsed["tokens"]:
+        t["sentence_id"] = 0 if t["i"] < 4 else 1 if t["i"] < 7 else 2
+    assert [f["predicate"] for f in extract(text, parsed)["facts"]] == ["dance"]
+    assert extract(text, parsed, rules_version=REPAIRED_RULE_VERSION)["facts"] == []

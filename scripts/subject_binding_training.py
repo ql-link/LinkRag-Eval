@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fixed five-arm training on explicit existing Train/development snapshots only."""
+"""Fixed basic-matching or binding comparison on existing Train/development snapshots."""
 from __future__ import annotations
 
 import argparse
@@ -11,7 +11,13 @@ from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
-from subject_binding_development import check_summary, read_json, read_rows, write_json
+from subject_binding_development import (
+    check_summary,
+    read_json,
+    read_rows,
+    rules_from_config,
+    write_json,
+)
 
 from linkrag_eval.retrieval.learning_to_rank.features import ENGLISH_FEATURE_VERSION
 from linkrag_eval.retrieval.learning_to_rank.pairwise_training import (
@@ -30,12 +36,15 @@ from linkrag_eval.retrieval.learning_to_rank.pairwise_training import (
     training_parameters,
 )
 from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+    GATE_VERSION,
+    RULE_VERSION,
     SHUFFLE_SEEDS,
     cache_key,
     extract,
     score_conditions,
     shuffled_subjects,
     text_hash,
+    training_signal_gate,
 )
 from linkrag_eval.retrieval.learning_to_rank.subject_binding_model import (
     OfflineBindingModel,
@@ -74,14 +83,14 @@ def train_texts(config, out):
     print(json.dumps({"candidate_rows": candidate_count, "unique_text_roles": len(records)}), flush=True)
 
 
-def compute_scores(dataset, cache, out, *, shuffle_seed=None):
+def compute_scores(dataset, cache, out, *, shuffle_seed=None, rules_version=RULE_VERSION):
     parsed_queries, parsed_paragraphs = {}, {}
     by_query, timings, rows = {}, [], []
     shuffle_reports = {}
     for q in dataset.queries:
         qh = text_hash(q.query)
         if qh not in parsed_queries:
-            parsed_queries[qh] = extract(q.query, read_json(cache / f"{cache_key(q.query)}.json"), query=True)
+            parsed_queries[qh] = extract(q.query, read_json(cache / f"{cache_key(q.query)}.json"), query=True, rules_version=rules_version)
         query = parsed_queries[qh]
         scores = []
         load_started = time.perf_counter()
@@ -90,7 +99,7 @@ def compute_scores(dataset, cache, out, *, shuffle_seed=None):
             text = q.method_view["candidate_contents"][cid]
             ph = text_hash(text)
             if ph not in parsed_paragraphs:
-                paragraph = extract(text, read_json(cache / f"{cache_key(text)}.json"))
+                paragraph = extract(text, read_json(cache / f"{cache_key(text)}.json"), rules_version=rules_version)
                 if shuffle_seed is not None:
                     paragraph, info = shuffled_subjects(paragraph, shuffle_seed)
                     shuffle_reports[ph] = info
@@ -113,7 +122,8 @@ def compute_scores(dataset, cache, out, *, shuffle_seed=None):
                               ("paragraph-facts.jsonl", list(parsed_paragraphs.values()))):
         with (out / filename).open("x") as f:
             f.writelines(json.dumps(v, ensure_ascii=False) + "\n" for v in values)
-    summary = {"candidate_rows": len(rows), "supported_queries": sum(parsed_queries[text_hash(q.query)]["query_structure_supported"] for q in dataset.queries),
+    summary = {"rules_version": rules_version,
+               "candidate_rows": len(rows), "supported_queries": sum(parsed_queries[text_hash(q.query)]["query_structure_supported"] for q in dataset.queries),
                "availability": dict(Counter(r["scores"]["availability"] for r in rows)),
                "score_distributions": {n: dict(Counter(str(r["scores"][n]) for r in rows)) for n in ("loose", "sentence", "entity")},
                "matching_seconds": sum(t["full_pool_matching_seconds"] for t in timings),
@@ -124,14 +134,14 @@ def compute_scores(dataset, cache, out, *, shuffle_seed=None):
     return by_query, summary
 
 
-def augmented_dataset(dataset, scores, arm):
+def augmented_dataset(dataset, scores, arm, *, rules_version=RULE_VERSION):
     items = [replace(q, features=augment(q.features, scores[q.query_id], arm=arm,
-                                        base_feature_version=dataset.feature_version))
+                                        base_feature_version=dataset.feature_version, rules_version=rules_version))
              for q in dataset.queries]
     blocks = [q for q in items if not q.exclusion_reasons]
     result = replace(dataset, queries=items, blocks=blocks,
                      x=np.concatenate([q.features[q.selected_indices] for q in blocks]),
-                     feature_version=contract(arm)["feature_version"])
+                     feature_version=contract(arm, rules_version=rules_version)["feature_version"])
     if [q.query_id for q in result.blocks] != [q.query_id for q in dataset.blocks]:
         raise ValueError("augmentation changed supervision")
     return result
@@ -175,11 +185,11 @@ def contrast(left, right):
             "leave_one_source_out": {s: (net - v["corrected"] + v["harmed"]) / (total - sum(v.values())) for s, v in sorted(sources.items())}}
 
 
-def fit_arm(train, dev, *, arm, out, params, train_scores, dev_scores):
+def fit_arm(train, dev, *, arm, out, params, train_scores, dev_scores, rules_version=RULE_VERSION):
     import lightgbm as lgb
     out.mkdir(parents=True, exist_ok=False)
-    a, b = (augmented_dataset(d, scores, arm) for d, scores in ((train, train_scores), (dev, dev_scores)))
-    schema = contract(arm)
+    a, b = (augmented_dataset(d, scores, arm, rules_version=rules_version) for d, scores in ((train, train_scores), (dev, dev_scores)))
+    schema = contract(arm, rules_version=rules_version)
     history = []
     def progress(row):
         history.append(row)
@@ -189,7 +199,7 @@ def fit_arm(train, dev, *, arm, out, params, train_scores, dev_scores):
                                 timeout_seconds=CANDIDATE_TIMEOUT_SECONDS, progress=progress)
     fitted.update(training_parameters=params, rounds_executed=len(history),
                   fit_with_process_seconds=time.perf_counter() - started)
-    save_bundle(out / "model", text, arm=arm, fit=fitted)
+    save_bundle(out / "model", text, arm=arm, fit=fitted, rules_version=rules_version)
     loaded = OfflineBindingModel(out / "model", expected_contract=schema)
     booster = lgb.Booster(model_str=text)
     started = time.perf_counter()
@@ -208,6 +218,10 @@ def fit_arm(train, dev, *, arm, out, params, train_scores, dev_scores):
 
 
 def run(config, cache, out):
+    extractor_version = rules_from_config(config)
+    purpose = config.get("experiment_purpose", "binding")
+    if purpose not in {"basic_matching", "binding"}:
+        raise ValueError("unknown training comparison purpose")
     out.mkdir(parents=True, exist_ok=False)
     old = read_json(config["english_selection"])
     if (old["seed"], old["maximum_iterations_per_fit"], old["patience"]) != (SEED, MAX_ITERATIONS, PATIENCE):
@@ -216,8 +230,8 @@ def run(config, cache, out):
     params = training_parameters(next(c for c in GRID if c["config_id"] == config["config_id"]))
     if params != picked["params"]:
         raise ValueError("historical fixed hyperparameters differ")
-    for package, version in old["versions"].items():
-        if importlib.metadata.version(package) != version:
+    for package, expected_package_version in old["versions"].items():
+        if importlib.metadata.version(package) != expected_package_version:
             raise ValueError(f"training environment differs: {package}")
     prep_started = time.perf_counter()
     datasets = []
@@ -232,7 +246,22 @@ def run(config, cache, out):
     state = {"status": "running", "roles_read": ["train", "development"], "arms": {},
              "prepare_seconds": time.perf_counter() - prep_started,
              "train": train.summary, "development": dev.summary, "parameters": params,
-             "official_label_exploration_only": True, "human_submissions": "0/2"}
+             "official_label_exploration_only": True, "rules_version": extractor_version,
+             "experiment_purpose": purpose}
+    # Recompute eligibility from these exact inputs, even when run() is called directly
+    # or a stale/incorrect stage-A summary says True. Do not fit even E0 before this check.
+    train_scores, train_cost = compute_scores(train, cache, out / "train-signals", rules_version=extractor_version)
+    dev_scores, dev_cost = compute_scores(dev, cache, out / "development-signals", rules_version=extractor_version)
+    gates = {"development_full_pools": training_signal_gate(dev_scores, purpose=purpose),
+             "train_supervised_rows": training_signal_gate({
+                 q.query_id: [train_scores[q.query_id][i] for i in q.selected_indices]
+                 for q in train.blocks}, purpose=purpose)}
+    state.update(signal_cost={"train": train_cost, "development": dev_cost}, training_signal_gates=gates)
+    if not all(g["allowed"] for g in gates.values()):
+        state.update(status="stopped_before_fit", stop_reason="insufficient_signal_for_requested_comparison")
+        write_json(out / "results.json", state)
+        print(json.dumps({"status": state["status"], "gates": gates}), flush=True)
+        return
     write_json(out / "results.json", state)
     print("Fitting E0 once; must reproduce frozen English baseline", flush=True)
     fit = train_and_select(train, dev, out_dir=out / "E0", policy_source=Path(config["policy_source"]),
@@ -243,36 +272,40 @@ def run(config, cache, out):
         raise ValueError("E0 cannot reproduce frozen English baseline; dependent arms stopped")
     state["arms"]["E0"] = {"metrics": evaluate(predictions["E0"]), "best_iteration": fit["actual_trees"], "historical_predictions_exact": True}
     write_json(out / "results.json", state)
-    train_scores, train_cost = compute_scores(train, cache, out / "train-signals")
-    dev_scores, dev_cost = compute_scores(dev, cache, out / "development-signals")
     available = {q.query_id for q in dev.blocks if all(dev_scores[q.query_id][i]["availability"] == "available" for i in q.selected_indices)}
     state["signal_cost"] = {"train": train_cost, "development": dev_cost}
-    for arm in ("EM", "E1", "E2", "E3"):
+    arms = ("EM", "E1") if purpose == "basic_matching" else ("EM", "E1", "E2", "E3")
+    for arm in arms:
         print(f"Fitting {arm} once", flush=True)
         pred, fitted = fit_arm(train, dev, arm=arm, out=out / arm, params=params,
-                               train_scores=train_scores, dev_scores=dev_scores)
+                               train_scores=train_scores, dev_scores=dev_scores, rules_version=extractor_version)
         predictions[arm] = pred
         state["arms"][arm] = {"metrics": evaluate(pred), "available_subset": evaluate(pred, available), "fit": fitted}
         write_json(out / "results.json", state)
     state["arms"]["E0"]["available_subset"] = evaluate(predictions["E0"], available)
     state["history_B"] = evaluate(predictions["B"])
     state["contrasts"] = {f"{base}->{arm}": contrast(predictions[base], predictions[arm])
-                          for base in ("E0", "EM", "B") for arm in ("E0", "EM", "E1", "E2", "E3") if base != arm}
-    state["contrasts"].update({f"{base}->E3": contrast(predictions[base], predictions["E3"]) for base in ("E1", "E2")})
-    stage_c = (all(evaluate(predictions["E3"])["correct"] > evaluate(predictions[k])["correct"] for k in ("E0", "EM", "E1", "E2", "B"))
+                          for base in ("E0", "EM", "B") for arm in ("E0", *arms) if base != arm}
+    if purpose == "binding":
+        state["contrasts"].update({f"{base}->E3": contrast(predictions[base], predictions["E3"]) for base in ("E1", "E2")})
+    stage_c = (purpose == "binding" and config.get("enable_stage_c", True)
+               and all(evaluate(predictions["E3"])["correct"] > evaluate(predictions[k])["correct"] for k in ("E0", "EM", "E1", "E2", "B"))
                and all(state["contrasts"][f"{k}->E3"]["positive_sources"] > 1 for k in ("E1", "E2")))
     state["stage_c"] = {"triggered": stage_c, "seeds": list(SHUFFLE_SEEDS), "runs": []}
     if stage_c:
         for seed in SHUFFLE_SEEDS:
             folder = out / f"E3-shuffled-{seed}"
-            t_scores, t_cost = compute_scores(train, cache, out / f"shuffle-train-{seed}", shuffle_seed=seed)
-            d_scores, d_cost = compute_scores(dev, cache, out / f"shuffle-development-{seed}", shuffle_seed=seed)
-            pred, fitted = fit_arm(train, dev, arm="E3", out=folder, params=params, train_scores=t_scores, dev_scores=d_scores)
+            t_scores, t_cost = compute_scores(train, cache, out / f"shuffle-train-{seed}", shuffle_seed=seed, rules_version=extractor_version)
+            d_scores, d_cost = compute_scores(dev, cache, out / f"shuffle-development-{seed}", shuffle_seed=seed, rules_version=extractor_version)
+            pred, fitted = fit_arm(train, dev, arm="E3", out=folder, params=params, train_scores=t_scores, dev_scores=d_scores, rules_version=extractor_version)
             state["stage_c"]["runs"].append({"seed": seed, "metrics": evaluate(pred), "fit": fitted, "train": t_cost, "development": d_cost})
             write_json(out / "results.json", state)
         state["stage_c"]["mean_correct"] = float(np.mean([r["metrics"]["correct"] for r in state["stage_c"]["runs"]]))
     state["status"] = "complete"
-    state["stage_c"]["stop_reason"] = None if stage_c else "E3 did not pass preregistered superiority/multiple-source trigger"
+    state["stage_c"]["stop_reason"] = (None if stage_c else "not part of basic matching comparison"
+                                      if purpose == "basic_matching" else "disabled by execution config"
+                                      if not config.get("enable_stage_c", True)
+                                      else "E3 did not pass preregistered superiority/multiple-source trigger")
     write_json(out / "results.json", state)
     print(json.dumps({k: {"correct": v["metrics"]["correct"], "wrong": v["metrics"]["wrong"], "tie": v["metrics"]["tie"]} for k, v in state["arms"].items()}), flush=True)
 
@@ -286,10 +319,13 @@ def main():
     p.add_argument("--out", type=Path, required=True)
     args = p.parse_args()
     config = read_json(args.config)
-    frozen = read_json(config["extraction_spec"])
-    if frozen["extraction_source_sha256"] != text_hash(Path(frozen["extraction_source"]).read_text()):
-        raise ValueError("frozen extraction source changed")
-    if not read_json(args.development_summary)["stage_b_allowed"]:
+    version = rules_from_config(config)
+    summary = read_json(args.development_summary)
+    if (summary.get("rules_version") != version
+            or summary.get("training_signal_gate", {}).get("version") != GATE_VERSION
+            or summary.get("training_signal_gate", {}).get("purpose") != config.get("experiment_purpose", "binding")):
+        raise ValueError("stage A extraction/gate version mismatch; regenerate with current rules")
+    if not summary["stage_b_allowed"]:
         raise ValueError("stage A stopped dependent training")
     if args.action == "prepare-texts":
         train_texts(config, args.out)

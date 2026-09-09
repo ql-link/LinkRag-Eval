@@ -9,28 +9,50 @@ import numpy as np
 from linkrag_eval.retrieval.learning_to_rank.features import (
     ENGLISH_FEATURE_VERSION,
     FEATURE_NAMES,
-    rules_version,
 )
-from linkrag_eval.retrieval.learning_to_rank.subject_binding import parser_contract, text_hash
+from linkrag_eval.retrieval.learning_to_rank.features import (
+    rules_version as base_rules_version,
+)
+from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+    RECORD_RULE_VERSION,
+    RULE_VERSION,
+    parser_contract,
+    text_hash,
+    validate_rules_version,
+)
 
 PILOT_VERSION = "candidate_difference_v3_en_subject_binding_v1"
 SHARED_FLAGS = ("query_structure_supported", "extraction_incomplete")
 ARM_SCORES = {"EM": "constant_zero", "E1": "loose", "E2": "sentence", "E3": "entity"}
 
 
-def contract(arm):
+def contract(arm, *, rules_version=RULE_VERSION):
+    validate_rules_version(rules_version)
     if arm not in ARM_SCORES:
         raise ValueError("unknown pilot arm")
-    return {"feature_version": PILOT_VERSION, "base_feature_version": ENGLISH_FEATURE_VERSION,
-            "base_rules_version": rules_version(ENGLISH_FEATURE_VERSION), "parser": parser_contract(),
+    schema = {"feature_version": PILOT_VERSION, "base_feature_version": ENGLISH_FEATURE_VERSION,
+            "base_rules_version": base_rules_version(ENGLISH_FEATURE_VERSION), "parser": parser_contract(),
             "arm": arm, "score": ARM_SCORES[arm], "shared_flags": list(SHARED_FLAGS),
             "feature_names": [*FEATURE_NAMES, *SHARED_FLAGS, "condition_support"],
             "missing_value": "NaN; common availability for loose/sentence/entity; EM last column always zero",
             "dtype": "float32", "candidate_scope": "complete saved pool before supervised row selection"}
+    if rules_version != RULE_VERSION:
+        schema.update(feature_version="candidate_difference_v3_en_subject_binding_v2",
+                      extraction_rules=rules_version)
+    if rules_version == RECORD_RULE_VERSION:
+        from .subject_binding_matching import STRICT_MATCHER_VERSION
+        from .subject_binding_records import RECORD_SCHEMA
+        schema.update(feature_version="candidate_difference_v3_en_subject_binding_v3",
+                      record_schema=RECORD_SCHEMA, matcher_version=STRICT_MATCHER_VERSION)
+    return schema
 
 
-def augment(base, rows, *, arm, base_feature_version):
-    schema = contract(arm)
+def augment(base, rows, *, arm, base_feature_version, rules_version=RULE_VERSION):
+    schema = contract(arm, rules_version=rules_version)
+    if any(r.get("rules_version", RULE_VERSION) != rules_version for r in rows):
+        raise ValueError("augmentation score cache extraction rules mismatch")
+    if rules_version == RECORD_RULE_VERSION and any(r.get("matcher_version") != schema["matcher_version"] for r in rows):
+        raise ValueError("augmentation score cache matcher version mismatch")
     if base_feature_version != ENGLISH_FEATURE_VERSION:
         raise ValueError("pilot augmentation requires the explicit English feature contract")
     if base.shape != (len(rows), len(FEATURE_NAMES)) or not np.isfinite(base).all():
@@ -45,10 +67,10 @@ def augment(base, rows, *, arm, base_feature_version):
     return result
 
 
-def save_bundle(path: Path, model_text: str, *, arm: str, fit: dict):
+def save_bundle(path: Path, model_text: str, *, arm: str, fit: dict, rules_version=RULE_VERSION):
     import lightgbm as lgb
     path.mkdir(parents=True, exist_ok=False)
-    schema = contract(arm)
+    schema = contract(arm, rules_version=rules_version)
     booster = lgb.Booster(model_str=model_text)
     if booster.feature_name() != schema["feature_names"]:
         raise ValueError("trained feature order differs from bundle contract")
@@ -66,7 +88,8 @@ class OfflineBindingModel:
         saved = json.loads((path / "manifest.json").read_text())
         if (saved.get("format") != "subject_binding_offline_lgbm_v1"
                 or saved.get("contract") != expected_contract
-                or expected_contract != contract(expected_contract.get("arm"))):
+                or expected_contract != contract(expected_contract.get("arm"),
+                    rules_version=expected_contract.get("extraction_rules", RULE_VERSION))):
             raise ValueError("offline pilot model feature/version contract mismatch")
         content = (path / "model.txt").read_text()
         if saved["model_sha256"] != text_hash(content) or saved["lightgbm_version"] != lgb.__version__:

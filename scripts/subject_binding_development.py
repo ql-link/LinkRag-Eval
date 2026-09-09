@@ -20,10 +20,13 @@ from linkrag_eval.retrieval.learning_to_rank.pairwise_training import (
     load_dataset,
 )
 from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+    RULE_VERSION,
     cache_key,
     extract,
     score_conditions,
     text_hash,
+    training_signal_gate,
+    validate_rules_version,
 )
 
 
@@ -37,6 +40,19 @@ def read_rows(path):
 
 def write_json(path, value):
     Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2, allow_nan=False) + "\n")
+
+
+def rules_from_config(config):
+    version = validate_rules_version(config.get("rules_version", RULE_VERSION))
+    frozen = read_json(config["extraction_spec"])
+    if frozen.get("rules_version", frozen["parser_contract"]["extraction_rules"]) != version:
+        raise ValueError("configured extraction rules differ from execution spec")
+    if frozen["extraction_source_sha256"] != text_hash(Path(frozen["extraction_source"]).read_text()):
+        raise ValueError("frozen extraction source changed")
+    for source in frozen.get("additional_sources", []):
+        if source["sha256"] != text_hash(Path(source["path"]).read_text()):
+            raise ValueError("frozen representation/matcher source changed")
+    return version
 
 
 def distribution(values):
@@ -107,6 +123,7 @@ def prepare(config, out):
 
 
 def analyze(config, cache, out):
+    version = rules_from_config(config)
     out.mkdir(parents=True, exist_ok=False)
     dev = development(config)
     records, queries, paragraphs = [], {}, {}
@@ -115,13 +132,13 @@ def analyze(config, cache, out):
         started = time.perf_counter()
         qhash = text_hash(q.query)
         if qhash not in queries:
-            queries[qhash] = extract(q.query, read_json(cache / f"{cache_key(q.query)}.json"), query=True)
+            queries[qhash] = extract(q.query, read_json(cache / f"{cache_key(q.query)}.json"), query=True, rules_version=version)
         parsed_query = queries[qhash]
         for cid in q.chunk_ids:
             text = q.method_view["candidate_contents"][cid]
             phash = text_hash(text)
             if phash not in paragraphs:
-                paragraphs[phash] = extract(text, read_json(cache / f"{cache_key(text)}.json"))
+                paragraphs[phash] = extract(text, read_json(cache / f"{cache_key(text)}.json"), rules_version=version)
             parsed = paragraphs[phash]
             records.append({"source_query_id": q.query_id, "chunk_id": cid,
                             "query_text_sha256": qhash, "paragraph_text_sha256": phash,
@@ -144,7 +161,12 @@ def analyze(config, cache, out):
     support = sum(q["query_structure_supported"] for q in query_stats)
     counts = {name: distribution(r["scores"][name] for r in records)
               for name in ("query_structure_supported", "extraction_incomplete", "loose", "sentence", "entity")}
-    gate = support > 0 and any(len(v) > 1 for v in counts.values())
+    pools = {q.query_id: [by_id[q.query_id, cid] for cid in q.chunk_ids] for q in dev.queries}
+    purpose = config.get("experiment_purpose", "binding")
+    gates = {name: training_signal_gate(pools, purpose=name) for name in ("basic_matching", "binding")}
+    if purpose not in gates:
+        raise ValueError("unknown training comparison purpose")
+    gate = gates[purpose]
     summary = {"stage": "A", "status": "complete", "scheduled_queries": 76, "candidate_rows": len(records),
                "eligible_queries": 74, "covered_pairs": 37, "sources": 19,
                "supported_queries": support, "query_condition_counts": distribution(q["condition_count"] for q in query_stats),
@@ -153,9 +175,9 @@ def analyze(config, cache, out):
                "target_direct_difference_counts": {n: distribution(q["direct_difference"][n] for q in query_stats) for n in ("loose", "sentence", "entity")},
                "unique_paragraphs": len(paragraphs), "paragraph_status": distribution(p["status"] for p in paragraphs.values()),
                "paragraph_issue_counts": dict(Counter(i["reason"] for p in paragraphs.values() for i in p["issues"])),
-               "stage_b_allowed": gate,
-               "stage_b_stop_reason": None if gate else "all_queries_unsupported" if not support else "all_new_scores_and_status_constant",
-               "human_submissions": "0/2", "semantic_accuracy": "pending human review",
+               "rules_version": version, "training_signal_gate": gate, "training_signal_gates": gates,
+               "stage_b_allowed": gate["allowed"], "stage_b_stop_reason": gate["stop_reason"],
+               "semantic_accuracy": "not measured by this mechanical extraction check",
                "load_extract_match_seconds": sum(t["load_extract_match_seconds"] for t in timings)}
     for filename, rows in (("full-pool-scores.jsonl", records), ("query-coverage.jsonl", query_stats), ("timings.jsonl", timings),
                            ("query-structures.jsonl", list(queries.values())), ("paragraph-facts.jsonl", list(paragraphs.values()))):
@@ -173,9 +195,7 @@ def main():
     p.add_argument("--cache", type=Path)
     args = p.parse_args()
     config = read_json(args.config)
-    frozen = read_json(config["extraction_spec"])
-    if frozen["extraction_source_sha256"] != text_hash(Path(frozen["extraction_source"]).read_text()):
-        raise ValueError("frozen extraction source changed")
+    rules_from_config(config)
     if args.action == "prepare":
         prepare(config, args.out)
     else:

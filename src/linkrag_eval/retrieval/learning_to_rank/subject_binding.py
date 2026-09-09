@@ -8,10 +8,15 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import random
 from collections import Counter
 
 RULE_VERSION = "subject_binding_basic_v1"
+REPAIRED_RULE_VERSION = "subject_binding_nominal_quotes_v2"
+RECORD_RULE_VERSION = "subject_binding_evidence_records_v3"
+RULE_VERSIONS = (RULE_VERSION, REPAIRED_RULE_VERSION, RECORD_RULE_VERSION)
+GATE_VERSION = "within_query_aggregation_contrast_v2"
 PARSER_MODEL = "en_core_web_sm"
 PARSER_VERSION = "3.8.0"
 SPACY_VERSION = "3.8.16"
@@ -27,6 +32,8 @@ def text_hash(text: str) -> str:
 
 
 def parser_contract() -> dict:
+    # Frozen token-producer contract. Its historical extraction_rules field is retained
+    # to verify existing token caches; the selected extractor is versioned separately.
     return {"model": PARSER_MODEL, "model_version": PARSER_VERSION,
             "spacy_version": SPACY_VERSION, "extraction_rules": RULE_VERSION,
             "components_used": ["lemma", "dependency", "sentence"],
@@ -46,16 +53,61 @@ def serialize_doc(doc) -> dict:
                        for t in doc]}
 
 
-def extract(text: str, parsed: dict, *, query: bool = False) -> dict:
+def validate_rules_version(rules_version: str) -> str:
+    if rules_version not in RULE_VERSIONS:
+        raise ValueError("unknown subject-binding extraction rules version")
+    return rules_version
+
+
+def _unsafe_quote_sentences(tokens):
+    """Only matched, non-clausal nominal double quotes may bypass the old guard.
+
+    This preserves title arguments without asserting the contents of reported speech.
+    Unbalanced, nested, cross-sentence and verbal quotes remain unsupported.
+    """
+    quoted, unsafe, opening, content = set(), set(), None, []
+    for token in tokens:
+        mark, sid = token["text"], token["sentence_id"]
+        if mark in {'"', '“', '”'}:
+            quoted.add(sid)
+            if opening is None:
+                if mark == '”':
+                    unsafe.add(sid)
+                else:
+                    opening, content = token, []
+            elif (opening["text"], mark) in {('"', '"'), ('“', '”')}:
+                nominal = (opening["sentence_id"] == sid
+                           and any(t["pos"] in {"NOUN", "PROPN"} for t in content)
+                           and all(t["pos"] in {"NOUN", "PROPN", "ADJ", "ADP", "DET",
+                                                "NUM", "CCONJ", "PART", "PUNCT", "SPACE"}
+                                   and t["dep"] not in NESTED_CLAUSES for t in content))
+                if not nominal:
+                    unsafe.update(t["sentence_id"] for t in [opening, *content, token])
+                opening, content = None, []
+            else:
+                unsafe.update({sid, opening["sentence_id"]})
+        elif opening is not None:
+            content.append(token)
+    if opening is not None:
+        unsafe.update(t["sentence_id"] for t in [opening, *content])
+    return quoted, unsafe
+
+
+def extract(text: str, parsed: dict, *, query: bool = False, rules_version=RULE_VERSION) -> dict:
+    validate_rules_version(rules_version)
     if parsed["text_sha256"] != text_hash(text) or parsed["contract"] != parser_contract():
         raise ValueError("parser text/version contract mismatch")
     tokens = parsed["tokens"]
+    quoted, unsafe_quotes = _unsafe_quote_sentences(tokens)
     children = {t["i"]: [] for t in tokens}
     for i, t in enumerate(tokens):
         if t["i"] != i or text[t["start"]:t["end"]] != t["text"]:
             raise ValueError("token identity/Unicode offsets mismatch")
         if t["head"] != i:
             children[t["head"]].append(i)
+    if rules_version == RECORD_RULE_VERSION:
+        from .subject_binding_records import extract_records
+        return extract_records(text, tokens, children, query=query)
     issues: list[dict] = []
 
     def issue(reason, index):
@@ -125,7 +177,8 @@ def extract(text: str, parsed: dict, *, query: bool = False) -> dict:
         t = tokens[index]
         local = children[index]
         try:
-            if any(x["text"] in {'"', '“', '”'} and x["sentence_id"] == t["sentence_id"] for x in tokens):
+            quote_guard = quoted if rules_version == RULE_VERSION else unsafe_quotes
+            if t["sentence_id"] in quote_guard:
                 raise ValueError("quoted_statement_scope")
             if t["dep"] not in {"ROOT", "conj", "relcl"}:
                 raise ValueError("unsupported_embedded_clause")
@@ -197,12 +250,12 @@ def extract(text: str, parsed: dict, *, query: bool = False) -> dict:
                 conditions.append(f)
         if len(conditions) < 2:
             issue("fewer_than_two_conditions", None)
-        return {"text_sha256": text_hash(text), "rules_version": RULE_VERSION,
+        return {"text_sha256": text_hash(text), "rules_version": rules_version,
                 "conditions": conditions, "condition_count": len(conditions),
                 "query_structure_supported": not issues,
                 "explicit_subject_constraint": bool(subjects) and all(s.startswith("name:") for s in subjects),
                 "issues": issues, "status": "supported" if not issues else "unsupported"}
-    return {"text_sha256": text_hash(text), "rules_version": RULE_VERSION, "facts": facts,
+    return {"text_sha256": text_hash(text), "rules_version": rules_version, "facts": facts,
             "extraction_incomplete": bool(issues) or not facts, "issues": issues,
             "status": "incomplete" if issues or not facts else "complete"}
 
@@ -215,13 +268,22 @@ def atomic_match(condition: dict, fact: dict) -> bool:
     return all(arg in fact["arguments"] for arg in condition["arguments"])
 
 
-def score_conditions(query: dict, paragraph: dict) -> dict:
+def score_conditions(query: dict, paragraph: dict, *, matcher=None) -> dict:
+    if query.get("rules_version") != paragraph.get("rules_version"):
+        raise ValueError("query/paragraph extraction rules mismatch")
+    if query.get("rules_version") == RECORD_RULE_VERSION:
+        from .subject_binding_matching import score_records
+        return score_records(query, paragraph, matcher=matcher)
+    if matcher is not None:
+        raise ValueError("legacy rules do not accept a replacement matcher")
     supported = query["query_structure_supported"]
     facts = [f for f in paragraph["facts"] if f["extraction_status"] == "usable"]
     result = {"query_structure_supported": int(supported),
               "extraction_incomplete": int(paragraph["extraction_incomplete"] or not facts),
               "loose": None, "sentence": None, "entity": None,
               "availability": "query_unsupported" if not supported else "no_usable_facts"}
+    if query.get("rules_version") == REPAIRED_RULE_VERSION:
+        result["rules_version"] = REPAIRED_RULE_VERSION
     if not supported or len(query["conditions"]) < 2 or not facts:
         return result
     def coverage(group):
@@ -235,7 +297,53 @@ def score_conditions(query: dict, paragraph: dict) -> dict:
     return {**result, **scores, "loose": loose, "availability": "available"}
 
 
+def training_signal_gate(by_query: dict, *, purpose="binding") -> dict:
+    """Check numeric candidate contrasts, never labels or cross-query status variation.
+
+    Use complete pools for development and only legal supervised rows for training.
+    Both stages must pass before fitting an aggregation comparison. Missingness alone
+    and an arm-specific constant offset cannot establish an aggregation contrast.
+    """
+    if purpose not in {"basic_matching", "binding"}:
+        raise ValueError("unknown training comparison purpose")
+    numeric, aggregation = [], []
+    for qid, rows in by_query.items():
+        values = []
+        for row in rows:
+            scores = tuple(row[k] for k in ("loose", "sentence", "entity"))
+            if all(v is None for v in scores):
+                continue
+            if (row["query_structure_supported"] != 1 or row["availability"] != "available"
+                    or any(v is None or not math.isfinite(v) or not 0 <= v <= 1 for v in scores)):
+                raise ValueError("invalid numeric aggregation signal")
+            values.append(scores)
+        if any(len({v[i] for v in values}) > 1 for i in range(3)):
+            numeric.append(qid)
+        if any(values and any(not math.isclose(v[i] - v[j], values[0][i] - values[0][j],
+                                               rel_tol=0.0, abs_tol=1e-12) for v in values[1:])
+               for i, j in ((0, 1), (0, 2), (1, 2))):
+            aggregation.append(qid)
+    allowed = bool(numeric and (purpose == "basic_matching" or aggregation))
+    return {"version": GATE_VERSION, "queries": len(by_query),
+            "purpose": purpose,
+            "numeric_contrast_queries": numeric, "aggregation_contrast_queries": aggregation,
+            "allowed": allowed,
+            "stop_reason": None if allowed else "no_within_query_numeric_contrast" if not numeric
+            else "no_within_query_aggregation_contrast"}
+
+
 def shuffled_subjects(paragraph: dict, seed: int) -> tuple[dict, dict]:
+    if paragraph.get("rules_version") == RECORD_RULE_VERSION:
+        # Leave unresolved identities isolated. Only known binding assignments form
+        # the perturbation population; raw mentions/evidence are never rewritten.
+        indices = [i for i, f in enumerate(paragraph["facts"]) if f["subject"]["binding_key"] is not None]
+        subset = {**paragraph, "rules_version": REPAIRED_RULE_VERSION,
+                  "facts": [paragraph["facts"][i] for i in indices]}
+        permuted, report = shuffled_subjects(subset, seed)
+        facts = list(paragraph["facts"])
+        for i, fact in zip(indices, permuted["facts"], strict=True):
+            facts[i] = {**fact, "subject": {**fact["subject"], "binding_key": fact["subject_key"]}}
+        return {**paragraph, "facts": facts}, {**report, "unresolved_records_unchanged": len(facts) - len(indices)}
     facts = paragraph["facts"]
     before = [f["subject_key"] for f in facts]
     after = list(before)

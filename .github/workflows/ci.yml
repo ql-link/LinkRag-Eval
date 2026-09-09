@@ -29,6 +29,11 @@ jobs:
           python-version: "3.11"
           cache: pip
 
+      - name: Install Node for standalone review page tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Verify and install pinned toLink-Rag
         run: |
           actual_sha="$(git -C vendor/toLink-Rag rev-parse HEAD)"

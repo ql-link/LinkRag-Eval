@@ -70,3 +70,21 @@ T2 接入目前暂停，已有 CLI 保留：
 | 历史规模与 realistic 编排 | `run_scale_*.sh`、`run_overnight_*.sh`、`run_realistic_tune.sh`、`run_final_expanded_realistic.sh` |
 
 `scripts/` 放实验编排，复用计算在 `src/linkrag_eval/`；入口测试在 `tests/unit/`。实验目录中的 `*.py` 可能是当时工具或源码副本，身份以该实验 README 为准。新增脚本按实际职责命名并补到本页，参数细节留给 CLI 帮助，不另建重复使用手册。
+
+## N08 离线原型与人类收件
+
+当前设计／边界见[研究计划 §2.7](../docs/plans/post-recall-research-plan.md#27-同一自动事实上的条件聚合对照2026-09-08)，结果与继续决定见[正式报告](../docs/reports/nevir_subject_binding_pilot_2026_09_08.md)。这些入口显式选择文件和新输出目录，不自动重跑或遍历其他划分。
+
+| 入口 | 职责与主要参数 |
+| --- | --- |
+| [nevir_review_handoff.py](nevir_review_handoff.py) | `--experiment-dir --source-review --out`；验证并复制原 N05 公共包，拒绝已存在输出，不重新抽样 |
+| [结构化审阅包升级模块](../src/linkrag_eval/retrieval/learning_to_rank/review_structured.py) | `.venv/bin/python -m linkrag_eval.retrieval.learning_to_rank.review_structured --source-manifest ... --out ...`；只升级核对后的公共表单和教程，新目录输出，原 cases 字节与映射不变 |
+| [nevir_review_receive.py](nevir_review_receive.py) | `--manifest ... receive --reviewer --submission --out` 保存原始收件；`disagreements --reviewer-1-intake --reviewer-2-intake --out` 只生成待人类裁定材料 |
+| [subject_binding_parse.py](subject_binding_parse.py) | 独立 parser 环境运行，`--texts --cache --out`；只收原文和文本角色，无 ID／标签，固定版本且完整解析 |
+| [subject_binding_controls.py](subject_binding_controls.py) | `--scenes --cache --spec --out`；复算原 12 探针，人工预期未核验，不加入训练 |
+| [subject_binding_development.py](subject_binding_development.py) | `prepare` 精确重放 B／英文并导出开发文本；`analyze` 计算覆盖。均需 `--config --out`，后者还需 `--cache` |
+| [subject_binding_training.py](subject_binding_training.py) | `prepare-texts` 导出原 Train 文本；`train` 做通过门槛后的固定五臂与条件触发的三次打乱。均需 `--config --development-summary --out`，训练还需 `--cache` |
+
+本轮配置与输出在[运行目录](../runs/post_recall/subject-binding-pilot-20260908/)。parser Python 位于其 `environment/parser/bin/python`，使用 `PYTHONPATH=src`；其余脚本使用原 `.venv/bin/python`。新 41 列模型仅用于本地离线研究，不替换在线两模型。人工输入未到时不调用收件，也不生成替代人类意见；人类锁定前不关联模型。
+
+当前人类收件使用 `runs/post_recall/subject-binding-pilot-20260908/handoff-structured-v2/handoff-manifest.json`，两份最终 ZIP 位于同目录。schema 2 新增段落 `reason_types` 与 `pair_reason_code`，后端按条件检查证据／补充；原因类型差异单独交人类查看，不推断偏好或裁定。旧草稿可在新版页导入补填，旧 schema 1 不能直接作为新版完整提交；只有对应旧 manifest 保留旧收件口径。每次收件用新的版本目录，原始文件只读保留。具体打开／填写／导出及待审状态见[同一份报告 §2.3](../docs/reports/nevir_subject_binding_pilot_2026_09_08.md#23-结构化原因选择当前分发与收件契约)。

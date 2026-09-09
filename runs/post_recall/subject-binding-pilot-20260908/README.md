@@ -15,3 +15,5 @@
 - `handoff-structured-v2/`：当前两份五文件公共分发包，答案格式 2；同目录 manifest 只留研究侧。
 - `handoff-structured-audit/`：结构化修订的代码／文档前态、实际最终包 DOM 脚本＋接收验收和回归日志；临时 QA 不是人类提交。
 - `handoff-durable-v1/`：此前持久化和教程版本，保留供恢复旧草稿，不再作为当前分发入口。
+
+- `repair-20260909/`：已实施的名词性引号／跨句引述范围与训练准入修复；v1/v2 配置、普通英文检查、完整回归、旧模型重放及同输入比较。最新结果为 `comparison-v2/results.json`，`comparison/` 保留首次工程检查中止；`development-cli/` 和 `cli-gate-checks.json` 验证当前入口拒绝无区分信号与旧版准入摘要。`compare.py --out-name 新目录名` 是本轮一次性重放入口；没有新研究模型。

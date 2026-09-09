@@ -82,8 +82,10 @@ T2 接入目前暂停，已有 CLI 保留：
 | [nevir_review_receive.py](nevir_review_receive.py) | `--manifest ... receive --reviewer --submission --out` 保存原始收件；`disagreements --reviewer-1-intake --reviewer-2-intake --out` 只生成待人类裁定材料 |
 | [subject_binding_parse.py](subject_binding_parse.py) | 独立 parser 环境运行，`--texts --cache --out`；只收原文和文本角色，无 ID／标签，固定版本且完整解析 |
 | [subject_binding_controls.py](subject_binding_controls.py) | `--scenes --cache --spec --out`；复算原 12 探针，人工预期未核验，不加入训练 |
-| [subject_binding_development.py](subject_binding_development.py) | `prepare` 精确重放 B／英文并导出开发文本；`analyze` 计算覆盖。均需 `--config --out`，后者还需 `--cache` |
-| [subject_binding_training.py](subject_binding_training.py) | `prepare-texts` 导出原 Train 文本；`train` 做通过门槛后的固定五臂与条件触发的三次打乱。均需 `--config --development-summary --out`，训练还需 `--cache` |
+| [subject_binding_development.py](subject_binding_development.py) | `prepare` 精确重放 B／英文并导出开发文本；`analyze` 按显式 `rules_version` 计算覆盖及同查询数值／聚合准入。均需 `--config --out`，后者还需 `--cache` |
+| [subject_binding_training.py](subject_binding_training.py) | 旧五臂协议的入口；`prepare-texts` 导出原 Train 文本，`train` 在任何拟合前重新检查当前开发全池与 Train 合法监督行信号。旧版准入摘要不直接放行。均需 `--config --development-summary --out`，训练还需 `--cache`；不代表当前任务要求重跑五臂 |
+
+2026-09-09 的工程修复通过配置 `rules_version=subject_binding_nominal_quotes_v2` 显式启用；省略仍为 v1。使用本轮新配置与执行 spec，不能直接修改历史 spec 的源码摘要来假装重放旧实现。原始 token 缓存按已核实的冻结 parser 契约共享，只复用 token，新的事实／分数带 v2 身份并写新目录，旧分数不能充当 v2 缓存。离线模型的规则与 41 列契约必须同时相符，两个在线基线未改。一次性同输入比较入口是 [compare.py](../runs/post_recall/subject-binding-pilot-20260908/repair-20260909/compare.py)，使用 `--out-name 新目录名`，预算最多为固定 E3 控制／修复两臂，实际因准入未通过而零拟合；不执行原五臂或打乱扩展。产物与验收见[报告 §3.4](../docs/reports/nevir_subject_binding_pilot_2026_09_08.md#34-名词性引号与训练准入工程修复2026-09-09)。
 
 本轮配置与输出在[运行目录](../runs/post_recall/subject-binding-pilot-20260908/)。parser Python 位于其 `environment/parser/bin/python`，使用 `PYTHONPATH=src`；其余脚本使用原 `.venv/bin/python`。新 41 列模型仅用于本地离线研究，不替换在线两模型。人工输入未到时不调用收件，也不生成替代人类意见；人类锁定前不关联模型。
 

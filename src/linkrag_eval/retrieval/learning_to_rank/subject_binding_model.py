@@ -14,6 +14,7 @@ from linkrag_eval.retrieval.learning_to_rank.features import (
     rules_version as base_rules_version,
 )
 from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+    RECORD_RULE_VERSION,
     RULE_VERSION,
     parser_contract,
     text_hash,
@@ -38,6 +39,11 @@ def contract(arm, *, rules_version=RULE_VERSION):
     if rules_version != RULE_VERSION:
         schema.update(feature_version="candidate_difference_v3_en_subject_binding_v2",
                       extraction_rules=rules_version)
+    if rules_version == RECORD_RULE_VERSION:
+        from .subject_binding_matching import STRICT_MATCHER_VERSION
+        from .subject_binding_records import RECORD_SCHEMA
+        schema.update(feature_version="candidate_difference_v3_en_subject_binding_v3",
+                      record_schema=RECORD_SCHEMA, matcher_version=STRICT_MATCHER_VERSION)
     return schema
 
 
@@ -45,6 +51,8 @@ def augment(base, rows, *, arm, base_feature_version, rules_version=RULE_VERSION
     schema = contract(arm, rules_version=rules_version)
     if any(r.get("rules_version", RULE_VERSION) != rules_version for r in rows):
         raise ValueError("augmentation score cache extraction rules mismatch")
+    if rules_version == RECORD_RULE_VERSION and any(r.get("matcher_version") != schema["matcher_version"] for r in rows):
+        raise ValueError("augmentation score cache matcher version mismatch")
     if base_feature_version != ENGLISH_FEATURE_VERSION:
         raise ValueError("pilot augmentation requires the explicit English feature contract")
     if base.shape != (len(rows), len(FEATURE_NAMES)) or not np.isfinite(base).all():

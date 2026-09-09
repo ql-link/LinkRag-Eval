@@ -14,7 +14,7 @@ FIELD_GUIDE = """
 <tr><th scope="row">姓名或稳定代号、审阅者类型</th><td>正式页面填写能持续识别你的姓名或代号，续填时保持一致；本人标注选“人类审阅者”。练习页不用填写身份。</td><td>正式标注必填。</td></tr>
 <tr><th scope="row">影响判断的查询歧义</th><td>检查问题本身是否有不同理解。“无”：意思清楚；“有”：如“他”没说明是谁，且会影响答案；“无法判断”：拿不准是否有影响。正文没有答案，不等于查询有歧义。</td><td>每题必选；选“有”或“无法判断”，在比较补充中说明疑点。</td></tr>
 <tr><th scope="row">适用性</th><td>分别判断这段正文是否提供符合查询要求的证据。四个选项的区别见下方。</td><td>X、Y 各选一项。</td></tr>
-<tr><th scope="row">你主要根据哪些内容作出判断？</th><td>勾选实际用到的内容类别，可多选；人物、行为、肯否、时间等类别的解释就在选项旁。类别不表示条件已满足，也不用每题全选。证据不足时，勾选的具体类别表示缺少哪类内容。</td><td>每段至少一项。拿不准可选“其他／说不清”并写疑点，不要猜。</td></tr>
+<tr><th scope="row">你主要根据哪些内容作出判断？</th><td>勾选实际用到的内容类别，可多选；人物、行为、肯否、时间等类别的解释就在选项旁。类别不表示条件已满足，也不用每题全选。证据不足时，勾选的具体类别表示缺少哪类内容。</td><td>通常每段至少一项。若查询有歧义／无法判断、本段无法裁定，且本段补充已写明疑点，可留空。不要为填满表单强行选。</td></tr>
 <tr><th scope="row">证据摘录</th><td>从这一段中选取能支撑判断的原句，保留必要的人物、条件及否定词，不能改写。不要只摘一个脱离上下文的“not”。</td><td>“支持”或“明确不满足”必填；不足或无法裁定可留空，也可摘录有助说明的文字。</td></tr>
 <tr><th scope="row">起始、结束（不含）</th><td>它们记录摘录在正文中的位置。用鼠标选中对应正文 → 点击“将所选原文记为证据” → 摘录与两个数字自动填写。不用自己数；“结束”指摘录后面的第一个位置。选错时重新选中并记录。</td><td>有摘录就需要匹配的位置；出现不一致提示时重新选取，不随意改数字。</td></tr>
 <tr><th scope="row">段落补充说明</th><td>仅补充选项说不清的内容，一句话即可，如“没有交代周三的时间”或“无法确定 he 指谁”。</td><td>无法裁定、选其他／说不清时必填；不足但没勾具体缺失类型也必填。普通清楚情况可空。</td></tr>
@@ -57,7 +57,7 @@ PRACTICES = [
     {"case_id": "practice-3", "query": "Did he return the book?",
      "paragraphs": [{"display_id": "X", "content": "Sam returned the book on Monday."},
                     {"display_id": "Y", "content": "Alex returned the book on Tuesday."}],
-     "reference": "查询未交代 he 指谁，可选有歧义、两段无法裁定，勾人物和歧义，逐段简注无法确定 he 的指代。比较无法裁定，依据为存在歧义或矛盾无法可靠比较，补充同一疑点。摘录可选。"},
+     "reference": "查询未交代 he 指谁，可选有歧义、两段无法裁定，逐段简注无法确定 he 的指代。依据可勾人物和歧义；若无法选择，类别可留空。比较无法裁定，依据为存在歧义或矛盾无法可靠比较，补充同一疑点。摘录可选。"},
 ]
 
 
@@ -97,7 +97,7 @@ section,form{background:white;padding:22px;border:1px solid #dbe1e8;border-radiu
 textarea{width:100%;min-height:65px}input,select,textarea,button{font:inherit}button{padding:10px;margin:10px 0}pre{white-space:pre-wrap;font:17px/1.6 Georgia}fieldset{border:1px solid #ccd5e0}.note{font-size:14px;color:#52637a}[hidden]{display:none!important}
 .table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:620px}th,td{padding:12px;border:1px solid #ccd5e0;vertical-align:top;text-align:left}thead{background:#eef2f7}th[scope=row]{width:18%}caption{text-align:left;font-weight:bold;margin:8px 0}</style>
 <h1>先练习，再独立审阅</h1><p>以下 3 个示例和 3 道练习均为教学自编，不是正式 76 条中的案例，也不是人工金标。练习不计分；独立填完全部 3 题后才显示参考解释。</p>
-<p>每段都选择适用性和至少一种判断依据；支持／明确不满足必须摘录原文。证据不足要指出缺少哪类内容，可勾具体类别，或补充一句说明；只勾“缺少必要信息”仍不完整。无法裁定或选择其他时简短写出疑点。普通清楚情况不用反复写理由。</p>
+<p>每段选择适用性，通常至少选一种判断依据。若查询有歧义／无法判断、本段无法裁定，且已在本段补充说明中写明疑点，依据类别可以留空；不强迫选择或摘录。支持／明确不满足仍必须摘录原文。证据不足要指出缺少哪类内容，可勾具体类别或写短注；只勾“缺少必要信息”仍不完整。无法裁定或选择其他时简短写出疑点。普通清楚情况不用反复写理由。</p>
 <p>比较依据与相对偏好分别填写，程序不会替你决定。两段都支持、都不足或都不满足也允许；若仍有严格优劣，请简要解释。查询有歧义、无法比较、证据质量差异或其他原因时补充说明。</p>
 <p>证据位置按 Unicode 字符计数，推荐选中对应正文后按记录按钮。练习使用与正式页相同的字段条件；练习进度与正式标注隔离。练习内容无需交回。</p>'''
             + FIELD_GUIDE + examples + ''.join(forms) + '<button id="reveal" disabled>全部完成后显示参考解释（不计分）</button><button id="reset">清空练习</button><p id="notice" role="status"></p>'

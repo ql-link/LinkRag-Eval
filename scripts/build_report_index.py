@@ -19,7 +19,7 @@ EXCLUDED_NAMES = {"REPORT_INDEX.md"}
 REPORT_GUIDES = {
     "nevir_subject_binding_pilot_2026_09_08": (
         "英文研究与 NevIR", "同一自动事实上的主体聚合是否提供增量？",
-        "五组开发探索、原型覆盖与两份原盲审包；人工待审，未独立确认。",
+        "五组开发探索、人审敏感性及 v2/v3 工程修复与固定基础匹配对照；不属于独立确认。",
     ),
     "nevir_offline_diagnostic_2026_09_07": (
         "英文研究与 NevIR", "开发快照中，基线评分与特征响应是什么？",

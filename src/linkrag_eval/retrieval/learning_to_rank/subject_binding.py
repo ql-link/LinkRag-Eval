@@ -14,7 +14,8 @@ from collections import Counter
 
 RULE_VERSION = "subject_binding_basic_v1"
 REPAIRED_RULE_VERSION = "subject_binding_nominal_quotes_v2"
-RULE_VERSIONS = (RULE_VERSION, REPAIRED_RULE_VERSION)
+RECORD_RULE_VERSION = "subject_binding_evidence_records_v3"
+RULE_VERSIONS = (RULE_VERSION, REPAIRED_RULE_VERSION, RECORD_RULE_VERSION)
 GATE_VERSION = "within_query_aggregation_contrast_v2"
 PARSER_MODEL = "en_core_web_sm"
 PARSER_VERSION = "3.8.0"
@@ -104,6 +105,9 @@ def extract(text: str, parsed: dict, *, query: bool = False, rules_version=RULE_
             raise ValueError("token identity/Unicode offsets mismatch")
         if t["head"] != i:
             children[t["head"]].append(i)
+    if rules_version == RECORD_RULE_VERSION:
+        from .subject_binding_records import extract_records
+        return extract_records(text, tokens, children, query=query)
     issues: list[dict] = []
 
     def issue(reason, index):
@@ -264,9 +268,14 @@ def atomic_match(condition: dict, fact: dict) -> bool:
     return all(arg in fact["arguments"] for arg in condition["arguments"])
 
 
-def score_conditions(query: dict, paragraph: dict) -> dict:
+def score_conditions(query: dict, paragraph: dict, *, matcher=None) -> dict:
     if query.get("rules_version") != paragraph.get("rules_version"):
         raise ValueError("query/paragraph extraction rules mismatch")
+    if query.get("rules_version") == RECORD_RULE_VERSION:
+        from .subject_binding_matching import score_records
+        return score_records(query, paragraph, matcher=matcher)
+    if matcher is not None:
+        raise ValueError("legacy rules do not accept a replacement matcher")
     supported = query["query_structure_supported"]
     facts = [f for f in paragraph["facts"] if f["extraction_status"] == "usable"]
     result = {"query_structure_supported": int(supported),
@@ -288,13 +297,15 @@ def score_conditions(query: dict, paragraph: dict) -> dict:
     return {**result, **scores, "loose": loose, "availability": "available"}
 
 
-def training_signal_gate(by_query: dict) -> dict:
+def training_signal_gate(by_query: dict, *, purpose="binding") -> dict:
     """Check numeric candidate contrasts, never labels or cross-query status variation.
 
     Use complete pools for development and only legal supervised rows for training.
     Both stages must pass before fitting an aggregation comparison. Missingness alone
     and an arm-specific constant offset cannot establish an aggregation contrast.
     """
+    if purpose not in {"basic_matching", "binding"}:
+        raise ValueError("unknown training comparison purpose")
     numeric, aggregation = [], []
     for qid, rows in by_query.items():
         values = []
@@ -312,8 +323,9 @@ def training_signal_gate(by_query: dict) -> dict:
                                                rel_tol=0.0, abs_tol=1e-12) for v in values[1:])
                for i, j in ((0, 1), (0, 2), (1, 2))):
             aggregation.append(qid)
-    allowed = bool(numeric and aggregation)
+    allowed = bool(numeric and (purpose == "basic_matching" or aggregation))
     return {"version": GATE_VERSION, "queries": len(by_query),
+            "purpose": purpose,
             "numeric_contrast_queries": numeric, "aggregation_contrast_queries": aggregation,
             "allowed": allowed,
             "stop_reason": None if allowed else "no_within_query_numeric_contrast" if not numeric
@@ -321,6 +333,17 @@ def training_signal_gate(by_query: dict) -> dict:
 
 
 def shuffled_subjects(paragraph: dict, seed: int) -> tuple[dict, dict]:
+    if paragraph.get("rules_version") == RECORD_RULE_VERSION:
+        # Leave unresolved identities isolated. Only known binding assignments form
+        # the perturbation population; raw mentions/evidence are never rewritten.
+        indices = [i for i, f in enumerate(paragraph["facts"]) if f["subject"]["binding_key"] is not None]
+        subset = {**paragraph, "rules_version": REPAIRED_RULE_VERSION,
+                  "facts": [paragraph["facts"][i] for i in indices]}
+        permuted, report = shuffled_subjects(subset, seed)
+        facts = list(paragraph["facts"])
+        for i, fact in zip(indices, permuted["facts"], strict=True):
+            facts[i] = {**fact, "subject": {**fact["subject"], "binding_key": fact["subject_key"]}}
+        return {**paragraph, "facts": facts}, {**report, "unresolved_records_unchanged": len(facts) - len(indices)}
     facts = paragraph["facts"]
     before = [f["subject_key"] for f in facts]
     after = list(before)

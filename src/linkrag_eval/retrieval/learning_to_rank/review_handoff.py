@@ -16,6 +16,7 @@ from linkrag_eval.retrieval.learning_to_rank.review_schema import (
     REASON_SCHEMA_VERSION,
     REASON_TYPES,
     STORAGE_SUFFIX,
+    VALIDATION_POLICY_VERSION,
     structured_errors,
     structured_missing,
 )
@@ -321,6 +322,8 @@ def validate_submission(payload: dict, cases: list[dict], reviewer: str,
             "reviewer_name": identity, "reviewer_type": payload.get("reviewer_type"),
             "answer_schema_version": version,
             "reason_schema_version": payload.get("reason_schema_version"),
+            "validation_policy_version": VALIDATION_POLICY_VERSION if version == 2 else "legacy_v1",
+            "export_completion_policy": "recomputed from original answers; exporter completion summary is not authoritative",
             "reason_selection_counts": {
                 "paragraphs": {k: sum(k in p.get("reason_types", []) for a in normalized if not a["technical_errors"]
                                       for p in a["paragraphs"]) for k in REASON_TYPES},
@@ -430,21 +433,7 @@ def disagreement_material(handoff_manifest: Path, first: Path, second: Path, out
                                                    "original_display_id": p["display_id"]}
                                                   for p in answer["paragraphs"]], key=lambda p: p["display_id"]),
                             "incomplete": bool(answer["missing"])})
-        reasons = []
-        if any(r is None or r["incomplete"] for r in neutral):
-            reasons.append("missing_or_incomplete_human_review")
-        else:
-            a, b = neutral
-            if any(a[k] != b[k] for k in ("query_ambiguity", "pair_preference", "adjudication_status")) or [p["applicability"] for p in a["paragraphs"]] != [p["applicability"] for p in b["paragraphs"]]:
-                reasons.append("human_choices_disagree")
-            if (a.get("pair_reason_code") != b.get("pair_reason_code")
-                    or [sorted(p.get("reason_types", [])) for p in a["paragraphs"]]
-                    != [sorted(p.get("reason_types", [])) for p in b["paragraphs"]]):
-                reasons.append("human_reason_categories_differ")
-            if any(r["query_ambiguity"] != "no" or r["pair_preference"] in {"tie", "undetermined"}
-                   or any(p["applicability"] == "无法裁定" for p in r["paragraphs"])
-                   or r["adjudication_status"] != "独立复核" for r in neutral):
-                reasons.append("uncertainty_or_ambiguity_retained")
+        reasons = comparison_flags(neutral)
         rows.append({**case, "human_reviews": neutral, "mechanical_flags": reasons,
                      "rationale_consistency": "requires human check even when choices agree",
                      "adjudication": {"status": "pending", "adjudicator": None, "time": None,
@@ -453,7 +442,40 @@ def disagreement_material(handoff_manifest: Path, first: Path, second: Path, out
     (out / "human-adjudication-cases.json").write_text(json.dumps(rows, ensure_ascii=False, indent=2) + "\n")
     (out / "disagreements.json").write_text(json.dumps([r for r in rows if r["mechanical_flags"]], ensure_ascii=False, indent=2) + "\n")
     summary = {"aligned_cases": len(rows), "flagged_cases": sum(bool(r["mechanical_flags"]) for r in rows),
+               "classification_version": "independent_available_fields_v2",
                "human_judgments_locked": False, "models_associated": False,
                "rationale_consistency": "not automatically adjudicated; human check required"}
     (out / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
     return summary
+
+
+def comparison_flags(reviews: list[dict | None]) -> list[str]:
+    """Missing fields do not hide other judgments; flags never adjudicate relevance."""
+    flags = []
+    present = [r for r in reviews if r is not None]
+    if len(present) != 2 or any(r["incomplete"] for r in present):
+        flags.append("missing_or_incomplete_human_review")
+    if len(present) == 2:
+        a, b = present
+
+        def differs(left, right):
+            return bool(left) and bool(right) and left != right
+
+        if (any(differs(a.get(k), b.get(k)) for k in ("query_ambiguity", "pair_preference"))
+                or any(differs(p.get("applicability"), q.get("applicability"))
+                       for p, q in zip(a["paragraphs"], b["paragraphs"], strict=True))):
+            flags.append("human_choices_disagree")
+        if differs(a.get("adjudication_status"), b.get("adjudication_status")):
+            flags.append("review_status_differs")
+        if (differs(a.get("pair_reason_code"), b.get("pair_reason_code"))
+                or any(differs(set(p.get("reason_types", [])), set(q.get("reason_types", [])))
+                       for p, q in zip(a["paragraphs"], b["paragraphs"], strict=True))):
+            flags.append("human_reason_categories_differ")
+    if any(r.get("query_ambiguity") in {"yes", "uncertain"}
+           or r.get("pair_preference") == "undetermined"
+           or any(p.get("applicability") == "无法裁定" for p in r["paragraphs"])
+           or r.get("adjudication_status") == "争议保留" for r in present):
+        flags.append("uncertainty_or_ambiguity_retained")
+    if any(r.get("pair_preference") == "tie" for r in present):
+        flags.append("tie_preference_present")
+    return flags

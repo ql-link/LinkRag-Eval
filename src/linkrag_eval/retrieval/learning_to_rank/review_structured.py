@@ -15,6 +15,7 @@ from .review_schema import (
     CONTRACT,
     REASON_SCHEMA_VERSION,
     STORAGE_SUFFIX,
+    VALIDATION_POLICY_VERSION,
     pair_reason_control,
     reason_controls,
 )
@@ -36,7 +37,7 @@ INSTRUCTIONS = '''# 独立审阅：结构化原因版
 
 | 字段 | 什么时候需要填写 |
 | --- | --- |
-| 每段判断依据（可多选） | 每段必填；只勾与自己判断有关的类型。人物对象、行为关系、肯定否定、时间数量比较、缺少信息、歧义矛盾、其他。类别本身不表示条件已满足。 |
+| 每段判断依据（可多选） | 通常至少一类；若查询有歧义／无法判断、本段无法裁定，且本段补充已写明疑点，可留空。其余只勾与自己判断有关的类型，类别本身不表示条件已满足。 |
 | 原文摘录 | 支持或明确不满足时必填；证据不足或无法裁定时可选。选中对应正文后按记录按钮，自动填 Unicode 字符位置。不能用说明替代原文。 |
 | 缺少什么 | 证据不足时指出内容类型：可选人物／行为／肯否／时间数量等，或补充一句。只勾“缺少必要信息”仍需具体化。 |
 | 段落补充说明 | 无法裁定、选其他／说不清，或没有用类别说明缺少什么时必填。普通清楚情况可以留空。 |
@@ -50,6 +51,8 @@ INSTRUCTIONS = '''# 独立审阅：结构化原因版
 每次输入、选择会自动保存，页底显示状态。**每次离开前点“下载备份（可恢复）”，确认下载目录出现 JSON 文件。** 不要只保存网页或原 ZIP，不要清理浏览器数据或多窗口同时填写。同一浏览器也可能因移动目录、换地址或设备而读不到草稿，独立 JSON 备份用于恢复。
 
 点“导入备份／结果”恢复自己的 JSON。版本 2 严格核对自己的包、正文、原因格式；不接受别人的包。导入替换当前内容前先下载当前备份。旧版本 1 的草稿或结果可导入，原文字和证据保留，新增原因类型不会自动推断；请逐题补选并核对。新旧本地草稿使用不同存储键，旧草稿不被覆盖。无法直接读取旧本地草稿时，先在旧页下载 JSON，再到新页导入。
+
+本轮只修订完整性检查策略，版本 2 的已导出文件无需修改或重导出。旧页面的完成数可能仍沿用旧规则；负责人按新策略重新检查原答案，不修改原文件中的旧摘要。因歧义无法裁定的有效记录仍是待裁定意见，不能当作已确定的相关性标签。
 
 浏览器保存失败会明确提示，当前页仍可下载备份和导出。下载开始不等于文件已落盘，请检查浏览器下载记录。任何离线页面都不能保证断电或文件被删后恢复，务必保留独立备份。
 
@@ -124,6 +127,7 @@ def upgrade_structured(source_manifest: Path, out: Path) -> dict:
         p.pop('review_page_unchanged_after_tutorial',None)
     manifest.update(created_at=datetime.now(UTC).isoformat(), upgraded_from=str(source_manifest.resolve()),
                     answer_schema_version=2,reason_schema_version=REASON_SCHEMA_VERSION,persistence_version='structured_review_v2',
+                    validation_policy_version=VALIDATION_POLICY_VERSION,
                     tutorial='3 authored examples + 3 independent exercises; shared conditional requirements; no grading',
                     browser_acceptance='not verified in real browser; standing Browser URL security denial, no workaround',
                     script_acceptance='pending final ZIP QA',human_submissions_received=0,

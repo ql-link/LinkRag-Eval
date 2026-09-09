@@ -9,6 +9,7 @@ import pytest
 from linkrag_eval.retrieval.learning_to_rank.features import ENGLISH_FEATURE_VERSION, FEATURE_NAMES
 from linkrag_eval.retrieval.learning_to_rank.online import LambdaMartOnlineRanker
 from linkrag_eval.retrieval.learning_to_rank.subject_binding import (
+    RECORD_RULE_VERSION,
     REPAIRED_RULE_VERSION,
     RULE_VERSION,
 )
@@ -38,7 +39,7 @@ def test_arms_share_status_columns_and_missing_not_zero():
         augment(base, rows, arm="E3", base_feature_version="candidate_difference_v3")
 
 
-@pytest.mark.parametrize("version", [RULE_VERSION, REPAIRED_RULE_VERSION])
+@pytest.mark.parametrize("version", [RULE_VERSION, REPAIRED_RULE_VERSION, RECORD_RULE_VERSION])
 def test_offline_model_roundtrip_rejects_version_and_column_mismatch(tmp_path, version):
     import lightgbm as lgb
     schema = contract("E3", rules_version=version)
@@ -83,3 +84,19 @@ def test_score_cache_cannot_cross_extraction_versions():
                     rules_version=version)
     assert augment(base, [v2], arm="E3", base_feature_version=ENGLISH_FEATURE_VERSION,
                    rules_version=REPAIRED_RULE_VERSION)[0, -1] == 1.
+
+
+def test_v3_model_cache_requires_both_representation_and_matcher_identity():
+    base = np.zeros((1, 38), dtype=np.float32)
+    schema = contract("E1", rules_version=RECORD_RULE_VERSION)
+    row = {"query_structure_supported": 1, "extraction_incomplete": 0,
+           "loose": 1., "sentence": 1., "entity": 1., "rules_version": RECORD_RULE_VERSION}
+    for matcher in (None, "unrecorded_semantic_matcher"):
+        bad = {**row, "matcher_version": matcher}
+        with pytest.raises(ValueError, match="matcher version"):
+            augment(base, [bad], arm="E1", base_feature_version=ENGLISH_FEATURE_VERSION,
+                    rules_version=RECORD_RULE_VERSION)
+    result = augment(base, [{**row, "matcher_version": schema["matcher_version"]}], arm="E1",
+                     base_feature_version=ENGLISH_FEATURE_VERSION, rules_version=RECORD_RULE_VERSION)
+    assert result.shape == (1, 41) and result[0, -1] == 1
+    assert schema["feature_version"] != contract("E1", rules_version=REPAIRED_RULE_VERSION)["feature_version"]

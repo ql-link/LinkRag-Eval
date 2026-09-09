@@ -69,6 +69,7 @@ function snapshot(){
     else if(answers[c.case_id])rows.push(answers[c.case_id]);
   }
   return {schema_version:structured?2:1,reason_schema_version:structured?reasonContract.reason_schema_version:undefined,
+    validation_policy_version:structured?reasonContract.validation_policy_version:undefined,
     draft_format:structured?2:1,migrated_from_legacy:migratedLegacy||undefined,packet:data.packet,storage_key:data.storage_key,
     scheduled_cases:data.cases.length,exported_at:new Date().toISOString(),
     reviewer_name:$('reviewer').value,reviewer_type:$('reviewer-type').value||null,

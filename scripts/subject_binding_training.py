@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fixed five-arm training on explicit existing Train/development snapshots only."""
+"""Fixed basic-matching or binding comparison on existing Train/development snapshots."""
 from __future__ import annotations
 
 import argparse
@@ -218,7 +218,10 @@ def fit_arm(train, dev, *, arm, out, params, train_scores, dev_scores, rules_ver
 
 
 def run(config, cache, out):
-    version = rules_from_config(config)
+    extractor_version = rules_from_config(config)
+    purpose = config.get("experiment_purpose", "binding")
+    if purpose not in {"basic_matching", "binding"}:
+        raise ValueError("unknown training comparison purpose")
     out.mkdir(parents=True, exist_ok=False)
     old = read_json(config["english_selection"])
     if (old["seed"], old["maximum_iterations_per_fit"], old["patience"]) != (SEED, MAX_ITERATIONS, PATIENCE):
@@ -227,8 +230,8 @@ def run(config, cache, out):
     params = training_parameters(next(c for c in GRID if c["config_id"] == config["config_id"]))
     if params != picked["params"]:
         raise ValueError("historical fixed hyperparameters differ")
-    for package, version in old["versions"].items():
-        if importlib.metadata.version(package) != version:
+    for package, expected_package_version in old["versions"].items():
+        if importlib.metadata.version(package) != expected_package_version:
             raise ValueError(f"training environment differs: {package}")
     prep_started = time.perf_counter()
     datasets = []
@@ -243,18 +246,19 @@ def run(config, cache, out):
     state = {"status": "running", "roles_read": ["train", "development"], "arms": {},
              "prepare_seconds": time.perf_counter() - prep_started,
              "train": train.summary, "development": dev.summary, "parameters": params,
-             "official_label_exploration_only": True, "rules_version": version}
+             "official_label_exploration_only": True, "rules_version": extractor_version,
+             "experiment_purpose": purpose}
     # Recompute eligibility from these exact inputs, even when run() is called directly
     # or a stale/incorrect stage-A summary says True. Do not fit even E0 before this check.
-    train_scores, train_cost = compute_scores(train, cache, out / "train-signals", rules_version=version)
-    dev_scores, dev_cost = compute_scores(dev, cache, out / "development-signals", rules_version=version)
-    gates = {"development_full_pools": training_signal_gate(dev_scores),
+    train_scores, train_cost = compute_scores(train, cache, out / "train-signals", rules_version=extractor_version)
+    dev_scores, dev_cost = compute_scores(dev, cache, out / "development-signals", rules_version=extractor_version)
+    gates = {"development_full_pools": training_signal_gate(dev_scores, purpose=purpose),
              "train_supervised_rows": training_signal_gate({
                  q.query_id: [train_scores[q.query_id][i] for i in q.selected_indices]
-                 for q in train.blocks})}
+                 for q in train.blocks}, purpose=purpose)}
     state.update(signal_cost={"train": train_cost, "development": dev_cost}, training_signal_gates=gates)
     if not all(g["allowed"] for g in gates.values()):
-        state.update(status="stopped_before_fit", stop_reason="insufficient_numeric_aggregation_contrast")
+        state.update(status="stopped_before_fit", stop_reason="insufficient_signal_for_requested_comparison")
         write_json(out / "results.json", state)
         print(json.dumps({"status": state["status"], "gates": gates}), flush=True)
         return
@@ -270,32 +274,38 @@ def run(config, cache, out):
     write_json(out / "results.json", state)
     available = {q.query_id for q in dev.blocks if all(dev_scores[q.query_id][i]["availability"] == "available" for i in q.selected_indices)}
     state["signal_cost"] = {"train": train_cost, "development": dev_cost}
-    for arm in ("EM", "E1", "E2", "E3"):
+    arms = ("EM", "E1") if purpose == "basic_matching" else ("EM", "E1", "E2", "E3")
+    for arm in arms:
         print(f"Fitting {arm} once", flush=True)
         pred, fitted = fit_arm(train, dev, arm=arm, out=out / arm, params=params,
-                               train_scores=train_scores, dev_scores=dev_scores, rules_version=version)
+                               train_scores=train_scores, dev_scores=dev_scores, rules_version=extractor_version)
         predictions[arm] = pred
         state["arms"][arm] = {"metrics": evaluate(pred), "available_subset": evaluate(pred, available), "fit": fitted}
         write_json(out / "results.json", state)
     state["arms"]["E0"]["available_subset"] = evaluate(predictions["E0"], available)
     state["history_B"] = evaluate(predictions["B"])
     state["contrasts"] = {f"{base}->{arm}": contrast(predictions[base], predictions[arm])
-                          for base in ("E0", "EM", "B") for arm in ("E0", "EM", "E1", "E2", "E3") if base != arm}
-    state["contrasts"].update({f"{base}->E3": contrast(predictions[base], predictions["E3"]) for base in ("E1", "E2")})
-    stage_c = (all(evaluate(predictions["E3"])["correct"] > evaluate(predictions[k])["correct"] for k in ("E0", "EM", "E1", "E2", "B"))
+                          for base in ("E0", "EM", "B") for arm in ("E0", *arms) if base != arm}
+    if purpose == "binding":
+        state["contrasts"].update({f"{base}->E3": contrast(predictions[base], predictions["E3"]) for base in ("E1", "E2")})
+    stage_c = (purpose == "binding" and config.get("enable_stage_c", True)
+               and all(evaluate(predictions["E3"])["correct"] > evaluate(predictions[k])["correct"] for k in ("E0", "EM", "E1", "E2", "B"))
                and all(state["contrasts"][f"{k}->E3"]["positive_sources"] > 1 for k in ("E1", "E2")))
     state["stage_c"] = {"triggered": stage_c, "seeds": list(SHUFFLE_SEEDS), "runs": []}
     if stage_c:
         for seed in SHUFFLE_SEEDS:
             folder = out / f"E3-shuffled-{seed}"
-            t_scores, t_cost = compute_scores(train, cache, out / f"shuffle-train-{seed}", shuffle_seed=seed, rules_version=version)
-            d_scores, d_cost = compute_scores(dev, cache, out / f"shuffle-development-{seed}", shuffle_seed=seed, rules_version=version)
-            pred, fitted = fit_arm(train, dev, arm="E3", out=folder, params=params, train_scores=t_scores, dev_scores=d_scores, rules_version=version)
+            t_scores, t_cost = compute_scores(train, cache, out / f"shuffle-train-{seed}", shuffle_seed=seed, rules_version=extractor_version)
+            d_scores, d_cost = compute_scores(dev, cache, out / f"shuffle-development-{seed}", shuffle_seed=seed, rules_version=extractor_version)
+            pred, fitted = fit_arm(train, dev, arm="E3", out=folder, params=params, train_scores=t_scores, dev_scores=d_scores, rules_version=extractor_version)
             state["stage_c"]["runs"].append({"seed": seed, "metrics": evaluate(pred), "fit": fitted, "train": t_cost, "development": d_cost})
             write_json(out / "results.json", state)
         state["stage_c"]["mean_correct"] = float(np.mean([r["metrics"]["correct"] for r in state["stage_c"]["runs"]]))
     state["status"] = "complete"
-    state["stage_c"]["stop_reason"] = None if stage_c else "E3 did not pass preregistered superiority/multiple-source trigger"
+    state["stage_c"]["stop_reason"] = (None if stage_c else "not part of basic matching comparison"
+                                      if purpose == "basic_matching" else "disabled by execution config"
+                                      if not config.get("enable_stage_c", True)
+                                      else "E3 did not pass preregistered superiority/multiple-source trigger")
     write_json(out / "results.json", state)
     print(json.dumps({k: {"correct": v["metrics"]["correct"], "wrong": v["metrics"]["wrong"], "tie": v["metrics"]["tie"]} for k, v in state["arms"].items()}), flush=True)
 
@@ -312,7 +322,8 @@ def main():
     version = rules_from_config(config)
     summary = read_json(args.development_summary)
     if (summary.get("rules_version") != version
-            or summary.get("training_signal_gate", {}).get("version") != GATE_VERSION):
+            or summary.get("training_signal_gate", {}).get("version") != GATE_VERSION
+            or summary.get("training_signal_gate", {}).get("purpose") != config.get("experiment_purpose", "binding")):
         raise ValueError("stage A extraction/gate version mismatch; regenerate with current rules")
     if not summary["stage_b_allowed"]:
         raise ValueError("stage A stopped dependent training")

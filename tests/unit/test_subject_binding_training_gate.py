@@ -38,6 +38,15 @@ def test_within_query_aggregation_contrast_allows_training_without_labels():
     assert result["numeric_contrast_queries"] == result["aggregation_contrast_queries"] == ["q"]
 
 
+def test_basic_matching_does_not_require_binding_difference():
+    pools = {"q": [signal(1, 1, 1), signal(.5, .5, .5)]}
+    assert training_signal_gate(pools, purpose="basic_matching")["allowed"]
+    assert not training_signal_gate(pools, purpose="binding")["allowed"]
+    assert not training_signal_gate({"q": [signal(), signal(0, 0, 0)]}, purpose="basic_matching")["allowed"]
+    with pytest.raises(ValueError, match="purpose"):
+        training_signal_gate(pools, purpose="disable_checks")
+
+
 @pytest.mark.parametrize("row", [signal(1, None, 1), signal(float("nan"), 1, 1),
                                   signal(1, 1, 1, query_structure_supported=0)])
 def test_invalid_numeric_signals_cannot_admit_training(row):
@@ -52,14 +61,23 @@ def test_actual_training_entry_stops_before_fit_when_only_background_varies(tmp_
     params = runner.training_parameters(runner.GRID[0])
     old = {"seed": runner.SEED, "maximum_iterations_per_fit": runner.MAX_ITERATIONS,
            "patience": runner.PATIENCE, "grid": [{"config_id": "fixed", "params": params}],
-           "selected_config_id": "fixed", "versions": {}, "train": {}, "development": {}}
+           "selected_config_id": "fixed",
+           "versions": {"numpy": runner.importlib.metadata.version("numpy")},
+           "train": {}, "development": {}}
     monkeypatch.setattr(runner, "read_json", lambda _: old)
     query = SimpleNamespace(query_id="q", selected_indices=[0, 1])
     dataset = SimpleNamespace(queries=[query], blocks=[query], summary={})
     monkeypatch.setattr(runner, "load_dataset", lambda **_: dataset)
     monkeypatch.setattr(runner, "assert_disjoint_roles", lambda *_: None)
     pools = {"q": [signal(0, 0, 0), signal(0, 0, 0), signal(1, 1, .5)]}
-    monkeypatch.setattr(runner, "compute_scores", lambda *_, **__: (pools, {}))
+    received_versions = []
+
+    def compute_current_scores(*args, rules_version):
+        received_versions.append(rules_version)
+        assert rules_version == REPAIRED_RULE_VERSION
+        return pools, {}
+
+    monkeypatch.setattr(runner, "compute_scores", compute_current_scores)
 
     def forbidden(*args, **kwargs):
         pytest.fail("fit called before current supervised contrast gate")
@@ -74,3 +92,5 @@ def test_actual_training_entry_stops_before_fit_when_only_background_varies(tmp_
     assert saved["training_signal_gates"]["development_full_pools"]["allowed"]
     assert not saved["training_signal_gates"]["train_supervised_rows"]["allowed"]
     assert not (out / "E0").exists()
+    assert received_versions == [REPAIRED_RULE_VERSION, REPAIRED_RULE_VERSION]
+    assert saved["rules_version"] == REPAIRED_RULE_VERSION

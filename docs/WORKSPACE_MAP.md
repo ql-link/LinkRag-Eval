@@ -84,3 +84,18 @@
 | `intfloat/multilingual-e5-base` | `d128750597153bb5987e10b1c3493a34e5a4502a` |
 | `jinaai/jina-reranker-v2-base-multilingual` | `9cfeff2df7d40d1b78e75e5e9cebec92a99813c9` |
 | `sentence-transformers/distiluse-base-multilingual-cased-v2` | `bfe45d0732ca50787611c0fe107ba278c7f3f889` |
+
+## 5. 同级临时工作树与备份（2026-09-09 核对）
+
+以下 `../LinkRag-Eval-pr-*` 是为隔离提交和 PR 建立的 Git worktree，共用本仓库 Git 历史，不是新的评测项目。三者当前 HEAD 均等于对应 PR 的最终 head，完整文件树也与该 PR 的合并结果相同；工作区干净，没有未跟踪或被忽略的本地产物。当前源码、脚本、测试、配置和文档未发现依赖这些临时路径。
+
+| 同级目录 | 原用途及已合并 PR | 本次占盘 | 当前判断 |
+| --- | --- | ---: | --- |
+| `../LinkRag-Eval-pr-research-foundation/` | [研究基础整理 #5](https://github.com/ql-link/LinkRag-Eval/pull/5) | 4.8 MiB | 临时提交工作树，已完成，可清理候选 |
+| `../LinkRag-Eval-pr-doc-cleanup/` | [研究文档清理 #6](https://github.com/ql-link/LinkRag-Eval/pull/6) | 3.7 MiB | 临时提交工作树，已完成，可清理候选 |
+| `../LinkRag-Eval-pr-nevir-review/` | [条件聚合与盲审 #11](https://github.com/ql-link/LinkRag-Eval/pull/11) | 4.5 MiB | 临时提交工作树，已完成，可清理候选；其中 runs 只有随 Git 的入口，不含本地实验数据 |
+| `../LinkRag-Eval-restructure-backups/` | §3 所述重构前源码 bundle、历史研究 tar 及 manifest | 111 MiB | 历史恢复材料，继续保留；它不覆盖当前 NevIR 本地产物 |
+
+另有系统临时目录下的 `linkrag-upstream-pr-ntn90g38/worktree`，对应已合并 [引号／准入修复 #12](https://github.com/ql-link/LinkRag-Eval/pull/12)。源码树与合并结果一致，无未提交源码，仅有 Python／pytest／Ruff 缓存，约 10 MiB，也属于完成用途的临时工作树。
+
+本次只盘点，没有删除目录或分支。实际清理时先重新检查未提交及本地产物，再用 `git worktree remove` 移除已登记的工作树，避免直接删文件夹留下 Git 登记；备份目录不按 worktree 处理。容量为本次 `du -sh` 读数，合计不含共用的主仓库 `.git`，不是持续维护的磁盘统计。

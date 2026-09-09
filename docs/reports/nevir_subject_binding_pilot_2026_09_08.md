@@ -471,6 +471,8 @@ LINKRAG_EVAL_REQUIRE_RAG=1 .venv/bin/python -m pytest -m 'not integration' -q
   --cache runs/post_recall/subject-binding-pilot-20260908/parse-cache --out 新目录
 ```
 
+**上一轮 PR #12 的独立验收（历史）。** 该次将修复相关代码／测试及本节记录从其他未提交修改中隔离，在基于 `origin/master` 的独立工作树验证。`PYTHONPATH=src LINKRAG_EVAL_REQUIRE_RAG=1 <现有环境>/bin/python -m pytest -m 'not integration' -q` 为 **1,146 passed、3 deselected、6 既有 warnings，16.22 s**；确认导入来自该工作树。七个相关 Python 文件 Ruff、两个 CLI `--help`、报告索引及 diff 检查通过。以上验证没有包含另行进行的人工收件／裁定修订。前述同输入机械比较、15 例实际 parser 检查和 58.18 s 成本来自原工作区已保存的修复运行，该次未重新训练或采集。`repair-20260909/` 中的配置、原始运行数据和日志按既有 runs 规则本地保存，不随该次源码提交。
+
 ### 3.5 版本覆盖、类型对称与事件保留的 v3 修复（2026-09-09）
 
 负责人要求完成工程修复，不再仅放宽守卫后重算零分。本次依据实际工作区 `codex/nevir-human-review-20260909`、HEAD `5afd458b2e69695b99127a83d9ea6e6b183cc0ec` 执行，没有切到交接中提及的 `master 3e141b9`。原有人审源码、文档和未跟踪附件保留；没有提交、推送或替换当前两个工作模型。[执行记录](../../runs/post_recall/subject-binding-pilot-20260908/representation-v3-20260909/execution.json)记录范围，所有新结果进入 `representation-v3-20260909/`。

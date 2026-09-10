@@ -60,8 +60,8 @@ def load_role(args, role, suffix):
 
 def write_csv(path, points):
     rows = [{k: v for k, v in p.items() if k != "evaluation"} for p in points]
-    with path.open("x") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+    with path.open("x", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
@@ -115,13 +115,13 @@ def svg_chart(role, curve, triggers):
 
 
 def tables(curves, variants):
-    lines = ["confirmation", "|K|strict|both|pref@1|mean judged|", "|---|---|---|---|---|"]
+    lines = ["confirmation", "", "|K|strict|both|pref@1|mean judged|", "|---|---|---|---|---|"]
     for p in curves["confirmation"]:
         if p["K"] in {1, 2, 3, 5, 10, 15, 20}:
             lines.append(f'|{p["K"]}|{p["strict_correct"]}|{p["both_directions_correct"]}|'
                          f'{p["preferred@1"]:.4f}|{p["mean_judged"]:.3f}|')
     for role, points in variants.items():
-        lines.extend(["", role, "|variant|threshold|triggered fraction|mean judged|strict|both|pref@1|",
+        lines.extend(["", role, "", "|variant|threshold|triggered fraction|mean judged|strict|both|pref@1|",
                       "|---|---|---|---|---|---|---|"])
         for p in points:
             threshold = "—" if p["threshold"] is None else f'{p["threshold"]:.8g}'

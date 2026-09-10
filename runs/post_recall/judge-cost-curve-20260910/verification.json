@@ -1,0 +1,80 @@
+{
+  "status": "verified",
+  "verified_at": "2026-09-10T11:17:06.977699+00:00",
+  "git_head": "9174cbc363b7efd14aaddf4ed71b42fbe93a58b6",
+  "original_git_head": "da46a431b93481d910159959a1879f13e1bada0e",
+  "original_code_state": "three new untracked implementation files; original run predates 9174cbc",
+  "command": ".venv/bin/python scripts/llm_judge_cost_curve.py run --root runs/post_recall/llm-judge-pilot-20260910 --candidates runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/candidates --out runs/post_recall/judge-cost-curve-20260910/recheck",
+  "wall_seconds": 1.186216875037644,
+  "timing_scope": "input loading, cached evaluation and self-check; before artifact writes",
+  "sections_exact_match": {
+    "curves": true,
+    "triggers": true,
+    "selection": true
+  },
+  "files_byte_equal": {
+    "triggers-confirmation.csv": true,
+    "curve-development.csv": true,
+    "curve-confirmation.csv": true,
+    "triggers-development.csv": true,
+    "curve-development.svg": true,
+    "curve-confirmation.svg": true,
+    "margin-threshold-development.csv": true
+  },
+  "self_check": "K=20 self-check PASS (GPT-6 confirmation stage1_judge, all pairwise/list metrics): strict=311/371, both=129, pref@1=0.6495956873315364",
+  "model_calls": 0,
+  "replay_outputs": "recheck/",
+  "provenance": {
+    "development": {
+      "paths": {
+        "baseline": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/llm-judge-pilot-20260910/baseline/development/scores.jsonl",
+        "stage1": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/development/stage1-development.jsonl",
+        "scores": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/llm-judge-pilot-20260910/l2s-development-judge/scores.jsonl",
+        "supervision": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/development/supervision.jsonl",
+        "candidates": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/candidates/development/inputs.jsonl",
+        "summary": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/llm-judge-pilot-20260910/l2s-development-judge/summary.json"
+      },
+      "judge_metadata": {
+        "model": "gpt-6-astra",
+        "effort": "low",
+        "prompt_version": "judge_prompt_v1"
+      }
+    },
+    "confirmation": {
+      "paths": {
+        "baseline": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/llm-judge-pilot-20260910/baseline/confirmation/scores.jsonl",
+        "stage1": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/confirmation/stage1-confirmation.jsonl",
+        "scores": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-judge/scores.jsonl",
+        "supervision": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/confirmation/supervision.jsonl",
+        "candidates": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/candidates/confirmation/inputs.jsonl",
+        "summary": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-judge/summary.json"
+      },
+      "judge_metadata": {
+        "model": "gpt-6-astra",
+        "effort": "low",
+        "prompt_version": "judge_prompt_v1"
+      }
+    }
+  },
+  "tests": {
+    "non_integration": {
+      "passed": 1262,
+      "skipped": 23,
+      "deselected": 3,
+      "warnings": 6,
+      "wall_seconds": 16.91
+    },
+    "skip_reason": "23 real parser contract cases: parser runtime unavailable",
+    "new_cost_curve_cases": 18
+  },
+  "environment": {
+    "python": "Python 3.11.15",
+    "platform": "macOS-26.5.2-arm64-arm-64bit"
+  },
+  "publication_format": {
+    "csv_newlines": "LF",
+    "change": "normalize CRLF after exact 9174cbc replay; numbers unchanged",
+    "original_crlf_outputs": "recheck/",
+    "csv_equal_ignoring_crlf": true
+  }
+}

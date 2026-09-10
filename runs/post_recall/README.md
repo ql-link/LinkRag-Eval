@@ -1,47 +1,56 @@
-# 召回后实验产物入口
+# 召回后实验产物导航
 
-查实验先读下表对应目录的 `README.md`，再按需打开结果文件。数据划分与六个实际输入见[数据入口](../../data/README.md)，当前工作安排见[当前状态](../../docs/CURRENT_STATUS.md)；本页不另定实验计划。
+本页是 `runs/post_recall/` 的唯一导航。查实验先看状态列，再进目录 `README.md`。当前进度看[当前状态](../../docs/CURRENT_STATUS.md)，逐次实验看[实验台账](../../docs/experiments/EXPERIMENT_LOG.md)，数据划分看[数据入口](../../data/README.md)，模型身份看[模型入口](../../models/README.md)。本目录整体被 Git 忽略，只有各目录的 `README.md` 入库；运行数据不随 clone 出现。
 
-## 与当前英文研究直接相关的四个实验
+## 1. 目录状态一览
 
-| 实验及目录名 | 做了什么／如何使用 | 一页说明 |
-| --- | --- | --- |
-| 英文特征对照 `nevir-english-features-20260907/` | legacy 控制与英文适配各训练一次；英文模型产自这里 | [对象、结论与文件](nevir-english-features-20260907/README.md) |
-| 英文模型诊断 `nevir-english-diagnostic-20260907/` | 原 A 与英文模型在同一开发候选上重放、追踪；未训练 | [对象、结论与文件](nevir-english-diagnostic-20260907/README.md) |
-| 历史同特征重训 `nevir-ltr-validation-20260907/` | 原 A 对历史 B；其保存的 Train／开发候选仍被复用 | [共享输入与历史产物](nevir-ltr-validation-20260907/README.md) |
-| 历史 A/B 诊断 `nevir-offline-diagnostic-20260907/` | 旧特征下的 A/B 机械诊断及原盲审材料 | [历史诊断文件](nevir-offline-diagnostic-20260907/README.md) |
+| 状态 | 目录 | 内容 | 能否删除 |
+| --- | --- | --- | --- |
+| **共享输入，不可删** | [nevir-ltr-validation-20260907](nevir-ltr-validation-20260907/README.md) | Train／开发／确认的查询、监督与完整三路候选快照；所有英文实验都读它 | 否 |
+| **当前结果** | [llm-judge-pilot-20260910](llm-judge-pilot-20260910/README.md) | N09：LLM 判断器三级试点，含判断缓存、评价与 L3 模型；正式报告见 [docs/reports](../../docs/reports/llm_judge_pilot_2026_09_10.md) | 否 |
+| **当前模型来源** | [nevir-english-features-20260907](nevir-english-features-20260907/README.md) | 英文基线由此训练；保存的开发全池分数是各实验的一致性校验基准 | 否 |
+| **当前引用的人审与诊断** | [subject-binding-pilot-20260908](subject-binding-pilot-20260908/README.md) | N08：人审 v5 固定结果（`human/`）、五臂训练、v2/v3 修复产物 | `human/` 不可删；其余见 §3 |
+| 同上 | [nevir-offline-diagnostic-20260907](nevir-offline-diagnostic-20260907/README.md) | 人审匿名映射 `review/private/`（人审 52 题评价必需）、旧 A/B 机械诊断 | `review/` 不可删；其余见 §3 |
+| 同上 | [nevir-english-diagnostic-20260907](nevir-english-diagnostic-20260907/README.md) | 中文／英文基线在同一快照上的重放与追踪 | 见 §3 |
+| 历史，保留不引用 | [nevir-controlled-20260907](nevir-controlled-20260907/) | 最初 20 对 NevIR 错排复现 | 否（问题存在性的原始证据） |
+| 历史，保留不引用 | [nevir-suitability-20260907](nevir-suitability-20260907/)、[english-capability-20260907](english-capability-20260907/README.md) | 数据适用性审计、普通英文链路检查 | 否（小） |
+| 历史，暂停 | [t2-full-20260906](t2-full-20260906/) | 暂停的 T2 入库及 `process-logs/` 故障记录 | 待定 |
+| 归档 | [_archive](_archive/) | 早期连通性探针、Sparse 前缀探针、两份外部咨询提示词（ChatGPT Pro、Codex 统一执行稿） | 待定（小） |
 
-`features` 实验回答“基础英文适配是否改善开发表现”；`diagnostic` 实验检查“已有模型如何在这些候选上打分”。两个目录不能互当结果来源。模型身份统一查[模型入口](../../models/README.md)。
+## 2. 当前研究的文件依赖链
 
-## 常见文件名怎么理解
+```
+data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（test 未读逐题）
+  → nevir-ltr-validation-20260907/data-preparation/experiment/  prepared/ 与 candidates/（共享输入）
+    → nevir-english-features-20260907/comparison/english/       英文基线与保存的开发分数
+    → nevir-offline-diagnostic-20260907/review/private/         人审匿名映射
+    → subject-binding-pilot-20260908/human/adjudication/        人审 v5 固定结果
+      → llm-judge-pilot-20260910/                               N09 判断缓存、评价、L3 模型
+```
 
-| 文件或目录 | 实际职责 |
-| --- | --- |
-| `selection.json` | 训练输入、排除项、参数及选模记录；不是单纯的最终分数 |
-| `manifest.json` | 含义取决于所属目录：模型包内是模型契约，诊断目录内是运行范围与状态 |
-| `summary.json`／`comparison.json` | 所属实验的聚合统计；先看实验说明中的比较对象与分母 |
-| `cases.jsonl`／`raw-predictions.jsonl` | 逐题分析／候选分数；不是人工金标，也不是可直接交给盲审者的公共材料 |
-| `checks/` | 工程检查日志；与检索效果分开。其 README 可按旧文件名查新位置 |
+新实验一律新建 `runs/post_recall/<目的>-<YYYYMMDD>/`，只读上面的输入，不改写它们；每个目录一份 `README.md`。
 
-## 其他历史目录
+## 3. 归档结果与清理候选（2026-09-10 深度归档后）
 
-| 目录 | 用途 |
-| --- | --- |
-| [english-capability-20260907](english-capability-20260907/README.md) | 普通英文的端到端能力检查 |
-| [nevir-suitability-20260907](nevir-suitability-20260907/) | NevIR 数据适用性审计 |
-| [nevir-controlled-20260907](nevir-controlled-20260907/) | 最初 20 对 NevIR 问题复现 |
-| [exploration-connectivity-20260906](exploration-connectivity-20260906/)／[direct](exploration-connectivity-20260906-direct/) | 早期探索链路连通性检查 |
-| [sparse-prefix-probes-20260906](sparse-prefix-probes-20260906/) | Sparse 前缀探针 |
-| [t2-full-20260906](t2-full-20260906/) | 暂停的 T2 入库及故障记录，不属于当前英文训练输入 |
+被替代的中间版本、重复重放、大体量追踪和可重建环境已移入各实验目录的 `_superseded/`，每个目录有 `MANIFEST.md` 列出原路径、大小与原因；引用它们的报告链接已改指新位置。**未删除任何数据**，删除由负责人在 GitHub issue #27 决定。
 
-这些历史目录和根级进程／咨询文件保留原位；不因存在旧脚本就恢复运行。
+| 目录 | 大小 | 内容 | 删除后果 |
+| --- | ---: | --- | --- |
+| `subject-binding-pilot-20260908/_superseded/` | 1.4 GB | 人审 intake-v1、ambiguity-policy-v1、analysis-v1、results-v1 到 v4；前三版分发包与审计快照；隔离 parser 环境副本；v2/v3 修复的全池重放、逐段事实 JSONL、三臂训练全池信号 | 人审最终版（v5、intake-v2）、模型包、结论文件全部保留；只失去中间过程的逐条复核能力 |
+| `nevir-english-diagnostic-20260907/_superseded/` | 316 MB | 中文／英文基线逐树特征追踪与树路径核验明细 | 报告结论与 cases／summary 保留；重跑诊断脚本可再生成 |
+| `nevir-offline-diagnostic-20260907/_superseded/` | 164 MB | 旧 A/B 特征追踪与树路径核验明细 | 同上；`review/private/` 人审映射保留原位 |
+| `nevir-english-features-20260907/_superseded/` | 11 MB | 结构整理前的源码副本与 legacy 重放输入 | 结构一致性结论已在报告与 checks |
+| `llm-judge-pilot-20260910/_superseded/` | 42 MB | 按 E0 前 10 名做的被替代设计、重复的续跑目录、工程会话空结果 | 无影响；判断缓存可被后续运行复用，删了只是重判 |
+| `t2-full-20260906/` | 98 MB | 暂停的 T2 入库存储与故障日志 | 若研究不回到 T2，可整体删除 |
+| `_archive/` | 0.7 MB | 早期探针与两份外部咨询稿 | 无影响 |
 
-## 后续命名沿用这三个原则
+`runs/` 根目录的 `alt_embedding_eval.sqlite3`（95 MB）与 `bm25_eval.sqlite3`（117 MB）是[存放总览](../../docs/WORKSPACE_MAP.md)登记的评测库 sidecar，本次未动，是否仍在使用由负责人确认。
 
-- 实验目录写出数据集、实验目的和日期，例如 `nevir-english-feature-comparison-YYYYMMDD/`；不用 `new`、`final2` 或仅靠日期区分用途。
-- 新文件名写出对象与内容，例如 `development-pair-metrics.json`、`english-training-selection.json`；只有组别已明确时才用简短名称。程序固定格式继续按现有接口，不擅自改名。
-- 每次运行有一份短 README，写明问题、比较对象、数据范围、结论和关键文件；参数与逐题数据仍链接原产物，不复制。只建立实际需要的子目录。
+不在候选内、不可删：`nevir-ltr-validation-20260907/`（共享输入）、`subject-binding-pilot-20260908/human/`（人审最终结果与原始收件）、`nevir-offline-diagnostic-20260907/review/`（人审映射）、`nevir-english-features-20260907/comparison/`（英文模型与保存分数）、`llm-judge-pilot-20260910/` 下所有 `judge-cache/`、判断批次原始输出、`items-stage1-top20/`、`baseline/`。
 
-本入口及上述四个实验的目录说明可纳入 Git；运行数据、模型、日志继续忽略。路径缺失时报告具体文件，不自动重建实验。
+## 4. 命名与文件约定
 
-- [N08 主体聚合运行目录](subject-binding-pilot-20260908/)：原 76 条分发包、固定五臂、覆盖和验收；实证见[正式报告](../../docs/reports/nevir_subject_binding_pilot_2026_09_08.md)。
+- 目录名写出数据集、目的与日期；不用 `new`、`final2`。
+- `_archive/`、`_superseded/`、`_engineering-checks/` 三个前缀目录分别表示：不再引用的历史材料、被后续设计替代的结果、工程验收记录；它们都不进导航正文。
+- `summary.json`／`results.json` 是所属命令的聚合统计，先看对应 README 的分母口径；`manifest.json` 在模型包内是契约、在运行目录内是范围记录。
+- 大产物、缓存、模型继续忽略；新增需要入库的 README 时在 `.gitignore` 白名单补一行。

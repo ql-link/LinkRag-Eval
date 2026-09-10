@@ -32,10 +32,10 @@
 
 **最终使用的是 §2.3 记录的 `handoff-structured-v2` 材料；两份最终 ZIP 当前缺失，公共文件与映射仍在，已有提交可正常使用。** §2–2.6 按各次交付保留历史事实，当前人工结果与已完成分析以 §2.7 为准。下方初版、§2.1 和 §2.2 不再作为分发入口。
 
-- [reviewer_1_package.zip](../../runs/post_recall/subject-binding-pilot-20260908/handoff/reviewer_1_package.zip)
-- [reviewer_2_package.zip](../../runs/post_recall/subject-binding-pilot-20260908/handoff/reviewer_2_package.zip)
+- [reviewer_1_package.zip](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff/reviewer_1_package.zip)
+- [reviewer_2_package.zip](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff/reviewer_2_package.zip)
 
-每份只有该人的 `review.html`、`cases.jsonl`、`blank-answers.jsonl` 和同一份中性 `README.md`。原三份公共文件逐字节复制 N05；两人各自的 76 查询、152 个正文展示、匿名编号、顺序、X/Y 位置与原私有映射逐项一致。没有重新抽样、打乱、生成编号或把缺失目标加入候选。ZIP 成员白名单、CRC 和解包字节通过，公共材料没有私有映射、官方方向、模型结果或另一人的意见。详见[分发 manifest](../../runs/post_recall/subject-binding-pilot-20260908/handoff/handoff-manifest.json)，该 manifest 属于研究侧，**不随 ZIP 分发**。
+每份只有该人的 `review.html`、`cases.jsonl`、`blank-answers.jsonl` 和同一份中性 `README.md`。原三份公共文件逐字节复制 N05；两人各自的 76 查询、152 个正文展示、匿名编号、顺序、X/Y 位置与原私有映射逐项一致。没有重新抽样、打乱、生成编号或把缺失目标加入候选。ZIP 成员白名单、CRC 和解包字节通过，公共材料没有私有映射、官方方向、模型结果或另一人的意见。详见[分发 manifest](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff/handoff-manifest.json)，该 manifest 属于研究侧，**不随 ZIP 分发**。
 
 使用方式：分别解压自己的一份，先读 README，用桌面浏览器打开 `review.html`；姓名可用稳定代号，类型选人类，每人完成全部 76 条。选择 X/Y 原文证据、填写适用性与理由，保存后点击“下载结果”。交回各自完整 `reviewer_1-answers.json`／`reviewer_2-answers.json` 原文件，不能只交截图。最初页面以原打开位置的浏览器本地存储恢复草稿，当时没有 JSON 导入功能；新版已补齐（见 §2.1），仍应频繁下载备份。file 访问有问题时，README 给出只暴露自己公共目录的本机 localhost 方法。
 
@@ -63,15 +63,15 @@
 
 ### 2.1 分发页面持久化修订（2026-09-08，侧栏请求）
 
-负责人要求补强独立标注员的保存可靠性。**该次持久化修订曾分发[审阅者 1 ZIP](../../runs/post_recall/subject-binding-pilot-20260908/handoff-durable-v1/reviewer_1_package.zip)和[审阅者 2 ZIP](../../runs/post_recall/subject-binding-pilot-20260908/handoff-durable-v1/reviewer_2_package.zip)。** 上述旧包记录保留供追溯；旧 ZIP、N05 页面、正文、编号、顺序与私有映射没有覆盖。新版 `cases.jsonl`、空白模板以及页面内嵌数据／存储键与原版一致。
+负责人要求补强独立标注员的保存可靠性。**该次持久化修订曾分发[审阅者 1 ZIP](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-durable-v1/reviewer_1_package.zip)和[审阅者 2 ZIP](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-durable-v1/reviewer_2_package.zip)。** 上述旧包记录保留供追溯；旧 ZIP、N05 页面、正文、编号、顺序与私有映射没有覆盖。新版 `cases.jsonl`、空白模板以及页面内嵌数据／存储键与原版一致。
 
 新增输入即时自动保存、明确保存失败提示、未下载备份的离开提醒、带时间的 JSON 备份、JSON 导入续填。未完成或证据位置暂时不一致的原始字段也作为草稿保存；本地存储报错时仍可下载备份或结果。导入检查包、正文版本、匿名编号、证据和字段；替换已有草稿需确认并先发起现有备份下载，错误／取消不替换。其他窗口修改同一草稿时停止覆盖保存并提示备份。
 
 保存只是当前浏览器的本地副本；每次结束仍须下载 JSON 并确认文件实际存在。没有服务器或后台自动上传，无法承诺设备损坏、清理数据或未完成下载后也绝不丢失。新版 README 已明确这些边界及恢复步骤。普通答案导出维持 schema_version=1，附带可恢复草稿；已有收件检查可接受，不改人类判断或模型结果。
 
-实现：[review_persistence.py](../../src/linkrag_eval/retrieval/learning_to_rank/review_persistence.py)；通过 16 项新增持久化用例及既有页面／收件回归，共 **64 passed**。两个实际新版包分别进行了 76 条临时草稿的 JS 导出／导入逐值检查，内容和私有标识隔离校验通过。测试仅在 Node 模拟环境执行，没有写真实人工提交；**真实浏览器验收仍未执行**。[验收记录](../../runs/post_recall/subject-binding-pilot-20260908/handoff-durable-v1/acceptance.json)与[测试日志](../../runs/post_recall/subject-binding-pilot-20260908/handoff-durable-v1/tests.log)保留。该次版本的收件 manifest 为 `handoff-durable-v1/handoff-manifest.json`；当前新版入口见 §2.3，仍连接原 N05 私有映射。
+实现：[review_persistence.py](../../src/linkrag_eval/retrieval/learning_to_rank/review_persistence.py)；通过 16 项新增持久化用例及既有页面／收件回归，共 **64 passed**。两个实际新版包分别进行了 76 条临时草稿的 JS 导出／导入逐值检查，内容和私有标识隔离校验通过。测试仅在 Node 模拟环境执行，没有写真实人工提交；**真实浏览器验收仍未执行**。[验收记录](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-durable-v1/acceptance.json)与[测试日志](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-durable-v1/tests.log)保留。该次版本的收件 manifest 为 `handoff-durable-v1/handoff-manifest.json`；当前新版入口见 §2.3，仍连接原 N05 私有映射。
 
-**学生入门页补充。** 根据负责人的侧栏请求，两份新版 ZIP 均加入相同的独立[标注入门.html](../../runs/post_recall/subject-binding-pilot-20260908/handoff-durable-v1/reviewer_1/标注入门.html)：三个自编讲解示例、三道先填后看参考标注的练习。面向非专业学生说明四种适用性、查询歧义、相对偏好和证据理由；仅展示参考，不比较选项、不评分。六道材料均非 NevIR 正式样本，也不进入人工金标或模型实验。练习使用独立本地存储，不能改动正式 76 条；两份教程与说明一致。原 `review.html`、cases 和空白模板字节不变，之前分发的 ZIP 已保存到 `handoff-durable-v1/archive-before-tutorial/`。离线脚本检查了三题填写门槛、参考初始隐藏、展示后保留作答、刷新恢复、清空隔离以及存储失败时仍可练习；[检查记录](../../runs/post_recall/subject-binding-pilot-20260908/handoff-durable-v1/tutorial-checks.json)保留，未进行真实浏览器视觉验收。
+**学生入门页补充。** 根据负责人的侧栏请求，两份新版 ZIP 均加入相同的独立[标注入门.html](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-durable-v1/reviewer_1/标注入门.html)：三个自编讲解示例、三道先填后看参考标注的练习。面向非专业学生说明四种适用性、查询歧义、相对偏好和证据理由；仅展示参考，不比较选项、不评分。六道材料均非 NevIR 正式样本，也不进入人工金标或模型实验。练习使用独立本地存储，不能改动正式 76 条；两份教程与说明一致。原 `review.html`、cases 和空白模板字节不变，之前分发的 ZIP 已保存到 `handoff-durable-v1/archive-before-tutorial/`。离线脚本检查了三题填写门槛、参考初始隐藏、展示后保留作答、刷新恢复、清空隔离以及存储失败时仍可练习；[检查记录](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-durable-v1/tutorial-checks.json)保留，未进行真实浏览器视觉验收。
 
 ### 2.2 主会话独立验收：填写后能否用于正式收件
 
@@ -122,7 +122,7 @@
 
 程序生成的答案与收件只在独立系统临时 QA 目录，不进入研究标签、语义准确率或效果统计。**真实浏览器渲染、原生选文、磁盘下载及跨浏览器现场验收仍未执行**：此前 Browser URL security policy 拒绝继续有效，没有改走其他入口绕过。这里通过的是最终 HTML 的 DOM 模拟和真实 Python 数据链路；审阅者仍需确认 JSON 实际下载成功。
 
-产物：[分发 manifest](../../runs/post_recall/subject-binding-pilot-20260908/handoff-structured-v2/handoff-manifest.json)仅供研究侧，[验收](../../runs/post_recall/subject-binding-pilot-20260908/handoff-structured-audit/acceptance.json)、[最终包链路记录](../../runs/post_recall/subject-binding-pilot-20260908/handoff-structured-audit/packet-end-to-end.json)、[相关测试](../../runs/post_recall/subject-binding-pilot-20260908/handoff-structured-audit/related-tests.log)、[完整回归](../../runs/post_recall/subject-binding-pilot-20260908/handoff-structured-audit/full-regression.log)。旧包保留，未新增训练、召回、确认／Test 读取；N08 的官方探索结论不变。
+产物：[分发 manifest](../../runs/post_recall/subject-binding-pilot-20260908/handoff-structured-v2/handoff-manifest.json)仅供研究侧，[验收](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-structured-audit/acceptance.json)、[最终包链路记录](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-structured-audit/packet-end-to-end.json)、[相关测试](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-structured-audit/related-tests.log)、[完整回归](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/handoff-structured-audit/full-regression.log)。旧包保留，未新增训练、召回、确认／Test 读取；N08 的官方探索结论不变。
 
 ### 2.4 查询歧义的完整性例外与原提交兼容验收（2026-09-09）
 
@@ -146,11 +146,11 @@ Python 接收、共享 JS、正式表单提示、教程练习及字段说明、�
 
 “完整”包括有说明的无法裁定，**不等于得到可判相关性金标**。当时 reviewer_2 的待补项是其他条件说明、歧义选择或必要摘录，本例外没有改变其验收结果。该阶段按负责人的“需补写即中止”要求暂停后续分析；指定补写文件的续接见 §2.5。
 
-原规则收件及当时生成的未裁定材料保留在 [20260909-intake-v1](../../runs/post_recall/subject-binding-pilot-20260908/human/20260909-intake-v1/)；其中混合缺项、不确定与不同选择的标记数不能当作人类分歧率。当前新规则的[兼容验收](../../runs/post_recall/subject-binding-pilot-20260908/human/20260909-ambiguity-policy-v1/compatibility.json)、[reviewer_1 收件](../../runs/post_recall/subject-binding-pilot-20260908/human/20260909-ambiguity-policy-v1/reviewer_1/receipt.json)和 [reviewer_2 收件／缺项](../../runs/post_recall/subject-binding-pilot-20260908/human/20260909-ambiguity-policy-v1/reviewer_2/receipt.json)写入独立目录，均只供研究侧使用。验证了原始文件逐字节保留、已有收件和分发 manifest 未变；接收同时核对原公共文件与私有映射。当前渲染器直接导入两份原始 JSON，含原 `drafts` 的答案、草稿及存储键在导出后逐字段一致，完整数与 Python 接收一致。验证脚本位于同目录 `check_compatibility.py`；采用 Node DOM 模拟，未新增真实浏览器现场验收。
+原规则收件及当时生成的未裁定材料保留在 [20260909-intake-v1](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/20260909-intake-v1/)；其中混合缺项、不确定与不同选择的标记数不能当作人类分歧率。当前新规则的[兼容验收](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/20260909-ambiguity-policy-v1/compatibility.json)、[reviewer_1 收件](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/20260909-ambiguity-policy-v1/reviewer_1/receipt.json)和 [reviewer_2 收件／缺项](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/20260909-ambiguity-policy-v1/reviewer_2/receipt.json)写入独立目录，均只供研究侧使用。验证了原始文件逐字节保留、已有收件和分发 manifest 未变；接收同时核对原公共文件与私有映射。当前渲染器直接导入两份原始 JSON，含原 `drafts` 的答案、草稿及存储键在导出后逐字段一致，完整数与 Python 接收一致。验证脚本位于同目录 `check_compatibility.py`；采用 Node DOM 模拟，未新增真实浏览器现场验收。
 
-相关测试 **111 passed**；完整非 integration **1144 passed、3 deselected、6 warnings（16.61 秒）**。共享 Python／JS 规则覆盖 6,144 个条件组合，另测单段例外、其他必填、无效摘录、旧策略头兼容、无自动补选及教程解锁；格式 1 和既有保存恢复回归通过。首次新增测试的 9 项失败来自测试只修改 `answers` 却保留旧 `drafts`，修正合成夹具后通过；真实文件验证保留了原始两者，没有用删草稿代替兼容证明。[相关测试日志](../../runs/post_recall/subject-binding-pilot-20260908/human/20260909-ambiguity-policy-v1/related-tests-final.log)、[完整回归日志](../../runs/post_recall/subject-binding-pilot-20260908/human/20260909-ambiguity-policy-v1/full-regression.log)保留。
+相关测试 **111 passed**；完整非 integration **1144 passed、3 deselected、6 warnings（16.61 秒）**。共享 Python／JS 规则覆盖 6,144 个条件组合，另测单段例外、其他必填、无效摘录、旧策略头兼容、无自动补选及教程解锁；格式 1 和既有保存恢复回归通过。首次新增测试的 9 项失败来自测试只修改 `answers` 却保留旧 `drafts`，修正合成夹具后通过；真实文件验证保留了原始两者，没有用删草稿代替兼容证明。[相关测试日志](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/20260909-ambiguity-policy-v1/related-tests-final.log)、[完整回归日志](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/20260909-ambiguity-policy-v1/full-regression.log)保留。
 
-工程检查：相关 Ruff、两个 CLI 入口、报告索引和 `git diff --check` 通过。文档链接核对发现原最终两份 ZIP 在本地缺失；上一轮 Git 正文已有这四处链接，公共文件、原映射及人工 JSON 均完整，故不阻断本次收件，也不重建 ZIP 补齐。当前导航改指向现存表单，历史分发文件名保留；具体检查见 [engineering-checks.json](../../runs/post_recall/subject-binding-pilot-20260908/human/20260909-ambiguity-policy-v1/engineering-checks.json)。
+工程检查：相关 Ruff、两个 CLI 入口、报告索引和 `git diff --check` 通过。文档链接核对发现原最终两份 ZIP 在本地缺失；上一轮 Git 正文已有这四处链接，公共文件、原映射及人工 JSON 均完整，故不阻断本次收件，也不重建 ZIP 补齐。当前导航改指向现存表单，历史分发文件名保留；具体检查见 [engineering-checks.json](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/20260909-ambiguity-policy-v1/engineering-checks.json)。
 
 本轮分支 `codex/nevir-human-review-20260909` 基于 `5afd458b2e69695b99127a83d9ea6e6b183cc0ec`；远端没有 `origin/main`，已从实际默认 `origin/master` 获取最新版本后创建。此前收件过程中已写入的“缺项与已填字段分别标记”代码及两项测试保留，并纳入回归；未用它重算真实人类比较结果。当前无新增模型实验，未提交或推送，根目录既有未跟踪附件保留。
 
@@ -213,7 +213,7 @@ Python 接收、共享 JS、正式表单提示、教程练习及字段说明、�
 
 第 64 题保留查询歧义 yes，其余 8 题为 no。27 与 76 的原偏好并不对称，照录而不自动统一；原理由对具体性要求和比较口径的说明完整保留。该批状态记录为“负责人报告 A/B 达成一致并采用 A，整体未锁定”，与首批初步意见区分；接收时间不冒充实际讨论时间，也未伪造新的裁定者签名。
 
-本批[原话](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-02-source.md)、[应用记录](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-02-applied.json)与[验收](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-02-checks.json)留存。更新前的汇总保存为只读 [results-v1.json](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/history/results-v1.json)；当前版本为 2。机械和独立核对确认 9 条完整答案与 A 原始 JSON 一致、其余 67 条结果对象不变、原始及规范化收件未变。
+本批[原话](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-02-source.md)、[应用记录](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-02-applied.json)与[验收](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-02-checks.json)留存。更新前的汇总保存为只读 [results-v1.json](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/adjudication/history/results-v1.json)；当前版本为 2。机械和独立核对确认 9 条完整答案与 A 原始 JSON 一致、其余 67 条结果对象不变、原始及规范化收件未变。
 
 **第二批完成时累计 32/76 条已登记，44 条未讨论；X 12、Y 7、平局 9、未决 4（12、15、20、64）。** 首批 23 条仍为初步意见，第二批 9 条为用户报告的讨论一致；整体锁定 0 条。只修改本地汇总和过程记录，未新增训练、模型关联或效果评分。
 
@@ -230,7 +230,7 @@ Python 接收、共享 JS、正式表单提示、教程练习及字段说明、�
 
 原讨论的“明示与合理推测”共性说明保持原话，作用范围记录为本批讨论依据，不追溯重标此前允许语境对应的题目，也未调用外部知识验证游戏规则或故事背景。当前排序研究仍只使用保存的候选正文，不新增任何文本、规则或模型。
 
-本批[原话](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-03-source.md)、[应用记录](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-03-applied.json)和[核对记录](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-03-checks.json)保留；上一版只读存为 [results-v2.json](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/history/results-v2.json)。本批引用的 6 段摘录均由给定短句在原正文中定位，记录 Unicode 范围；只是字符串匹配，不是新增人类证据判断。独立核对确认三题可录入、第 60 题确需明确；此前 32 条结果对象未改动。
+本批[原话](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-03-source.md)、[应用记录](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-03-applied.json)和[核对记录](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-03-checks.json)保留；上一版只读存为 [results-v2.json](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/adjudication/history/results-v2.json)。本批引用的 6 段摘录均由给定短句在原正文中定位，记录 Unicode 范围；只是字符串匹配，不是新增人类证据判断。独立核对确认三题可录入、第 60 题确需明确；此前 32 条结果对象未改动。
 
 **第三批完成时共收到 36 题讨论，35 题已登记，60 待确认，40 题未收到单独讨论。** 已登记偏好为 X 13、Y 7、平局 11、语义未决 4（12、15、20、64）；当时整体未锁定，无新增训练、指标比较或模型关联。
 
@@ -254,7 +254,7 @@ Python 接收、共享 JS、正式表单提示、教程练习及字段说明、�
 
 冻结范围是成对偏好与已明确提供的字段；首批若只指定偏好，未指定的单段标签、歧义字段仍为空，原审阅答案完整保留。评分只消费已明确的偏好，不能从空字段推断“没有歧义”或完整语义审阅已完成。
 
-**先固定结果和口径，后读模型分数。** 只读的 [results-v4-frozen.json](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/history/results-v4-frozen.json)与[analysis-policy-v1.json](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/analysis-policy-v1.json)在模型关联前写入。政策记录的摘要由分析程序消费，用于拒绝更改后的人工输入；没有为工作区另建哈希台账。原 v1/v2/v3、四批原话和完整提交不覆盖。[当前阅读视图](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/current-results.md)维护最终结果及分析入口，固定输入保持原样。
+**先固定结果和口径，后读模型分数。** 只读的 [results-v4-frozen.json](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/adjudication/history/results-v4-frozen.json)与[analysis-policy-v1.json](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/adjudication/analysis-policy-v1.json)在模型关联前写入。政策记录的摘要由分析程序消费，用于拒绝更改后的人工输入；没有为工作区另建哈希台账。原 v1/v2/v3、四批原话和完整提交不覆盖。[当前阅读视图](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/current-results.md)维护最终结果及分析入口，固定输入保持原样。
 
 评价规则在读分数前明确：仅纳入人工 X/Y 严格方向且两段实际共同召回的查询；分数严格大于才正确，相等仍为模型同分，不用文档 ID 破平。原 52 条严格方向中第 69 题缺候选，最终为 **51 查询、19 来源组**；只有两方向都符合该口径的 **20 对**进入双向全对分母。第 71 题既是人工平局又缺候选，因此排除原因计数有重叠：19 平局＋4 人工未决＋1 未解决＋2 缺池，排除并集为 25，不是 26。没有补入缺候选或重抽样。
 
@@ -268,7 +268,7 @@ Python 接收、共享 JS、正式表单提示、教程练习及字段说明、�
 | EM | 32（62.75%） | 17 | 2 | 5 | 62.72% |
 | E1 / E2 / E3（各自） | 32（62.75%） | 19 | 0 | 5 | 62.72% |
 
-来源宏平均先分别计算 19 组中的正确率，再等权平均；各组进入分母的查询数不同，不能用全体正确数替代。完整来源分布、全部 21 个模型对的四格及逐来源四格均在 [results.json](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/analysis-v1/results.json)。
+来源宏平均先分别计算 19 组中的正确率，再等权平均；各组进入分母的查询数不同，不能用全体正确数替代。完整来源分布、全部 21 个模型对的四格及逐来源四格均在 [results.json](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/adjudication/analysis-v1/results.json)。
 
 | 参照 → 方法 | 共同正确 | 纠正 | 改坏 | 共同未正确 | 净增 |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -288,7 +288,7 @@ Python 接收、共享 JS、正式表单提示、教程练习及字段说明、�
 
 #### 本次输入、执行与验收
 
-工作分支 `codex/nevir-human-review-20260909`，HEAD `5afd458b2e69695b99127a83d9ea6e6b183cc0ec`。A 读取已保存英文诊断中的 A 分数，B 读取 N08 阶段 A 重放分数，E0/EM/E1/E2/E3 读取各自开发预测；精确路径在结果 JSON。七组各 76 查询、10,465 行候选，所有查询与候选 ID／顺序一致，私有映射中的覆盖与实际分数集合一致。逐题输出只含开发数据，见 [per-query.jsonl](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/analysis-v1/per-query.jsonl)。
+工作分支 `codex/nevir-human-review-20260909`，HEAD `5afd458b2e69695b99127a83d9ea6e6b183cc0ec`。A 读取已保存英文诊断中的 A 分数，B 读取 N08 阶段 A 重放分数，E0/EM/E1/E2/E3 读取各自开发预测；精确路径在结果 JSON。七组各 76 查询、10,465 行候选，所有查询与候选 ID／顺序一致，私有映射中的覆盖与实际分数集合一致。逐题输出只含开发数据，见 [per-query.jsonl](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/adjudication/analysis-v1/per-query.jsonl)。
 
 ```bash
 .venv/bin/python runs/post_recall/subject-binding-pilot-20260908/human/adjudication/evaluate_saved.py \
@@ -297,7 +297,7 @@ Python 接收、共享 JS、正式表单提示、教程练习及字段说明、�
 
 本地读取、校验与聚合单次 **0.0442 秒**，不含结果写盘和此前人类工时；这不是模型推理成本。没有训练、模型预测、外部服务、重新召回或确认／Test 逐题读取。一次性编排在运行目录内，未新增训练框架或第二份正式报告。
 
-验收包括 40 题一致字段、35 条旧结果不变、原始／规范化提交保真、76 题映射、154 条新采纳意见摘录定位、冻结摘要及先后顺序、51 查询资格、所有模型指标与来源四格、官方统计不变；主流程与不读取主脚本的[独立复算](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/analysis-v1/independent-check.json)全部一致。[本批采纳检查](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-04-checks.json)和[工程验收](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/analysis-v1/acceptance.json)记录实际范围。实现期间两次前置断言发现脚本误用审阅者显示姓名作为角色，以及旧预测使用 `wrong` 枚举；按原数据契约修正后继续，没有改人类答案、冻结政策或模型分数。
+验收包括 40 题一致字段、35 条旧结果不变、原始／规范化提交保真、76 题映射、154 条新采纳意见摘录定位、冻结摘要及先后顺序、51 查询资格、所有模型指标与来源四格、官方统计不变；主流程与不读取主脚本的[独立复算](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/adjudication/analysis-v1/independent-check.json)全部一致。[本批采纳检查](../../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/batches/20260909-04-checks.json)和[工程验收](../../runs/post_recall/subject-binding-pilot-20260908/_superseded/human/adjudication/analysis-v1/acceptance.json)记录实际范围。实现期间两次前置断言发现脚本误用审阅者显示姓名作为角色，以及旧预测使用 `wrong` 枚举；按原数据契约修正后继续，没有改人类答案、冻结政策或模型分数。
 
 本次执行 `.venv/bin/python -m pytest -q tests/unit/test_report_index.py`，结果 **7 passed（0.07 s）**；五个相关 Python 文件 Ruff、分析 CLI `--help`、报告索引及 `git diff --check` 通过。8 份文档／阅读视图的 359 个本地链接目标均存在；该检查不代替浏览器或锚点渲染验收。
 

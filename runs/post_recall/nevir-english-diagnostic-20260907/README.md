@@ -14,7 +14,7 @@
 | 聚合诊断结果 | [diagnostic/summary.json](diagnostic/summary.json) | 指标、特征响应及机械观察 |
 | 实际命令与执行 | [execution.json](execution.json) · [execution.log](execution.log) | 保存输入、命令、退出状态与耗时 |
 | 逐题比较与全池分数 | [cases.jsonl](diagnostic/cases.jsonl) · [raw-predictions.jsonl](diagnostic/raw-predictions.jsonl) | 官方偏好下的逐题分析、A／英文候选分数 |
-| 分模型特征与树路径 | [A/](diagnostic/A/) · [English/](diagnostic/English/) · [tree-audit.jsonl](diagnostic/tree-audit.jsonl) | 各自版本的矩阵、特征追踪与逐树成对核验 |
+| 分模型特征与树路径 | [A/](_superseded/diagnostic/A/) · [English/](_superseded/diagnostic/English/) · [tree-audit.jsonl](_superseded/diagnostic/tree-audit.jsonl) | 各自版本的矩阵、特征追踪与逐树成对核验 |
 | 重放与工程验收 | [replay-check.json](diagnostic/replay-check.json) · [artifact-verification.json](artifact-verification.json) · [acceptance.json](acceptance.json) | 精确重放、保存产物复核与工程检查结果 |
 | 公共盲审材料 | [diagnostic/review/README.md](diagnostic/review/README.md) | 两份公共材料与提交格式；与旧诊断公共材料相同，尚非人工金标 |
 | 测试和 CLI 日志 | [checks/README.md](checks/README.md) | 四份检查日志及原名称 |
@@ -22,3 +22,5 @@
 `before-diagnostic-features.py` 和 `before-diagnostic-summary.py` 是诊断修改前的源码副本，不是运行入口。当前脚本为 `scripts/nevir_english_diagnostics.py`；本说明不触发重放或人工任务。
 
 输入路径的来源见[数据入口](../../../data/README.md)；英文模型产自[英文特征对照](../nevir-english-features-20260907/README.md)，不是本诊断训练的。[返回实验总入口](../README.md)。
+
+> 2026-09-10 归档：两模型的逐树特征追踪与树路径核验明细已移入 [`_superseded/`](_superseded/MANIFEST.md)，未删除；当前结论所需文件保留原位。

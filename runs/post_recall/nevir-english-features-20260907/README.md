@@ -26,3 +26,5 @@
 - `initial-*`、`*-acceptance.json`、`*-replay.json` 等记录各阶段状态；通常只需上表验收入口，追溯时再读。
 
 [数据入口](../../../data/README.md)说明共享快照与使用边界；[实验总入口](../README.md)区分本实验与后续英文诊断。检查日志的新旧文件名映射见 `checks/README.md`；原运行记录中的历史命令不改写。
+
+> 2026-09-10 归档：结构整理前的源码副本与 legacy 重放输入已移入 [`_superseded/`](_superseded/MANIFEST.md)，未删除；当前结论所需文件保留原位。

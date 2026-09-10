@@ -1,0 +1,28 @@
+{
+  "engineering_status": "passed",
+  "research_protocol_status": "deviations_documented_not_strict_issue_16_acceptance",
+  "checks": {
+    "l1_retry_matches_existing_evaluation": true,
+    "l2_k10_retry_metrics_unchanged": true,
+    "l2_k20_retry_metrics_unchanged": true,
+    "l2_k10_baselines_match_gpt": true,
+    "l2_k20_baselines_match_gpt": true,
+    "l1_available_scores_preserved": true,
+    "l2s_available_scores_preserved": true
+  },
+  "local_non_integration": {
+    "passed": 1244,
+    "skipped": 23,
+    "deselected": 3,
+    "warnings": 6,
+    "wall_seconds": 17.5,
+    "skip_reason": "real parser runtime unavailable"
+  },
+  "code_changes": "none; retained da46a43 judge, prompt and evaluator",
+  "new_L2_available_scores_from_recovery_retry": 0,
+  "remaining_unavailable_items": {
+    "L1_after_retry": 2,
+    "L2_after_retry": 4
+  },
+  "raw_L2_retry_scores_and_statuses_equal_first_pass": true
+}

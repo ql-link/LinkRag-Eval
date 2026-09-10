@@ -54,6 +54,11 @@ runs/
 !/runs/post_recall/ood-probe-20260910/README.md
 !/runs/post_recall/ood-probe-20260910/fixture.json
 !/runs/post_recall/ood-probe-20260910/review-sheet.md
+!/runs/post_recall/judge-statistics-20260910/
+/runs/post_recall/judge-statistics-20260910/*
+!/runs/post_recall/judge-statistics-20260910/README.md
+!/runs/post_recall/judge-statistics-20260910/tables.md
+!/runs/post_recall/judge-statistics-20260910/results.json
 reports/*.html
 /linkrag-eval-sqlite-share-20260827/
 /docs/papers/*

@@ -4,13 +4,179 @@ from __future__ import annotations
 import json
 import math
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 from itertools import combinations
 
 import httpx
 import numpy as np
 
 from .llm_judge import PROMPT_VERSION, SCHEMA, judged_scores, relation
+
+
+def probe_items(fixture: dict) -> list[dict]:
+    """Expand probe pools into L1 items; labels stay outside the judge prompt."""
+    items = []
+    query_ids, pair_ids, document_ids = set(), set(), set()
+
+    def documents(rows, id_field):
+        docs = {}
+        for row in rows:
+            cid = row[id_field]
+            if not isinstance(cid, str) or not cid or cid in document_ids:
+                raise ValueError("empty or duplicate probe document ID")
+            document_ids.add(cid)
+            docs[cid] = row["text"]
+        if len(docs) < 2:
+            raise ValueError("probe pool requires at least two documents")
+        return docs
+
+    def expand(query, docs, pair_id, probe_set, kind):
+        qid = query["id"]
+        if not isinstance(qid, str) or not qid or qid in query_ids:
+            raise ValueError("empty or duplicate probe query ID")
+        query_ids.add(qid)
+        if query["expected_doc_id"] not in docs:
+            raise ValueError("expected probe document is outside its pool")
+        for cid, text in docs.items():
+            items.append({"source_query_id": qid, "chunk_id": cid, "pair_id": pair_id,
+                          "query": query["query"], "passage": text, "level": "l1",
+                          "prompt_version": PROMPT_VERSION, "model": None, "effort": None,
+                          "codex_version": None, "expected": cid == query["expected_doc_id"],
+                          "probe_set": probe_set, "kind": kind})
+
+    english = fixture["english"]
+    docs = documents(english["docs"], "id")
+    if not english["queries"]:
+        raise ValueError("English probe requires queries")
+    for query in english["queries"]:
+        expand(query, docs, query["id"], "english", query["kind"])
+    for pair in fixture["chinese"]["pairs"]:
+        pid = pair["pair_id"]
+        if not isinstance(pid, str) or not pid or pid in pair_ids:
+            raise ValueError("empty or duplicate Chinese pair ID")
+        pair_ids.add(pid)
+        if len(pair["queries"]) != 2 or len(pair["passages"]) != 2:
+            raise ValueError("Chinese pair requires two queries and two passages")
+        docs = documents(pair["passages"], "doc_id")
+        for query in pair["queries"]:
+            expand(query, docs, pid + "-" + query["id"], "chinese", pair["kind"])
+    _probe_groups(items)
+    return items
+
+
+def _probe_groups(items):
+    groups, pairs = defaultdict(list), defaultdict(list)
+    keys = set()
+    for item in items:
+        key = (item["source_query_id"], item["chunk_id"])
+        if key in keys:
+            raise ValueError("duplicate probe item")
+        keys.add(key)
+        if (item["probe_set"] not in {"english", "chinese"}
+                or item["level"] != "l1" or type(item["expected"]) is not bool
+                or any(not isinstance(item[k], str) or not item[k].strip() for k in
+                       ("source_query_id", "chunk_id", "pair_id", "query", "passage", "kind"))):
+            raise ValueError("invalid probe item metadata")
+        groups[key[0]].append(item)
+    if not groups:
+        raise ValueError("empty probe items")
+    english_pool = None
+    for qid, rows in groups.items():
+        first = rows[0]
+        if (len(rows) < 2 or sum(r["expected"] for r in rows) != 1
+                or any(r[k] != first[k] for r in rows for k in
+                       ("query", "pair_id", "probe_set", "kind"))):
+            raise ValueError("probe query requires one target and a consistent candidate pool")
+        pool = {r["chunk_id"]: r["passage"] for r in rows}
+        if first["probe_set"] == "english":
+            if first["pair_id"] != qid or (english_pool is not None and pool != english_pool):
+                raise ValueError("English probe requires query pair IDs and a shared pool")
+            english_pool = pool
+        else:
+            suffix = "-" + qid
+            if len(rows) != 2 or not first["pair_id"].endswith(suffix):
+                raise ValueError("invalid Chinese directional pair ID or pool")
+            pid = first["pair_id"][:-len(suffix)]
+            if not pid:
+                raise ValueError("empty Chinese pair ID")
+            pairs[pid].append(qid)
+    for qids in pairs.values():
+        if len(qids) != 2:
+            raise ValueError("Chinese pair requires both query directions")
+        a, b = (groups[qid] for qid in qids)
+        if (a[0]["kind"] != b[0]["kind"]
+                or {r["chunk_id"]: r["passage"] for r in a}
+                != {r["chunk_id"]: r["passage"] for r in b}
+                or next(r["chunk_id"] for r in a if r["expected"])
+                == next(r["chunk_id"] for r in b if r["expected"])):
+            raise ValueError("Chinese directions require the same pool and opposite targets")
+    return groups, pairs
+
+
+def probe_evaluate(items: list[dict], scores: list[dict]) -> dict:
+    """Evaluate exact saved pools; ties and unavailable queries are never wins.
+
+    Rank is competition rank (1 + candidates scoring higher); rank_worst also
+    counts candidates tied with the target. Incomplete scores yield null ranks.
+    Accuracy denominators include unavailable queries/pairs, reported separately.
+    """
+    groups, pairs = _probe_groups(items)
+    judged_scores(scores)
+    indexed = {(r["source_query_id"], r["chunk_id"]): r for r in scores}
+    if set(indexed) != {(r["source_query_id"], r["chunk_id"]) for r in items}:
+        raise ValueError("probe scores must cover exactly the items, including unavailable rows")
+    for item in items:
+        saved = indexed[(item["source_query_id"], item["chunk_id"])]
+        if any(saved.get(k) != item[k] for k in
+               ("pair_id", "query", "passage", "level", "expected", "probe_set", "kind")):
+            raise ValueError("probe scores contain conflicting item text or metadata")
+    queries = []
+    for qid, rows in groups.items():
+        target = next(r for r in rows if r["expected"])
+        values = {r["chunk_id"]: indexed[(qid, r["chunk_id"])]["score"] for r in rows}
+        value = values[target["chunk_id"]]
+        missing = sum(v is None for v in values.values())
+        rank = worst = None
+        outcome = "unavailable"
+        if not missing:
+            rank = 1 + sum(v > value for v in values.values())
+            worst = sum(v >= value for v in values.values())
+            outcome = "reverse" if rank > 1 else "tie" if worst > 1 else "strict"
+        queries.append({"source_query_id": qid, "pair_id": target["pair_id"],
+                        "probe_set": target["probe_set"], "kind": target["kind"],
+                        "expected_doc_id": target["chunk_id"], "candidate_count": len(rows),
+                        "expected_score": value, "expected_rank": rank,
+                        "expected_rank_worst": worst, "outcome": outcome,
+                        "strict_correct": outcome == "strict", "n_unavailable": missing})
+    by_query = {r["source_query_id"]: r for r in queries}
+    pair_results = []
+    for pid, qids in pairs.items():
+        directions = [by_query[qid] for qid in qids]
+        pair_results.append({"pair_id": pid, "probe_set": "chinese",
+                             "kind": directions[0]["kind"], "source_query_ids": qids,
+                             "available": all(r["outcome"] != "unavailable" for r in directions),
+                             "both_directions_correct": all(r["strict_correct"] for r in directions)})
+
+    def aggregate(rows, pair_rows):
+        counts = Counter(r["outcome"] for r in rows)
+        both = sum(r["both_directions_correct"] for r in pair_rows)
+        return {"n_queries": len(rows), "n_scored_queries": len(rows) - counts["unavailable"],
+                **{k: counts[k] for k in ("strict", "reverse", "tie", "unavailable")},
+                "strict_accuracy": counts["strict"] / len(rows),
+                "n_pairs": len(pair_rows), "n_scored_pairs": sum(r["available"] for r in pair_rows),
+                "both_directions_correct": both,
+                "both_directions_accuracy": both / len(pair_rows) if pair_rows else None}
+
+    def breakdown(field):
+        return {key: aggregate([r for r in queries if r[field] == key],
+                               [r for r in pair_results if r[field] == key])
+                for key in sorted({r[field] for r in queries})}
+
+    return {"queries": queries, "pairs": pair_results,
+            "by_probe_set": breakdown("probe_set"), "by_kind": breakdown("kind"),
+            "policy": {"rank": "competition rank; rank_worst includes ties with the target",
+                       "unavailable": "null ranks; not correct; retained in accuracy denominators",
+                       "strict": "expected score is greater than every other candidate score"}}
 
 
 def _runtime(kind, endpoint, model, effort="none"):

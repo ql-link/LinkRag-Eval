@@ -9,6 +9,8 @@
 | 任务 | 入口 | 必要输入 → 输出 | 实际动作 |
 | --- | --- | --- | --- |
 | 固定候选 LLM 判断器试点 | [llm_judge_pilot.py](llm_judge_pilot.py) | 保存查询／候选／英文分数 → 基线与融合分数、条目、判断日志、L1/L2 评价或 L3 离线模型目录 | `judge` 支持本机 `codex exec`、Ollama 和 OpenAI 兼容服务；`agreement` 比较已有判断目录；`stage1-scores` 提取固定融合 `baseline_score`，L2/L3 按前 K（默认 20）选择；子命令拒绝覆盖已有输出。结果、命令与限制见[运行目录](../runs/post_recall/llm-judge-pilot-20260910/README.md)与[正式报告](../docs/reports/llm_judge_pilot_2026_09_10.md) |
+| OOD 探针条目转换 | `llm_judge_pilot.py probe-items --fixture <fixture.json> --output <新items.jsonl>` | 默认读取 `runs/post_recall/ood-probe-20260910/fixture.json` → L1 格式条目；英文全池、中文双向均展开，保留 `expected/probe_set/kind`，模型元数据暂为 null | 沿用 `judge` 与缓存，标签不进入提示词；拒绝覆盖输出 |
+| OOD 探针评分评价 | `llm_judge_pilot.py probe-evaluate --items <items.jsonl> --scores <judge-dir>/scores.jsonl --output <新结果.json>` | 逐查询目标竞争排名及含平局的最差排名、strict/reverse/tie、中文双向全对，按 probe_set 与 kind 汇总 | 严格核对条目与评分范围；不可用查询排名为 null，计入准确率分母但不计正确；拒绝覆盖输出 |
 | 检查基线模型包 | `linkrag-eval ltr validate-bundle --model-dir <目录>` | 中文／英文基线 → 契约检查结果 | 读取模型，校验及本地预测 |
 | 诊断中文／英文基线 | [nevir_english_diagnostics.py](nevir_english_diagnostics.py) | 开发快照＋两模型＋英文训练产物＋旧 A/B 诊断 → 新诊断目录 | 写本地统计、追踪与盲审材料；不训练、不召回 |
 | 重现两种特征版本的训练比较 | [nevir_compare_feature_versions.py](nevir_compare_feature_versions.py) | [比较配置](../runs/post_recall/nevir-english-features-20260907/comparison-config.json)＋已有 Train／开发输入 → 新比较目录 | 实际训练 legacy／英文各一组；历史对照复现 |

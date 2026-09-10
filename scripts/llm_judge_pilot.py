@@ -35,6 +35,8 @@ from linkrag_eval.retrieval.learning_to_rank.llm_judge_local import (
     OllamaRunner,
     OpenAICompatRunner,
     agreement_report,
+    probe_evaluate,
+    probe_items,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -116,6 +118,18 @@ def items(args):
     write_json(args.out / "summary.json", dict(meta, role=args.role, level=args.level,
                top_k=args.top_k, items=len(rows), baseline=str(args.baseline) if args.baseline else None,
                stage1=str(args.stage1) if args.stage1 else None, exact_match_with_scratch=exact))
+
+
+def build_probe_items(args):
+    if args.output.exists():
+        raise FileExistsError(args.output)
+    write_rows(args.output, probe_items(json.loads(args.fixture.read_text())))
+
+
+def evaluate_probe(args):
+    if args.output.exists():
+        raise FileExistsError(args.output)
+    write_json(args.output, probe_evaluate(read_rows(args.items), read_rows(args.scores)))
 
 
 def judge(args):
@@ -388,6 +402,16 @@ def main(argv=None):
             p.add_argument("--stage1", type=Path)
             p.add_argument("--level", choices=("l1", "l2", "l3"), required=True)
             p.add_argument("--top-k", type=int, default=20)
+    p = sub.add_parser("probe-items")
+    p.set_defaults(function=build_probe_items)
+    p.add_argument("--fixture", type=Path,
+                   default=ROOT / "runs/post_recall/ood-probe-20260910/fixture.json")
+    p.add_argument("--output", type=Path, required=True)
+    p = sub.add_parser("probe-evaluate")
+    p.set_defaults(function=evaluate_probe)
+    p.add_argument("--items", type=Path, required=True)
+    p.add_argument("--scores", type=Path, required=True)
+    p.add_argument("--output", type=Path, required=True)
     p = sub.add_parser("judge")
     p.set_defaults(function=judge)
     p.add_argument("--out", type=Path, required=True)

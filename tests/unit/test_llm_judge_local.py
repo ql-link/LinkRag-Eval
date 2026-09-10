@@ -13,6 +13,8 @@ from linkrag_eval.retrieval.learning_to_rank.llm_judge_local import (
     OllamaRunner,
     OpenAICompatRunner,
     agreement_report,
+    probe_evaluate,
+    probe_items,
 )
 
 VALUE = {"items": [{"id": "i01", "score": 4, "reason": "supported"}]}
@@ -249,3 +251,185 @@ def test_openai_think_mode_sets_label_and_budget(tmp_path):
     assert runner.run("prompt", tmp_path / "out.json") == VALUE
     plain = OpenAICompatRunner("http://localhost:8000", "qwen3", transport=httpx.MockTransport(handler))
     assert plain.metadata["effort"] == "none"
+
+
+@pytest.fixture
+def tiny_probe():
+    return {"english": {
+        "docs": [{"id": f"d{i}", "text": text} for i, text in enumerate(
+            ("Books last three weeks.", "Bread rises from yeast.", "Dolphins breathe air."))],
+        "queries": [
+            {"id": "en-q1", "query": "How long can I borrow books?",
+             "expected_doc_id": "d0", "kind": "literal"},
+            {"id": "en-q2", "query": "Why does dough rise?",
+             "expected_doc_id": "d1", "kind": "paraphrase"}]},
+        "chinese": {"pairs": [
+            {"pair_id": pid, "kind": kind, "topic": "合成测试",
+             "passages": [{"doc_id": pid + "a", "text": pid + "设备支持离线查询。"},
+                          {"doc_id": pid + "b", "text": pid + "设备不支持离线查询。"}],
+             "queries": [{"id": pid + "-q-a", "query": pid + "哪些设备支持离线查询？",
+                          "expected_doc_id": pid + "a"},
+                         {"id": pid + "-q-b", "query": pid + "哪些设备不支持离线查询？",
+                          "expected_doc_id": pid + "b"}]}
+            for pid, kind in (("zh-p1", "negation"), ("zh-p2", "negation"))]}}
+
+
+def probe_scores(items, values=None):
+    if values is None:
+        values = [4 if r["expected"] else 1 for r in items]
+    return [dict(r, score=v, status="unavailable" if v is None else "available")
+            for r, v in zip(items, values, strict=True)]
+
+
+def test_probe_items_mapping_and_no_prompt_label_leak(tiny_probe):
+    before = json.dumps(tiny_probe, ensure_ascii=False)
+    items = probe_items(tiny_probe)
+    assert len(items) == 14 and sum(r["expected"] for r in items) == 6
+    assert items[0] == {
+        "source_query_id": "en-q1", "chunk_id": "d0", "pair_id": "en-q1",
+        "query": "How long can I borrow books?", "passage": "Books last three weeks.",
+        "level": "l1", "prompt_version": "judge_prompt_v1", "model": None,
+        "effort": None, "codex_version": None, "expected": True,
+        "probe_set": "english", "kind": "literal"}
+    assert [r["chunk_id"] for r in items[:6]] == ["d0", "d1", "d2"] * 2
+    assert [r["expected"] for r in items[6:10]] == [True, False, False, True]
+    assert {r["pair_id"] for r in items[6:10]} == {
+        "zh-p1-zh-p1-q-a", "zh-p1-zh-p1-q-b"}
+    prompt = judge.prompt_for(items)
+    assert "expected" not in prompt and "probe_set" not in prompt and "zh-p1a" not in prompt
+    assert json.dumps(tiny_probe, ensure_ascii=False) == before
+
+
+@pytest.mark.parametrize("error", ["target", "doc_id", "query_id", "pair_id", "directions"])
+def test_probe_items_rejects_invalid_fixture(tiny_probe, error):
+    if error == "target":
+        tiny_probe["english"]["queries"][0]["expected_doc_id"] = "missing"
+    elif error == "doc_id":
+        tiny_probe["english"]["docs"][1]["id"] = "d0"
+    elif error == "query_id":
+        tiny_probe["chinese"]["pairs"][0]["queries"][0]["id"] = "en-q1"
+    elif error == "pair_id":
+        tiny_probe["chinese"]["pairs"][1]["pair_id"] = "zh-p1"
+    else:
+        tiny_probe["chinese"]["pairs"][0]["queries"][1]["expected_doc_id"] = "zh-p1a"
+    with pytest.raises(ValueError):
+        probe_items(tiny_probe)
+
+
+def test_probe_evaluate_ranks_ties_reverse_and_pair_aggregates(tiny_probe):
+    items = probe_items(tiny_probe)
+    scores = probe_scores(items, [2, 4, 3, 1, 4, 4, 4, 1, 0, 4, 2, 2, 4, 1])
+    report = probe_evaluate(items, list(reversed(scores)))
+    queries = report["queries"]
+    assert [(r["expected_rank"], r["expected_rank_worst"]) for r in queries[:2]] == [(3, 3), (1, 2)]
+    assert [r["outcome"] for r in queries] == ["reverse", "tie", "strict", "strict", "tie", "reverse"]
+    assert [r["both_directions_correct"] for r in report["pairs"]] == [True, False]
+    assert report["pairs"][0]["pair_id"] == "zh-p1"
+    assert report["by_probe_set"]["english"]["strict_accuracy"] == 0
+    assert report["by_probe_set"]["english"]["both_directions_accuracy"] is None
+    assert report["by_probe_set"]["chinese"] == {
+        "n_queries": 4, "n_scored_queries": 4, "strict": 2, "reverse": 1, "tie": 1,
+        "unavailable": 0, "strict_accuracy": .5, "n_pairs": 2, "n_scored_pairs": 2,
+        "both_directions_correct": 1, "both_directions_accuracy": .5}
+    assert report["by_kind"]["negation"] == report["by_probe_set"]["chinese"]
+    assert report["by_kind"]["literal"]["reverse"] == 1
+    assert report["by_kind"]["paraphrase"]["tie"] == 1
+
+
+def test_probe_evaluate_unavailable_keeps_full_denominators(tiny_probe):
+    items = probe_items(tiny_probe)
+    scores = probe_scores(items)
+    # A missing distractor prevents a top-1 claim, as does a missing target.
+    scores[1].update(score=None, status="unavailable")
+    scores[6].update(score=None, status="unavailable")
+    report = probe_evaluate(items, scores)
+    for idx in (0, 2):
+        row = report["queries"][idx]
+        assert row["outcome"] == "unavailable" and row["strict_correct"] is False
+        assert row["expected_rank"] is row["expected_rank_worst"] is None
+    assert report["by_probe_set"]["english"]["strict_accuracy"] == .5
+    assert report["by_kind"]["negation"]["strict_accuracy"] == .75
+    assert report["by_kind"]["negation"]["n_scored_pairs"] == 1
+    assert report["by_kind"]["negation"]["both_directions_accuracy"] == .5
+    json.dumps(report, allow_nan=False)
+
+
+@pytest.mark.parametrize("error", ["missing", "extra", "duplicate", "text", "label", "score", "status"])
+def test_probe_evaluate_rejects_incompatible_scores(tiny_probe, error):
+    items = probe_items(tiny_probe)
+    scores = probe_scores(items)
+    if error == "missing":
+        scores.pop()
+    elif error == "extra":
+        scores.append(dict(scores[0], chunk_id="extra"))
+    elif error == "duplicate":
+        scores.append(scores[0])
+    elif error == "text":
+        scores[0]["passage"] = "changed"
+    elif error == "label":
+        scores[0]["expected"] = False
+    elif error == "score":
+        scores[0]["score"] = 5
+    else:
+        scores[0]["status"] = "unavailable"
+    with pytest.raises(ValueError):
+        probe_evaluate(items, scores)
+
+
+@pytest.mark.parametrize("error", ["duplicate", "target", "pool", "direction", "pair", "flag"])
+def test_probe_evaluate_rejects_invalid_items(tiny_probe, error):
+    items = probe_items(tiny_probe)
+    if error == "duplicate":
+        items.append(items[0])
+    elif error == "target":
+        items[0]["expected"] = False
+    elif error == "pool":
+        items[3]["passage"] = "different English pool"
+    elif error == "direction":
+        del items[6:8]
+    elif error == "pair":
+        items[6]["pair_id"] = "incorrect"
+    else:
+        items[0]["expected"] = 1
+    with pytest.raises(ValueError):
+        probe_evaluate(items, probe_scores(items))
+
+
+def test_probe_cli_roundtrip_and_exclusive_outputs(tiny_probe, tmp_path):
+    script = load_script()
+    fixture, items, scores, output = (tmp_path / name for name in
+                                     ("fixture.json", "items.jsonl", "scores.jsonl", "report.json"))
+    judge.write_json(fixture, tiny_probe)
+    build = ["probe-items", "--fixture", str(fixture), "--output", str(items)]
+    script.main(build)
+    rows = judge.read_rows(items)
+    assert rows == probe_items(tiny_probe)
+    judge.write_rows(scores, probe_scores(rows))
+    evaluate = ["probe-evaluate", "--items", str(items), "--scores", str(scores), "--output", str(output)]
+    script.main(evaluate)
+    report = json.loads(output.read_text())
+    assert report["by_probe_set"]["english"]["strict_accuracy"] == 1
+    assert report["by_probe_set"]["chinese"]["both_directions_correct"] == 2
+    for argv, path in ((build, items), (evaluate, output)):
+        original = path.read_bytes()
+        with pytest.raises(FileExistsError):
+            script.main(argv)
+        assert path.read_bytes() == original
+
+
+def test_probe_items_use_shared_judge_and_cache(tiny_probe, tmp_path):
+    items = probe_items(tiny_probe)
+    calls = []
+    class FakeRunner:
+        def run(self, prompt, out):
+            calls.append(prompt)
+            return VALUE
+    meta = {"prompt_version": judge.PROMPT_VERSION, "model": "fake-probe", "effort": "none",
+            "codex_version": None}
+    first, _ = judge.judge_items(items, FakeRunner(), tmp_path / "first", metadata=meta, batch_size=1)
+    second, summary = judge.judge_items(items, FakeRunner(), tmp_path / "second", metadata=meta,
+                                       cache_dirs=[tmp_path / "first/judge-cache"], batch_size=1)
+    assert len(calls) == len(items) and summary["cache_hits"] == len(items)
+    assert first == second and all(r["model"] == "fake-probe" for r in second)
+    assert [r["expected"] for r in second] == [r["expected"] for r in items]
+    assert probe_evaluate(items, second)["by_probe_set"]["chinese"]["tie"] == 4

@@ -55,4 +55,6 @@ data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（test 
 - `summary.json`／`results.json` 是所属命令的聚合统计，先看对应 README 的分母口径；`manifest.json` 在模型包内是契约、在运行目录内是范围记录。
 - 大产物、缓存、模型继续忽略；新增需要入库的 README 时在 `.gitignore` 白名单补一行。
 
+- [open-judge-confirmation-20260910](open-judge-confirmation-20260910/README.md)（N11）：开源确认集 L1／L2 K=10、20 的首次与失败项重试、四排序器评价、参数、成本与协议偏差。Git 保存聚合产物；原始分数仍在 `llm-judge-pilot-20260910/`，事前冻结与一次性运行验收缺口明确保留。
+
 - [judge-cost-curve-20260910](judge-cost-curve-20260910/README.md)（N13，#17 一期）：GPT-6 缓存的 K 曲线和触发对照，含两种触发未达保留标准的负结果。Git 保存聚合 JSON、CSV、SVG、README 和复验记录；原始判断与候选从既有共享输入取得。开源二期待两集 L2 缓存齐备。

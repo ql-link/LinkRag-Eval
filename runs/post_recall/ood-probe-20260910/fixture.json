@@ -1,0 +1,426 @@
+{
+  "frozen_at": "2026-09-10",
+  "version": "ood_probe_v1",
+  "source": {
+    "english": {
+      "path": "runs/post_recall/english-capability-20260907/fixture.json",
+      "frozen_at": "2026-09-06T18:04:46.164046+00:00"
+    },
+    "chinese": "constructed 2026-09-10"
+  },
+  "english": {
+    "docs": [
+      {
+        "id": "d01",
+        "text": "The city library lends books and provides quiet study rooms. Library members can borrow a book for three weeks."
+      },
+      {
+        "id": "d02",
+        "text": "Photosynthesis allows green plants to turn sunlight, water, and carbon dioxide into sugar. Oxygen is released during this process."
+      },
+      {
+        "id": "d03",
+        "text": "To repair a flat bicycle tire, remove the wheel and inner tube. Find the puncture, apply a patch, and inflate the tire with a pump."
+      },
+      {
+        "id": "d04",
+        "text": "A volcano erupts when underground pressure pushes molten rock to the surface. Lava flows from the opening while ash rises into the air."
+      },
+      {
+        "id": "d05",
+        "text": "If you forget your account password, select the reset link on the sign-in page. An email will let you choose a new password."
+      },
+      {
+        "id": "d06",
+        "text": "Bread dough rises because yeast consumes sugar and releases carbon dioxide. The gas forms bubbles that expand the dough before baking."
+      },
+      {
+        "id": "d07",
+        "text": "Dolphins are marine mammals. They breathe air at the surface and use clicks and whistles to communicate with their group."
+      },
+      {
+        "id": "d08",
+        "text": "A train ticket can be refunded before departure according to the fare conditions. Discount tickets may have a cancellation charge."
+      }
+    ],
+    "queries": [
+      {
+        "id": "q01",
+        "query": "How long can library members borrow a book?",
+        "expected_doc_id": "d01",
+        "kind": "literal"
+      },
+      {
+        "id": "q02",
+        "query": "What does photosynthesis turn sunlight and water into?",
+        "expected_doc_id": "d02",
+        "kind": "literal"
+      },
+      {
+        "id": "q03",
+        "query": "How do I repair a flat bicycle tire?",
+        "expected_doc_id": "d03",
+        "kind": "literal"
+      },
+      {
+        "id": "q04",
+        "query": "Why does hot liquid rock come out of a volcano?",
+        "expected_doc_id": "d04",
+        "kind": "paraphrase"
+      },
+      {
+        "id": "q05",
+        "query": "I cannot remember my password. How can I regain access to my account?",
+        "expected_doc_id": "d05",
+        "kind": "paraphrase"
+      },
+      {
+        "id": "q06",
+        "query": "What makes bread become larger while it is left to rise?",
+        "expected_doc_id": "d06",
+        "kind": "paraphrase"
+      }
+    ]
+  },
+  "chinese": {
+    "pairs": [
+      {
+        "pair_id": "zh_p01",
+        "kind": "negation",
+        "topic": "巡检终端的离线查阅",
+        "passages": [
+          {
+            "doc_id": "zh_p01_a",
+            "text": "岚舟巡检终端将当日测量结果保存在本机，联网后按任务编号同步至工作台。根据使用手册，该终端支持在断网状态下查阅历史记录。用户可按设备名称筛选条目，屏幕右上角显示最近一次同步时间，交接班时应核对任务编号。"
+          },
+          {
+            "doc_id": "zh_p01_b",
+            "text": "岚舟巡检终端将当日测量结果保存在本机，联网后按任务编号同步至工作台。根据使用手册，该终端不支持在断网状态下查阅历史记录。用户可按设备名称筛选条目，屏幕右上角显示最近一次同步时间，交接班时应核对任务编号。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q01",
+            "query": "去没有网络的站点巡检，哪款终端还能让我翻查以前的记录？",
+            "expected_doc_id": "zh_p01_a"
+          },
+          {
+            "id": "zh_q02",
+            "query": "哪些巡检终端一断网就无法翻查以前的记录？",
+            "expected_doc_id": "zh_p01_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p02",
+        "kind": "negation",
+        "topic": "温度记录仪的校准条件",
+        "passages": [
+          {
+            "doc_id": "zh_p02_a",
+            "text": "澄川温度记录仪用于仓库环境巡检，每次启动均显示电量与上次校准日期。操作规程规定，执行现场校准时不需要连接外置参考探头。操作员应先将仪器放在平稳台面，等待读数稳定后进入校准菜单，并将操作时间记入维护台账。"
+          },
+          {
+            "doc_id": "zh_p02_b",
+            "text": "澄川温度记录仪用于仓库环境巡检，每次启动均显示电量与上次校准日期。操作规程规定，执行现场校准时需要连接外置参考探头。操作员应先将仪器放在平稳台面，等待读数稳定后进入校准菜单，并将操作时间记入维护台账。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q03",
+            "query": "外置参考探头没带，哪款温度记录仪仍能按规程在现场校准？",
+            "expected_doc_id": "zh_p02_a"
+          },
+          {
+            "id": "zh_q04",
+            "query": "哪些温度记录仪做现场校准必须配上外置参考探头？",
+            "expected_doc_id": "zh_p02_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p03",
+        "kind": "negation",
+        "topic": "巡检相机的原始影像上传权限",
+        "passages": [
+          {
+            "doc_id": "zh_p03_a",
+            "text": "栖云巡检相机面向园区设备维护，拍摄文件按工单归档，管理员可在控制台配置账号权限。企业版隐私规则允许将原始影像上传至云端。设备在每次传输后生成操作日志，日志记录文件编号、操作账号与时间，供维护负责人定期核查。"
+          },
+          {
+            "doc_id": "zh_p03_b",
+            "text": "栖云巡检相机面向园区设备维护，拍摄文件按工单归档，管理员可在控制台配置账号权限。企业版隐私规则不允许将原始影像上传至云端。设备在每次传输后生成操作日志，日志记录文件编号、操作账号与时间，供维护负责人定期核查。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q05",
+            "query": "要把巡检原始影像放到云端存档，哪款相机的企业版规则允许这样做？",
+            "expected_doc_id": "zh_p03_a"
+          },
+          {
+            "id": "zh_q06",
+            "query": "我们要求原始影像不能上传云端，哪款巡检相机的企业版规则符合要求？",
+            "expected_doc_id": "zh_p03_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p04",
+        "kind": "negation",
+        "topic": "展馆电子票的取票后退款",
+        "passages": [
+          {
+            "doc_id": "zh_p04_a",
+            "text": "青禾展馆的周末电子票通过官方小程序出售，每张票对应一个预约时段。票务细则说明，在预约时段开始前，已经取票的观众仍可申请退款。订单页面保留购票与取票时间，客服受理咨询时先核验订单编号，再向观众说明适用条款。"
+          },
+          {
+            "doc_id": "zh_p04_b",
+            "text": "青禾展馆的周末电子票通过官方小程序出售，每张票对应一个预约时段。票务细则说明，在预约时段开始前，已经取票的观众不可申请退款。订单页面保留购票与取票时间，客服受理咨询时先核验订单编号，再向观众说明适用条款。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q07",
+            "query": "周末的票已经取了但预约时段还没到，哪家展馆仍接受退款申请？",
+            "expected_doc_id": "zh_p04_a"
+          },
+          {
+            "id": "zh_q08",
+            "query": "哪些展馆的周末电子票取出后，即使还没到预约时段也不能申请退款？",
+            "expected_doc_id": "zh_p04_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p05",
+        "kind": "attribution",
+        "topic": "仓储试验会上的通风建议",
+        "passages": [
+          {
+            "doc_id": "zh_p05_a",
+            "text": "青岚研究所与海汀研究所共同参加了粮仓节能试验交流会，会上公布了同一批传感器的观测记录。青岚研究所建议将夜间通风改为按湿度触发，以减少无效运行。会议纪要保留了建议的提出单位，试验仓仍按原有流程运行，待评估后再作调整。"
+          },
+          {
+            "doc_id": "zh_p05_b",
+            "text": "青岚研究所与海汀研究所共同参加了粮仓节能试验交流会，会上公布了同一批传感器的观测记录。海汀研究所建议将夜间通风改为按湿度触发，以减少无效运行。会议纪要保留了建议的提出单位，试验仓仍按原有流程运行，待评估后再作调整。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q09",
+            "query": "青岚研究所对粮仓夜间通风的启动方式提出了什么建议？",
+            "expected_doc_id": "zh_p05_a"
+          },
+          {
+            "id": "zh_q10",
+            "query": "海汀研究所对粮仓夜间通风的启动方式提出了什么建议？",
+            "expected_doc_id": "zh_p05_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p06",
+        "kind": "attribution",
+        "topic": "联合演练中的测试责任",
+        "passages": [
+          {
+            "doc_id": "zh_p06_a",
+            "text": "云衡软件与松澜软件共同参与港区预约系统的联合演练，两家公司均派技术人员到场。此次断网恢复测试由云衡软件负责，测试过程包括切断链路、恢复连接及核对订单。演练结束后，双方共同签收日志，后续缺陷按测试责任分派处理。"
+          },
+          {
+            "doc_id": "zh_p06_b",
+            "text": "云衡软件与松澜软件共同参与港区预约系统的联合演练，两家公司均派技术人员到场。此次断网恢复测试由松澜软件负责，测试过程包括切断链路、恢复连接及核对订单。演练结束后，双方共同签收日志，后续缺陷按测试责任分派处理。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q11",
+            "query": "港区联合演练中，分派给云衡软件的测试任务是什么？",
+            "expected_doc_id": "zh_p06_a"
+          },
+          {
+            "id": "zh_q12",
+            "query": "港区联合演练中，分派给松澜软件的测试任务是什么？",
+            "expected_doc_id": "zh_p06_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p07",
+        "kind": "number",
+        "topic": "样品转运车的单批载量",
+        "passages": [
+          {
+            "doc_id": "zh_p07_a",
+            "text": "禾舟样品转运车用于检验楼内短距离运输，车厢设有固定槽位，适配统一规格的密封样品箱。按操作手册，单批最多装载十二箱样品。装车前应检查箱盖与固定扣，运输途中保持低速，到达交接点后由接收人员逐箱核对编号。"
+          },
+          {
+            "doc_id": "zh_p07_b",
+            "text": "禾舟样品转运车用于检验楼内短距离运输，车厢设有固定槽位，适配统一规格的密封样品箱。按操作手册，单批最多装载十八箱样品。装车前应检查箱盖与固定扣，运输途中保持低速，到达交接点后由接收人员逐箱核对编号。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q13",
+            "query": "要搬十五箱标准样品，哪款转运车必须分批才能搬完？",
+            "expected_doc_id": "zh_p07_a"
+          },
+          {
+            "id": "zh_q14",
+            "query": "十五箱标准样品想一次搬完，哪款转运车的单批载量够用？",
+            "expected_doc_id": "zh_p07_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p08",
+        "kind": "number",
+        "topic": "工单系统的审计日志保留期",
+        "passages": [
+          {
+            "doc_id": "zh_p08_a",
+            "text": "时屿工单系统为园区维护团队提供派单和审计功能，审计日志记录账号、操作类型与时间。默认策略仅保留最近七天的日志，超过期限即自动删除，且不另存副本。管理员可按工单编号检索现存记录，导出文件沿用当前账号的访问权限。"
+          },
+          {
+            "doc_id": "zh_p08_b",
+            "text": "时屿工单系统为园区维护团队提供派单和审计功能，审计日志记录账号、操作类型与时间。默认策略仅保留最近三十天的日志，超过期限即自动删除，且不另存副本。管理员可按工单编号检索现存记录，导出文件沿用当前账号的访问权限。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q15",
+            "query": "按默认设置，哪些工单系统已经查不到十五天前的审计日志？",
+            "expected_doc_id": "zh_p08_a"
+          },
+          {
+            "id": "zh_q16",
+            "query": "按默认设置，哪些工单系统还能查到十五天前的审计日志？",
+            "expected_doc_id": "zh_p08_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p09",
+        "kind": "date",
+        "topic": "自然展馆恢复开放的日期",
+        "passages": [
+          {
+            "doc_id": "zh_p09_a",
+            "text": "栖湾自然馆因展厅检修暂停接待，公告明确自2026年9月1日起恢复开放，此前不接待观众。恢复后每天均按正常时段接待，入口沿用东门，团体参观须在小程序预约。已预约观众可凭订单查询入馆说明，现场咨询台提供路线指引。"
+          },
+          {
+            "doc_id": "zh_p09_b",
+            "text": "栖湾自然馆因展厅检修暂停接待，公告明确自2026年10月1日起恢复开放，此前不接待观众。恢复后每天均按正常时段接待，入口沿用东门，团体参观须在小程序预约。已预约观众可凭订单查询入馆说明，现场咨询台提供路线指引。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q17",
+            "query": "计划2026年9月15日参观，哪些自然馆届时已经恢复开放？",
+            "expected_doc_id": "zh_p09_a"
+          },
+          {
+            "id": "zh_q18",
+            "query": "2026年9月15日还在检修、暂时去不了的自然馆有哪些？",
+            "expected_doc_id": "zh_p09_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p10",
+        "kind": "date",
+        "topic": "产业园新版收货标准的生效时间",
+        "passages": [
+          {
+            "doc_id": "zh_p10_a",
+            "text": "望岚产业园发布新版收货标准，规定自2026年11月1日起，所有到货纸箱均须附防潮检测单，生效前沿用无需该单据的旧版要求。仓库仍按预约顺序验货，承运人应在到达前核对箱号，接收人员将验货记录上传至园区服务平台。"
+          },
+          {
+            "doc_id": "zh_p10_b",
+            "text": "望岚产业园发布新版收货标准，规定自2026年12月1日起，所有到货纸箱均须附防潮检测单，生效前沿用无需该单据的旧版要求。仓库仍按预约顺序验货，承运人应在到达前核对箱号，接收人员将验货记录上传至园区服务平台。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q19",
+            "query": "2026年11月15日送纸箱，哪些产业园已经要求随货附防潮检测单？",
+            "expected_doc_id": "zh_p10_a"
+          },
+          {
+            "id": "zh_q20",
+            "query": "2026年11月15日送纸箱，哪些产业园仍按旧标准收货、无需防潮检测单？",
+            "expected_doc_id": "zh_p10_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p11",
+        "kind": "entity",
+        "topic": "空气净化器滤芯的适配型号",
+        "passages": [
+          {
+            "doc_id": "zh_p11_a",
+            "text": "沐岚滤芯采用独立密封包装，外盒标有批次与安装方向。产品手册注明，该滤芯仅适用于清屿空气净化器，不能装入其他型号。更换时应先断开电源，取下旧件后清理卡槽，再按箭头方向推入新件，合上盖板并复位滤芯计时器。"
+          },
+          {
+            "doc_id": "zh_p11_b",
+            "text": "沐岚滤芯采用独立密封包装，外盒标有批次与安装方向。产品手册注明，该滤芯仅适用于清汀空气净化器，不能装入其他型号。更换时应先断开电源，取下旧件后清理卡槽，再按箭头方向推入新件，合上盖板并复位滤芯计时器。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q21",
+            "query": "家里的清屿空气净化器要换耗材，可以买哪款适配滤芯？",
+            "expected_doc_id": "zh_p11_a"
+          },
+          {
+            "id": "zh_q22",
+            "query": "家里的清汀空气净化器要换耗材，可以买哪款适配滤芯？",
+            "expected_doc_id": "zh_p11_b"
+          }
+        ]
+      },
+      {
+        "pair_id": "zh_p12",
+        "kind": "entity",
+        "topic": "园区直达接驳线的目的地",
+        "passages": [
+          {
+            "doc_id": "zh_p12_a",
+            "text": "榆湾园区新开行蓝湾接驳线，起点设在园区南门，终点为海岚码头，中途不设站，也不延伸至其他码头。车辆每日按固定间隔发车，乘客在南门服务台领取当班乘车凭证。行李须放入指定区域，到站后工作人员引导乘客依次下车。"
+          },
+          {
+            "doc_id": "zh_p12_b",
+            "text": "榆湾园区新开行蓝湾接驳线，起点设在园区南门，终点为海澜码头，中途不设站，也不延伸至其他码头。车辆每日按固定间隔发车，乘客在南门服务台领取当班乘车凭证。行李须放入指定区域，到站后工作人员引导乘客依次下车。"
+          }
+        ],
+        "queries": [
+          {
+            "id": "zh_q23",
+            "query": "从榆湾园区南门去海岚码头，坐哪条接驳线能直达？",
+            "expected_doc_id": "zh_p12_a"
+          },
+          {
+            "id": "zh_q24",
+            "query": "从榆湾园区南门去海澜码头，坐哪条接驳线能直达？",
+            "expected_doc_id": "zh_p12_b"
+          }
+        ]
+      }
+    ]
+  },
+  "assessment": {
+    "expected_doc_id": "Author-assigned target passage, not a verified 0–4 score label. All targets must be reviewed by a second person before use.",
+    "reviewed_by": null,
+    "review_status": "pending_second_person_review",
+    "freeze_rule": "frozen_at records assembly date. Once reviewed, freeze all texts, queries and targets; subsequent corrections require a new version and documented reason.",
+    "scope": "English is an unchanged ordinary-topic capability control (literal/paraphrase); Chinese is an authored non-NevIR minimal-edit probe, not a representative benchmark or evidence of training-data exclusion. Chinese names, organisations, products and events are fictional; each passage is an independent counterfactual version.",
+    "evaluation": "Score each query against both passages of its own Chinese pair independently with judge_prompt_v1 (48 items). Compare target versus other score strictly; ties are not correct. Also report pairs with both directions correct. English uses all 6 queries against all 8 docs (48 items) and is reported separately.",
+    "review_focus": [
+      "zh_p05/zh_p06: verify attribution scope; joint attendance or log signing does not jointly attribute the specific recommendation or test responsibility.",
+      "zh_p07/zh_p08: verify capacity and retention threshold inference in both query directions.",
+      "zh_p11/zh_p12: very similar fictional entity names deliberately test exact identity; review readability and reject accidental name aliasing."
+    ]
+  }
+}

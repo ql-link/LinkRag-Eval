@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="570" viewBox="0 0 900 570" role="img">
+<title>confirmation: cached judge cost versus strict accuracy</title>
+<rect width="900" height="570" fill="white"/>
+<g font-family="sans-serif" font-size="14" fill="#222">
+<text x="85" y="32" font-size="20">confirmation — strict correct / 371</text>
+<path d="M85 435.0 H830" stroke="#ddd"/>
+<text x="70" y="440.0" text-anchor="end">0.0</text>
+<path d="M85 365.0 H830" stroke="#ddd"/>
+<text x="70" y="370.0" text-anchor="end">0.2</text>
+<path d="M85 295.0 H830" stroke="#ddd"/>
+<text x="70" y="300.0" text-anchor="end">0.4</text>
+<path d="M85 225.0 H830" stroke="#ddd"/>
+<text x="70" y="230.0" text-anchor="end">0.6</text>
+<path d="M85 155.0 H830" stroke="#ddd"/>
+<text x="70" y="160.0" text-anchor="end">0.8</text>
+<path d="M85 85.0 H830" stroke="#ddd"/>
+<text x="70" y="90.0" text-anchor="end">1.0</text>
+<path d="M85.0 435 v6" stroke="#333"/>
+<text x="85.0" y="460" text-anchor="middle">0</text>
+<path d="M271.25 435 v6" stroke="#333"/>
+<text x="271.25" y="460" text-anchor="middle">5</text>
+<path d="M457.5 435 v6" stroke="#333"/>
+<text x="457.5" y="460" text-anchor="middle">10</text>
+<path d="M643.75 435 v6" stroke="#333"/>
+<text x="643.75" y="460" text-anchor="middle">15</text>
+<path d="M830.0 435 v6" stroke="#333"/>
+<text x="830.0" y="460" text-anchor="middle">20</text>
+<path d="M85 85 V435 H830" fill="none" stroke="#333"/>
+<text x="450" y="491" text-anchor="middle">Mean judged candidates per query (all queries)</text>
+<text x="23" y="260" transform="rotate(-90 23 260)" text-anchor="middle">Strict accuracy</text>
+<polyline points="122.25,256.70 159.50,210.47 196.75,149.15 234.00,148.21 271.25,146.32 308.50,145.38 345.75,143.49 383.00,143.49 420.25,143.49 457.50,143.49 494.75,143.49 532.00,142.55 569.25,142.55 606.50,142.55 643.75,142.55 681.00,142.55 718.25,142.55 755.50,141.60 792.75,141.60 830.00,141.60" fill="none" stroke="#2864b4" stroke-width="2"/>
+<circle cx="122.25" cy="256.6981132075472" r="3" fill="#2864b4"><title>K=1: 189/371</title></circle>
+<text x="122.25" y="244.69811320754718" text-anchor="middle" font-size="12">K=1</text>
+<circle cx="159.5" cy="210.47169811320757" r="3" fill="#2864b4"><title>K=2: 238/371</title></circle>
+<circle cx="196.75" cy="149.1509433962264" r="3" fill="#2864b4"><title>K=3: 303/371</title></circle>
+<circle cx="234.0" cy="148.20754716981133" r="3" fill="#2864b4"><title>K=4: 304/371</title></circle>
+<circle cx="271.25" cy="146.32075471698113" r="3" fill="#2864b4"><title>K=5: 306/371</title></circle>
+<text x="271.25" y="134.32075471698113" text-anchor="middle" font-size="12">K=5</text>
+<circle cx="308.5" cy="145.37735849056605" r="3" fill="#2864b4"><title>K=6: 307/371</title></circle>
+<circle cx="345.75" cy="143.49056603773585" r="3" fill="#2864b4"><title>K=7: 309/371</title></circle>
+<circle cx="383.0" cy="143.49056603773585" r="3" fill="#2864b4"><title>K=8: 309/371</title></circle>
+<circle cx="420.25" cy="143.49056603773585" r="3" fill="#2864b4"><title>K=9: 309/371</title></circle>
+<circle cx="457.5" cy="143.49056603773585" r="3" fill="#2864b4"><title>K=10: 309/371</title></circle>
+<text x="457.5" y="131.49056603773585" text-anchor="middle" font-size="12">K=10</text>
+<circle cx="494.75000000000006" cy="143.49056603773585" r="3" fill="#2864b4"><title>K=11: 309/371</title></circle>
+<circle cx="532.0" cy="142.54716981132077" r="3" fill="#2864b4"><title>K=12: 310/371</title></circle>
+<circle cx="569.25" cy="142.54716981132077" r="3" fill="#2864b4"><title>K=13: 310/371</title></circle>
+<circle cx="606.5" cy="142.54716981132077" r="3" fill="#2864b4"><title>K=14: 310/371</title></circle>
+<circle cx="643.75" cy="142.54716981132077" r="3" fill="#2864b4"><title>K=15: 310/371</title></circle>
+<circle cx="681.0" cy="142.54716981132077" r="3" fill="#2864b4"><title>K=16: 310/371</title></circle>
+<circle cx="718.25" cy="142.54716981132077" r="3" fill="#2864b4"><title>K=17: 310/371</title></circle>
+<circle cx="755.5" cy="141.6037735849057" r="3" fill="#2864b4"><title>K=18: 311/371</title></circle>
+<circle cx="792.75" cy="141.6037735849057" r="3" fill="#2864b4"><title>K=19: 311/371</title></circle>
+<circle cx="830.0" cy="141.6037735849057" r="3" fill="#2864b4"><title>K=20: 311/371</title></circle>
+<text x="830.0" y="129.6037735849057" text-anchor="middle" font-size="12">K=20</text>
+<text x="85" y="530" fill="#2864b4">● K=1–20</text>
+<circle cx="85.0" cy="256.6981132075472" r="7" fill="white" stroke="#666" stroke-width="2"><title>never_call: 189/371, cost=0.000</title></circle>
+<text x="240" y="530" fill="#666">○ never_call</text>
+<circle cx="714.4652406417113" cy="164.2452830188679" r="7" fill="white" stroke="#bd4300" stroke-width="2"><title>fusion_margin: 287/371, cost=16.898</title></circle>
+<text x="440" y="530" fill="#bd4300">○ fusion_margin</text>
+<circle cx="730.4010695187167" cy="157.64150943396226" r="7" fill="white" stroke="#16825d" stroke-width="2"><title>route_disagreement: 294/371, cost=17.326</title></circle>
+<text x="640" y="530" fill="#16825d">○ route_disagreement</text>
+</g></svg>

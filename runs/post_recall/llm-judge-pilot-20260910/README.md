@@ -92,3 +92,7 @@ done
 ## 保留的首轮历史
 
 初版受本执行环境的 Codex app-server 初始化权限错误阻断，两次不同三项 smoke 共 8 次子进程、36.5665 秒，没有有效判断；经理之后已在自己的 shell 跑通。原 `smoke/`、`smoke-isolated-state/`、`l1-development/results.json` 的阻断状态及 [implementation-notes.md](implementation-notes.md) 原样保留，只描述首轮事实，不代表最新真实结果或当前缓存政策。首轮 E0 的官方 44/74、human v5 31/52 和全池精确重放仍是已核验的历史事实。
+
+## N10 追加（2026-09-10）：开源判断器对照
+
+`l1-development-judge-qwen3-8b{,-think}`、`l1-development-judge-qwen3-14b-awq{,-think}` 及对应 `l1-development-eval-*`、`l1-development-agreement-*-vs-gpt6*.json`：同一 L1 开发 148 项，vLLM 0.29 / RTX 4090。`-smoke` 目录为 3 项冒烟。结果见[报告 §10](../../../docs/reports/llm_judge_pilot_2026_09_10.md#10-开源判断器对照n10)。

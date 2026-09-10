@@ -206,7 +206,9 @@ def _content(response, kind):
                    else value["message"]["content"])
     except (KeyError, IndexError, TypeError):
         raise ValueError("invalid judge response envelope") from None
-    if not isinstance(content, str):
+    if not isinstance(content, str):  # non-string content is an invalid envelope
+        content = None
+    if content is None:
         raise ValueError("judge content must be a string")
     content = re.sub(r"<think>.*?</think>", "", content, flags=re.DOTALL).strip()
     if content.startswith("```"):

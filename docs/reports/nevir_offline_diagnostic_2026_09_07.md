@@ -38,7 +38,7 @@
 | 预先规定的重建容差 | `atol=1e-10, rtol=0` |
 | 偏好／同分判断 | 原始浮点数直接 `>`、`<`、`==`；不使用上述容差 |
 
-详细证据见 [replay-check.json](../../runs/post_recall/nevir-offline-diagnostic-20260907/replay-check.json) 和 [tree-audit.jsonl](../../runs/post_recall/nevir-offline-diagnostic-20260907/tree-audit.jsonl)。本轮只计算纯模型分数；未调用在线短查询／超时回退，也不以 ID 排序打破模型原始分数同分。模型包中原在线策略另存于 manifest，未修改。
+详细证据见 [replay-check.json](../../runs/post_recall/nevir-offline-diagnostic-20260907/replay-check.json) 和 [tree-audit.jsonl](../../runs/post_recall/nevir-offline-diagnostic-20260907/_superseded/tree-audit.jsonl)。本轮只计算纯模型分数；未调用在线短查询／超时回退，也不以 ID 排序打破模型原始分数同分。模型包中原在线策略另存于 manifest，未修改。
 
 ## 3. 全量开发结果及机械观察
 

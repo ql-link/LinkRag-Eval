@@ -23,3 +23,5 @@
 - `upstream-diagnostic-20260909/`：侧对话来源、v4/v5保存表示核查、21条错例机械定位与证据关联；不是完成的语义首因裁定，也没有修复或新训练。
 - `repair-20260909/`：已实施的名词性引号／跨句引述范围与训练准入修复；v1/v2 配置、普通英文检查、完整回归、旧模型重放及同输入比较。最新结果为 `comparison-v2/results.json`，`comparison/` 保留首次工程检查中止；`development-cli/` 和 `cli-gate-checks.json` 验证当前入口拒绝无区分信号与旧版准入摘要。`compare.py --out-name 新目录名` 是本轮一次性重放入口；没有新研究模型。
 - `representation-v3-20260909/`：版本覆盖、类型对称、事件／参数／证据保留及匹配接口修复。`config-v3-final.json` 关联当前源码 spec；`development-v1/v2/v3` 保存本轮原快照比较，`basic-training/` 保存固定 E0/EM/E1 模型、矩阵和逐候选预测；`source-at-fit/` 保留拟合时源码，`final-replay/` 保存证据字段最终校正后的完整数值等价验证，没有再次拟合。`model-audit.json`、`human-sensitivity.json` 和 `acceptance.json` 为模型、固定人工口径与交付核验入口；原配置和首次测试失败日志保留，不覆盖历史。
+
+> 2026-09-10 归档：人审中间版本（intake-v1、analysis-v1、results-v1 到 v4）、前三版分发包、隔离环境副本、v2/v3 的全池重放与逐段事实记录已移入 [`_superseded/`](_superseded/MANIFEST.md)，未删除；当前结论所需文件保留原位。

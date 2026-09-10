@@ -9,10 +9,12 @@
 | 运行范围与状态 | [manifest.json](manifest.json) | 原 A/B 模型、输入和机械／人工状态 |
 | 聚合诊断结果 | [summary.json](summary.json) | 原 legacy 特征下的统计 |
 | 逐题分析与分数 | [cases.jsonl](cases.jsonl) · [raw-predictions.jsonl](raw-predictions.jsonl) | 含官方方向的分析与候选分数，不作公共盲审材料 |
-| 特征与树路径 | [feature-traces.jsonl](feature-traces.jsonl) · [tree-audit.jsonl](tree-audit.jsonl) | 原规则的特征取值与模型树路径 |
+| 特征与树路径 | [feature-traces.jsonl](_superseded/feature-traces.jsonl) · [tree-audit.jsonl](_superseded/tree-audit.jsonl) | 原规则的特征取值与模型树路径 |
 | 重放和独立验收 | [replay-check.json](replay-check.json) · [independent-acceptance.json](independent-acceptance.json) | 保存分数重放及产物机械检查 |
 | 原公共盲审材料 | [review/README.md](review/README.md) | 公共材料、匿名映射边界和提交格式 |
 
 `diagnosis.md`／`decision.md` 是当次自动诊断的输出；`probe_plan.json`／`training-support.json` 记录当时状态，不代表已启动新训练。`execution-plan.md` 是历史执行说明，本地同名重训报告是当时副本；当前正式报告以 `docs/reports/` 为准。
 
 [数据入口](../../../data/README.md)解释开发材料的已使用范围。[返回实验总入口](../README.md)。
+
+> 2026-09-10 归档：旧 A/B 特征追踪与树路径核验明细已移入 [`_superseded/`](_superseded/MANIFEST.md)，未删除；当前结论所需文件保留原位。

@@ -30,21 +30,23 @@ data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（test 
 
 新实验一律新建 `runs/post_recall/<目的>-<YYYYMMDD>/`，只读上面的输入，不改写它们；每个目录一份 `README.md`。
 
-## 3. 清理候选（未删除，等负责人批准）
+## 3. 归档结果与清理候选（2026-09-10 深度归档后）
 
-以下目录不影响当前结论的复现，但删除不可逆，本次只登记：
+被替代的中间版本、重复重放、大体量追踪和可重建环境已移入各实验目录的 `_superseded/`，每个目录有 `MANIFEST.md` 列出原路径、大小与原因；引用它们的报告链接已改指新位置。**未删除任何数据**，删除由负责人在 GitHub issue #27 决定。
 
-| 目录 | 大小 | 说明 |
-| --- | ---: | --- |
-| `subject-binding-pilot-20260908/representation-v3-20260909/` 中的逐段事实 JSONL 与 `source-at-fit/` | 约 810 MB 中的大部分 | v3 抽取的详细记录；报告与模型已保留结论，重算入口在 README |
-| `subject-binding-pilot-20260908/repair-20260909/` | 421 MB | v2 修复的全池重放输出 |
-| `subject-binding-pilot-20260908/environment/` | 110 MB | 隔离 parser 环境的安装副本，可按 README 重建 |
-| `nevir-english-diagnostic-20260907/diagnostic/` 中的追踪文件 | 约 318 MB | 树路径追踪；诊断结论已在报告 |
-| `nevir-offline-diagnostic-20260907/feature-traces.jsonl` | 149 MB | 旧 A/B 特征追踪；`review/` 必须保留 |
-| `llm-judge-pilot-20260910/_superseded/` | 42 MB | 按 E0 前 10 名做的被替代设计、重复的续跑目录 |
-| `t2-full-20260906/` | 98 MB | T2 暂停；若研究范围不再回到 T2 可整体删除 |
+| 目录 | 大小 | 内容 | 删除后果 |
+| --- | ---: | --- | --- |
+| `subject-binding-pilot-20260908/_superseded/` | 1.4 GB | 人审 intake-v1、ambiguity-policy-v1、analysis-v1、results-v1 到 v4；前三版分发包与审计快照；隔离 parser 环境副本；v2/v3 修复的全池重放、逐段事实 JSONL、三臂训练全池信号 | 人审最终版（v5、intake-v2）、模型包、结论文件全部保留；只失去中间过程的逐条复核能力 |
+| `nevir-english-diagnostic-20260907/_superseded/` | 316 MB | 中文／英文基线逐树特征追踪与树路径核验明细 | 报告结论与 cases／summary 保留；重跑诊断脚本可再生成 |
+| `nevir-offline-diagnostic-20260907/_superseded/` | 164 MB | 旧 A/B 特征追踪与树路径核验明细 | 同上；`review/private/` 人审映射保留原位 |
+| `nevir-english-features-20260907/_superseded/` | 11 MB | 结构整理前的源码副本与 legacy 重放输入 | 结构一致性结论已在报告与 checks |
+| `llm-judge-pilot-20260910/_superseded/` | 42 MB | 按 E0 前 10 名做的被替代设计、重复的续跑目录、工程会话空结果 | 无影响；判断缓存可被后续运行复用，删了只是重判 |
+| `t2-full-20260906/` | 98 MB | 暂停的 T2 入库存储与故障日志 | 若研究不回到 T2，可整体删除 |
+| `_archive/` | 0.7 MB | 早期探针与两份外部咨询稿 | 无影响 |
 
-不在候选内的：所有 `judge-cache/` 与判断批次原始输出（它们是判断可复现性的凭据）、`items-stage1-top20/`（第一阶段分数与条目）、`baseline/`（英文基线全池分数）。
+`runs/` 根目录的 `alt_embedding_eval.sqlite3`（95 MB）与 `bm25_eval.sqlite3`（117 MB）是[存放总览](../../docs/WORKSPACE_MAP.md)登记的评测库 sidecar，本次未动，是否仍在使用由负责人确认。
+
+不在候选内、不可删：`nevir-ltr-validation-20260907/`（共享输入）、`subject-binding-pilot-20260908/human/`（人审最终结果与原始收件）、`nevir-offline-diagnostic-20260907/review/`（人审映射）、`nevir-english-features-20260907/comparison/`（英文模型与保存分数）、`llm-judge-pilot-20260910/` 下所有 `judge-cache/`、判断批次原始输出、`items-stage1-top20/`、`baseline/`。
 
 ## 4. 命名与文件约定
 

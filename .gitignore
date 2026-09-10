@@ -46,6 +46,14 @@ runs/
 !/runs/post_recall/llm-judge-pilot-20260910/
 /runs/post_recall/llm-judge-pilot-20260910/*
 !/runs/post_recall/llm-judge-pilot-20260910/README.md
+!/runs/post_recall/list-collapse-inputs-20260910/
+/runs/post_recall/list-collapse-inputs-20260910/*
+!/runs/post_recall/list-collapse-inputs-20260910/README.md
+!/runs/post_recall/ood-probe-20260910/
+/runs/post_recall/ood-probe-20260910/*
+!/runs/post_recall/ood-probe-20260910/README.md
+!/runs/post_recall/ood-probe-20260910/fixture.json
+!/runs/post_recall/ood-probe-20260910/review-sheet.md
 reports/*.html
 /linkrag-eval-sqlite-share-20260827/
 /docs/papers/*

@@ -8,7 +8,9 @@
 
 | 任务 | 入口 | 必要输入 → 输出 | 实际动作 |
 | --- | --- | --- | --- |
-| 固定候选 LLM 判断器试点 | [llm_judge_pilot.py](llm_judge_pilot.py) | 保存查询／候选／英文分数 → 基线与融合分数、条目、判断日志、L1/L2 评价或 L3 离线模型目录 | `judge` 调用本机 `codex exec`；`stage1-scores` 提取固定融合 `baseline_score`，L2/L3 按前 K（默认 20）选择；子命令拒绝覆盖已有目录。结果、命令与限制见[运行目录](../runs/post_recall/llm-judge-pilot-20260910/README.md)与[正式报告](../docs/reports/llm_judge_pilot_2026_09_10.md) |
+| 固定候选 LLM 判断器试点 | [llm_judge_pilot.py](llm_judge_pilot.py) | 保存查询／候选／英文分数 → 基线与融合分数、条目、判断日志、L1/L2 评价或 L3 离线模型目录 | `judge` 支持本机 `codex exec`、Ollama 和 OpenAI 兼容服务；`agreement` 比较已有判断目录；`stage1-scores` 提取固定融合 `baseline_score`，L2/L3 按前 K（默认 20）选择；子命令拒绝覆盖已有输出。结果、命令与限制见[运行目录](../runs/post_recall/llm-judge-pilot-20260910/README.md)与[正式报告](../docs/reports/llm_judge_pilot_2026_09_10.md) |
+| OOD 探针条目转换 | `llm_judge_pilot.py probe-items --fixture <fixture.json> --output <新items.jsonl>` | 默认读取 `runs/post_recall/ood-probe-20260910/fixture.json` → L1 格式条目；英文全池、中文双向均展开，保留 `expected/probe_set/kind`，模型元数据暂为 null | 沿用 `judge` 与缓存，标签不进入提示词；拒绝覆盖输出 |
+| OOD 探针评分评价 | `llm_judge_pilot.py probe-evaluate --items <items.jsonl> --scores <judge-dir>/scores.jsonl --output <新结果.json>` | 逐查询目标竞争排名及含平局的最差排名、strict/reverse/tie、中文双向全对，按 probe_set 与 kind 汇总 | 严格核对条目与评分范围；不可用查询排名为 null，计入准确率分母但不计正确；拒绝覆盖输出 |
 | 检查基线模型包 | `linkrag-eval ltr validate-bundle --model-dir <目录>` | 中文／英文基线 → 契约检查结果 | 读取模型，校验及本地预测 |
 | 诊断中文／英文基线 | [nevir_english_diagnostics.py](nevir_english_diagnostics.py) | 开发快照＋两模型＋英文训练产物＋旧 A/B 诊断 → 新诊断目录 | 写本地统计、追踪与盲审材料；不训练、不召回 |
 | 重现两种特征版本的训练比较 | [nevir_compare_feature_versions.py](nevir_compare_feature_versions.py) | [比较配置](../runs/post_recall/nevir-english-features-20260907/comparison-config.json)＋已有 Train／开发输入 → 新比较目录 | 实际训练 legacy／英文各一组；历史对照复现 |
@@ -16,6 +18,10 @@
 | 查通用评测命令 | [linkrag-eval CLI](../src/linkrag_eval/cli.py) | 按子命令指定 | 入库、生成、检索和评价的动作不同，先查子命令帮助 |
 
 比较脚本原名 `nevir_feature_compare.py`，现已改名；参数与行为不变，历史运行记录仍可能记旧名。它不是“只比较已有分数”的工具，也不是每次诊断的前置步骤。
+
+`llm_judge_pilot.py judge --runner {codex,ollama,openai}` 默认使用 codex；本地服务必须传 `--endpoint`（服务根 URL，不含 API 路径）和 `--model`。`--num-ctx` 默认 8192，分别设置 Ollama 上下文大小和 OpenAI 兼容服务的生成 token 上限；后者的服务端上下文容量需自行配置。OpenAI 兼容服务可用 `--api-key-env EVAL_JUDGE_API_KEY` 指定已有密钥环境变量名，密钥不写日志。`--batch-size` 未指定时 codex 为 40、本地为 1；`--workers` 默认 4，可按 vLLM 容量设为 8–16。本地 effort 固定为 `none`，与 codex 缓存区分；原提示词、`--cache`、`--seed`、`--smoke` 及分数目录结构沿用。
+
+`llm_judge_pilot.py agreement --a <judge-dir> --b <judge-dir> --output <新文件.json>` 读取两边 `scores.jsonl`，按查询 ID＋chunk ID 对齐。报告包含共享／双方可用条目数、精确及相差不超过 1 分的一致率、平均秩 Spearman、Kendall tau-b、5×5 混淆矩阵（行 A、列 B，均为 0–4 分）及成对方向一致率。成对比较使用相同查询和 pair ID 内共享候选的所有无序组合，平局单独作为一种关系；不可用分数不进入一致率分母，无有效样本或相关性无定义时写 `null`。拒绝覆盖已有输出文件。
 
 ## 2. 当前诊断的依赖
 

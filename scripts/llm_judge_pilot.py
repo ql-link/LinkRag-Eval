@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Fixed-pool LLM judge pilot; all command outputs require a new directory."""
+"""Fixed-pool LLM judge pilot; command outputs must not already exist."""
 from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
 from collections import Counter
 from pathlib import Path
@@ -29,6 +30,13 @@ from linkrag_eval.retrieval.learning_to_rank.llm_judge import (
     stage1_scores,
     write_json,
     write_rows,
+)
+from linkrag_eval.retrieval.learning_to_rank.llm_judge_local import (
+    OllamaRunner,
+    OpenAICompatRunner,
+    agreement_report,
+    probe_evaluate,
+    probe_items,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -112,6 +120,18 @@ def items(args):
                stage1=str(args.stage1) if args.stage1 else None, exact_match_with_scratch=exact))
 
 
+def build_probe_items(args):
+    if args.output.exists():
+        raise FileExistsError(args.output)
+    write_rows(args.output, probe_items(json.loads(args.fixture.read_text())))
+
+
+def evaluate_probe(args):
+    if args.output.exists():
+        raise FileExistsError(args.output)
+    write_json(args.output, probe_evaluate(read_rows(args.items), read_rows(args.scores)))
+
+
 def judge(args):
     if args.out.exists():
         raise FileExistsError(args.out)
@@ -120,14 +140,38 @@ def judge(args):
         rows = plan_batches(rows, seed=args.seed)[0][args.smoke_offset:args.smoke_offset + 3]
         if len(rows) != 3:
             raise ValueError("smoke requires three items from distinct pairs")
-    runner = CodexRunner(model=args.model, effort=args.effort, isolated_state=args.isolated_state)
+    batch_size = args.batch_size if args.batch_size is not None else (40 if args.runner == "codex" else 1)
+    if args.runner == "codex":
+        runner = CodexRunner(model=args.model, effort=args.effort, isolated_state=args.isolated_state)
+    else:
+        if not args.endpoint or not args.model:
+            raise ValueError("local judge requires --endpoint and --model")
+        if args.runner == "ollama":
+            if args.api_key_env:
+                raise ValueError("--api-key-env is only supported with --runner openai")
+            runner = OllamaRunner(args.endpoint, args.model, num_ctx=args.num_ctx)
+        else:
+            api_key = os.environ.get(args.api_key_env) if args.api_key_env else None
+            if args.api_key_env and not api_key:
+                raise ValueError("--api-key-env must name a nonempty environment variable")
+            floor = 4096 if args.think else 1024
+            max_tokens = args.max_tokens if args.max_tokens is not None else max(floor, 80 * batch_size)
+            runner = OpenAICompatRunner(args.endpoint, args.model, api_key=api_key, think=args.think,
+                                        num_ctx=args.num_ctx, max_tokens=max_tokens)
     caches = sorted({*args.cache, *RUN.rglob("judge-cache")})
     _, summary = judge_items(rows, runner, args.out, metadata=runner.metadata,
-                             cache_dirs=caches, batch_size=args.batch_size,
+                             cache_dirs=caches, batch_size=batch_size,
                              workers=args.workers, seed=args.seed)
     print(json.dumps(summary, indent=2))
     if args.smoke and summary["unavailable"]:
         raise RuntimeError("real smoke failed; full run must not proceed")
+
+
+def agreement(args):
+    if args.output.exists():
+        raise FileExistsError(args.output)
+    report = agreement_report(read_rows(args.a / "scores.jsonl"), read_rows(args.b / "scores.jsonl"))
+    write_json(args.output, report)
 
 
 def evaluation_report(role, baseline_rows, judged, summary):
@@ -358,19 +402,43 @@ def main(argv=None):
             p.add_argument("--stage1", type=Path)
             p.add_argument("--level", choices=("l1", "l2", "l3"), required=True)
             p.add_argument("--top-k", type=int, default=20)
+    p = sub.add_parser("probe-items")
+    p.set_defaults(function=build_probe_items)
+    p.add_argument("--fixture", type=Path,
+                   default=ROOT / "runs/post_recall/ood-probe-20260910/fixture.json")
+    p.add_argument("--output", type=Path, required=True)
+    p = sub.add_parser("probe-evaluate")
+    p.set_defaults(function=evaluate_probe)
+    p.add_argument("--items", type=Path, required=True)
+    p.add_argument("--scores", type=Path, required=True)
+    p.add_argument("--output", type=Path, required=True)
     p = sub.add_parser("judge")
     p.set_defaults(function=judge)
     p.add_argument("--out", type=Path, required=True)
     p.add_argument("--items", type=Path, required=True)
     p.add_argument("--model")
+    p.add_argument("--runner", choices=("codex", "ollama", "openai"), default="codex")
+    p.add_argument("--endpoint", help="server base URL, without /v1/chat/completions or /api/chat")
+    p.add_argument("--max-tokens", type=int, default=None,
+                   help="OpenAI 兼容后端的生成上限；默认 max(1024, 80×batch_size)，须小于 --num-ctx")
+    p.add_argument("--num-ctx", type=int, default=8192,
+                   help="Ollama num_ctx；OpenAI 兼容后端仅用于校验 --max-tokens 上限（默认 8192）")
+    p.add_argument("--think", action="store_true",
+                   help="OpenAI 兼容后端开启 Qwen3 思考模式（effort 标签为 think，缓存与非思考运行分离；服务端需配置 reasoning parser）")
+    p.add_argument("--api-key-env", help="environment variable containing the OpenAI-compatible API key")
     p.add_argument("--effort", choices=("low", "medium"), default="low")
-    p.add_argument("--batch-size", type=int, default=40)
+    p.add_argument("--batch-size", type=int, help="default: 40 for codex, 1 for local runners")
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--seed", type=int, default=20260910)
     p.add_argument("--cache", type=Path, action="append", default=[])
     p.add_argument("--smoke", action="store_true")
     p.add_argument("--smoke-offset", type=int, default=0)
     p.add_argument("--isolated-state", action="store_true")
+    p = sub.add_parser("agreement")
+    p.set_defaults(function=agreement)
+    p.add_argument("--a", type=Path, required=True)
+    p.add_argument("--b", type=Path, required=True)
+    p.add_argument("--output", type=Path, required=True)
     for name in ("evaluate-l1", "evaluate-l2", "evaluate-l3"):
         p = sub.add_parser(name)
         p.set_defaults(function={"evaluate-l1": evaluate, "evaluate-l2": evaluate_l2, "evaluate-l3": evaluate_l3}[name])

@@ -54,6 +54,13 @@ runs/
 !/runs/post_recall/ood-probe-20260910/README.md
 !/runs/post_recall/ood-probe-20260910/fixture.json
 !/runs/post_recall/ood-probe-20260910/review-sheet.md
+!/runs/post_recall/judge-cost-curve-20260910/
+/runs/post_recall/judge-cost-curve-20260910/*
+!/runs/post_recall/judge-cost-curve-20260910/README.md
+!/runs/post_recall/judge-cost-curve-20260910/results.json
+!/runs/post_recall/judge-cost-curve-20260910/verification.json
+!/runs/post_recall/judge-cost-curve-20260910/*.csv
+!/runs/post_recall/judge-cost-curve-20260910/*.svg
 reports/*.html
 /linkrag-eval-sqlite-share-20260827/
 /docs/papers/*

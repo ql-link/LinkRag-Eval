@@ -43,6 +43,9 @@ runs/
 !/runs/post_recall/subject-binding-pilot-20260908/
 /runs/post_recall/subject-binding-pilot-20260908/*
 !/runs/post_recall/subject-binding-pilot-20260908/README.md
+!/runs/post_recall/llm-judge-pilot-20260910/
+/runs/post_recall/llm-judge-pilot-20260910/*
+!/runs/post_recall/llm-judge-pilot-20260910/README.md
 reports/*.html
 /linkrag-eval-sqlite-share-20260827/
 /docs/papers/*

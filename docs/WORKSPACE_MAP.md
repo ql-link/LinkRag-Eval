@@ -6,6 +6,8 @@
 
 ## 1. 按保存内容找位置
 
+运行产物的目录状态、依赖链与清理候选统一维护在 [runs/post_recall/README.md](../runs/post_recall/README.md)；本页只记录保存位置与备份。
+
 | 保存什么 | 实际位置／首选入口 | 保存方式与职责 |
 | --- | --- | --- |
 | 实现、测试、运行入口 | `src/linkrag_eval/`、`tests/`、[scripts/README.md](../scripts/README.md) | 源码进 Git；脚本编排与可复用计算分开 |
@@ -87,15 +89,15 @@
 
 ## 5. 同级临时工作树与备份（2026-09-09 核对）
 
-以下 `../LinkRag-Eval-pr-*` 是为隔离提交和 PR 建立的 Git worktree，共用本仓库 Git 历史，不是新的评测项目。三者当前 HEAD 均等于对应 PR 的最终 head，完整文件树也与该 PR 的合并结果相同；工作区干净，没有未跟踪或被忽略的本地产物。当前源码、脚本、测试、配置和文档未发现依赖这些临时路径。
+以下 `../LinkRag-Eval-pr-*` 是为隔离提交和 PR 建立的 Git worktree，共用本仓库 Git 历史，不是新的评测项目。清理前，三者 HEAD 均等于对应 PR 的最终 head，完整文件树也与该 PR 的合并结果相同；工作区干净，没有未跟踪或被忽略的本地产物。源码、脚本、测试、配置和文档未发现依赖这些临时路径。
 
-| 同级目录 | 原用途及已合并 PR | 本次占盘 | 当前判断 |
+| 同级目录 | 原用途及已合并 PR | 盘点时占盘 | 当前状态 |
 | --- | --- | ---: | --- |
-| `../LinkRag-Eval-pr-research-foundation/` | [研究基础整理 #5](https://github.com/ql-link/LinkRag-Eval/pull/5) | 4.8 MiB | 临时提交工作树，已完成，可清理候选 |
-| `../LinkRag-Eval-pr-doc-cleanup/` | [研究文档清理 #6](https://github.com/ql-link/LinkRag-Eval/pull/6) | 3.7 MiB | 临时提交工作树，已完成，可清理候选 |
-| `../LinkRag-Eval-pr-nevir-review/` | [条件聚合与盲审 #11](https://github.com/ql-link/LinkRag-Eval/pull/11) | 4.5 MiB | 临时提交工作树，已完成，可清理候选；其中 runs 只有随 Git 的入口，不含本地实验数据 |
+| `../LinkRag-Eval-pr-research-foundation/` | [研究基础整理 #5](https://github.com/ql-link/LinkRag-Eval/pull/5) | 4.8 MiB | 已按负责人授权清理目录及 worktree 登记 |
+| `../LinkRag-Eval-pr-doc-cleanup/` | [研究文档清理 #6](https://github.com/ql-link/LinkRag-Eval/pull/6) | 3.7 MiB | 已按负责人授权清理目录及 worktree 登记 |
+| `../LinkRag-Eval-pr-nevir-review/` | [条件聚合与盲审 #11](https://github.com/ql-link/LinkRag-Eval/pull/11) | 4.5 MiB | 已按负责人授权清理；其中 runs 只有随 Git 的入口，不含本地实验数据 |
 | `../LinkRag-Eval-restructure-backups/` | §3 所述重构前源码 bundle、历史研究 tar 及 manifest | 111 MiB | 历史恢复材料，继续保留；它不覆盖当前 NevIR 本地产物 |
 
 另有系统临时目录下的 `linkrag-upstream-pr-ntn90g38/worktree`，对应已合并 [引号／准入修复 #12](https://github.com/ql-link/LinkRag-Eval/pull/12)。源码树与合并结果一致，无未提交源码，仅有 Python／pytest／Ruff 缓存，约 10 MiB，也属于完成用途的临时工作树。
 
-本次只盘点，没有删除目录或分支。实际清理时先重新检查未提交及本地产物，再用 `git worktree remove` 移除已登记的工作树，避免直接删文件夹留下 Git 登记；备份目录不按 worktree 处理。容量为本次 `du -sh` 读数，合计不含共用的主仓库 `.git`，不是持续维护的磁盘统计。
+负责人随后明确授权清理三个同级 `LinkRag-Eval-pr-*` 目录。再次核对未提交、未跟踪及被忽略产物为空后，已用 `git worktree remove` 逐一移除，并确认三个目录和对应登记均不存在。分支与提交历史保留；主仓库、历史备份及上述系统临时工作树保持。容量为清理前 `du -sh` 读数，不含共用的主仓库 `.git`，不等于实测文件系统释放量。

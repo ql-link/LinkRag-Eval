@@ -8,6 +8,7 @@
 
 | 任务 | 入口 | 必要输入 → 输出 | 实际动作 |
 | --- | --- | --- | --- |
+| 固定候选 LLM 判断器试点 | [llm_judge_pilot.py](llm_judge_pilot.py) | 保存查询／候选／英文分数 → 基线与融合分数、条目、判断日志、L1/L2 评价或 L3 离线模型目录 | `judge` 调用本机 `codex exec`；`stage1-scores` 提取固定融合 `baseline_score`，L2/L3 按前 K（默认 20）选择；子命令拒绝覆盖已有目录。结果、命令与限制见[运行目录](../runs/post_recall/llm-judge-pilot-20260910/README.md)与[正式报告](../docs/reports/llm_judge_pilot_2026_09_10.md) |
 | 检查基线模型包 | `linkrag-eval ltr validate-bundle --model-dir <目录>` | 中文／英文基线 → 契约检查结果 | 读取模型，校验及本地预测 |
 | 诊断中文／英文基线 | [nevir_english_diagnostics.py](nevir_english_diagnostics.py) | 开发快照＋两模型＋英文训练产物＋旧 A/B 诊断 → 新诊断目录 | 写本地统计、追踪与盲审材料；不训练、不召回 |
 | 重现两种特征版本的训练比较 | [nevir_compare_feature_versions.py](nevir_compare_feature_versions.py) | [比较配置](../runs/post_recall/nevir-english-features-20260907/comparison-config.json)＋已有 Train／开发输入 → 新比较目录 | 实际训练 legacy／英文各一组；历史对照复现 |

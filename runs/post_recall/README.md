@@ -54,3 +54,5 @@ data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（test 
 - `_archive/`、`_superseded/`、`_engineering-checks/` 三个前缀目录分别表示：不再引用的历史材料、被后续设计替代的结果、工程验收记录；它们都不进导航正文。
 - `summary.json`／`results.json` 是所属命令的聚合统计，先看对应 README 的分母口径；`manifest.json` 在模型包内是契约、在运行目录内是范围记录。
 - 大产物、缓存、模型继续忽略；新增需要入库的 README 时在 `.gitignore` 白名单补一行。
+
+- [open-judge-confirmation-20260910](open-judge-confirmation-20260910/README.md)（N11）：开源确认集 L1／L2 K=10、20 的首次与失败项重试、四排序器评价、参数、成本与协议偏差。Git 保存聚合产物；原始分数仍在 `llm-judge-pilot-20260910/`，事前冻结与一次性运行验收缺口明确保留。

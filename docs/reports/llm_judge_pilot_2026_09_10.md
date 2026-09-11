@@ -169,7 +169,7 @@ LINKRAG_EVAL_REQUIRE_RAG=1 .venv/bin/python -m pytest -m 'not integration' -q
 
 ### 10.2 冻结 OOD 探针集
 
-`runs/post_recall/ood-probe-20260910/`：英文 6 查询×8 文档（沿用 `english-capability-20260907`）＋中文 12 对最小编辑对（negation 4、attribution 2、number 2、date 2、entity 2，每对两个方向）。标签为作者指定、尚待第二人复核。
+`runs/post_recall/ood-probe-20260910/`：英文 6 查询×8 文档（沿用 `english-capability-20260907`）＋中文 12 对最小编辑对（negation 4、attribution 2、number 2、date 2、entity 2，每对两个方向）。原运行时标签为作者指定、待第二人复核；本次收到的中文复核及离线复算见 §10.2.1。
 
 | 判断器 | 英文 6 | 中文方向 strict/reverse/tie（24） | 中文对双向全对（12） | 墙钟 |
 | --- | ---: | --- | ---: | ---: |
@@ -177,7 +177,16 @@ LINKRAG_EVAL_REQUIRE_RAG=1 .venv/bin/python -m pytest -m 'not integration' -q
 | Qwen3-14B-AWQ 不思考 | 6 | 16/1/7 | 6 | 19 s |
 | Qwen3-14B-AWQ 思考 | 6 | 14/0/9（1 项不可用） | 4 | 169 s |
 
-按类型（不思考／思考，各 4 个方向）：negation 8/8 与 4/8，attribution 4/4 与 4/4，date 2 与 3，entity 1 与 2，number 1 与 1。样本极小，仅表明开源判断器的薄弱点在数字与近形实体，且几乎都以平局出现。
+按类型（不思考／思考，negation 为 8 个方向，其余各 4 个方向）：negation 8/8 与 4/8，attribution 4/4 与 4/4，date 2/4 与 3/4，entity 1/4 与 2/4，number 1/4 与 1/4。数字与近形实体在本批构造题上正确数较低，错误多以平局出现；样本极小，不能据此概括模型的一般薄弱点。
+
+<a id="ood-human-review"></a>
+#### 10.2.1 中文复核收件与已有评分复算（2026-09-10，issue #24）
+
+负责人提供了[已完成复核表](../../runs/post_recall/ood-probe-20260910/review-sheet-completed.md)。12 对、24 个方向全部填写“通过”及理由；与空白复核表相比只填了判定和备注，查询、目标段、类型、单一差异及全部 24 段正文均与 `fixture.json` 一致。英文 6 查询不属于本次人工复核范围。复核人姓名、实际复核日期和复核时是否见过模型结果未提供，`reviewed_by`／`reviewed_at` 保留空值，2026-09-10 只登记为收件日期，不补造具名或盲审记录。
+
+本次使用提交 `50e7aa33ec8360e1e309f60ca43be1a6e81c38b5` 的 `probe_items`／`probe_evaluate`：从原 fixture 精确重建 96 条输入，对三份 `judge-*/scores.jsonl` 分别复算，完整评价对象均与原 `evaluation-*.json` 精确一致。正文、查询、标签、提示词与模型评分未改变；这次没有新推理、调参、训练、召回或 Test 逐题读取。复核状态与[核验产物](../../runs/post_recall/ood-probe-20260910/review-validation.json)独立留存，原评分目录和空白复核表保留。实际命令及成本见[运行说明](../../runs/post_recall/ood-probe-20260910/README.md#review-replay)。
+
+**初步迹象。** 在本批小探针上，三种配置的英文严格 top-1 均为 6/6；中文 Qwen 不思考为 16/24、双向 6/12，思考为 14/24、双向 4/12，GPT-6 为 24/24、双向 12/12。思考配置保留 1 条不可用评分，对应方向仍计入 24 的分母且不计正确；中文双向的分母保持 12。这里比较的是单段判断能力，未运行三路召回或融合前 20 重排，不能当作主方法跨分布有效的证明；也不能外推自然中文错误率、思考模式总体优劣或训练数据无污染。既有模型评分早于本次复核提交，复算不改变这一时间顺序，不称为复核后新跑的独立确认实验。
 
 ### 10.3 结论与限制
 

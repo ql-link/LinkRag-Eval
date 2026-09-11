@@ -229,3 +229,6 @@ venv/
 !/runs/post_recall/judge-cost-curve-qwen-20260911/verification.json
 !/runs/post_recall/judge-cost-curve-qwen-20260911/*.csv
 !/runs/post_recall/judge-cost-curve-qwen-20260911/*.svg
+
+!/runs/post_recall/ood-probe-20260910/review-sheet-completed.md
+!/runs/post_recall/ood-probe-20260910/review-validation.json

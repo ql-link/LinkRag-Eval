@@ -26,15 +26,14 @@
 ## 2. #24：跨分布小探针
 
 **已完成**：
-- 探针集 `runs/post_recall/ood-probe-20260910/fixture.json`（`ood_probe_v1`）：英文 6 查询×8 文档原样引用，中文 12 对最小编辑对，共 96 条判断条目 `items.jsonl`。
+- 探针集 `runs/post_recall/ood-probe-20260910/fixture.json`（`ood_probe_v1`）：英文 6 查询×8 文档原样引用，中文 12 对最小编辑对；判断条目为 `runs/post_recall/ood-probe-20260910/items.jsonl`，共 96 条。
 - 转换与评估：`scripts/llm_judge_pilot.py probe-items` / `probe-evaluate`。
-- 判断输出：GPT-6 low（30/30 方向全对）、Qwen3-14B-AWQ 不思考（中文 16/24）与思考（14/24），结果登记在目录 README 与报告 §10.2。
-- 复核表 `review-sheet.md` 与复核方法（README「复核方法」）。
+- 判断输出：GPT-6 low（30/30 方向全对）、Qwen3-14B-AWQ 不思考（中文 16/24）与思考（14/24），结果登记在 `runs/post_recall/ood-probe-20260910/README.md` 与 `docs/reports/llm_judge_pilot_2026_09_10.md` §10.2。
+- 复核表 `runs/post_recall/ood-probe-20260910/review-sheet.md`；复核方法在 `runs/post_recall/ood-probe-20260910/README.md`「复核方法」。
 
-**待做**：
-1. 中文标签第二人复核，填 `assessment.reviewed_by` 后冻结（复核前的 Qwen 结果只能算试跑）。
-2. 复核后按需重跑（命令如下），把"初步迹象"一段写进报告；样本量小，措辞不得外推。
-3. 若要加第二个开源模型（如 Qwen3-8B 思考），换 `--model` 与服务器脚本即可，不改提示词。
+**2026-09-10 收尾补充**：负责人已提供 `runs/post_recall/ood-probe-20260910/review-sheet-completed.md`，中文 24 个方向全部通过，文本与标签未改；三份已有评分的评价均精确复算。后续复核状态、原始提交和核验结果见 [runs/post_recall/ood-probe-20260910/README.md](../../runs/post_recall/ood-probe-20260910/README.md#review-replay)，初步迹象与限制见 [docs/reports/llm_judge_pilot_2026_09_10.md](../reports/llm_judge_pilot_2026_09_10.md#ood-human-review)。该段描述后续本地补充，原包中的 #24 文件仍为复核前快照。复核人姓名、实际日期和盲审情况未提供，保留缺失，不因姓名字段为空再要求重复标注。
+
+本次没有重跑模型；既有评分仍如实标为复核提交前的运行。原待办中的“按需重跑”和增加另一开源模型是可选扩展，不因复核提交自动执行。下列命令仅供未来明确需要新推理时使用；当前 #24 本地复核、复算和报告已收尾，GitHub 关闭与合并状态另查。
 
 ```bash
 P=runs/post_recall/ood-probe-20260910

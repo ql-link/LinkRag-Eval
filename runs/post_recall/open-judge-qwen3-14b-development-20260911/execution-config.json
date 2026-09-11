@@ -1,0 +1,73 @@
+{
+  "record_kind": "pre-run execution config",
+  "recorded_at": "2026-09-10T16:50:32.044817+00:00",
+  "issues": [
+    15,
+    17
+  ],
+  "purpose": "Complete missing Qwen development L2 cache; evaluate fixed K10/K20; enable offline open-model cost curves. Current model already fixed, no new model selection.",
+  "code_commit": "50e7aa33ec8360e1e309f60ca43be1a6e81c38b5",
+  "application_source_changes": false,
+  "data_role": "validation/development, previously exposed; not official Test",
+  "input": "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/development/development.jsonl",
+  "queries": 76,
+  "items": 1520,
+  "model": {
+    "repository": "Qwen/Qwen3-14B-AWQ",
+    "served_name": "qwen3-14b-awq",
+    "revision_verified_before_run": "31c69efc29464b6bb0aee1398b5a7b50a99340c3",
+    "quantization": "awq_marlin"
+  },
+  "server": {
+    "ssh_alias": "runpod",
+    "gpu": "RTX 4090 24GB",
+    "context_length": 8192,
+    "gpu_memory_utilization": 0.9
+  },
+  "judge_arguments": {
+    "runner": "openai",
+    "endpoint": "http://127.0.0.1:18000",
+    "think": true,
+    "max_tokens": 6144,
+    "num_ctx": 8192,
+    "batch_size": 1,
+    "workers": 8,
+    "temperature": 0,
+    "batch_shuffle_seed": 20260910,
+    "model_request_seed": null,
+    "prompt_version": "judge_prompt_v1"
+  },
+  "cache": {
+    "available_matching_keys_before_smoke": 142,
+    "missing_keys_before_smoke": 1378,
+    "source_directories": [
+      "runs/post_recall/llm-judge-pilot-20260910/_engineering-checks/l1-development-judge-qwen3-14b-awq-think-retry6144/judge-cache",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge-qwen3-14b-awq-think/judge-cache"
+    ],
+    "policy": "Reuse available exact prompt/model/effort cache keys; historical entries may have earlier token caps. No changed scores. Fresh smoke keys reused in full run. Existing runner makes at most three attempts per singleton; no extra repeat invocation planned."
+  },
+  "smoke": {
+    "items": "runs/post_recall/open-judge-qwen3-14b-development-20260911/smoke-items.jsonl",
+    "output": "runs/post_recall/open-judge-qwen3-14b-development-20260911/smoke",
+    "selection": "first three uncached items from distinct pairs in saved input order; no score-based selection"
+  },
+  "full_output": "runs/post_recall/llm-judge-pilot-20260910/l2s-development-judge-qwen3-14b-awq-think",
+  "evaluations": {
+    "K": [
+      10,
+      20
+    ],
+    "primary": "stage1_judge; fixed fusion tie-break",
+    "auxiliary": "E0_judge",
+    "official_directions": 74,
+    "official_pairs": 37,
+    "human_v5_directions": 52,
+    "unavailable_policy": "Whole-query fusion fallback; retained in denominators"
+  },
+  "constraints": [
+    "No official Test rows read.",
+    "No new recall, training, prompt change or Qwen32B selection.",
+    "Do not rerun completed confirmation scores.",
+    "Only after development inference, run cached K1–20 analysis; threshold chosen using development only."
+  ]
+}

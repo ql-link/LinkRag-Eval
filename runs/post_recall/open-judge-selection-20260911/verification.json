@@ -1,0 +1,296 @@
+{
+  "recorded_at": "2026-09-10T19:03:56.679081+00:00",
+  "git_head": "50e7aa33ec8360e1e309f60ca43be1a6e81c38b5",
+  "scope": "Four N10 L1 evaluations, four GPT agreements, six N11 evaluations; offline only",
+  "model_requests": 0,
+  "evaluations": [
+    {
+      "name": "development-qwen3-8b",
+      "expected": "runs/post_recall/llm-judge-pilot-20260910/l1-development-eval-qwen3-8b/results.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "agreement-qwen3-8b.json",
+      "expected": "runs/post_recall/llm-judge-pilot-20260910/l1-development-agreement-qwen3-8b-vs-gpt6.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "development-qwen3-8b-think",
+      "expected": "runs/post_recall/llm-judge-pilot-20260910/l1-development-eval-qwen3-8b-think/results.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "agreement-qwen3-8b-think.json",
+      "expected": "runs/post_recall/llm-judge-pilot-20260910/l1-development-agreement-qwen3-8b-think-vs-gpt6.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "development-qwen3-14b-awq",
+      "expected": "runs/post_recall/llm-judge-pilot-20260910/l1-development-eval-qwen3-14b-awq/results.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "agreement-qwen3-14b-awq.json",
+      "expected": "runs/post_recall/llm-judge-pilot-20260910/l1-development-agreement-qwen3-14b-awq-vs-gpt6.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "development-qwen3-14b-awq-think",
+      "expected": "runs/post_recall/llm-judge-pilot-20260910/l1-development-eval-qwen3-14b-awq-think/results.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "agreement-qwen3-14b-awq-think.json",
+      "expected": "runs/post_recall/llm-judge-pilot-20260910/l1-development-agreement-qwen3-14b-awq-think-vs-gpt6.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "l1-first-pass",
+      "expected": "runs/post_recall/open-judge-confirmation-20260910/l1-first-pass/results.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "l2-first-pass-k10",
+      "expected": "runs/post_recall/open-judge-confirmation-20260910/l2-first-pass-k10/results.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "l2-first-pass-k20",
+      "expected": "runs/post_recall/open-judge-confirmation-20260910/l2-first-pass-k20/results.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "l1-retry",
+      "expected": "runs/post_recall/open-judge-confirmation-20260910/l1-retry/results.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "l2-retry-k10",
+      "expected": "runs/post_recall/open-judge-confirmation-20260910/l2-retry-k10/results.json",
+      "all_fields_equal": true
+    },
+    {
+      "name": "l2-retry-k20",
+      "expected": "runs/post_recall/open-judge-confirmation-20260910/l2-retry-k20/results.json",
+      "all_fields_equal": true
+    }
+  ],
+  "retry_checks": [
+    {
+      "level": "l1",
+      "rows": 742,
+      "valid_scores_preserved": true,
+      "changed_score_or_status_rows": 1
+    },
+    {
+      "level": "l2s",
+      "rows": 7480,
+      "valid_scores_preserved": true,
+      "changed_score_or_status_rows": 0
+    }
+  ],
+  "commands": [
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l1",
+      "--role",
+      "development",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/development/scores.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge-qwen3-8b/scores.jsonl",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/development-qwen3-8b"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "agreement",
+      "--a",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge-qwen3-8b",
+      "--b",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge",
+      "--output",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/agreement-qwen3-8b.json"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l1",
+      "--role",
+      "development",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/development/scores.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge-qwen3-8b-think/scores.jsonl",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/development-qwen3-8b-think"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "agreement",
+      "--a",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge-qwen3-8b-think",
+      "--b",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge",
+      "--output",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/agreement-qwen3-8b-think.json"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l1",
+      "--role",
+      "development",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/development/scores.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge-qwen3-14b-awq/scores.jsonl",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/development-qwen3-14b-awq"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "agreement",
+      "--a",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge-qwen3-14b-awq",
+      "--b",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge",
+      "--output",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/agreement-qwen3-14b-awq.json"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l1",
+      "--role",
+      "development",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/development/scores.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge-qwen3-14b-awq-think/scores.jsonl",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/development-qwen3-14b-awq-think"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "agreement",
+      "--a",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge-qwen3-14b-awq-think",
+      "--b",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-development-judge",
+      "--output",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/agreement-qwen3-14b-awq-think.json"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l1",
+      "--role",
+      "confirmation",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/confirmation/scores.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-confirmation-judge-qwen3-14b-awq-think/scores.jsonl",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/l1-first-pass"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l2",
+      "--role",
+      "confirmation",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/confirmation/scores.jsonl",
+      "--stage1",
+      "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/confirmation/stage1-confirmation.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-judge-qwen3-14b-awq-think/scores.jsonl",
+      "--top-k",
+      "10",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/l2-first-pass-k10"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l2",
+      "--role",
+      "confirmation",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/confirmation/scores.jsonl",
+      "--stage1",
+      "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/confirmation/stage1-confirmation.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-judge-qwen3-14b-awq-think/scores.jsonl",
+      "--top-k",
+      "20",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/l2-first-pass-k20"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l1",
+      "--role",
+      "confirmation",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/confirmation/scores.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l1-confirmation-judge-qwen3-14b-awq-think-retry/scores.jsonl",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/l1-retry"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l2",
+      "--role",
+      "confirmation",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/confirmation/scores.jsonl",
+      "--stage1",
+      "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/confirmation/stage1-confirmation.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-judge-qwen3-14b-awq-think-retry/scores.jsonl",
+      "--top-k",
+      "10",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/l2-retry-k10"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l2",
+      "--role",
+      "confirmation",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/confirmation/scores.jsonl",
+      "--stage1",
+      "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/confirmation/stage1-confirmation.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-judge-qwen3-14b-awq-think-retry/scores.jsonl",
+      "--top-k",
+      "20",
+      "--out",
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/open-judge-selection-20260911/checks/replay-1/l2-retry-k20"
+    ]
+  ],
+  "status": "passed",
+  "engineering_checks": {
+    "pytest": {
+      "command": ".venv/bin/python -m pytest tests/unit/test_llm_judge_local.py tests/unit/test_llm_judge.py tests/unit/test_llm_judge_model.py tests/test_import_boundary.py -q",
+      "passed": 79,
+      "wall_seconds": 1.5
+    },
+    "ruff": "passed; datetime.UTC finding fixed",
+    "report_index": "current",
+    "git_diff_check": "passed",
+    "local_link_targets_checked": 238
+  }
+}

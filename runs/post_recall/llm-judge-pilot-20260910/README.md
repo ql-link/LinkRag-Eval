@@ -96,3 +96,7 @@ done
 ## N10 追加（2026-09-10）：开源判断器对照
 
 `l1-development-judge-qwen3-8b{,-think}`、`l1-development-judge-qwen3-14b-awq{,-think}` 及对应 `l1-development-eval-*`、`l1-development-agreement-*-vs-gpt6*.json`：同一 L1 开发 148 项，vLLM 0.29 / RTX 4090。`-smoke` 目录为 3 项冒烟。结果见[报告 §10](../../../docs/reports/llm_judge_pilot_2026_09_10.md#10-开源判断器对照n10)。
+
+## N11 开源确认收尾（2026-09-10）
+
+原始分数和缓存：`l1-confirmation-judge-qwen3-14b-awq-think{,-retry}/`、`l2s-confirmation-judge-qwen3-14b-awq-think{,-retry}/`。旧 L1 评价与一致性文件保留；新增 L1、L2 K=10／20 的首次／重试评价、成本、配置与协议偏差集中在 [open-judge-confirmation-20260910](../open-judge-confirmation-20260910/README.md)。L1 重试后 212/371、剩 2 项不可用；L2 K=20 为 280/287、4 项不可用，限定重试未改分数。无事前冻结配置，不称满足 #16 的严格一次性验收。

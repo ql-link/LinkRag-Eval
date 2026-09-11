@@ -1,0 +1,745 @@
+{
+  "role": "development",
+  "official": {
+    "E0": {
+      "n": 74,
+      "strict_correct": 44,
+      "reverse": 29,
+      "model_tie": 1,
+      "unavailable": 0,
+      "strict_accuracy": 0.5945945945945946,
+      "source_groups": 19,
+      "by_source_group": {
+        "nevir-validation-0462": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0468": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0471": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0473": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0475": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0476": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0478": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0479": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0494": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0504": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0508": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0516": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0518": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0533": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0548": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0557": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0558": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0561": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0564": {
+          "n": 4,
+          "strict_correct": 3
+        }
+      },
+      "source_macro_accuracy": 0.6052631578947368,
+      "eligible_bidirectional_pairs": 37,
+      "both_directions_correct": 9,
+      "both_directions_accuracy": 0.24324324324324326
+    },
+    "judge": {
+      "n": 74,
+      "strict_correct": 42,
+      "reverse": 8,
+      "model_tie": 21,
+      "unavailable": 3,
+      "strict_accuracy": 0.5675675675675675,
+      "source_groups": 19,
+      "by_source_group": {
+        "nevir-validation-0462": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0468": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0471": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0473": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0475": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0476": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0478": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0479": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0494": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0504": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0508": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0516": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0518": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0533": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0548": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0557": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0558": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0561": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0564": {
+          "n": 4,
+          "strict_correct": 1
+        }
+      },
+      "source_macro_accuracy": 0.5789473684210527,
+      "eligible_bidirectional_pairs": 37,
+      "both_directions_correct": 15,
+      "both_directions_accuracy": 0.40540540540540543
+    },
+    "contrast": {
+      "n": 74,
+      "common_correct": 25,
+      "corrected": 17,
+      "damaged": 19,
+      "common_not_correct": 13,
+      "net": -2
+    },
+    "contrast_by_source_group": {
+      "nevir-validation-0462": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0468": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0471": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0473": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0475": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0476": {
+        "n": 4,
+        "common_correct": 0,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0478": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": -2
+      },
+      "nevir-validation-0479": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0494": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0504": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": -1
+      },
+      "nevir-validation-0508": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0516": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 0,
+        "damaged": 2,
+        "common_not_correct": 1,
+        "net": -2
+      },
+      "nevir-validation-0518": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0533": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0548": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0557": {
+        "n": 2,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0558": {
+        "n": 4,
+        "common_correct": 0,
+        "corrected": 2,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0561": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 0,
+        "damaged": 2,
+        "common_not_correct": 1,
+        "net": -2
+      },
+      "nevir-validation-0564": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 0,
+        "damaged": 2,
+        "common_not_correct": 1,
+        "net": -2
+      }
+    }
+  },
+  "judge_run": {
+    "runner": "openai",
+    "endpoint": "127.0.0.1",
+    "model": "qwen3-14b-awq",
+    "effort": "think",
+    "prompt_version": "judge_prompt_v1",
+    "codex_version": null,
+    "items": 148,
+    "unique_keys": 148,
+    "cache_hits": 0,
+    "cache_misses": 148,
+    "duplicate_items": 0,
+    "planned_batches": 148,
+    "batch_count": 154,
+    "workers": 8,
+    "batch_size": 1,
+    "seed": 20260910,
+    "unavailable": 3,
+    "wall_seconds": 223.01632541697472
+  },
+  "human_v5": {
+    "E0": {
+      "n": 52,
+      "strict_correct": 31,
+      "reverse": 21,
+      "model_tie": 0,
+      "unavailable": 0,
+      "strict_accuracy": 0.5961538461538461,
+      "source_groups": 19,
+      "by_source_group": {
+        "nevir-validation-0462": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0468": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0471": {
+          "n": 3,
+          "strict_correct": 2
+        },
+        "nevir-validation-0473": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0475": {
+          "n": 3,
+          "strict_correct": 3
+        },
+        "nevir-validation-0476": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0478": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0479": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0494": {
+          "n": 3,
+          "strict_correct": 1
+        },
+        "nevir-validation-0504": {
+          "n": 3,
+          "strict_correct": 2
+        },
+        "nevir-validation-0508": {
+          "n": 1,
+          "strict_correct": 0
+        },
+        "nevir-validation-0516": {
+          "n": 1,
+          "strict_correct": 0
+        },
+        "nevir-validation-0518": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0533": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0548": {
+          "n": 2,
+          "strict_correct": 1
+        },
+        "nevir-validation-0557": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0558": {
+          "n": 1,
+          "strict_correct": 0
+        },
+        "nevir-validation-0561": {
+          "n": 3,
+          "strict_correct": 3
+        },
+        "nevir-validation-0564": {
+          "n": 2,
+          "strict_correct": 2
+        }
+      },
+      "source_macro_accuracy": 0.5745614035087719,
+      "eligible_bidirectional_pairs": 21,
+      "both_directions_correct": 6,
+      "both_directions_accuracy": 0.2857142857142857
+    },
+    "judge": {
+      "n": 52,
+      "strict_correct": 41,
+      "reverse": 2,
+      "model_tie": 7,
+      "unavailable": 2,
+      "strict_accuracy": 0.7884615384615384,
+      "source_groups": 19,
+      "by_source_group": {
+        "nevir-validation-0462": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0468": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0471": {
+          "n": 3,
+          "strict_correct": 3
+        },
+        "nevir-validation-0473": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0475": {
+          "n": 3,
+          "strict_correct": 3
+        },
+        "nevir-validation-0476": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0478": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0479": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0494": {
+          "n": 3,
+          "strict_correct": 2
+        },
+        "nevir-validation-0504": {
+          "n": 3,
+          "strict_correct": 2
+        },
+        "nevir-validation-0508": {
+          "n": 1,
+          "strict_correct": 0
+        },
+        "nevir-validation-0516": {
+          "n": 1,
+          "strict_correct": 1
+        },
+        "nevir-validation-0518": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0533": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0548": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0557": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0558": {
+          "n": 1,
+          "strict_correct": 1
+        },
+        "nevir-validation-0561": {
+          "n": 3,
+          "strict_correct": 1
+        },
+        "nevir-validation-0564": {
+          "n": 2,
+          "strict_correct": 1
+        }
+      },
+      "source_macro_accuracy": 0.7850877192982456,
+      "eligible_bidirectional_pairs": 21,
+      "both_directions_correct": 15,
+      "both_directions_accuracy": 0.7142857142857143
+    },
+    "contrast": {
+      "n": 52,
+      "common_correct": 25,
+      "corrected": 16,
+      "damaged": 6,
+      "common_not_correct": 5,
+      "net": 10
+    },
+    "contrast_by_source_group": {
+      "nevir-validation-0462": {
+        "n": 2,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0468": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0471": {
+        "n": 3,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0473": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0475": {
+        "n": 3,
+        "common_correct": 3,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0476": {
+        "n": 4,
+        "common_correct": 0,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0478": {
+        "n": 2,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0479": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0494": {
+        "n": 3,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0504": {
+        "n": 3,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0508": {
+        "n": 1,
+        "common_correct": 0,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0516": {
+        "n": 1,
+        "common_correct": 0,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0518": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0533": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0548": {
+        "n": 2,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0557": {
+        "n": 2,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0558": {
+        "n": 1,
+        "common_correct": 0,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0561": {
+        "n": 3,
+        "common_correct": 1,
+        "corrected": 0,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": -2
+      },
+      "nevir-validation-0564": {
+        "n": 2,
+        "common_correct": 1,
+        "corrected": 0,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": -1
+      }
+    }
+  },
+  "human_population": {
+    "eligible": 52,
+    "all_queries": 76,
+    "exclusions_nonexclusive": {
+      "human_tie": 19,
+      "human_undetermined": 4,
+      "targets_not_jointly_recalled": 2
+    }
+  },
+  "baseline_self_check": true,
+  "model": "qwen3-14b-awq",
+  "effort": "think",
+  "codex_version": null,
+  "prompt_version": "judge_prompt_v1",
+  "status": "completed_with_unavailable",
+  "wall_seconds": 223.01632541697472,
+  "batch_count": 154,
+  "score_distribution": {
+    "None": 3,
+    "4": 80,
+    "3": 12,
+    "1": 7,
+    "0": 39,
+    "2": 7
+  },
+  "cache_stats": {
+    "cache_hits": 0,
+    "cache_misses": 148,
+    "duplicate_items": 0
+  }
+}

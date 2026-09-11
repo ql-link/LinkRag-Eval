@@ -1,16 +1,19 @@
 """Fixed-budget NevIR adaptation of the unchanged 38-column LambdaMART features.
 
 Only explicit train/development files are consumed. Unjudged candidates affect
-the full-pool features, but never become rows in the ranking loss Dataset.
+the full-pool features; they enter the training loss only when background
+negative sampling is explicitly enabled (default: disabled).
 """
 
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import math
 import multiprocessing
+import random
 import subprocess
 import time
 from collections import Counter, defaultdict
@@ -52,6 +55,7 @@ class PreparedQuery:
     chunk_ids: list[str] = field(default_factory=list)
     features: np.ndarray | None = None
     selected_indices: list[int] = field(default_factory=list)
+    loss_indices: list[int] = field(default_factory=list)
     exclusion_reasons: list[str] = field(default_factory=list)
     method_view: dict[str, Any] | None = None
     duplicate_of: str | None = None
@@ -239,11 +243,16 @@ def prepare_pairwise_dataset(
     supervision: list[dict[str, Any]],
     inputs: list[dict[str, Any]],
     feature_version: str = FEATURE_VERSION,
+    background_negative_count: int = 0,
 ) -> PairwiseDataset:
-    """Compute complete-pool features before selecting the two judged rows."""
+    """Compute full-pool features, then select judged and optional background rows."""
     rules_version(feature_version)
     if role not in {"train", "development"}:
         raise ValueError("training accepts only train and development roles")
+    if type(background_negative_count) is not int or background_negative_count < 0:
+        raise ValueError("background negative count must be a non-negative integer")
+    if role != "train" and background_negative_count:
+        raise ValueError("background negatives are only allowed in the training loss")
     query_by_id, labels, input_by_id = map(_indexed, (queries, supervision, inputs))
     for row in queries:
         _text(row, "query")
@@ -289,6 +298,18 @@ def prepare_pairwise_dataset(
         item.selected_indices = [i for i, cid in enumerate(item.chunk_ids) if cid in targets]
         if len(item.selected_indices) != 2:
             item.exclusion_reasons.append("targets_not_jointly_recalled")
+        elif background_negative_count:
+            background = [i for i, cid in enumerate(item.chunk_ids) if cid not in targets]
+            if len(background) < background_negative_count:
+                item.exclusion_reasons.append("insufficient_background_candidates")
+            else:
+                seed = int.from_bytes(
+                    hashlib.sha256(f"{SEED}:{qid}".encode()).digest()[:8], "big"
+                )
+                sampled = random.Random(seed).sample(background, background_negative_count)
+                item.loss_indices = [*item.selected_indices, *sorted(sampled)]
+        else:
+            item.loss_indices = list(item.selected_indices)
         if role == "train" and not item.exclusion_reasons:
             key = (item.query, label["preferred_chunk_id"], label["other_chunk_id"])
             for previous in seen_training[key]:
@@ -301,24 +322,38 @@ def prepare_pairwise_dataset(
             seen_training[key].append(item)
     blocks = [q for q in prepared if not q.exclusion_reasons]
     x = (
-        np.concatenate([q.features[q.selected_indices] for q in blocks])
+        np.concatenate([q.features[q.loss_indices] for q in blocks])
         if blocks
         else np.empty((0, len(FEATURE_NAMES)), dtype=np.float32)
     )
-    y = np.asarray(
-        [
-            int(q.chunk_ids[i] == q.supervision["preferred_chunk_id"])
-            for q in blocks
-            for i in q.selected_indices
-        ],
-        dtype=np.int32,
-    )
+    if background_negative_count:
+        y = np.asarray(
+            [
+                2
+                if q.chunk_ids[i] == q.supervision["preferred_chunk_id"]
+                else 1
+                if q.chunk_ids[i] == q.supervision["other_chunk_id"]
+                else 0
+                for q in blocks
+                for i in q.loss_indices
+            ],
+            dtype=np.int32,
+        )
+    else:
+        y = np.asarray(
+            [
+                int(q.chunk_ids[i] == q.supervision["preferred_chunk_id"])
+                for q in blocks
+                for i in q.loss_indices
+            ],
+            dtype=np.int32,
+        )
     counts = Counter(q.supervision["source_group_id"] for q in blocks)
     weights = np.asarray(
         [
             len(blocks) / (len(counts) * counts[q.supervision["source_group_id"]])
             for q in blocks
-            for _ in range(2)
+            for _ in q.loss_indices
         ],
         dtype=np.float64,
     )
@@ -335,6 +370,17 @@ def prepare_pairwise_dataset(
         "eligible_source_group_ids": sorted(counts),
         "ranking_group_count": len(blocks),
         "loss_row_count": len(x) if role == "train" else 0,
+        "background_negative_count": background_negative_count,
+        "background_negative_sampling": (
+            "sha256(seed:source_query_id), sampled without replacement from non-target full-pool candidates"
+            if background_negative_count
+            else "disabled"
+        ),
+        "loss_labels": (
+            {"preferred": 2, "other_designated": 1, "background": 0}
+            if background_negative_count
+            else {"preferred": 1, "other_designated": 0}
+        ),
         "full_pool_ready_query_count": sum(q.features is not None for q in prepared),
         "jointly_recalled_query_count": sum(len(q.selected_indices) == 2 for q in prepared),
         "exclusion_counts": dict(
@@ -345,11 +391,21 @@ def prepare_pairwise_dataset(
             q.supervision["semantic_uncertain"] for q in prepared
         ),
         "query_order": list(query_by_id),
-        "weighting": "N_queries / (N_sources * queries_in_source); equal weight for both rows",
+        "weighting": "N_queries / (N_sources * queries_in_source); equal weight for all rows",
     }
     summary.update(feature_version=feature_version, feature_rules_version=rules_version(feature_version))
     summary["feature_compute_seconds"] = feature_compute_seconds
-    return PairwiseDataset(role, prepared, blocks, x, y, [2] * len(blocks), weights, summary, feature_version)
+    return PairwiseDataset(
+        role,
+        prepared,
+        blocks,
+        x,
+        y,
+        [len(q.loss_indices) for q in blocks],
+        weights,
+        summary,
+        feature_version,
+    )
 
 
 def assert_disjoint_roles(train: PairwiseDataset, development: PairwiseDataset) -> None:
@@ -480,7 +536,9 @@ def select_best_candidate(reports: list[dict[str, Any]]) -> dict[str, Any]:
     return min(reports, key=key)
 
 
-def training_parameters(config: dict[str, Any]) -> dict[str, Any]:
+def training_parameters(
+    config: dict[str, Any], *, background_negative_count: int = 0
+) -> dict[str, Any]:
     return {
         "objective": "lambdarank",
         "boosting_type": "gbdt",
@@ -498,7 +556,7 @@ def training_parameters(config: dict[str, Any]) -> dict[str, Any]:
         "feature_fraction_bynode": 1.0,
         "subsample": 1.0,
         "subsample_freq": 0,
-        "label_gain": [0, 1],
+        "label_gain": [0, 1, 2] if background_negative_count else [0, 1],
         "sigmoid": 1.0,
         "lambdarank_norm": True,
         "lambdarank_truncation_level": 2,
@@ -651,8 +709,15 @@ def _read_jsonl(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
-def load_dataset(*, role: str, queries: Path, supervision: Path, inputs: Path,
-                 feature_version: str = FEATURE_VERSION) -> PairwiseDataset:
+def load_dataset(
+    *,
+    role: str,
+    queries: Path,
+    supervision: Path,
+    inputs: Path,
+    feature_version: str = FEATURE_VERSION,
+    background_negative_count: int = 0,
+) -> PairwiseDataset:
     labels = _read_jsonl(supervision)
     if role not in {"train", "development"} or any(r.get("role") != role for r in labels):
         raise ValueError("supervision role mismatch before reading queries or candidates")
@@ -662,6 +727,7 @@ def load_dataset(*, role: str, queries: Path, supervision: Path, inputs: Path,
         supervision=labels,
         inputs=_read_jsonl(inputs),
         feature_version=feature_version,
+        background_negative_count=background_negative_count,
     )
 
 
@@ -819,7 +885,10 @@ def train_and_select(
             {
                 **config,
                 "status": "not_started",
-                "params": training_parameters(config),
+                "params": training_parameters(
+                    config,
+                    background_negative_count=train.summary["background_negative_count"],
+                ),
                 "history": [],
             }
             for config in grid
@@ -921,6 +990,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model-version", required=True)
     parser.add_argument("--feature-version", choices=FEATURE_VERSIONS, default=FEATURE_VERSION)
     parser.add_argument("--config-id", choices=[c["config_id"] for c in GRID])
+    parser.add_argument(
+        "--background-negatives",
+        type=int,
+        default=0,
+        help="deterministically sample N background candidates per training query (default: 0)",
+    )
     args = parser.parse_args(argv)
     paths = {
         f"{role}_{kind}": str(getattr(args, f"{role}_{kind}").resolve())
@@ -931,6 +1006,7 @@ def main(argv: list[str] | None = None) -> int:
         load_dataset(
             role=role,
             feature_version=args.feature_version,
+            background_negative_count=args.background_negatives if role == "train" else 0,
             **{
                 kind: getattr(args, f"{role}_{kind}")
                 for kind in ("queries", "supervision", "inputs")

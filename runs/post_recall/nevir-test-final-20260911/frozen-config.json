@@ -1,0 +1,47 @@
+{
+  "experiment": "issue23_background_n8_official_test_once",
+  "frozen_before_scoring": true,
+  "dataset": {
+    "repository": "orionweller/NevIR",
+    "revision": "6263585072ce3b435ed09658613553fbf4e74184",
+    "file": "test.jsonl",
+    "sha256": "5eb79ec32e82ff17ef6c2f47b75baca182013053ed74672d426bbc338af05d67",
+    "pairs": 1383,
+    "queries": 2766
+  },
+  "candidate_snapshot": "runs/post_recall/nevir-test-candidates-20260910/snapshot",
+  "rankers": {
+    "E0": {
+      "model": "runs/post_recall/list-collapse-20260910/baseline-disabled-replay/model-b/model.txt",
+      "sha256": "03f578106b2bbaea65721cdeb75fd717aa00ac70fd147ff26e46310a784ba164"
+    },
+    "fusion": {
+      "feature": "baseline_score",
+      "feature_version": "candidate_difference_v3_english_v1"
+    },
+    "background_n8": {
+      "model": "runs/post_recall/list-collapse-20260910/background-n8-training/model-b/model.txt",
+      "sha256": "4236db6c2f9b6f72736812274c55c3ff60f29ff661d32d1d909faa8ac103d459"
+    }
+  },
+  "evaluation": {
+    "primary_population": "official labels, both designated passages in common candidate union, excluding structural conflicts",
+    "sensitivity_population": "official labels, both designated passages in common candidate union, including structural conflicts",
+    "metrics": [
+      "strict_pairwise_correct_wrong_tie",
+      "both_directions_correct",
+      "preferred_at_1",
+      "preferred_at_3",
+      "preferred_mrr",
+      "designated_mean_and_median_rank",
+      "both_designated_in_top10",
+      "wilson_95ci",
+      "mcnemar_e0_vs_background_n8"
+    ],
+    "coverage": [
+      "both_designated_in_candidate_union",
+      "both_designated_in_fusion_top20"
+    ]
+  },
+  "policy": "Score once after candidate completion; do not tune, retrain, or add arms from Test results."
+}

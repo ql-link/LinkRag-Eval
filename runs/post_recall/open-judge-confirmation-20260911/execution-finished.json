@@ -1,0 +1,52 @@
+{
+  "completed_at": "2026-09-11T06:13:33.173547+00:00",
+  "status": "completed",
+  "summaries": [
+    {
+      "runner": "openai",
+      "endpoint": "127.0.0.1",
+      "model": "qwen3-14b-awq",
+      "effort": "think",
+      "prompt_version": "judge_prompt_v1",
+      "codex_version": null,
+      "items": 742,
+      "unique_keys": 739,
+      "cache_hits": 0,
+      "cache_misses": 739,
+      "duplicate_items": 3,
+      "planned_batches": 739,
+      "batch_count": 739,
+      "workers": 8,
+      "batch_size": 1,
+      "seed": 20260910,
+      "unavailable": 5,
+      "wall_seconds": 470.59562241699314,
+      "started_at": "2026-09-11T05:03:57.371656+00:00",
+      "completed_at": "2026-09-11T05:11:47.971128+00:00",
+      "max_attempts_per_unique_input": 1
+    },
+    {
+      "runner": "openai",
+      "endpoint": "127.0.0.1",
+      "model": "qwen3-14b-awq",
+      "effort": "think",
+      "prompt_version": "judge_prompt_v1",
+      "codex_version": null,
+      "items": 7480,
+      "unique_keys": 7420,
+      "cache_hits": 0,
+      "cache_misses": 7420,
+      "duplicate_items": 60,
+      "planned_batches": 7420,
+      "batch_count": 7420,
+      "workers": 8,
+      "batch_size": 1,
+      "seed": 20260910,
+      "unavailable": 7,
+      "wall_seconds": 3704.7930384580395,
+      "started_at": "2026-09-11T05:11:48.008146+00:00",
+      "completed_at": "2026-09-11T06:13:33.168016+00:00",
+      "max_attempts_per_unique_input": 1
+    }
+  ]
+}

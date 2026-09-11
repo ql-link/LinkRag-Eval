@@ -44,7 +44,8 @@
 | --- | --- | --- |
 | 准备原 NevIR 划分 | [nevir_ltr_prepare.py](nevir_ltr_prepare.py) | 官方 Train／Validation＋既定分组建议 → prepared 语料、查询与监督；本地写文件，涉及原确认划分 |
 | 原 NevIR 入库／采集 | [nevir_ltr_collect.py](nevir_ltr_collect.py) | prepared 语料或查询 → 存储／三路候选；远端编码与检索，按 `--stage` 分阶段 |
-| 部分标签训练 | [pairwise_training 模块](../src/linkrag_eval/retrieval/learning_to_rank/pairwise_training.py) | 显式 Train／开发 queries、supervision、inputs＋策略模型 → 新模型和开发分数；实际训练 |
+| 部分标签训练 | [pairwise_training 模块](../src/linkrag_eval/retrieval/learning_to_rank/pairwise_training.py) | 显式 Train／开发 queries、supervision、inputs＋策略模型 → 新模型和开发分数；实际训练。`--background-negatives` 默认 0，#23 的固定 N=8 仅作实验扩展 |
+| #23 接收复验 | [evaluate.py](../runs/post_recall/list-collapse-20260910/evaluate.py) | 既有开发／确认候选和模型 → 原指标核验；不训练，不读 Test 逐题 |
 | 历史 legacy A/B 评价 | [nevir_evaluation 模块](../src/linkrag_eval/retrieval/learning_to_rank/nevir_evaluation.py) | 指定角色的保存候选＋A/B → 新评价目录；角色须显式指定 |
 | 历史 legacy A/B 诊断 | [nevir_diagnostics 模块](../src/linkrag_eval/retrieval/learning_to_rank/nevir_diagnostics.py) | 开发快照＋A/B＋旧 B 分数＋执行说明 → 新机械诊断；不自动适用于英文特征 |
 
@@ -105,5 +106,7 @@ T2 接入目前暂停，已有 CLI 保留：
 指定补写版已通过收件；最初的人类讨论材料为[裁定清单](../runs/post_recall/subject-binding-pilot-20260908/human/20260909-intake-v2/adjudication/review-checklist.md)。该原清单保留原题号、左右对应和当时空白裁定栏；已完成的最终接收结果使用下方汇总，不再要求重新填写原清单。机器标记可重叠，既不等同语义错误，也不代表选项一致即金标。具体范围见[报告 §2.5](../docs/reports/nevir_subject_binding_pilot_2026_09_08.md#25-指定补写版本接收与人类裁定清单2026-09-09)。
 
 分批通过对话提交的讨论集中维护在[最终结果](../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/current-results.md)。`batches/` 保留五批原话与字段来源，最新固定输入为 `history/results-v5-frozen.json`；第五批明确第 60 题 X 不足/Y 不满足/偏好 X，其余 75 题未改，原 v4 保留。一次性 [evaluate_saved.py](../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/evaluate_saved.py) 只读取人工固定输入、原映射和已有开发分数；默认政策重放 v4，显式 `--policy .../human/adjudication/analysis-policy-v2.json` 选择 v5，`--out` 必须指向新目录。最新产物见 [analysis-v2](../runs/post_recall/subject-binding-pilot-20260908/human/adjudication/analysis-v2/)，口径与实际执行见[报告 §2.8](../docs/reports/nevir_subject_binding_pilot_2026_09_08.md#28-第-60-题收尾与-v5-更新2026-09-09)。
+
+- [llm_judge_cost_curve.py](llm_judge_cost_curve.py) `run --root <判断器运行目录> --candidates <候选目录> --out <新目录> [--judge-dir-suffix=-<tag>]`：只读 L2 缓存，输出开发／确认 K=1–20 成本曲线、分差与三路分歧触发、CSV／SVG。分差阈值仅开发选择；两集缓存需对应摘要且模型／推理强度／提示词一致。缺分按既有整查询回退计数，拒绝覆盖，独立校验 N09 GPT-6 K=20。详见[运行入口](../runs/post_recall/judge-cost-curve-20260910/README.md)。
 
 - `llm_judge_statistics.py run --root <判断器运行目录> --out runs/post_recall/judge-statistics-<日期> [--seed --repeats] [--extra 名称=逐题文件]`：对 L1／L2／L3 逐题关系做来源组自助 95% 区间与配对符号检验（issue #18），输出 `results.json` 与 `tables.md`。

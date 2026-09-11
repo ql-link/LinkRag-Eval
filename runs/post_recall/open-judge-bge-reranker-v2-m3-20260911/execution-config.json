@@ -1,0 +1,63 @@
+{
+  "record_kind": "pre-run fixed baseline config",
+  "recorded_at": "2026-09-10T16:53:50.118820+00:00",
+  "issue": 15,
+  "purpose": "One fixed lightweight text reranker comparison; current Qwen main choice retained independently of these results.",
+  "code_commit": "50e7aa33ec8360e1e309f60ca43be1a6e81c38b5",
+  "model": {
+    "repository": "BAAI/bge-reranker-v2-m3",
+    "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+    "model_card": "https://huggingface.co/BAAI/bge-reranker-v2-m3",
+    "dtype": "float16",
+    "implementation": "transformers.AutoModelForSequenceClassification; raw logits, no sigmoid or 0–4 mapping",
+    "trust_remote_code": false
+  },
+  "runtime": {
+    "ssh_alias": "runpod",
+    "python": "/workspace/venv/bin/python",
+    "torch": "2.13.0",
+    "transformers": "5.17.0",
+    "gpu": "RTX 4090 24GB",
+    "batch_size": 1,
+    "max_input_tokens": 8192,
+    "truncation_policy": "No silent truncation: measure untruncated token length before scoring and fail if any exceeds 8192.",
+    "seed": 20260910,
+    "eval_mode": true,
+    "torch_inference_mode": true,
+    "attention_implementation": "sdpa",
+    "gpu_memory_fraction_limit": 0.12,
+    "schedule": "Run only after Qwen development batch completes; keep existing Qwen server resident."
+  },
+  "inputs": {
+    "development": {
+      "l1": "runs/post_recall/llm-judge-pilot-20260910/items/l1-development.jsonl",
+      "l2": "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/development/development.jsonl",
+      "l1_items": 148,
+      "l2_items": 1520
+    },
+    "confirmation": {
+      "l1": "runs/post_recall/llm-judge-pilot-20260910/items-confirmation-l1/l1-confirmation.jsonl",
+      "l2": "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/confirmation/confirmation.jsonl",
+      "l1_items": 742,
+      "l2_items": 7480
+    }
+  },
+  "unique_role_query_passage_items": 9034,
+  "data_use": "Previously exposed validation/development and validation/confirmation only; no Test inputs. Both role settings fixed before any BGE inference. Confirmation is an auxiliary fixed-baseline comparison, not a new untouched confirmation set.",
+  "evaluation": {
+    "l1": "Raw score pair preference; same official and development human-v5 populations as Qwen.",
+    "l2_K": [
+      10,
+      20
+    ],
+    "primary_tie_break": "fixed fusion score then chunk_id; tail unchanged",
+    "auxiliary_tie_break": "E0 score then chunk_id",
+    "main_method_choice": "Qwen unchanged; no selection on these results."
+  },
+  "raw_output": "scores.jsonl",
+  "constraints": [
+    "Use existing fixed candidate pools and visible text only.",
+    "No training, recall, prompt changes, model sweep or Test.",
+    "Keep raw real-valued BGE scores outside the 0–4 LLM cache; use existing l2_rankers/evaluate_pairs/evaluate_rankers directly."
+  ]
+}

@@ -1,6 +1,6 @@
 # 召回后实验产物导航
 
-本页是 `runs/post_recall/` 的唯一导航。查实验先看状态列，再进目录 `README.md`。当前进度看[当前状态](../../docs/CURRENT_STATUS.md)，逐次实验看[实验台账](../../docs/experiments/EXPERIMENT_LOG.md)，数据划分看[数据入口](../../data/README.md)，模型身份看[模型入口](../../models/README.md)。本目录整体被 Git 忽略，只有各目录的 `README.md` 入库；运行数据不随 clone 出现。
+本页是 `runs/post_recall/` 的唯一导航。查实验先看状态列，再进目录 `README.md`。当前进度看[当前状态](../../docs/CURRENT_STATUS.md)，逐次实验看[实验台账](../../docs/experiments/EXPERIMENT_LOG.md)，数据划分看[数据入口](../../data/README.md)，模型身份看[模型入口](../../models/README.md)。本目录默认被 Git 忽略；各目录 README 及显式白名单中的轻量配置、聚合结果、复现脚本入库。原始运行数据、模型及缓存通常不随 clone 出现，具体范围见各目录说明。
 
 ## 1. 目录状态一览
 
@@ -8,6 +8,17 @@
 | --- | --- | --- | --- |
 | **共享输入，不可删** | [nevir-ltr-validation-20260907](nevir-ltr-validation-20260907/README.md) | Train／开发／确认的查询、监督与完整三路候选快照；所有英文实验都读它 | 否 |
 | **当前结果** | [llm-judge-pilot-20260910](llm-judge-pilot-20260910/README.md) | N09：LLM 判断器三级试点，含判断缓存、评价与 L3 模型；正式报告见 [docs/reports](../../docs/reports/llm_judge_pilot_2026_09_10.md) | 否 |
+| **交接证据与选型恢复** | [open-judge-selection-20260911](open-judge-selection-20260911/README.md) | #14–#16：原选择规则、执行时间线、运行资源证据与离线复验；事后恢复身份 | 否 |
+| **当前开源补充结果** | [open-judge-qwen3-14b-development-20260911](open-judge-qwen3-14b-development-20260911/README.md) | N14／#15：Qwen 开发 L2 缓存补齐，固定配置、失败和 K10／K20 评价；主 K20 为 54/74 | 否 |
+| **8B 开发 L2 补齐** | [open-judge-qwen3-8b-development-20260911](open-judge-qwen3-8b-development-20260911/README.md) | #15：运行前配置、全新缓存、1,520 项判断及 K10／K20 评价 | 否 |
+| **当前文本参照** | [open-judge-bge-reranker-v2-m3-20260911](open-judge-bge-reranker-v2-m3-20260911/README.md) | N14／#15：BGE 固定权重对照，9,034 条判断、L1／L2 评价与脚本；主 K20 确认 257/371 | 否 |
+| **开源确认结果** | [open-judge-confirmation-20260910](open-judge-confirmation-20260910/README.md) | N11／#16：首次与失败重试分列，实际配置及执行偏差 | 否 |
+| **固定配置确认复验** | [open-judge-confirmation-20260911](open-judge-confirmation-20260911/README.md) | #16：已曝光确认上的单次请求复现，保留原 N11 并列对照；非新独立 Test | 否 |
+| **当前成本分析** | [judge-cost-curve-20260910](judge-cost-curve-20260910/README.md)、[judge-cost-curve-qwen-20260911](judge-cost-curve-qwen-20260911/README.md) | N13／#17：GPT 一期与 Qwen 二期缓存曲线，分别保留触发规则的负／正结果及复验产物 | 否 |
+| **已核验的列表诊断与训练扩展** | [list-collapse-20260910](list-collapse-20260910/README.md) | #23：四排序器及背景 N=8 开发／确认复验、训练模型；默认关闭 | 否 |
+| **成员交付的 Test 聚合** | [nevir-test-final-20260911](nevir-test-final-20260911/README.md) | #23 Test 最终聚合及原冻结记录；缺原始输入／评分／日志，未本地独立复现 | 否 |
+| **成员 Test 脚本，候选未接齐** | [nevir-test-candidates-20260910](nevir-test-candidates-20260910/README.md) | 仅准备／采集脚本，不含原 snapshot | 保留源码；不可误认为候选齐备 |
+| **小样本边界探针** | [ood-probe-20260910](ood-probe-20260910/README.md) | N10／#24：英文 6 查询与中文 12 对，原模型评分、中文完成复核表及离线复算；只作单段判断能力旁证 | 否 |
 | **当前模型来源** | [nevir-english-features-20260907](nevir-english-features-20260907/README.md) | 英文基线由此训练；保存的开发全池分数是各实验的一致性校验基准 | 否 |
 | **当前引用的人审与诊断** | [subject-binding-pilot-20260908](subject-binding-pilot-20260908/README.md) | N08：人审 v5 固定结果（`human/`）、五臂训练、v2/v3 修复产物 | `human/` 不可删；其余见 §3 |
 | 同上 | [nevir-offline-diagnostic-20260907](nevir-offline-diagnostic-20260907/README.md) | 人审匿名映射 `review/private/`（人审 52 题评价必需）、旧 A/B 机械诊断 | `review/` 不可删；其余见 §3 |
@@ -20,7 +31,7 @@
 ## 2. 当前研究的文件依赖链
 
 ```
-data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（test 未读逐题）
+data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（成员已报告 Test 终评；本机本轮未读 Test 逐题）
   → nevir-ltr-validation-20260907/data-preparation/experiment/  prepared/ 与 candidates/（共享输入）
     → nevir-english-features-20260907/comparison/english/       英文基线与保存的开发分数
     → nevir-offline-diagnostic-20260907/review/private/         人审匿名映射
@@ -54,5 +65,8 @@ data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（test 
 - `_archive/`、`_superseded/`、`_engineering-checks/` 三个前缀目录分别表示：不再引用的历史材料、被后续设计替代的结果、工程验收记录；它们都不进导航正文。
 - `summary.json`／`results.json` 是所属命令的聚合统计，先看对应 README 的分母口径；`manifest.json` 在模型包内是契约、在运行目录内是范围记录。
 - 大产物、缓存、模型继续忽略；新增需要入库的 README 时在 `.gitignore` 白名单补一行。
+
+
+- 两期成本曲线均保存聚合 JSON、CSV、SVG、README 和复验记录；原始判断与候选从既有共享输入取得。二期仅离线重放，不把开发补齐的 GPU 成本省略为零成本。
 
 - `judge-statistics-20260910/`（N12，issue #18）：N09 主要差值的来源组自助区间与符号检验表；跟踪 README、`tables.md`、`results.json`。

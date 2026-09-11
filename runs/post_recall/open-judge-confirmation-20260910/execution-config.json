@@ -1,0 +1,66 @@
+{
+  "purpose": "recover interrupted open judge confirmation, N11",
+  "recorded_at": "2026-09-10T11:31:58.176847+00:00",
+  "record_kind": "reconstructed execution record; not a pre-run frozen config",
+  "pre_run_config_file_found": false,
+  "strict_issue_16_acceptance_satisfied": false,
+  "config_evidence": "handoff agent-aab5abfd95105450a.jsonl: initial task and L1/L2 launch commands; root code and saved summaries checked",
+  "implementation_base": "da46a431b93481d910159959a1879f13e1bada0e",
+  "evaluation_git_head": "50e7aa33ec8360e1e309f60ca43be1a6e81c38b5",
+  "model": {
+    "repository": "Qwen/Qwen3-14B-AWQ",
+    "served_name": "qwen3-14b-awq",
+    "revision_observed_after_execution": "31c69efc29464b6bb0aee1398b5a7b50a99340c3",
+    "quantization": "awq_marlin"
+  },
+  "runtime_observed_after_execution": {
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "vllm": "0.29.0",
+    "torch": "2.13.0",
+    "transformers": "5.17.0",
+    "xgrammar": "0.2.6",
+    "server_max_model_len": 8192
+  },
+  "judge_arguments": {
+    "runner": "openai",
+    "endpoint": "http://127.0.0.1:8000",
+    "model": "qwen3-14b-awq",
+    "think": true,
+    "max_tokens": 6144,
+    "num_ctx": 8192,
+    "workers": 8,
+    "batch_size": 1,
+    "seed": 20260910,
+    "prompt_version": "judge_prompt_v1"
+  },
+  "cache_policy": "only available matching prompt/model/effort keys reused; unavailable entries retried; valid cached entries may originate from earlier runs with a different token cap",
+  "data_role": "confirmation subset of validation; 374 queries, 371 eligible directions, 185 complete pairs, 96 source groups",
+  "inputs": {
+    "L1": "runs/post_recall/llm-judge-pilot-20260910/items-confirmation-l1/l1-confirmation.jsonl",
+    "L2": "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/confirmation/confirmation.jsonl",
+    "baseline": "runs/post_recall/llm-judge-pilot-20260910/baseline/confirmation/scores.jsonl",
+    "stage1": "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/confirmation/stage1-confirmation.jsonl"
+  },
+  "raw_run_directories": {
+    "l1-confirmation-judge-qwen3-14b-awq-think": "runs/post_recall/llm-judge-pilot-20260910/l1-confirmation-judge-qwen3-14b-awq-think",
+    "l1-confirmation-judge-qwen3-14b-awq-think-retry": "runs/post_recall/llm-judge-pilot-20260910/l1-confirmation-judge-qwen3-14b-awq-think-retry",
+    "l2s-confirmation-judge-qwen3-14b-awq-think": "runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-judge-qwen3-14b-awq-think",
+    "l2s-confirmation-judge-qwen3-14b-awq-think-retry": "runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-judge-qwen3-14b-awq-think-retry"
+  },
+  "evaluation_top_ks": [
+    10,
+    20
+  ],
+  "protocol_deviations": [
+    "No frozen-config.json saved before execution; configuration recovered from earlier command records.",
+    "L1 and L2 each have a second invocation restricted to unavailable cache keys; first-pass metrics retained separately."
+  ],
+  "failure_observed": "ValueError: judge content must be a string; provider finish_reason was not saved, so token truncation is not independently verified for these records",
+  "new_inference_in_recovery": {
+    "invocations": 1,
+    "unique_missing_keys": 4,
+    "batch_attempts": 12,
+    "new_available_scores": 0
+  },
+  "status": "completed_with_unavailable_and_protocol_deviations"
+}

@@ -23,7 +23,7 @@
 | [#20](https://github.com/ql-link/LinkRag-Eval/issues/20) | 官方 Test 一次性终评；固定主配置和必要对照 | eval／must | #15 #16 #18 #19；#17 的结果用于报告，不要求触发成功 | 1 天 | `runs/post_recall/nevir-test-final-*` |
 | [#21](https://github.com/ql-link/LinkRag-Eval/issues/21) | 错误类型双人标注 | analysis／must | 无 | 人工半天 | `runs/post_recall/error-taxonomy-*`、`docs/reports/error_taxonomy_*` |
 | [#22](https://github.com/ql-link/LinkRag-Eval/issues/22) | 污染声明与改写探针 | analysis／must | 开源部分 #14 | 1 天 | `runs/post_recall/paraphrase-probe-*` |
-| [#23](https://github.com/ql-link/LinkRag-Eval/issues/23) | 列表塌陷的受控证据与背景负例重训 | analysis／optional | 无 | 0.5 + 2–3 天 | `pairwise_training.py`（唯一允许改它的任务）、`runs/post_recall/list-collapse-*` |
+| [#23](https://github.com/ql-link/LinkRag-Eval/issues/23) | 四排序器列表诊断必需；背景负例重训为因果扩展 | analysis／must＋optional | 无 | 0.5 + 2–3 天 | `pairwise_training.py`（唯一允许改它的任务）、`runs/post_recall/list-collapse-*` |
 | [#24](https://github.com/ql-link/LinkRag-Eval/issues/24) | 跨分布小探针 | analysis／optional | #14 | 1 天 | `runs/post_recall/ood-probe-*` |
 | [#25](https://github.com/ql-link/LinkRag-Eval/issues/25) | 论文骨架与图表 | paper／must | 骨架无；数字 #16 #17 #18 #20 | 4–5 天 | `docs/papers/manuscript/` |
 | [#26](https://github.com/ql-link/LinkRag-Eval/issues/26) | 复现包 | paper／must | #16 #20 | 1 天 | `docs/papers/artifacts/` |

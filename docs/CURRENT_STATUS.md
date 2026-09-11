@@ -4,6 +4,17 @@
 
 逐次实验已按现存报告补登到[实验台账](experiments/EXPERIMENT_LOG.md)，包含历史负结果、失败／中止、证据缺口和后续记录字段。该台账用于追溯；本页继续维护当前进度。补登历史条目时仅整理文档；此后新增 N08 的实际执行结果见下方，未核验全部历史机器产物。
 
+**2026-09-11 版本管理。** 现有成果已按 issue 分成下列独立 PR，均尚未合并。#25 仅为研究与写作准备，保持草稿；#23 的输入交接修订不在本轮提交或管理范围。下文“尚未提交／推送”保留实验收尾当时的记录，当前版本入口以本表为准。
+
+| Issue | PR | 范围 |
+| --- | --- | --- |
+| #14 | [#33](https://github.com/ql-link/LinkRag-Eval/pull/33) | 共用运行记录与验收工具 |
+| #15 | [#34](https://github.com/ql-link/LinkRag-Eval/pull/34) | 候选开发比较与选择记录 |
+| #16 | [#35](https://github.com/ql-link/LinkRag-Eval/pull/35) | 固定配置确认复验 |
+| #17 | [#36](https://github.com/ql-link/LinkRag-Eval/pull/36) | Qwen 二期成本曲线 |
+| #24 | [#37](https://github.com/ql-link/LinkRag-Eval/pull/37) | 人工复核收件与离线复算 |
+| #25 | [#38](https://github.com/ql-link/LinkRag-Eval/pull/38) | 研究与写作准备（草稿） |
+
 ## 当前安排：固定开源判断器完成关键条件错排的诊断与修复研究
 
 **2026-09-10 负责人纠偏后的现行方向。** 研究沿“发现细节／事实错排 → 分析来源 → 提出并验证修复”推进。主方案与模型已经明确，统一见[研究计划 §1.3](plans/post-recall-research-plan.md#13-current-direction)：固定融合前 20＋Qwen3-14B-AWQ 思考模式逐段判断，融合分破同分。Qwen 用于固定权重和复现，GPT 保留为启发与参照，追平 GPT 不构成验收；不继续 Qwen3-32B 选型。L1、L3 和列表诊断各自回答辅助问题，成本曲线分别保留 GPT 与 Qwen 的实际触发结果。

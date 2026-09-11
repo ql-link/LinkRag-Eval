@@ -1,0 +1,57 @@
+{
+  "recorded_at": "2026-09-11T04:22:16.991752+00:00",
+  "served_models": {
+    "object": "list",
+    "data": [
+      {
+        "id": "qwen3-8b",
+        "object": "model",
+        "created": 1789100532,
+        "owned_by": "vllm",
+        "root": "/workspace/hf/hub/models--Qwen--Qwen3-8B/snapshots/b968826d9c46dd6066d109eabc6255188de91218",
+        "parent": null,
+        "max_model_len": 8192,
+        "permission": [
+          {
+            "id": "modelperm-ae8c78e4b1d4c673",
+            "object": "model_permission",
+            "created": 1789100532,
+            "allow_create_engine": false,
+            "allow_sampling": true,
+            "allow_logprobs": true,
+            "allow_search_indices": false,
+            "allow_view": true,
+            "allow_fine_tuning": false,
+            "organization": "*",
+            "group": null,
+            "is_blocking": false
+          }
+        ]
+      }
+    ]
+  },
+  "smoke": {
+    "runner": "openai",
+    "endpoint": "127.0.0.1",
+    "model": "qwen3-8b",
+    "effort": "think",
+    "prompt_version": "judge_prompt_v1",
+    "codex_version": null,
+    "items": 3,
+    "unique_keys": 3,
+    "cache_hits": 0,
+    "cache_misses": 3,
+    "duplicate_items": 0,
+    "planned_batches": 3,
+    "batch_count": 3,
+    "workers": 3,
+    "batch_size": 1,
+    "seed": 20260910,
+    "unavailable": 0,
+    "wall_seconds": 6.543645915982779,
+    "started_at": "2026-09-11T04:22:10.447439+00:00",
+    "completed_at": "2026-09-11T04:22:16.990832+00:00",
+    "max_attempts_per_unique_input": 1
+  },
+  "scope": "Three synthetic query/passage inputs outside NevIR; schema and transport check only; never reused as evaluation scores"
+}

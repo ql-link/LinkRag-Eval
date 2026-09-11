@@ -1,0 +1,237 @@
+{
+  "recorded_at": "2026-09-10T19:05:44.644171+00:00",
+  "record_kind": "retrospective recovery, not a preregistration",
+  "files": [
+    {
+      "path": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a34a92e054e4a7171.jsonl",
+      "bytes": 281935,
+      "records": 143,
+      "record_types": {
+        "user": 36,
+        "attachment": 45,
+        "assistant": 62
+      },
+      "first_timestamp": "2026-09-10T06:47:47.277Z",
+      "last_timestamp": "2026-09-10T07:17:10.770Z",
+      "parse_errors": 0
+    },
+    {
+      "path": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a34a92e054e4a7171.meta.json",
+      "bytes": 155,
+      "parse_errors": 0
+    },
+    {
+      "path": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a922182e9571a9b73.jsonl",
+      "bytes": 271787,
+      "records": 126,
+      "record_types": {
+        "user": 29,
+        "attachment": 38,
+        "assistant": 59
+      },
+      "first_timestamp": "2026-09-10T06:11:42.224Z",
+      "last_timestamp": "2026-09-10T06:44:28.931Z",
+      "parse_errors": 0
+    },
+    {
+      "path": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a922182e9571a9b73.meta.json",
+      "bytes": 153,
+      "parse_errors": 0
+    },
+    {
+      "path": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-aab5abfd95105450a.jsonl",
+      "bytes": 342145,
+      "records": 150,
+      "record_types": {
+        "user": 40,
+        "attachment": 42,
+        "assistant": 68
+      },
+      "first_timestamp": "2026-09-10T10:04:40.543Z",
+      "last_timestamp": "2026-09-10T10:32:38.843Z",
+      "parse_errors": 0
+    },
+    {
+      "path": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-aab5abfd95105450a.meta.json",
+      "bytes": 157,
+      "parse_errors": 0
+    },
+    {
+      "path": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/tool-results/bkwi6tm4e.txt",
+      "bytes": 47566,
+      "lines": 889
+    },
+    {
+      "path": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "bytes": 4816041,
+      "records": 1375,
+      "record_types": {
+        "custom-title": 29,
+        "agent-name": 28,
+        "mode": 28,
+        "atis-latch": 28,
+        "pr-link": 30,
+        "queue-operation": 31,
+        "user": 277,
+        "attachment": 357,
+        "assistant": 477,
+        "system": 28,
+        "last-prompt": 28,
+        "file-history-snapshot": 6,
+        "bridge-session": 28
+      },
+      "first_timestamp": "2026-09-09T12:56:01.163Z",
+      "last_timestamp": "2026-09-10T10:32:38.844Z",
+      "parse_errors": 0
+    }
+  ],
+  "github_issues_observed": [
+    {
+      "createdAt": "2026-09-10T04:20:40Z",
+      "number": 14,
+      "state": "OPEN",
+      "title": "开源判断器本地运行器：同提示词、同 schema 的 JudgeRunner 实现",
+      "updatedAt": "2026-09-10T04:21:28Z",
+      "url": "https://github.com/ql-link/LinkRag-Eval/issues/14"
+    },
+    {
+      "createdAt": "2026-09-10T04:20:43Z",
+      "number": 15,
+      "state": "OPEN",
+      "title": "开源判断器候选比较：开发集选模与选择记录",
+      "updatedAt": "2026-09-10T04:21:29Z",
+      "url": "https://github.com/ql-link/LinkRag-Eval/issues/15"
+    },
+    {
+      "createdAt": "2026-09-10T04:20:45Z",
+      "number": 16,
+      "state": "OPEN",
+      "title": "开源判断器确认集一次性评价（L1／L2）",
+      "updatedAt": "2026-09-10T04:21:31Z",
+      "url": "https://github.com/ql-link/LinkRag-Eval/issues/16"
+    }
+  ],
+  "chronology": [
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "line": 608,
+      "timestamp": "2026-09-10T04:20:17.726Z",
+      "event": "Selection criteria authored before model comparisons and confirmation"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a34a92e054e4a7171.jsonl",
+      "line": 107,
+      "timestamp": "2026-09-10T06:54:35.228Z",
+      "event": "Qwen3-8B thinking development L1 launch"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a34a92e054e4a7171.jsonl",
+      "line": 126,
+      "timestamp": "2026-09-10T07:12:00.781Z",
+      "event": "Qwen3-14B AWQ non-thinking development L1 launch"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a34a92e054e4a7171.jsonl",
+      "line": 133,
+      "timestamp": "2026-09-10T07:12:48.862Z",
+      "event": "Qwen3-14B AWQ thinking development L1 launch"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "line": 1137,
+      "timestamp": "2026-09-10T07:22:20.282Z",
+      "event": "Qwen3-14B-AWQ thinking provisionally selected; 32B question still open"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "line": 1141,
+      "timestamp": "2026-09-10T09:53:05.678Z",
+      "event": "User explicitly excludes Qwen3-32B-AWQ"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "line": 1247,
+      "timestamp": "2026-09-10T10:04:40.528Z",
+      "event": "Claude delegates confirmation; explicitly directs missing-only retries"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-aab5abfd95105450a.jsonl",
+      "line": 1,
+      "timestamp": "2026-09-10T10:04:40.543Z",
+      "event": "Worker receives full settings and missing-only retry instruction before confirmation"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-aab5abfd95105450a.jsonl",
+      "line": 63,
+      "timestamp": "2026-09-10T10:05:39.254Z",
+      "event": "Development missing-only check at max_tokens 6144, before confirmation launch"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-aab5abfd95105450a.jsonl",
+      "line": 68,
+      "timestamp": "2026-09-10T10:09:31.391Z",
+      "event": "Claude launches first L1 confirmation"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-aab5abfd95105450a.jsonl",
+      "line": 122,
+      "timestamp": "2026-09-10T10:19:52.619Z",
+      "event": "Claude launches missing-only L1 confirmation retry"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-aab5abfd95105450a.jsonl",
+      "line": 127,
+      "timestamp": "2026-09-10T10:23:37.650Z",
+      "event": "Claude launches first L2 confirmation"
+    },
+    {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-aab5abfd95105450a.jsonl",
+      "line": 148,
+      "timestamp": "2026-09-10T10:27:05.315Z",
+      "event": "Claude polls unfinished L2 shortly before interruption"
+    }
+  ],
+  "later_recovery": {
+    "source": "runs/post_recall/open-judge-confirmation-20260910/execution-config.json",
+    "actor": "Codex takeover",
+    "action": "L2 missing-only retry",
+    "unique_missing_keys": 4,
+    "request_attempts": 12,
+    "new_valid_scores": 0
+  },
+  "historical_gaps": {
+    "original_selection_json_found": false,
+    "original_frozen_config_json_found": false,
+    "peak_gpu_memory_measurement_found": false,
+    "qwen_8b_l2_results_found": false
+  },
+  "new_model_requests_in_this_audit": 0,
+  "github_recovery_updates": [
+    {
+      "number": 14,
+      "state": "OPEN",
+      "updatedAt": "2026-09-10T19:11:12Z",
+      "url": "https://github.com/ql-link/LinkRag-Eval/issues/14"
+    },
+    {
+      "number": 15,
+      "state": "OPEN",
+      "updatedAt": "2026-09-10T19:11:16Z",
+      "url": "https://github.com/ql-link/LinkRag-Eval/issues/15"
+    },
+    {
+      "number": 16,
+      "state": "OPEN",
+      "updatedAt": "2026-09-10T19:11:20Z",
+      "url": "https://github.com/ql-link/LinkRag-Eval/issues/16"
+    }
+  ],
+  "subsequent_issue_14_resolution": {
+    "closedAt": "2026-09-11T03:40:04Z",
+    "number": 14,
+    "state": "CLOSED",
+    "stateReason": "COMPLETED",
+    "url": "https://github.com/ql-link/LinkRag-Eval/issues/14",
+    "basis": "Core runner and evaluation delivered; missing historical peak memory retained as non-blocking resource-reporting limitation, not converted into a measured value."
+  }
+}

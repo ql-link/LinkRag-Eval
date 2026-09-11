@@ -1,6 +1,6 @@
 # 召回后实验产物导航
 
-本页是 `runs/post_recall/` 的唯一导航。查实验先看状态列，再进目录 `README.md`。当前进度看[当前状态](../../docs/CURRENT_STATUS.md)，逐次实验看[实验台账](../../docs/experiments/EXPERIMENT_LOG.md)，数据划分看[数据入口](../../data/README.md)，模型身份看[模型入口](../../models/README.md)。本目录整体被 Git 忽略，只有各目录的 `README.md` 入库；运行数据不随 clone 出现。
+本页是 `runs/post_recall/` 的唯一导航。查实验先看状态列，再进目录 `README.md`。当前进度看[当前状态](../../docs/CURRENT_STATUS.md)，逐次实验看[实验台账](../../docs/experiments/EXPERIMENT_LOG.md)，数据划分看[数据入口](../../data/README.md)，模型身份看[模型入口](../../models/README.md)。本目录默认被 Git 忽略；各目录 README 及显式白名单中的轻量配置、聚合结果、复现脚本入库。原始运行数据、模型及缓存通常不随 clone 出现，具体范围见各目录说明。
 
 ## 1. 目录状态一览
 
@@ -8,6 +8,7 @@
 | --- | --- | --- | --- |
 | **共享输入，不可删** | [nevir-ltr-validation-20260907](nevir-ltr-validation-20260907/README.md) | Train／开发／确认的查询、监督与完整三路候选快照；所有英文实验都读它 | 否 |
 | **当前结果** | [llm-judge-pilot-20260910](llm-judge-pilot-20260910/README.md) | N09：LLM 判断器三级试点，含判断缓存、评价与 L3 模型；正式报告见 [docs/reports](../../docs/reports/llm_judge_pilot_2026_09_10.md) | 否 |
+| **交接证据与选型恢复** | [open-judge-selection-20260911](open-judge-selection-20260911/README.md) | #14–#16：原选择规则、执行时间线、运行资源证据与离线复验；事后恢复身份 | 否 |
 | **当前模型来源** | [nevir-english-features-20260907](nevir-english-features-20260907/README.md) | 英文基线由此训练；保存的开发全池分数是各实验的一致性校验基准 | 否 |
 | **当前引用的人审与诊断** | [subject-binding-pilot-20260908](subject-binding-pilot-20260908/README.md) | N08：人审 v5 固定结果（`human/`）、五臂训练、v2/v3 修复产物 | `human/` 不可删；其余见 §3 |
 | 同上 | [nevir-offline-diagnostic-20260907](nevir-offline-diagnostic-20260907/README.md) | 人审匿名映射 `review/private/`（人审 52 题评价必需）、旧 A/B 机械诊断 | `review/` 不可删；其余见 §3 |

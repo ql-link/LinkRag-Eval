@@ -113,3 +113,6 @@ venv/
 .idea/
 .vscode/
 .DS_Store
+
+!/runs/post_recall/ood-probe-20260910/review-sheet-completed.md
+!/runs/post_recall/ood-probe-20260910/review-validation.json

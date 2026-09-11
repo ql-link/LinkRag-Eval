@@ -91,6 +91,25 @@ def _prepare(fixture):
     return evaluation.prepare_inputs(*fixture, role="development")
 
 
+def test_prepare_test_role_preserves_conflicts_and_missing_inputs():
+    queries, labels, inputs, mapping = _fixture(pair_count=2)
+    for label in labels:
+        label["role"] = "test"
+    labels[0]["structural_conflict"] = True
+    prepared = evaluation.prepare_inputs(queries, labels, inputs[:-1], mapping, role="test")
+    assert len(prepared) == 4
+    assert all(item["role"] == "test" for item in prepared)
+    assert prepared[0]["structural_conflict"] and prepared[0]["rank_input_complete"]
+    assert prepared[-1]["input_status"] == "not_executed"
+    assert prepared[-1]["coverage_state"] == "unknown"
+    assert prepared[-1]["method_row"] is None
+
+
+def test_prepare_test_role_rejects_another_split_labels():
+    with pytest.raises(evaluation.EvaluationContractError, match="role/direction"):
+        evaluation.prepare_inputs(*_fixture(), role="test")
+
+
 class _Predictor:
     def __init__(self, score_table, *, failure=None):
         self.score_table = score_table

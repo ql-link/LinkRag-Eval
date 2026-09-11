@@ -1,0 +1,153 @@
+{
+  "record_kind": "pre-inference fixed Test configuration",
+  "recorded_at": "2026-09-11T13:11:23.835917+00:00",
+  "repository_root": "/root/linkrag-eval-test-20260911/code",
+  "code_commit": "23f465d0c7a991571488173593070fecf6809e0c",
+  "application_source_changes": true,
+  "experiment_driver": "runs/post_recall/open-judge-selection-20260911/run_frozen.py",
+  "issue": 20,
+  "purpose": "Owner-fixed Qwen K20 Test evaluation; no selection on Test results",
+  "model": {
+    "repository": "Qwen/Qwen3-14B-AWQ",
+    "served_name": "qwen3-14b-awq",
+    "revision": "31c69efc29464b6bb0aee1398b5a7b50a99340c3",
+    "format": "awq_marlin"
+  },
+  "server": {
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "vllm": "0.29.0",
+    "torch": "2.13.0",
+    "transformers": "5.17.0",
+    "context_length": 8192,
+    "gpu_memory_utilization": 0.9,
+    "reasoning_parser": "qwen3",
+    "seed": 0,
+    "launch_script": "runs/post_recall/nevir-test-main-20260911/serve.py",
+    "ssh_host": "connect.nmb1.seetacloud.com",
+    "ssh_port": 12981,
+    "ssh_user": "root",
+    "python": "/root/linkrag-eval-test-20260911/gpu-venv-py313/bin/python",
+    "python_version": "3.13.5",
+    "driver_version": "580.76.05",
+    "runtime_root": "/root/linkrag-eval-test-20260911",
+    "data_root": "/root/autodl-tmp/linkrag-eval-test-20260911",
+    "model_path": "/root/autodl-tmp/linkrag-eval-test-20260911/models/qwen3-14b-awq/31c69efc29464b6bb0aee1398b5a7b50a99340c3"
+  },
+  "judge_arguments": {
+    "endpoint": "http://127.0.0.1:8000",
+    "think": true,
+    "max_tokens": 6144,
+    "num_ctx": 8192,
+    "workers": 8,
+    "batch_size": 1,
+    "temperature": 0,
+    "timeout_seconds": 600,
+    "batch_shuffle_seed": 20260910,
+    "model_request_seed": null,
+    "prompt_version": "judge_prompt_v1"
+  },
+  "cache_policy": "fresh; no historical or cross-job caches",
+  "single_attempt": true,
+  "failure_policy": "Exactly one HTTP request per unique input; no retries or schema fallback; unavailable rows retained. Each L1/L2 job invoked once.",
+  "evaluation": {
+    "K": [
+      20
+    ],
+    "primary": "stage1_judge; fusion score tie-break",
+    "auxiliary": [
+      "E0",
+      "stage1",
+      "E0_judge",
+      "BGE same K20"
+    ],
+    "unavailable": "Retain denominators; L1 unavailable is not correct; L2 whole-query fusion fallback"
+  },
+  "constraints": [
+    "English NevIR fixed Test candidates; no recall, training, prompt or label changes",
+    "Exactly the declared L1 and K20 L2 jobs; no K/trigger/model selection on Test",
+    "Fresh independent jobs; one request per unique input within each job, no retries",
+    "Member Test results retained separately; never overwrite the Issue #23 folder",
+    "Only aggregate results are displayed; raw Test rows remain local experiment artifacts"
+  ],
+  "jobs": [
+    {
+      "name": "l1-test",
+      "level": "l1",
+      "input": "runs/post_recall/nevir-test-main-20260911/inputs/l1-test.jsonl",
+      "items": 5476,
+      "queries": 2738,
+      "unique_requests": 5472,
+      "output": "runs/post_recall/nevir-test-main-20260911/l1-judge"
+    },
+    {
+      "name": "l2-test",
+      "level": "l2",
+      "input": "runs/post_recall/nevir-test-main-20260911/inputs/l2-test.jsonl",
+      "items": 55320,
+      "queries": 2766,
+      "unique_requests": 55260,
+      "output": "runs/post_recall/nevir-test-main-20260911/l2-judge"
+    }
+  ],
+  "model_choice_basis": "Owner-fixed Qwen14B thinking K20; historical development selection already documented before original confirmation. This repetition does not reselect the main model.",
+  "historical_record": "runs/post_recall/open-judge-confirmation-20260911/frozen-config.json",
+  "engineering_smoke": {
+    "scope": "Three synthetic query/passage inputs outside NevIR; schema and transport check only; never reused as evaluation scores",
+    "request_count": 3
+  },
+  "snapshot": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-test-candidates-20260910/snapshot",
+  "snapshot_acceptance": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-test-candidates-20260910/run.json",
+  "test_exposure": "Issue #23 member E0/fusion/N8 aggregates already observed; no Qwen Test outputs yet",
+  "population": {
+    "all_queries": 2766,
+    "both_covered": 2738,
+    "primary": "official label available, both designated passages covered, no structural conflict",
+    "primary_queries": 2736,
+    "primary_source_groups": 699,
+    "primary_complete_pairs": 1363,
+    "sensitivity": "Also report all 2738 covered queries including the structural-conflict pair",
+    "cross_split_duplicate_passages": "4 exact shared passages retained; no deletion"
+  },
+  "statistics": {
+    "implementation": "linkrag_eval.retrieval.learning_to_rank.pair_statistics",
+    "seed": 20260910,
+    "repeats": 2000,
+    "alpha": 0.05,
+    "primary_contrast": "Qwen stage1_judge minus fixed fusion stage1",
+    "sign_test": "directional exact test; no group or multiplicity correction"
+  },
+  "inference_status": "not_started",
+  "version_control_status": "Pre-inference record; exact committed bytes required before launch; actual execution HEAD recorded in worker-start.json",
+  "bge_config": "runs/post_recall/nevir-test-main-20260911/bge/execution-config.json",
+  "baseline": {
+    "path": "models/english-baseline/model.txt",
+    "sha256": "03f578106b2bbaea65721cdeb75fd717aa00ac70fd147ff26e46310a784ba164"
+  },
+  "configuration_completed_at": "2026-09-11T17:31:31.832445+00:00",
+  "storage": {
+    "max_new_disk_bytes": 35000000000,
+    "scope": "This task across its isolated runtime and data directories; existing unrelated data retained",
+    "package_download_cache": "/dev/shm/linkrag-eval-test-20260911",
+    "qwen_model_bytes": 9992654711,
+    "policy": "One GPU model at a time; remote driver and about 58 MB of fixed inputs; reserve 4 GB for request artifacts and caches; retrieve outputs before removing only task-owned Qwen model/cache for BGE",
+    "output_reserve_bytes": 4000000000
+  },
+  "infrastructure_migration": {
+    "recorded_at": "2026-09-11T15:31:35.588879+00:00",
+    "from": "previous ssh runpod instance",
+    "to": "owner-provided replacement RTX 4090",
+    "authorization": "Owner supplied replacement SSH connection and requested a 35 GB storage budget",
+    "before_any_test_inference": true,
+    "research_configuration": "Model revision, prompt, K20, scores, population, decoding and failure policy unchanged",
+    "runtime_note": "Pinned GPU runtime on Python 3.13.5, with the project driver in a separate Python 3.13.5 environment; dependency lists recorded separately. Initial Python 3.10.8 service initialization failed in Triton source inspection before any model requests; a standalone source-inspection reproduction passed on 3.13.5. No vLLM or Triton source patches."
+  },
+  "execution": {
+    "mode": "remote_detached_single_worker",
+    "driver_python": "/root/linkrag-eval-test-20260911/judge-venv/bin/python",
+    "driver_python_version": "3.13.5",
+    "source": "Deploy committed source and exact frozen config before launch; prepared input rows unchanged",
+    "outputs": "Remote run directory; retrieve to the local run directory after completion",
+    "control": "Local workflow qwen checks committed config, remote config bytes and exclusive launch/worker markers; no auto restart"
+  },
+  "code_commit_scope": "Preparation base revision; actual execution revision is recorded separately at job launch"
+}

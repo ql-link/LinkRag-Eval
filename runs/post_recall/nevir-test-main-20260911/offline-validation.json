@@ -1,0 +1,52 @@
+{
+  "status": "offline_checks_passed_inference_not_started",
+  "completed_at": "2026-09-11T13:23:29.619468+00:00",
+  "wall_seconds": 1.1364564159885049,
+  "jobs": [
+    {
+      "name": "l1-test",
+      "items": 5476,
+      "queries": 2738,
+      "unique_requests": 5472
+    },
+    {
+      "name": "l2-test",
+      "items": 55320,
+      "queries": 2766,
+      "unique_requests": 55260
+    }
+  ],
+  "qwen_total_unique_requests_planned": 60732,
+  "bge_union_items": 55502,
+  "checks": [
+    "L1 exactly the jointly covered designated pairs",
+    "L2 exactly fixed fusion Top20 for every Test query",
+    "unique request counts use existing prompt cache keys",
+    "BGE union identities, text and level membership exact",
+    "fixed K20/model/prompt/failure policy; Test-only BGE role adaptation",
+    "driver syntax valid; no inference or evaluation outputs",
+    "all 29 delivered checksums still match after migration"
+  ],
+  "inference_guard": "blocked_as_expected: frozen configs not committed; no inference attempted",
+  "new_remote_requests": 0,
+  "trained_ranker_predictions": 0,
+  "delivery_files_preserved": 30,
+  "root_incoming_directory_removed": true,
+  "regression": {
+    "command": "LINKRAG_EVAL_REQUIRE_RAG=1 .venv/bin/python -m pytest -m 'not integration' -q",
+    "passed": 1310,
+    "skipped": 23,
+    "deselected": 3,
+    "warnings": 6,
+    "wall_seconds": 18.06
+  },
+  "validation_note": "Initial static runner comparison used the wrong old error-message string; corrected the check against the actual original runner. No input or method change was needed.",
+  "access": "machine_only; aggregate output; no query, passage or per-query score display",
+  "pending": [
+    "Commit the fixed configs before inference as required by issue #20",
+    "Owner has deferred GPU activation; verify original GPU runtime and synthetic smoke when resumed",
+    "Baseline/Qwen/BGE scoring and final statistics have not run"
+  ],
+  "final_config_metadata_reviewed_at": "2026-09-11T13:31:23.070730+00:00",
+  "final_config_metadata_note": "BGE constraint wording explicitly matches the validated L1/L2 union; committed-config guard still blocks, inference outputs absent."
+}

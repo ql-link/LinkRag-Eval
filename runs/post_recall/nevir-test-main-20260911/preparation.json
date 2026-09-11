@@ -1,0 +1,30 @@
+{
+  "status": "prepared_not_scored",
+  "completed_at": "2026-09-11T13:11:24.433357+00:00",
+  "wall_seconds": 75.45116924995091,
+  "code_revision": "23f465d0c7a991571488173593070fecf6809e0c",
+  "jobs": [
+    {
+      "name": "l1-test",
+      "level": "l1",
+      "input": "runs/post_recall/nevir-test-main-20260911/inputs/l1-test.jsonl",
+      "items": 5476,
+      "queries": 2738,
+      "unique_requests": 5472,
+      "output": "runs/post_recall/nevir-test-main-20260911/l1-judge"
+    },
+    {
+      "name": "l2-test",
+      "level": "l2",
+      "input": "runs/post_recall/nevir-test-main-20260911/inputs/l2-test.jsonl",
+      "items": 55320,
+      "queries": 2766,
+      "unique_requests": 55260,
+      "output": "runs/post_recall/nevir-test-main-20260911/l2-judge"
+    }
+  ],
+  "bge_items": 55502,
+  "new_remote_requests": 0,
+  "trained_ranker_predictions": 0,
+  "fusion": "Existing fixed score reconstructed solely for selection; no accuracy computed"
+}

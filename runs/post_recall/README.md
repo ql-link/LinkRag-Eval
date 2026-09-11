@@ -68,3 +68,5 @@ data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（成�
 
 
 - 两期成本曲线均保存聚合 JSON、CSV、SVG、README 和复验记录；原始判断与候选从既有共享输入取得。二期仅离线重放，不把开发补齐的 GPU 成本省略为零成本。
+
+- `judge-statistics-20260910/`（N12，issue #18）：N09 主要差值的来源组自助区间与符号检验表；跟踪 README、`tables.md`、`results.json`。

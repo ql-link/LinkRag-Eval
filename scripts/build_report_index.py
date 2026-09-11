@@ -19,7 +19,7 @@ EXCLUDED_NAMES = {"REPORT_INDEX.md"}
 REPORT_GUIDES = {
     "llm_judge_pilot_2026_09_10": (
         "英文研究与 NevIR", "读文本的判断器能否补上 38 维缺失的条件信号？",
-        "L1 单段判断、固定融合前 K 重排、判断列进 LTR；确认集只跑一次，开发与人审已曝光。",
+        "L1 单段判断、固定融合前 K 重排、判断列进 LTR；区分原确认、失败重试与后补复验。",
     ),
     "open_judge_selection_2026_09_11": (
         "英文研究与 NevIR", "为什么选 Qwen14B，8B 与 BGE 的开发对照是什么？",

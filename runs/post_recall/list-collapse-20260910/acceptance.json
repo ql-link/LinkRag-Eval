@@ -1,0 +1,191 @@
+{
+  "verified_at": "2026-09-11T08:23:46.924671+00:00",
+  "status": "passed",
+  "scope": "local development/confirmation predictions and metrics; no Test rows or training",
+  "versions": {
+    "lightgbm": "4.7.0"
+  },
+  "model_bundles": {
+    "E0": {
+      "model_version": "issue23-disabled-replay-20260910",
+      "feature_version": "candidate_difference_v3_en_v1",
+      "feature_signature": "0aa6f9b1b58f8aba935b4c1c97e42f56ab83e8ddc0922fe59dc5786a675dc808",
+      "alias_enabled": false,
+      "verified_files": [
+        "feature_contract.json",
+        "manifest.json",
+        "model.txt",
+        "short_fallback.json",
+        "test_vectors.json"
+      ],
+      "verified_test_vectors": 3
+    },
+    "background_n8": {
+      "model_version": "issue23-background-n8-20260910",
+      "feature_version": "candidate_difference_v3_en_v1",
+      "feature_signature": "0aa6f9b1b58f8aba935b4c1c97e42f56ab83e8ddc0922fe59dc5786a675dc808",
+      "alias_enabled": false,
+      "verified_files": [
+        "feature_contract.json",
+        "manifest.json",
+        "model.txt",
+        "short_fallback.json",
+        "test_vectors.json"
+      ],
+      "verified_test_vectors": 3
+    }
+  },
+  "e0_predictions_equal_existing_cache": true,
+  "integer_metrics_exact": true,
+  "floating_metric_absolute_tolerance": 1e-12,
+  "reported_metrics_reproduced": {
+    "development": {
+      "E0": {
+        "queries": 74,
+        "strict_correct": 44,
+        "strict_wrong": 29,
+        "strict_tie": 1,
+        "n": 74,
+        "preferred@1": 0.2702702702702703,
+        "preferred@3": 0.2702702702702703,
+        "preferred_mrr": 0.2850828470517198,
+        "mean_rank_preferred": 82.74324324324324,
+        "mean_rank_other": 98.77027027027027,
+        "median_rank_designated": 114.0,
+        "both_in_top10": 1
+      },
+      "background_n8": {
+        "queries": 74,
+        "strict_correct": 39,
+        "strict_wrong": 34,
+        "strict_tie": 1,
+        "n": 74,
+        "preferred@1": 0.35135135135135137,
+        "preferred@3": 0.7972972972972973,
+        "preferred_mrr": 0.5730806011884065,
+        "mean_rank_preferred": 5.108108108108108,
+        "mean_rank_other": 3.2027027027027026,
+        "median_rank_designated": 2.0,
+        "both_in_top10": 70
+      }
+    },
+    "confirmation": {
+      "E0": {
+        "queries": 371,
+        "strict_correct": 208,
+        "strict_wrong": 161,
+        "strict_tie": 2,
+        "n": 371,
+        "preferred@1": 0.2857142857142857,
+        "preferred@3": 0.33153638814016173,
+        "preferred_mrr": 0.3168758735239351,
+        "mean_rank_preferred": 81.91374663072776,
+        "mean_rank_other": 96.26684636118598,
+        "median_rank_designated": 105.5,
+        "both_in_top10": 12
+      },
+      "background_n8": {
+        "queries": 371,
+        "strict_correct": 198,
+        "strict_wrong": 168,
+        "strict_tie": 5,
+        "n": 371,
+        "preferred@1": 0.3638814016172507,
+        "preferred@3": 0.9083557951482479,
+        "preferred_mrr": 0.6133188153066859,
+        "mean_rank_preferred": 2.4851752021563343,
+        "mean_rank_other": 2.8221024258760106,
+        "median_rank_designated": 2.0,
+        "both_in_top10": 363
+      },
+      "A": {
+        "queries": 371,
+        "strict_correct": 193,
+        "strict_wrong": 169,
+        "strict_tie": 9,
+        "n": 371,
+        "preferred@1": 0.3665768194070081,
+        "preferred@3": 0.8787061994609164,
+        "preferred_mrr": 0.5965043999600299,
+        "mean_rank_preferred": 3.776280323450135,
+        "mean_rank_other": 4.048517520215634,
+        "median_rank_designated": 2.0,
+        "both_in_top10": 338
+      },
+      "B": {
+        "queries": 371,
+        "strict_correct": 201,
+        "strict_wrong": 167,
+        "strict_tie": 3,
+        "n": 371,
+        "preferred@1": 0.29380053908355797,
+        "preferred@3": 0.3719676549865229,
+        "preferred_mrr": 0.33416127168284254,
+        "mean_rank_preferred": 77.91374663072776,
+        "mean_rank_other": 89.20485175202157,
+        "median_rank_designated": 101.0,
+        "both_in_top10": 26
+      },
+      "fusion": {
+        "queries": 371,
+        "strict_correct": 189,
+        "strict_wrong": 179,
+        "strict_tie": 3,
+        "n": 371,
+        "preferred@1": 0.3665768194070081,
+        "preferred@3": 0.8867924528301887,
+        "preferred_mrr": 0.6016664687639389,
+        "mean_rank_preferred": 3.4474393530997305,
+        "mean_rank_other": 3.700808625336927,
+        "median_rank_designated": 2.0,
+        "both_in_top10": 348
+      }
+    }
+  },
+  "elapsed_seconds": 11.979580584098585,
+  "test_results": "received aggregates only; not independently reproduced",
+  "test_aggregate_arithmetic": {
+    "status": "passed",
+    "checks": [
+      "six correct/wrong/tie totals",
+      "six accuracies and Wilson intervals",
+      "six bidirectional rates",
+      "McNemar discordant total and exact binomial p-value"
+    ],
+    "p_value_recomputed": 0.008008865579404861,
+    "strict_accuracy_difference_n8_minus_e0": -0.020833333333333332,
+    "independent_test_reproduction": false,
+    "limitation": "Original Test candidates, labels, raw scores and run logs were not delivered; query/pair/source independence and execution chronology cannot be verified from aggregates."
+  },
+  "statistical_review": {
+    "fallacy_types_checked": 11,
+    "simpson_paradox": "source-group breakdown absent; unresolved",
+    "ecological_fallacy": "list metrics describe designated passages only; no whole-pool relevance claim",
+    "berkson_selection": "metrics are conditional on joint candidate coverage; coverage is separately reported",
+    "collider_bias": "no causal adjustment estimated; cannot generalize conditional ranking to recall performance",
+    "base_rate_neglect": "correct/wrong/tie and denominators retained",
+    "regression_to_mean": "fixed baseline comparison present; no repeated-seed evidence",
+    "survivorship_bias": "uncovered and structural-conflict exclusions disclosed; sensitivity aggregate retained",
+    "look_elsewhere": "one reported N and p-value; full run logs unavailable",
+    "forking_paths": "member reports fixed selection; original timestamps absent; tie aggregation correction disclosed",
+    "causality": "N=8 changes sampling and label gains together; does not isolate a unique cause",
+    "reverse_causality": "code intervention precedes prediction in implementation; original chronology is not independently verified",
+    "cluster_dependence": "query-wise Wilson/McNemar assume independent units; source/pair clustering not addressed by received p-value"
+  },
+  "code_validation": {
+    "training_module": {
+      "passed": 39,
+      "warnings": 1
+    },
+    "non_integration": {
+      "passed": 1264,
+      "skipped": 23,
+      "deselected": 3,
+      "warnings": 6
+    },
+    "command": "LINKRAG_EVAL_REQUIRE_RAG=1 .venv/bin/python -m pytest -m 'not integration' -q",
+    "ruff": "passed on changed source, tests, report index and four experiment scripts",
+    "test_overwrite_guard": "verified to refuse before any Test input read",
+    "logs": "_engineering-checks/"
+  }
+}

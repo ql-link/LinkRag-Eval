@@ -15,6 +15,9 @@
 | **开源确认结果** | [open-judge-confirmation-20260910](open-judge-confirmation-20260910/README.md) | N11／#16：首次与失败重试分列，实际配置及执行偏差 | 否 |
 | **固定配置确认复验** | [open-judge-confirmation-20260911](open-judge-confirmation-20260911/README.md) | #16：已曝光确认上的单次请求复现，保留原 N11 并列对照；非新独立 Test | 否 |
 | **当前成本分析** | [judge-cost-curve-20260910](judge-cost-curve-20260910/README.md)、[judge-cost-curve-qwen-20260911](judge-cost-curve-qwen-20260911/README.md) | N13／#17：GPT 一期与 Qwen 二期缓存曲线，分别保留触发规则的负／正结果及复验产物 | 否 |
+| **已核验的列表诊断与训练扩展** | [list-collapse-20260910](list-collapse-20260910/README.md) | #23：四排序器及背景 N=8 开发／确认复验、训练模型；默认关闭 | 否 |
+| **成员交付的 Test 聚合** | [nevir-test-final-20260911](nevir-test-final-20260911/README.md) | #23 Test 最终聚合及原冻结记录；缺原始输入／评分／日志，未本地独立复现 | 否 |
+| **成员 Test 脚本，候选未接齐** | [nevir-test-candidates-20260910](nevir-test-candidates-20260910/README.md) | 仅准备／采集脚本，不含原 snapshot | 保留源码；不可误认为候选齐备 |
 | **小样本边界探针** | [ood-probe-20260910](ood-probe-20260910/README.md) | N10／#24：英文 6 查询与中文 12 对，原模型评分、中文完成复核表及离线复算；只作单段判断能力旁证 | 否 |
 | **当前模型来源** | [nevir-english-features-20260907](nevir-english-features-20260907/README.md) | 英文基线由此训练；保存的开发全池分数是各实验的一致性校验基准 | 否 |
 | **当前引用的人审与诊断** | [subject-binding-pilot-20260908](subject-binding-pilot-20260908/README.md) | N08：人审 v5 固定结果（`human/`）、五臂训练、v2/v3 修复产物 | `human/` 不可删；其余见 §3 |
@@ -28,7 +31,7 @@
 ## 2. 当前研究的文件依赖链
 
 ```
-data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（test 未读逐题）
+data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（成员已报告 Test 终评；本机本轮未读 Test 逐题）
   → nevir-ltr-validation-20260907/data-preparation/experiment/  prepared/ 与 candidates/（共享输入）
     → nevir-english-features-20260907/comparison/english/       英文基线与保存的开发分数
     → nevir-offline-diagnostic-20260907/review/private/         人审匿名映射

@@ -44,7 +44,8 @@
 | --- | --- | --- |
 | 准备原 NevIR 划分 | [nevir_ltr_prepare.py](nevir_ltr_prepare.py) | 官方 Train／Validation＋既定分组建议 → prepared 语料、查询与监督；本地写文件，涉及原确认划分 |
 | 原 NevIR 入库／采集 | [nevir_ltr_collect.py](nevir_ltr_collect.py) | prepared 语料或查询 → 存储／三路候选；远端编码与检索，按 `--stage` 分阶段 |
-| 部分标签训练 | [pairwise_training 模块](../src/linkrag_eval/retrieval/learning_to_rank/pairwise_training.py) | 显式 Train／开发 queries、supervision、inputs＋策略模型 → 新模型和开发分数；实际训练 |
+| 部分标签训练 | [pairwise_training 模块](../src/linkrag_eval/retrieval/learning_to_rank/pairwise_training.py) | 显式 Train／开发 queries、supervision、inputs＋策略模型 → 新模型和开发分数；实际训练。`--background-negatives` 默认 0，#23 的固定 N=8 仅作实验扩展 |
+| #23 接收复验 | [evaluate.py](../runs/post_recall/list-collapse-20260910/evaluate.py) | 既有开发／确认候选和模型 → 原指标核验；不训练，不读 Test 逐题 |
 | 历史 legacy A/B 评价 | [nevir_evaluation 模块](../src/linkrag_eval/retrieval/learning_to_rank/nevir_evaluation.py) | 指定角色的保存候选＋A/B → 新评价目录；角色须显式指定 |
 | 历史 legacy A/B 诊断 | [nevir_diagnostics 模块](../src/linkrag_eval/retrieval/learning_to_rank/nevir_diagnostics.py) | 开发快照＋A/B＋旧 B 分数＋执行说明 → 新机械诊断；不自动适用于英文特征 |
 

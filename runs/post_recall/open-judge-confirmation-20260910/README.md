@@ -51,8 +51,10 @@ P=runs/post_recall/llm-judge-pilot-20260910
   --top-k 20 --out /tmp/open-judge-l2-k20-new
 ```
 
-K=10 只改离线参数与输出目录；重试敏感性分析用 `-retry/scores.jsonl`。这不是启动新确认实验的指令。#17 开源二期仍缺开发角色 L2 缓存，不能用 L1 开发分数代替。
+K=10 只改离线参数与输出目录；重试敏感性分析用 `-retry/scores.jsonl`。这不是启动新确认实验的指令。原接续时 #17 开源二期尚缺开发 L2；后续已由 N14 补齐并完成二期，见[成本曲线记录](../judge-cost-curve-qwen-20260911/README.md)。
 
 ## 验证
 
 两套基线精确复现、已有有效分数全部保留、L1 旧评价精确重放、L2 两种 K 的首次／重试全指标一致。独立工作树完整非 integration：**1,244 passed、23 skipped、3 deselected、6 warnings**；跳过项均因真实 parser 环境缺失，不称作 parser 验证通过。应用代码无修改。
+
+2026-09-11 进一步核对了 Claude 原委派与启动时间：配置在启动前已写在会话中，原委派同时要求失败项重试，与 issue 一次性规则冲突；L1 重试由 Claude 执行，L2 重试由 Codex 初次接手执行。两组首次／重试数据再次精确复验。原 `execution-config.json` 的事后身份与严格验收未满足标记不变，详见[交接恢复](../open-judge-selection-20260911/README.md)。

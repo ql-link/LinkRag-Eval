@@ -411,9 +411,14 @@
     ]
   },
   "assessment": {
-    "expected_doc_id": "Author-assigned target passage, not a verified 0–4 score label. All targets must be reviewed by a second person before use.",
+    "expected_doc_id": "Author-assigned target passage, not a verified 0–4 score label. All 24 Chinese directions passed the user-submitted completed review; English labels are unchanged and outside this review's scope.",
     "reviewed_by": null,
-    "review_status": "pending_second_person_review",
+    "review_status": "completed_all_pass",
+    "review_scope": "Chinese passages, queries, minimal edits and target directions only",
+    "review_source": "review-sheet-completed.md",
+    "review_received_at": "2026-09-10",
+    "reviewed_at": null,
+    "review_note": "The user supplied the completed review. Reviewer name, actual review date and whether model outputs were visible during review were not provided; do not infer them from the receipt date. No passage, query or target label changed.",
     "freeze_rule": "frozen_at records assembly date. Once reviewed, freeze all texts, queries and targets; subsequent corrections require a new version and documented reason.",
     "scope": "English is an unchanged ordinary-topic capability control (literal/paraphrase); Chinese is an authored non-NevIR minimal-edit probe, not a representative benchmark or evidence of training-data exclusion. Chinese names, organisations, products and events are fictional; each passage is an independent counterfactual version.",
     "evaluation": "Score each query against both passages of its own Chinese pair independently with judge_prompt_v1 (48 items). Compare target versus other score strictly; ties are not correct. Also report pairs with both directions correct. English uses all 6 queries against all 8 docs (48 items) and is reported separately.",

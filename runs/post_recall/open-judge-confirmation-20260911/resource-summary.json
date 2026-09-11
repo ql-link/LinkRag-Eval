@@ -1,0 +1,186 @@
+{
+  "recorded_at": "2026-09-11T06:16:39.289981+00:00",
+  "process_exit_code": 0,
+  "formal_judge_wall_seconds": 4175.388660875033,
+  "formal_unique_http_requests": 8159,
+  "engineering_smoke_requests": 3,
+  "total_http_requests_including_smoke": 8162,
+  "http_status_counts_including_smoke": {
+    "200": 8162
+  },
+  "one_http_request_per_unique_input_verified": true,
+  "jobs": [
+    {
+      "job": "l1-confirmation",
+      "rows": 742,
+      "unique_requests": 739,
+      "cache_hits": 0,
+      "unavailable_rows": 5,
+      "failed_unique_requests": 5,
+      "finish_reason_counts": {
+        "stop": 734,
+        "length": 5
+      },
+      "tokens": {
+        "prompt_tokens": 258094,
+        "completion_tokens": 255757,
+        "total_tokens": 513851
+      },
+      "wall_seconds": 470.59562241699314,
+      "errors": [
+        {
+          "batch": "batch-00170",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-00364",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-00448",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-00531",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-00546",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        }
+      ]
+    },
+    {
+      "job": "l2-confirmation",
+      "rows": 7480,
+      "unique_requests": 7420,
+      "cache_hits": 0,
+      "unavailable_rows": 7,
+      "failed_unique_requests": 7,
+      "finish_reason_counts": {
+        "stop": 7413,
+        "length": 7
+      },
+      "tokens": {
+        "prompt_tokens": 2617268,
+        "completion_tokens": 2007384,
+        "total_tokens": 4624652
+      },
+      "wall_seconds": 3704.7930384580395,
+      "errors": [
+        {
+          "batch": "batch-00831",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-00962",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-03144",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-04517",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-04899",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-05234",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        },
+        {
+          "batch": "batch-06754",
+          "error": "ValueError",
+          "finish_reasons": [
+            "length"
+          ],
+          "completion_tokens": 6144,
+          "reasoning_tokens": 6143
+        }
+      ]
+    }
+  ],
+  "gpu_sampling": {
+    "method": "nvidia-smi --query-gpu=timestamp,memory.used,memory.total,utilization.gpu,power.draw --format=csv -l 5",
+    "samples_during_formal_jobs": 834,
+    "sampled_max_memory_mib": 20974.0,
+    "limitation": "Sampled total GPU allocation including vLLM reservation; not a continuous peak, per-query memory or minimum VRAM requirement."
+  },
+  "observed_server": {
+    "requested_quantization": "awq_marlin",
+    "kernel": "MarlinLinearKernel",
+    "activation_dtype": "float16",
+    "internal_prefix_caching": true,
+    "score_cache_policy": "No historical or cross-job judge-score caches. vLLM internal prefix/KV caching remains enabled; it does not reuse saved judge answers."
+  },
+  "failure_diagnosis": "All 12 failed unique requests returned HTTP 200 with finish_reason=length and 6144 completion tokens; these new records establish token-budget exhaustion for this repetition, not historical failures.",
+  "sources": [
+    "frozen-config.json",
+    "execution-start.json",
+    "execution-finished.json",
+    "process-exit.json",
+    "l1-judge/batch-*/metadata.json",
+    "l2-judge/batch-*/provider-metadata.json",
+    "server-14b.log",
+    "gpu-telemetry.csv"
+  ]
+}

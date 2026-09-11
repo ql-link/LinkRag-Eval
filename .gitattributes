@@ -1,0 +1,2 @@
+# 原始人工提交保留末尾空行，仅豁免该文件的 EOF 空行检查。
+runs/post_recall/ood-probe-20260910/review-sheet-completed.md whitespace=-blank-at-eof

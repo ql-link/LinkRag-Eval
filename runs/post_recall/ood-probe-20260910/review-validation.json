@@ -1,0 +1,519 @@
+{
+  "verification_status": "VERIFIED",
+  "verification_scope": "Offline review-sheet alignment, unchanged inputs and exact replay of existing score evaluations; no new inference or independent human adjudication.",
+  "issue": 24,
+  "experiment": "N10 OOD probe review closure",
+  "verified_at": "2026-09-10T15:05:07.924027+00:00",
+  "code_commit": "50e7aa33ec8360e1e309f60ca43be1a6e81c38b5",
+  "working_tree_change_scope": "Review metadata, the user-submitted review, this validation record and documentation only; application source unchanged.",
+  "review": {
+    "source": "runs/post_recall/ood-probe-20260910/review-sheet-completed.md",
+    "received_date": "2026-09-10",
+    "reviewer_name": null,
+    "actual_review_date": null,
+    "reviewer_exposure_to_model_results": "unknown",
+    "scope": "24 Chinese directions only; English labels outside review scope",
+    "pairs": 12,
+    "directions": 24,
+    "passed": 24,
+    "failed": 0,
+    "notes_present": 24,
+    "directions_by_kind": {
+      "negation": 8,
+      "attribution": 4,
+      "number": 4,
+      "date": 4,
+      "entity": 4
+    }
+  },
+  "input_checks": {
+    "24_review_rows": true,
+    "seven_columns": true,
+    "only_verdict_and_notes_changed": true,
+    "all_verdicts_pass_with_notes": true,
+    "no_duplicate_directions": true,
+    "two_directions_per_pair": true,
+    "queries_kinds_targets_match_fixture": true,
+    "24_passages_match_fixture": true,
+    "passages_unchanged_from_blank_sheet": true,
+    "passage_lengths_60_to_120": true,
+    "single_edit_per_pair_matches_sheet": true,
+    "min_similarity_at_least_0_85": true,
+    "english_docs_and_queries_match_original_source": true,
+    "fixture_inputs_and_labels_unchanged_from_HEAD": true,
+    "review_metadata_matches_received_source": true,
+    "96_items_exactly_rebuilt_from_fixture": true,
+    "gpt6-low_evaluation_exact_replay": true,
+    "qwen3-14b-awq_evaluation_exact_replay": true,
+    "qwen3-14b-awq-think_evaluation_exact_replay": true
+  },
+  "passage_character_length_range": [
+    99,
+    107
+  ],
+  "min_pair_similarity": 0.9807692307692307,
+  "evaluations": {
+    "gpt6-low": {
+      "scores": "runs/post_recall/ood-probe-20260910/judge-gpt6-low/scores.jsonl",
+      "original_evaluation": "runs/post_recall/ood-probe-20260910/evaluation-gpt6-low.json",
+      "original_summary": "runs/post_recall/ood-probe-20260910/judge-gpt6-low/summary.json",
+      "score_rows": 96,
+      "unavailable_score_rows": 0,
+      "by_probe_set": {
+        "chinese": {
+          "n_queries": 24,
+          "n_scored_queries": 24,
+          "strict": 24,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 12,
+          "n_scored_pairs": 12,
+          "both_directions_correct": 12,
+          "both_directions_accuracy": 1.0
+        },
+        "english": {
+          "n_queries": 6,
+          "n_scored_queries": 6,
+          "strict": 6,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 0,
+          "n_scored_pairs": 0,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": null
+        }
+      },
+      "by_kind": {
+        "attribution": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 4,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 2,
+          "both_directions_accuracy": 1.0
+        },
+        "date": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 4,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 2,
+          "both_directions_accuracy": 1.0
+        },
+        "entity": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 4,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 2,
+          "both_directions_accuracy": 1.0
+        },
+        "literal": {
+          "n_queries": 3,
+          "n_scored_queries": 3,
+          "strict": 3,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 0,
+          "n_scored_pairs": 0,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": null
+        },
+        "negation": {
+          "n_queries": 8,
+          "n_scored_queries": 8,
+          "strict": 8,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 4,
+          "n_scored_pairs": 4,
+          "both_directions_correct": 4,
+          "both_directions_accuracy": 1.0
+        },
+        "number": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 4,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 2,
+          "both_directions_accuracy": 1.0
+        },
+        "paraphrase": {
+          "n_queries": 3,
+          "n_scored_queries": 3,
+          "strict": 3,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 0,
+          "n_scored_pairs": 0,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": null
+        }
+      }
+    },
+    "qwen3-14b-awq": {
+      "scores": "runs/post_recall/ood-probe-20260910/judge-qwen3-14b-awq/scores.jsonl",
+      "original_evaluation": "runs/post_recall/ood-probe-20260910/evaluation-qwen3-14b-awq.json",
+      "original_summary": "runs/post_recall/ood-probe-20260910/judge-qwen3-14b-awq/summary.json",
+      "score_rows": 96,
+      "unavailable_score_rows": 0,
+      "by_probe_set": {
+        "chinese": {
+          "n_queries": 24,
+          "n_scored_queries": 24,
+          "strict": 16,
+          "reverse": 1,
+          "tie": 7,
+          "unavailable": 0,
+          "strict_accuracy": 0.6666666666666666,
+          "n_pairs": 12,
+          "n_scored_pairs": 12,
+          "both_directions_correct": 6,
+          "both_directions_accuracy": 0.5
+        },
+        "english": {
+          "n_queries": 6,
+          "n_scored_queries": 6,
+          "strict": 6,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 0,
+          "n_scored_pairs": 0,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": null
+        }
+      },
+      "by_kind": {
+        "attribution": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 4,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 2,
+          "both_directions_accuracy": 1.0
+        },
+        "date": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 2,
+          "reverse": 1,
+          "tie": 1,
+          "unavailable": 0,
+          "strict_accuracy": 0.5,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": 0.0
+        },
+        "entity": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 1,
+          "reverse": 0,
+          "tie": 3,
+          "unavailable": 0,
+          "strict_accuracy": 0.25,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": 0.0
+        },
+        "literal": {
+          "n_queries": 3,
+          "n_scored_queries": 3,
+          "strict": 3,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 0,
+          "n_scored_pairs": 0,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": null
+        },
+        "negation": {
+          "n_queries": 8,
+          "n_scored_queries": 8,
+          "strict": 8,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 4,
+          "n_scored_pairs": 4,
+          "both_directions_correct": 4,
+          "both_directions_accuracy": 1.0
+        },
+        "number": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 1,
+          "reverse": 0,
+          "tie": 3,
+          "unavailable": 0,
+          "strict_accuracy": 0.25,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": 0.0
+        },
+        "paraphrase": {
+          "n_queries": 3,
+          "n_scored_queries": 3,
+          "strict": 3,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 0,
+          "n_scored_pairs": 0,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": null
+        }
+      }
+    },
+    "qwen3-14b-awq-think": {
+      "scores": "runs/post_recall/ood-probe-20260910/judge-qwen3-14b-awq-think/scores.jsonl",
+      "original_evaluation": "runs/post_recall/ood-probe-20260910/evaluation-qwen3-14b-awq-think.json",
+      "original_summary": "runs/post_recall/ood-probe-20260910/judge-qwen3-14b-awq-think/summary.json",
+      "score_rows": 96,
+      "unavailable_score_rows": 1,
+      "by_probe_set": {
+        "chinese": {
+          "n_queries": 24,
+          "n_scored_queries": 23,
+          "strict": 14,
+          "reverse": 0,
+          "tie": 9,
+          "unavailable": 1,
+          "strict_accuracy": 0.5833333333333334,
+          "n_pairs": 12,
+          "n_scored_pairs": 11,
+          "both_directions_correct": 4,
+          "both_directions_accuracy": 0.3333333333333333
+        },
+        "english": {
+          "n_queries": 6,
+          "n_scored_queries": 6,
+          "strict": 6,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 0,
+          "n_scored_pairs": 0,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": null
+        }
+      },
+      "by_kind": {
+        "attribution": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 4,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 2,
+          "both_directions_accuracy": 1.0
+        },
+        "date": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 3,
+          "reverse": 0,
+          "tie": 1,
+          "unavailable": 0,
+          "strict_accuracy": 0.75,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 1,
+          "both_directions_accuracy": 0.5
+        },
+        "entity": {
+          "n_queries": 4,
+          "n_scored_queries": 4,
+          "strict": 2,
+          "reverse": 0,
+          "tie": 2,
+          "unavailable": 0,
+          "strict_accuracy": 0.5,
+          "n_pairs": 2,
+          "n_scored_pairs": 2,
+          "both_directions_correct": 1,
+          "both_directions_accuracy": 0.5
+        },
+        "literal": {
+          "n_queries": 3,
+          "n_scored_queries": 3,
+          "strict": 3,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 0,
+          "n_scored_pairs": 0,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": null
+        },
+        "negation": {
+          "n_queries": 8,
+          "n_scored_queries": 8,
+          "strict": 4,
+          "reverse": 0,
+          "tie": 4,
+          "unavailable": 0,
+          "strict_accuracy": 0.5,
+          "n_pairs": 4,
+          "n_scored_pairs": 4,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": 0.0
+        },
+        "number": {
+          "n_queries": 4,
+          "n_scored_queries": 3,
+          "strict": 1,
+          "reverse": 0,
+          "tie": 2,
+          "unavailable": 1,
+          "strict_accuracy": 0.25,
+          "n_pairs": 2,
+          "n_scored_pairs": 1,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": 0.0
+        },
+        "paraphrase": {
+          "n_queries": 3,
+          "n_scored_queries": 3,
+          "strict": 3,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0,
+          "n_pairs": 0,
+          "n_scored_pairs": 0,
+          "both_directions_correct": 0,
+          "both_directions_accuracy": null
+        }
+      }
+    }
+  },
+  "replay_commands": [
+    [
+      ".venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "probe-items",
+      "--fixture",
+      "runs/post_recall/ood-probe-20260910/fixture.json",
+      "--output",
+      "/var/folders/20/d20rxr9n0dldqn7lg5gh7mnw0000gn/T/linkrag-ood-review-s_p20uae/items.jsonl"
+    ],
+    [
+      ".venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "probe-evaluate",
+      "--items",
+      "/var/folders/20/d20rxr9n0dldqn7lg5gh7mnw0000gn/T/linkrag-ood-review-s_p20uae/items.jsonl",
+      "--scores",
+      "runs/post_recall/ood-probe-20260910/judge-gpt6-low/scores.jsonl",
+      "--output",
+      "/var/folders/20/d20rxr9n0dldqn7lg5gh7mnw0000gn/T/linkrag-ood-review-s_p20uae/evaluation-gpt6-low.json"
+    ],
+    [
+      ".venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "probe-evaluate",
+      "--items",
+      "/var/folders/20/d20rxr9n0dldqn7lg5gh7mnw0000gn/T/linkrag-ood-review-s_p20uae/items.jsonl",
+      "--scores",
+      "runs/post_recall/ood-probe-20260910/judge-qwen3-14b-awq/scores.jsonl",
+      "--output",
+      "/var/folders/20/d20rxr9n0dldqn7lg5gh7mnw0000gn/T/linkrag-ood-review-s_p20uae/evaluation-qwen3-14b-awq.json"
+    ],
+    [
+      ".venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "probe-evaluate",
+      "--items",
+      "/var/folders/20/d20rxr9n0dldqn7lg5gh7mnw0000gn/T/linkrag-ood-review-s_p20uae/items.jsonl",
+      "--scores",
+      "runs/post_recall/ood-probe-20260910/judge-qwen3-14b-awq-think/scores.jsonl",
+      "--output",
+      "/var/folders/20/d20rxr9n0dldqn7lg5gh7mnw0000gn/T/linkrag-ood-review-s_p20uae/evaluation-qwen3-14b-awq-think.json"
+    ]
+  ],
+  "replay_output_directory": "/var/folders/20/d20rxr9n0dldqn7lg5gh7mnw0000gn/T/linkrag-ood-review-s_p20uae",
+  "cost": {
+    "new_model_requests": 0,
+    "offline_check_and_cli_replay_wall_seconds": 0.5599727500230074,
+    "timing_scope": "Review alignment, fixture checks and four offline CLI subprocesses; excludes this agent turn, model inference and later unit tests."
+  },
+  "interpretation_checks": {
+    "coverage": "11/11 statistical fallacy categories reviewed; descriptive only, no inferential tests or causal estimates.",
+    "grouping": "English and Chinese reported separately; negation has 8 directions and each other Chinese type has 4. Directions within a pair are dependent.",
+    "sampling": "Constructed convenience probe, not a random or representative benchmark; no population accuracy inference.",
+    "missingness": "One unavailable Qwen thinking score retained in full query and pair denominators.",
+    "researcher_choices": "No input, label, prompt, score or model choice altered after this review; original outputs predate receipt, reviewer exposure is unknown.",
+    "causality": "No claim that thinking is generally better or worse, that the fixed-top20 pipeline generalizes, or that training contamination is absent. No pre-post causal estimate or conditioning analysis performed."
+  },
+  "limits": [
+    "Reviewer identity, actual review date and blindness not supplied.",
+    "Existing model outputs predate this review submission; replay does not turn them into a new post-review inference experiment.",
+    "Qwen thinking probe used the original reported 4096 token limit; this is not a new run of the later 6144-token confirmation configuration.",
+    "Raw scores and original evaluations remain local ignored artifacts; replay needs those files."
+  ],
+  "related_tests": {
+    "command": [
+      ".venv/bin/python",
+      "-m",
+      "pytest",
+      "tests/unit/test_llm_judge_local.py",
+      "-k",
+      "probe",
+      "-q"
+    ],
+    "passed": 23,
+    "deselected": 26,
+    "reported_wall_seconds": 0.15
+  }
+}

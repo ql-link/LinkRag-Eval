@@ -1,0 +1,122 @@
+{
+  "status": "completed_with_unavailable",
+  "input_rows_match": true,
+  "original_valid_cache_rows": 142,
+  "original_valid_cache_unchanged": true,
+  "summary": {
+    "runner": "openai",
+    "endpoint": "127.0.0.1",
+    "model": "qwen3-14b-awq",
+    "effort": "think",
+    "prompt_version": "judge_prompt_v1",
+    "codex_version": null,
+    "items": 1520,
+    "unique_keys": 1520,
+    "cache_hits": 145,
+    "cache_misses": 1375,
+    "duplicate_items": 0,
+    "planned_batches": 1375,
+    "batch_count": 1380,
+    "workers": 8,
+    "batch_size": 1,
+    "seed": 20260910,
+    "unavailable": 2,
+    "wall_seconds": 809.613421291986
+  },
+  "fresh_smoke": {
+    "runner": "openai",
+    "endpoint": "127.0.0.1",
+    "model": "qwen3-14b-awq",
+    "effort": "think",
+    "prompt_version": "judge_prompt_v1",
+    "codex_version": null,
+    "items": 3,
+    "unique_keys": 3,
+    "cache_hits": 0,
+    "cache_misses": 3,
+    "duplicate_items": 0,
+    "planned_batches": 3,
+    "batch_count": 3,
+    "workers": 8,
+    "batch_size": 1,
+    "seed": 20260910,
+    "unavailable": 0,
+    "wall_seconds": 3.4309843750088476
+  },
+  "total_new_batch_attempts_including_smoke": 1383,
+  "error_attempts_by_message": {
+    "ValueError: judge content must be a string": 7
+  },
+  "missing_rows": [
+    {
+      "source_query_id": "q000036",
+      "chunk_id": "c68e01d4-bc75-52e8-83cf-51f8d17f2c42",
+      "status": "unavailable"
+    },
+    {
+      "source_query_id": "q001411",
+      "chunk_id": "06c49665-c31a-595e-be9a-4ff3f66ca637",
+      "status": "unavailable"
+    }
+  ],
+  "evaluation_commands": [
+    [
+      ".venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l2",
+      "--role",
+      "development",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/development/scores.jsonl",
+      "--stage1",
+      "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/development/stage1-development.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l2s-development-judge-qwen3-14b-awq-think/scores.jsonl",
+      "--top-k",
+      "10",
+      "--out",
+      "runs/post_recall/open-judge-qwen3-14b-development-20260911/l2-k10"
+    ],
+    [
+      ".venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l2",
+      "--role",
+      "development",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/development/scores.jsonl",
+      "--stage1",
+      "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/development/stage1-development.jsonl",
+      "--scores",
+      "runs/post_recall/llm-judge-pilot-20260910/l2s-development-judge-qwen3-14b-awq-think/scores.jsonl",
+      "--top-k",
+      "20",
+      "--out",
+      "runs/post_recall/open-judge-qwen3-14b-development-20260911/l2-k20"
+    ],
+    [
+      ".venv/bin/python",
+      "scripts/llm_judge_cost_curve.py",
+      "run",
+      "--root",
+      "runs/post_recall/llm-judge-pilot-20260910",
+      "--candidates",
+      "runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/candidates",
+      "--out",
+      "runs/post_recall/judge-cost-curve-qwen-20260911",
+      "--judge-dir-suffix=-qwen3-14b-awq-think"
+    ]
+  ],
+  "related_tests": {
+    "passed": 87,
+    "files": [
+      "tests/unit/test_llm_judge.py",
+      "tests/unit/test_llm_judge_local.py",
+      "tests/unit/test_judge_cost_curve.py"
+    ]
+  },
+  "new_confirmation_inference": false,
+  "test_used": false,
+  "failure_cause_note": "Provider finish_reason was not persisted by the existing runner; do not infer truncation from a missing content string.",
+  "postprocessing_note": "An initial console-summary expression used a flat metric key instead of ranker.pairwise.strict_correct; the error occurred after evaluation and validation artifacts were saved. Corrected field access and independently checked both K20 references without repeating inference."
+}

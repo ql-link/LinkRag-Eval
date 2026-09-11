@@ -1,0 +1,49 @@
+{
+  "verified_at": "2026-09-10T17:08:12.035822+00:00",
+  "qwen_K20_reference_matches": {
+    "development": true,
+    "confirmation": true
+  },
+  "reference_paths": {
+    "development": "runs/post_recall/open-judge-qwen3-14b-development-20260911/l2-k20/results.json",
+    "confirmation": "runs/post_recall/open-judge-confirmation-20260910/l2-first-pass-k20/results.json"
+  },
+  "repeated_outputs_exact": {
+    "curves": true,
+    "triggers": true,
+    "selection": true
+  },
+  "csv_svg_files_exact": {
+    "triggers-confirmation.csv": true,
+    "curve-development.csv": true,
+    "curve-confirmation.csv": true,
+    "triggers-development.csv": true,
+    "curve-development.svg": true,
+    "curve-confirmation.svg": true,
+    "margin-threshold-development.csv": true
+  },
+  "recheck_command": [
+    ".venv/bin/python",
+    "scripts/llm_judge_cost_curve.py",
+    "run",
+    "--root",
+    "runs/post_recall/llm-judge-pilot-20260910",
+    "--candidates",
+    "runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/candidates",
+    "--out",
+    "runs/post_recall/judge-cost-curve-qwen-20260911/recheck",
+    "--judge-dir-suffix=-qwen3-14b-awq-think"
+  ],
+  "new_model_requests": 0,
+  "development_score_rows": 1520,
+  "confirmation_score_rows": 7480,
+  "unavailable_score_rows": {
+    "development": 2,
+    "confirmation": 4
+  },
+  "failure_queries": {
+    "development": 2,
+    "confirmation": 4
+  },
+  "raw_evaluation_schema": "ranker has separate pairwise and list objects; curve evaluation matches both"
+}

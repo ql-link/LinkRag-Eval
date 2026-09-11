@@ -1,0 +1,538 @@
+{
+  "recorded_at": "2026-09-10T19:05:44.644171+00:00",
+  "record_kind": "retrospectively reconstructed selection record; not the original selection.json",
+  "data_role_for_original_choice": "development only; official 74 directions and human v5 52 directions",
+  "rule": {
+    "primary": "人审 52 与官方 74 的严格正确数",
+    "secondary": "本地耗时",
+    "prespecified_in_issue": true,
+    "prespecified_in_original_selection_json": false,
+    "source_issue": "https://github.com/ql-link/LinkRag-Eval/issues/15",
+    "issue_created_at": "2026-09-10T04:20:43Z",
+    "issue_last_updated_before_this_audit": "2026-09-10T04:21:29Z",
+    "session_evidence": {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "line": 608,
+      "timestamp": "2026-09-10T04:20:17.726Z",
+      "event": "Selection criteria authored before model comparisons and confirmation"
+    },
+    "scope_of_rule": "No numeric weighting or official/human conflict rule was specified. The selected candidate wins both observed primary counts."
+  },
+  "candidates": [
+    {
+      "model": "qwen3-8b",
+      "thinking": false,
+      "l1_results": "runs/post_recall/llm-judge-pilot-20260910/l1-development-eval-qwen3-8b/results.json",
+      "official": {
+        "n": 74,
+        "strict_correct": 16,
+        "unavailable": 0,
+        "both_directions_correct": 4
+      },
+      "human_v5": {
+        "n": 52,
+        "strict_correct": 11,
+        "unavailable": 0
+      },
+      "judge_items": 148,
+      "judge_unavailable": 0,
+      "wall_seconds": 37.641195583040826,
+      "cache_hits": 3,
+      "agreement_vs_gpt6": {
+        "n_shared": 148,
+        "n_scored": 148,
+        "exact_agreement": 0.18243243243243243,
+        "within_1_agreement": 0.6283783783783784,
+        "spearman": 0.2587749370153334,
+        "kendall_tau": 0.23451824589667022,
+        "confusion_matrix": [
+          [
+            0,
+            15,
+            3,
+            2,
+            6
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            34,
+            10,
+            7,
+            40
+          ],
+          [
+            0,
+            7,
+            3,
+            1,
+            20
+          ]
+        ],
+        "n_shared_pairs": 74,
+        "n_scored_pairs": 74,
+        "pairwise_direction_agreement": 0.2702702702702703
+      }
+    },
+    {
+      "model": "qwen3-8b",
+      "thinking": true,
+      "l1_results": "runs/post_recall/llm-judge-pilot-20260910/l1-development-eval-qwen3-8b-think/results.json",
+      "official": {
+        "n": 74,
+        "strict_correct": 41,
+        "unavailable": 4,
+        "both_directions_correct": 13
+      },
+      "human_v5": {
+        "n": 52,
+        "strict_correct": 38,
+        "unavailable": 4
+      },
+      "judge_items": 148,
+      "judge_unavailable": 4,
+      "wall_seconds": 535.5905408749823,
+      "cache_hits": 0,
+      "agreement_vs_gpt6": {
+        "n_shared": 148,
+        "n_scored": 144,
+        "exact_agreement": 0.4861111111111111,
+        "within_1_agreement": 0.7916666666666666,
+        "spearman": 0.7160493209225902,
+        "kendall_tau": 0.6435370345319159,
+        "confusion_matrix": [
+          [
+            0,
+            31,
+            6,
+            1,
+            2
+          ],
+          [
+            0,
+            7,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            2,
+            0,
+            0
+          ],
+          [
+            0,
+            7,
+            2,
+            1,
+            3
+          ],
+          [
+            0,
+            8,
+            6,
+            7,
+            60
+          ]
+        ],
+        "n_shared_pairs": 74,
+        "n_scored_pairs": 70,
+        "pairwise_direction_agreement": 0.8142857142857143
+      }
+    },
+    {
+      "model": "qwen3-14b-awq",
+      "thinking": false,
+      "l1_results": "runs/post_recall/llm-judge-pilot-20260910/l1-development-eval-qwen3-14b-awq/results.json",
+      "official": {
+        "n": 74,
+        "strict_correct": 31,
+        "unavailable": 0,
+        "both_directions_correct": 8
+      },
+      "human_v5": {
+        "n": 52,
+        "strict_correct": 32,
+        "unavailable": 0
+      },
+      "judge_items": 148,
+      "judge_unavailable": 0,
+      "wall_seconds": 32.924131333013065,
+      "cache_hits": 0,
+      "agreement_vs_gpt6": {
+        "n_shared": 148,
+        "n_scored": 148,
+        "exact_agreement": 0.4864864864864865,
+        "within_1_agreement": 0.6891891891891891,
+        "spearman": 0.4243952369586499,
+        "kendall_tau": 0.36394425983519685,
+        "confusion_matrix": [
+          [
+            0,
+            3,
+            3,
+            0,
+            1
+          ],
+          [
+            0,
+            25,
+            1,
+            4,
+            4
+          ],
+          [
+            0,
+            8,
+            3,
+            1,
+            5
+          ],
+          [
+            0,
+            5,
+            0,
+            1,
+            13
+          ],
+          [
+            0,
+            15,
+            9,
+            4,
+            43
+          ]
+        ],
+        "n_shared_pairs": 74,
+        "n_scored_pairs": 74,
+        "pairwise_direction_agreement": 0.5675675675675675
+      }
+    },
+    {
+      "model": "qwen3-14b-awq",
+      "thinking": true,
+      "l1_results": "runs/post_recall/llm-judge-pilot-20260910/l1-development-eval-qwen3-14b-awq-think/results.json",
+      "official": {
+        "n": 74,
+        "strict_correct": 42,
+        "unavailable": 3,
+        "both_directions_correct": 15
+      },
+      "human_v5": {
+        "n": 52,
+        "strict_correct": 41,
+        "unavailable": 2
+      },
+      "judge_items": 148,
+      "judge_unavailable": 3,
+      "wall_seconds": 223.01632541697472,
+      "cache_hits": 0,
+      "agreement_vs_gpt6": {
+        "n_shared": 148,
+        "n_scored": 145,
+        "exact_agreement": 0.4689655172413793,
+        "within_1_agreement": 0.7931034482758621,
+        "spearman": 0.663516728994099,
+        "kendall_tau": 0.5942021367925543,
+        "confusion_matrix": [
+          [
+            0,
+            31,
+            6,
+            0,
+            2
+          ],
+          [
+            0,
+            7,
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            3,
+            2,
+            0,
+            2
+          ],
+          [
+            0,
+            3,
+            1,
+            3,
+            5
+          ],
+          [
+            0,
+            10,
+            7,
+            7,
+            56
+          ]
+        ],
+        "n_shared_pairs": 74,
+        "n_scored_pairs": 71,
+        "pairwise_direction_agreement": 0.7464788732394366
+      }
+    }
+  ],
+  "selected": {
+    "model": "Qwen/Qwen3-14B-AWQ",
+    "thinking": true,
+    "reason": "Original L1: 42 official / 41 human correct versus 8B thinking 41 / 38, with 223.016 s versus 535.591 s observed wall time. Small differences are not a significance claim.",
+    "provisional_selection_evidence": {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "line": 1137,
+      "timestamp": "2026-09-10T07:22:20.282Z",
+      "event": "Qwen3-14B-AWQ thinking provisionally selected; 32B question still open"
+    },
+    "larger_model_exclusion_evidence": {
+      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "line": 1141,
+      "timestamp": "2026-09-10T09:53:05.678Z",
+      "event": "User explicitly excludes Qwen3-32B-AWQ"
+    }
+  },
+  "later_reference_not_selection_evidence": {
+    "qwen_development_l2": "runs/post_recall/open-judge-qwen3-14b-development-20260911/README.md",
+    "bge_development_and_confirmation": "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/README.md",
+    "reason": "These were generated after original Qwen confirmation and cannot retroactively establish its model choice."
+  },
+  "unfulfilled_original_deliverables": [
+    "No original timestamped selection.json was found; current file is a transparent reconstruction.",
+    "Qwen3-8B development L2 K10/K20 was not executed. No complete all-candidate L2 sweep is claimed."
+  ],
+  "current_scope": "Main Qwen14B thinking K20 configuration is already fixed by the owner; do not reopen the excluded 32B sweep.",
+  "strict_original_issue_acceptance_satisfied": false,
+  "supplement_declared_before_new_8b_results": {
+    "recorded_at": "2026-09-11T04:08:42.587033+00:00",
+    "purpose": "Complete existing 8B candidate L2 matrix without reselecting on confirmation",
+    "input_items": 1520,
+    "K": [
+      10,
+      20
+    ],
+    "primary_metrics": [
+      "official strict_correct / 74",
+      "human_v5 strict_correct / 52"
+    ],
+    "secondary_metric": "Observed local wall time with cache and attempt counts disclosed",
+    "selection_role": "Original model choice remains based on the pre-confirmation development L1 evidence. New L2 provides supplementary support or counterevidence, to be reported regardless of outcome.",
+    "config": "runs/post_recall/open-judge-qwen3-8b-development-20260911/execution-config.json",
+    "result_available_when_recorded": false
+  },
+  "completed_supplement": {
+    "recorded_at": "2026-09-11T04:58:47.427622+00:00",
+    "status": "completed_with_documented_historical_record_gap",
+    "models": [
+      {
+        "model": "qwen3-8b-think",
+        "evaluations": {
+          "l1": {
+            "source": "runs/post_recall/open-judge-qwen3-8b-development-20260911/l1/results.json",
+            "official": {
+              "n": 74,
+              "strict_correct": 41,
+              "reverse": 6,
+              "model_tie": 23,
+              "unavailable": 4,
+              "both_directions_correct": 13
+            },
+            "human_v5": {
+              "n": 52,
+              "strict_correct": 38,
+              "reverse": 1,
+              "model_tie": 9,
+              "unavailable": 4,
+              "both_directions_correct": 11
+            }
+          },
+          "l2-k10": {
+            "source": "runs/post_recall/open-judge-qwen3-8b-development-20260911/l2-k10/results.json",
+            "official": {
+              "n": 74,
+              "strict_correct": 54,
+              "reverse": 20,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 21
+            },
+            "human_v5": {
+              "n": 52,
+              "strict_correct": 46,
+              "reverse": 6,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 17
+            }
+          },
+          "l2-k20": {
+            "source": "runs/post_recall/open-judge-qwen3-8b-development-20260911/l2-k20/results.json",
+            "official": {
+              "n": 74,
+              "strict_correct": 55,
+              "reverse": 19,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 22
+            },
+            "human_v5": {
+              "n": 52,
+              "strict_correct": 47,
+              "reverse": 5,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 18
+            }
+          }
+        }
+      },
+      {
+        "model": "qwen3-14b-awq-think",
+        "evaluations": {
+          "l1": {
+            "source": "runs/post_recall/open-judge-qwen3-14b-development-20260911/l1/results.json",
+            "official": {
+              "n": 74,
+              "strict_correct": 42,
+              "reverse": 8,
+              "model_tie": 21,
+              "unavailable": 3,
+              "both_directions_correct": 15
+            },
+            "human_v5": {
+              "n": 52,
+              "strict_correct": 41,
+              "reverse": 2,
+              "model_tie": 7,
+              "unavailable": 2,
+              "both_directions_correct": 15
+            }
+          },
+          "l2-k10": {
+            "source": "runs/post_recall/open-judge-qwen3-14b-development-20260911/l2-k10/results.json",
+            "official": {
+              "n": 74,
+              "strict_correct": 53,
+              "reverse": 21,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 19
+            },
+            "human_v5": {
+              "n": 52,
+              "strict_correct": 44,
+              "reverse": 8,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 16
+            }
+          },
+          "l2-k20": {
+            "source": "runs/post_recall/open-judge-qwen3-14b-development-20260911/l2-k20/results.json",
+            "official": {
+              "n": 74,
+              "strict_correct": 54,
+              "reverse": 20,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 20
+            },
+            "human_v5": {
+              "n": 52,
+              "strict_correct": 45,
+              "reverse": 7,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 17
+            }
+          }
+        }
+      },
+      {
+        "model": "bge-reranker-v2-m3",
+        "evaluations": {
+          "l1": {
+            "source": "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/development-l1/results.json",
+            "official": {
+              "n": 74,
+              "strict_correct": 47,
+              "reverse": 27,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 13
+            },
+            "human_v5": {
+              "n": 52,
+              "strict_correct": 39,
+              "reverse": 13,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 8
+            }
+          },
+          "l2-k10": {
+            "source": "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/development-l2-k10/results.json",
+            "official": {
+              "n": 74,
+              "strict_correct": 45,
+              "reverse": 29,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 11
+            },
+            "human_v5": {
+              "n": 52,
+              "strict_correct": 38,
+              "reverse": 14,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 7
+            }
+          },
+          "l2-k20": {
+            "source": "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/development-l2-k20/results.json",
+            "official": {
+              "n": 74,
+              "strict_correct": 47,
+              "reverse": 27,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 13
+            },
+            "human_v5": {
+              "n": 52,
+              "strict_correct": 39,
+              "reverse": 13,
+              "model_tie": 0,
+              "unavailable": 0,
+              "both_directions_correct": 8
+            }
+          }
+        }
+      }
+    ],
+    "new_8b_run": "runs/post_recall/open-judge-qwen3-8b-development-20260911/execution-config.json",
+    "new_8b_verification": "runs/post_recall/open-judge-qwen3-8b-development-20260911/independent-verification.json",
+    "report": "docs/reports/open_judge_selection_2026_09_11.md",
+    "finding": "8B development L2 K20 is 55/74 official and 47/52 human, versus existing 14B 54/74 and 45/52. The supplement does not establish 14B as the best development L2 candidate.",
+    "decision": "Keep previously owner-fixed Qwen14B thinking K20 as the confirmation reproducibility configuration. Original selection used earlier development L1; do not relabel the new L2 comparison as pre-confirmation evidence or select on confirmation outcomes.",
+    "remaining_historical_limit": "The original prespecified selection.json was not found. Its absence remains documented; the new supplement cannot retroactively satisfy the original file-timing criterion."
+  }
+}

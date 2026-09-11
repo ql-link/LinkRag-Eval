@@ -1,0 +1,35 @@
+{
+  "exact_score_scope": true,
+  "all_finite_logits": true,
+  "model_revision_matches_config": true,
+  "development_E0_exact_replay": true,
+  "score_rows": 9034,
+  "roles": [
+    "development",
+    "confirmation"
+  ],
+  "human_population": "unchanged frozen v5; 52 development queries",
+  "evaluation_functions": [
+    "evaluation_report",
+    "listwise_report",
+    "l2_rankers"
+  ],
+  "llm_integer_cache_used": false,
+  "test_used": false,
+  "independent_sort_and_metric_checks": {
+    "development_l1_manual_strict": true,
+    "development_k10_stage1_judge_manual_order_and_strict": true,
+    "development_k10_E0_judge_manual_order_and_strict": true,
+    "development_k20_stage1_judge_manual_order_and_strict": true,
+    "development_k20_E0_judge_manual_order_and_strict": true,
+    "confirmation_l1_manual_strict": true,
+    "confirmation_k10_stage1_judge_manual_order_and_strict": true,
+    "confirmation_k10_E0_judge_manual_order_and_strict": true,
+    "confirmation_k20_stage1_judge_manual_order_and_strict": true,
+    "confirmation_k20_E0_judge_manual_order_and_strict": true
+  },
+  "related_tests": {
+    "passed": 87,
+    "ruff_experiment_scripts": "passed"
+  }
+}

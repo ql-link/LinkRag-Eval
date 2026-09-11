@@ -1,0 +1,1630 @@
+{
+  "role": "confirmation",
+  "official": {
+    "E0": {
+      "n": 371,
+      "strict_correct": 208,
+      "reverse": 161,
+      "model_tie": 2,
+      "unavailable": 0,
+      "strict_accuracy": 0.5606469002695418,
+      "source_groups": 96,
+      "by_source_group": {
+        "nevir-validation-0444": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0445": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0446": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0447": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0448": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0449": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0450": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0451": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0452": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0453": {
+          "n": 2,
+          "strict_correct": 0
+        },
+        "nevir-validation-0455": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0456": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0457": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0459": {
+          "n": 2,
+          "strict_correct": 1
+        },
+        "nevir-validation-0460": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0461": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0463": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0464": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0465": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0466": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0467": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0469": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0470": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0472": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0474": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0477": {
+          "n": 4,
+          "strict_correct": 0
+        },
+        "nevir-validation-0480": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0483": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0484": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0485": {
+          "n": 2,
+          "strict_correct": 1
+        },
+        "nevir-validation-0487": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0488": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0489": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0490": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0491": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0492": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0493": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0495": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0496": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0498": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0499": {
+          "n": 2,
+          "strict_correct": 1
+        },
+        "nevir-validation-0500": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0501": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0502": {
+          "n": 2,
+          "strict_correct": 1
+        },
+        "nevir-validation-0503": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0505": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0506": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0507": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0509": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0510": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0511": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0512": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0513": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0514": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0515": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0517": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0519": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0521": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0522": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0523": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0524": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0525": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0526": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0528": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0530": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0531": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0532": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0534": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0535": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0536": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0537": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0538": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0539": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0540": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0541": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0542": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0543": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0544": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0545": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0546": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0547": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0549": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0550": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0551": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0552": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0553": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0554": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0555": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0556": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0559": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0560": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0562": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0563": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0565": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0566": {
+          "n": 3,
+          "strict_correct": 2
+        },
+        "nevir-validation-0567": {
+          "n": 4,
+          "strict_correct": 2
+        }
+      },
+      "source_macro_accuracy": 0.5590277777777778,
+      "eligible_bidirectional_pairs": 185,
+      "both_directions_correct": 40,
+      "both_directions_accuracy": 0.21621621621621623
+    },
+    "judge": {
+      "n": 371,
+      "strict_correct": 261,
+      "reverse": 110,
+      "model_tie": 0,
+      "unavailable": 0,
+      "strict_accuracy": 0.7035040431266847,
+      "source_groups": 96,
+      "by_source_group": {
+        "nevir-validation-0444": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0445": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0446": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0447": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0448": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0449": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0450": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0451": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0452": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0453": {
+          "n": 2,
+          "strict_correct": 1
+        },
+        "nevir-validation-0455": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0456": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0457": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0459": {
+          "n": 2,
+          "strict_correct": 1
+        },
+        "nevir-validation-0460": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0461": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0463": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0464": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0465": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0466": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0467": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0469": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0470": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0472": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0474": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0477": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0480": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0483": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0484": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0485": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0487": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0488": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0489": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0490": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0491": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0492": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0493": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0495": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0496": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0498": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0499": {
+          "n": 2,
+          "strict_correct": 0
+        },
+        "nevir-validation-0500": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0501": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0502": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0503": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0505": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0506": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0507": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0509": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0510": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0511": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0512": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0513": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0514": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0515": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0517": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0519": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0521": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0522": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0523": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0524": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0525": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0526": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0528": {
+          "n": 2,
+          "strict_correct": 2
+        },
+        "nevir-validation-0530": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0531": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0532": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0534": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0535": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0536": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0537": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0538": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0539": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0540": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0541": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0542": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0543": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0544": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0545": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0546": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0547": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0549": {
+          "n": 4,
+          "strict_correct": 1
+        },
+        "nevir-validation-0550": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0551": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0552": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0553": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0554": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0555": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0556": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0559": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0560": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0562": {
+          "n": 4,
+          "strict_correct": 4
+        },
+        "nevir-validation-0563": {
+          "n": 4,
+          "strict_correct": 3
+        },
+        "nevir-validation-0565": {
+          "n": 4,
+          "strict_correct": 2
+        },
+        "nevir-validation-0566": {
+          "n": 3,
+          "strict_correct": 2
+        },
+        "nevir-validation-0567": {
+          "n": 4,
+          "strict_correct": 2
+        }
+      },
+      "source_macro_accuracy": 0.7022569444444445,
+      "eligible_bidirectional_pairs": 185,
+      "both_directions_correct": 82,
+      "both_directions_accuracy": 0.44324324324324327
+    },
+    "contrast": {
+      "n": 371,
+      "common_correct": 156,
+      "corrected": 105,
+      "damaged": 52,
+      "common_not_correct": 58,
+      "net": 53
+    },
+    "contrast_by_source_group": {
+      "nevir-validation-0444": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0445": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0446": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 2
+      },
+      "nevir-validation-0447": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0448": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": -1
+      },
+      "nevir-validation-0449": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 0,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": -1
+      },
+      "nevir-validation-0450": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0451": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0452": {
+        "n": 4,
+        "common_correct": 0,
+        "corrected": 2,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0453": {
+        "n": 2,
+        "common_correct": 0,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0455": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0456": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0457": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0459": {
+        "n": 2,
+        "common_correct": 0,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0460": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0461": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0463": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0464": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0465": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0466": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0467": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0469": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0470": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0472": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0474": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0477": {
+        "n": 4,
+        "common_correct": 0,
+        "corrected": 3,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 3
+      },
+      "nevir-validation-0480": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0483": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0484": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0485": {
+        "n": 2,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0487": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0488": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0489": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0490": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 3,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 3
+      },
+      "nevir-validation-0491": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 3,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 3
+      },
+      "nevir-validation-0492": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0493": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0495": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0496": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0498": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0499": {
+        "n": 2,
+        "common_correct": 0,
+        "corrected": 0,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": -1
+      },
+      "nevir-validation-0500": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0501": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0502": {
+        "n": 2,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0503": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0505": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0506": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": -1
+      },
+      "nevir-validation-0507": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0509": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0510": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 3,
+        "net": 0
+      },
+      "nevir-validation-0511": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0512": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 0,
+        "damaged": 1,
+        "common_not_correct": 2,
+        "net": -1
+      },
+      "nevir-validation-0513": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 0,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": -1
+      },
+      "nevir-validation-0514": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0515": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0517": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0519": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0521": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0522": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 2
+      },
+      "nevir-validation-0523": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0524": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0525": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0526": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0528": {
+        "n": 2,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0530": {
+        "n": 4,
+        "common_correct": 0,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0531": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0532": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": -1
+      },
+      "nevir-validation-0534": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 3,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 3
+      },
+      "nevir-validation-0535": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0536": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0537": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0538": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0539": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": -1
+      },
+      "nevir-validation-0540": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0541": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": -2
+      },
+      "nevir-validation-0542": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0543": {
+        "n": 4,
+        "common_correct": 0,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0544": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0545": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": -1
+      },
+      "nevir-validation-0546": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 2
+      },
+      "nevir-validation-0547": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0549": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 0,
+        "damaged": 1,
+        "common_not_correct": 2,
+        "net": -1
+      },
+      "nevir-validation-0550": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0551": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0552": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0553": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0554": {
+        "n": 4,
+        "common_correct": 3,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0555": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 1
+      },
+      "nevir-validation-0556": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 1,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 1
+      },
+      "nevir-validation-0559": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": 0
+      },
+      "nevir-validation-0560": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 1,
+        "common_not_correct": 1,
+        "net": -1
+      },
+      "nevir-validation-0562": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 0,
+        "net": 2
+      },
+      "nevir-validation-0563": {
+        "n": 4,
+        "common_correct": 1,
+        "corrected": 2,
+        "damaged": 0,
+        "common_not_correct": 1,
+        "net": 2
+      },
+      "nevir-validation-0565": {
+        "n": 4,
+        "common_correct": 2,
+        "corrected": 0,
+        "damaged": 0,
+        "common_not_correct": 2,
+        "net": 0
+      },
+      "nevir-validation-0566": {
+        "n": 3,
+        "common_correct": 1,
+        "corrected": 1,
+        "damaged": 1,
+        "common_not_correct": 0,
+        "net": 0
+      },
+      "nevir-validation-0567": {
+        "n": 4,
+        "common_correct": 0,
+        "corrected": 2,
+        "damaged": 2,
+        "common_not_correct": 0,
+        "net": 0
+      }
+    }
+  },
+  "judge_run": {
+    "status": "completed",
+    "completed_at": "2026-09-10T17:08:11.314035+00:00",
+    "model": {
+      "repository": "BAAI/bge-reranker-v2-m3",
+      "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+      "model_card": "https://huggingface.co/BAAI/bge-reranker-v2-m3",
+      "dtype": "float16",
+      "implementation": "transformers.AutoModelForSequenceClassification; raw logits, no sigmoid or 0–4 mapping",
+      "trust_remote_code": false
+    },
+    "runtime": {
+      "ssh_alias": "runpod",
+      "python": "/workspace/venv/bin/python",
+      "torch": "2.13.0",
+      "transformers": "5.17.0",
+      "gpu": "RTX 4090 24GB",
+      "batch_size": 1,
+      "max_input_tokens": 8192,
+      "truncation_policy": "No silent truncation: measure untruncated token length before scoring and fail if any exceeds 8192.",
+      "seed": 20260910,
+      "eval_mode": true,
+      "torch_inference_mode": true,
+      "attention_implementation": "sdpa",
+      "gpu_memory_fraction_limit": 0.12,
+      "schedule": "Run only after Qwen development batch completes; keep existing Qwen server resident."
+    },
+    "items": 9034,
+    "items_by_role": {
+      "development": 1524,
+      "confirmation": 7510
+    },
+    "unavailable": 0,
+    "input_tokens": {
+      "min": 33,
+      "max": 336,
+      "mean": 194.50520256807616,
+      "truncated_items": 0
+    },
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "peak_cuda_allocated_bytes": 1151739392,
+    "inference_wall_seconds": 102.80429605068639,
+    "total_wall_seconds": 116.2728919298388,
+    "timing_scope": "Total includes input loading, tokenization, model loading and inference; excludes imports, model download and SSH file transfers. Inference includes GPU work and incremental output serialization."
+  },
+  "model": "BAAI/bge-reranker-v2-m3",
+  "model_revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+  "score_type": "continuous raw cross-encoder logit",
+  "status": "completed"
+}

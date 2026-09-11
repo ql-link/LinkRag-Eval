@@ -1,0 +1,53 @@
+{
+  "recorded_at": "2026-09-11T04:55:04.499759+00:00",
+  "configuration_written_before_execution": true,
+  "commands": [
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l2",
+      "--role",
+      "development",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/development/scores.jsonl",
+      "--scores",
+      "runs/post_recall/open-judge-qwen3-8b-development-20260911/judge/scores.jsonl",
+      "--out",
+      "runs/post_recall/open-judge-qwen3-8b-development-20260911/l2-k10",
+      "--stage1",
+      "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/development/stage1-development.jsonl",
+      "--top-k",
+      "10"
+    ],
+    [
+      "/Users/kawauso/Documents/Projects/LinkRag-Eval/.venv/bin/python",
+      "scripts/llm_judge_pilot.py",
+      "evaluate-l2",
+      "--role",
+      "development",
+      "--baseline",
+      "runs/post_recall/llm-judge-pilot-20260910/baseline/development/scores.jsonl",
+      "--scores",
+      "runs/post_recall/open-judge-qwen3-8b-development-20260911/judge/scores.jsonl",
+      "--out",
+      "runs/post_recall/open-judge-qwen3-8b-development-20260911/l2-k20",
+      "--stage1",
+      "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/development/stage1-development.jsonl",
+      "--top-k",
+      "20"
+    ]
+  ],
+  "input_and_request_checks": [
+    {
+      "job": "l2-development",
+      "items": 1520,
+      "scope_exact": true,
+      "cache_hits": 0,
+      "unique_keys": 1520,
+      "unavailable": 2,
+      "batches": 1536
+    }
+  ],
+  "status": "passed",
+  "new_model_calls_in_evaluation": 0
+}

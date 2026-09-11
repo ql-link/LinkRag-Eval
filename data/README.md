@@ -17,7 +17,7 @@
 | `train` 训练 | Train | 948 对／1,896 查询；1,869 查询进入损失 | 已用于拟合；排除 25 条目标未共同召回、2 条结构冲突查询 |
 | `development` 开发 | Validation 的 38 对 | 76 查询，74 条目标共同覆盖 | 已用于选模、早停和诊断，不是独立测试 |
 | `confirmation` 历史确认 | Validation 的其余 187 对 | 374 查询，371 条目标共同覆盖 | 已用于历史 A/B 确认并曝光，不作为新方法的独立确认 |
-| 官方 Test | Test | 未用于当前英文模型拟合或选模 | 不默认读取逐题内容；未来独立评价仍需核对来源重叠 |
+| 官方 Test | Test | 成员已交付 #23 的 E0／融合／N=8 终评聚合，未用于当前英文基线拟合 | [Test 接收范围](../runs/post_recall/nevir-test-final-20260911/README.md)：缺原始候选与执行记录；不得再笼统称为未曝光，不授权重新读取逐题或据结果调参 |
 
 官方 Validation 不等于本项目 `development`。划分与历史用途依据见[同特征重训报告](../docs/reports/nevir_same38_retraining_2026_09_07.md)；当前训练数量以英文 `selection.json` 为准。
 
@@ -28,7 +28,7 @@
 | Train | [训练查询](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/train/queries.jsonl) | [训练监督](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/train/supervision.jsonl) | [训练候选](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/candidates/train/inputs.jsonl) |
 | 开发 | [开发查询](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/development/queries.jsonl) | [开发监督](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/development/supervision.jsonl) | [开发候选](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/candidates/development/inputs.jsonl) |
 
-共同语料见 [corpus.jsonl](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/corpus.jsonl)，原段落与匿名 chunk 对应见 [passage-mapping.jsonl](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/passage-mapping.jsonl)。训练与诊断优先读取上表保存候选，不从语料补入漏召回目标。特征基于完整候选池计算，训练损失只使用已标注的指定候选；未判断背景不作负例。
+共同语料见 [corpus.jsonl](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/corpus.jsonl)，原段落与匿名 chunk 对应见 [passage-mapping.jsonl](../runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/passage-mapping.jsonl)。训练与诊断优先读取上表保存候选，不从语料补入漏召回目标。上述英文基线的特征基于完整候选池计算，损失只使用已标注的指定候选。#23 另有[显式 N=8 弱负例实验](../runs/post_recall/list-collapse-20260910/README.md)，默认关闭；抽取背景的弱标签不能当作人工相关性标注。
 
 这些输入沿用原 `nevir-ltr-validation-20260907` 快照，英文适配没有另建一套查询或候选。监督文件中的配对和来源信息不作为排序特征。
 

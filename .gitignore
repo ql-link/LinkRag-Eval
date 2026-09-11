@@ -113,3 +113,11 @@ venv/
 .idea/
 .vscode/
 .DS_Store
+
+!/runs/post_recall/judge-cost-curve-qwen-20260911/
+/runs/post_recall/judge-cost-curve-qwen-20260911/*
+!/runs/post_recall/judge-cost-curve-qwen-20260911/README.md
+!/runs/post_recall/judge-cost-curve-qwen-20260911/results.json
+!/runs/post_recall/judge-cost-curve-qwen-20260911/verification.json
+!/runs/post_recall/judge-cost-curve-qwen-20260911/*.csv
+!/runs/post_recall/judge-cost-curve-qwen-20260911/*.svg

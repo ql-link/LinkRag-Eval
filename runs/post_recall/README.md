@@ -8,6 +8,8 @@
 | --- | --- | --- | --- |
 | **共享输入，不可删** | [nevir-ltr-validation-20260907](nevir-ltr-validation-20260907/README.md) | Train／开发／确认的查询、监督与完整三路候选快照；所有英文实验都读它 | 否 |
 | **当前结果** | [llm-judge-pilot-20260910](llm-judge-pilot-20260910/README.md) | N09：LLM 判断器三级试点，含判断缓存、评价与 L3 模型；正式报告见 [docs/reports](../../docs/reports/llm_judge_pilot_2026_09_10.md) | 否 |
+| **开源确认结果** | [open-judge-confirmation-20260910](open-judge-confirmation-20260910/README.md) | N11／#16：首次与失败重试分列，实际配置及执行偏差 | 否 |
+| **固定配置确认复验** | [open-judge-confirmation-20260911](open-judge-confirmation-20260911/README.md) | #16：已曝光确认上的单次请求复现，保留原 N11 并列对照；非新独立 Test | 否 |
 | **当前模型来源** | [nevir-english-features-20260907](nevir-english-features-20260907/README.md) | 英文基线由此训练；保存的开发全池分数是各实验的一致性校验基准 | 否 |
 | **当前引用的人审与诊断** | [subject-binding-pilot-20260908](subject-binding-pilot-20260908/README.md) | N08：人审 v5 固定结果（`human/`）、五臂训练、v2/v3 修复产物 | `human/` 不可删；其余见 §3 |
 | 同上 | [nevir-offline-diagnostic-20260907](nevir-offline-diagnostic-20260907/README.md) | 人审匿名映射 `review/private/`（人审 52 题评价必需）、旧 A/B 机械诊断 | `review/` 不可删；其余见 §3 |
@@ -55,6 +57,5 @@ data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（test 
 - `summary.json`／`results.json` 是所属命令的聚合统计，先看对应 README 的分母口径；`manifest.json` 在模型包内是契约、在运行目录内是范围记录。
 - 大产物、缓存、模型继续忽略；新增需要入库的 README 时在 `.gitignore` 白名单补一行。
 
-- [open-judge-confirmation-20260910](open-judge-confirmation-20260910/README.md)（N11）：开源确认集 L1／L2 K=10、20 的首次与失败项重试、四排序器评价、参数、成本与协议偏差。Git 保存聚合产物；原始分数仍在 `llm-judge-pilot-20260910/`，事前冻结与一次性运行验收缺口明确保留。
 
 - [judge-cost-curve-20260910](judge-cost-curve-20260910/README.md)（N13，#17 一期）：GPT-6 缓存的 K 曲线和触发对照，含两种触发未达保留标准的负结果。Git 保存聚合 JSON、CSV、SVG、README 和复验记录；原始判断与候选从既有共享输入取得。开源二期待两集 L2 缓存齐备。

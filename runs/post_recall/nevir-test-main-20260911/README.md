@@ -1,6 +1,6 @@
-# #20 官方 Test 主方案：替代 GPU 就绪，正式推理前版本冻结
+# #20 官方 Test 主方案：版本已冻结，正式推理进行中
 
-2026-09-11 先按负责人“暂不启用，先完成离线准备”的要求备齐输入与脚本；随后负责人提供替代 GPU 实例并要求本任务存储不超过 35GB，截至 2026-09-12 00:20（北京时间），新实例 RTX 4090 24GB 的模型服务与 3 条合成检查已通过，本任务实际磁盘占用 18.63GB；尚未生成 E0、Qwen 或 BGE 的新 Test 模型分数。原 #23 成员 Test 聚合继续保存在 [nevir-test-final-20260911](../nevir-test-final-20260911/README.md)，不在本目录覆盖或复用为判断缓存。
+配置与执行代码已纳入本地提交 **`b4d01d7bae361f72ab83643cc0a9df7280e06e65`**，未推送，并通过 Git archive 将该版本部署到替代 GPU。2026-09-11 17:33:29 UTC 开始 E0，17:34:43 完成全部 2,766 查询，73.442 秒；Qwen 单次 worker 于 17:33:42 UTC 启动，PID 55064，顺序执行 L1 与 L2。BGE 权重及分词器已在本机下载并校验，暂未上传或推理。原 #23 成员 Test 聚合继续保存在 [nevir-test-final-20260911](../nevir-test-final-20260911/README.md)，不在本目录覆盖或复用为判断缓存。
 
 ## 输入与固定方案
 
@@ -14,7 +14,7 @@
 | L2 固定融合 Top20 | 55,320 | 2,766 | Qwen 55,260 |
 | BGE 两层输入并集 | 55,502 | 2,766 | BGE 55,502 |
 
-Qwen 每个任务使用全新独立缓存，每个唯一输入只请求一次，不重试、不作 schema fallback；两任务合计 **60,732 次计划请求**，不是本次已发生请求。L1 不可用项保留在准确率分母，配对区间只用共同可用项；L2 任一判断不可用则整个查询回退到原固定融合。全查询都生成 Top20 输入，评价时才按事先口径筛选，不能只推理较容易的覆盖子集。
+Qwen 每个任务使用全新独立缓存，每个唯一输入只请求一次，不重试、不作 schema fallback；两任务合计 **60,732 次计划请求**，实际完成数读取远端 progress.json。L1 不可用项保留在准确率分母，配对区间只用共同可用项；L2 任一判断不可用则整个查询回退到原固定融合。全查询都生成 Top20 输入，评价时才按事先口径筛选，不能只推理较容易的覆盖子集。
 
 BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e`，保留连续原始 logits，不转成 0–4 分。其 [配置](bge/execution-config.json) 与 [运行脚本](bge/run_bge.py) 沿用已执行的开发／确认参照，适配 Test 角色及配置中的新模型路径；本次模型推理和完整分词检查仍待执行；计算过程不变。E0 使用当前英文基线，配置中的摘要用于启动时核对模型包身份，不重训。
 
@@ -24,7 +24,7 @@ BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2
 .venv/bin/python runs/post_recall/nevir-test-main-20260911/prepare.py
 ```
 
-已执行一次，完成于 2026-09-11 13:11:24 UTC，75.451 秒；记录在 [preparation.json](preparation.json)。只重建原固定融合分用于选池，未算准确率。该生成命令拒绝覆盖现有输入／配置，后续使用已生成文件，不再次生成另一套 Test 配置。配置补齐英文基线身份，并明确 BGE 的两层并集共享分数，最终保存时间见 JSON 的 configuration_completed_at，始终早于任何新模型推理；生成时 HEAD 为 `23f465d`，Test 角色支持和本目录脚本在离线准备时属于未提交差异；正式执行所用版本由独立启动记录和 E0 运行摘要记录，配置内 code_commit 明确表示准备基准版本。
+已执行一次，完成于 2026-09-11 13:11:24 UTC，75.451 秒；记录在 [preparation.json](preparation.json)。只重建原固定融合分用于选池，未算准确率。该生成命令拒绝覆盖现有输入／配置，后续使用已生成文件，不再次生成另一套 Test 配置。配置补齐英文基线身份，并明确 BGE 的两层并集共享分数，最终保存时间见 JSON 的 configuration_completed_at，早于本次正式 Test 评分；生成时 HEAD 为 `23f465d`，Test 角色支持和本目录脚本在离线准备时属于未提交差异；正式执行所用版本由独立启动记录和 E0 运行摘要记录，配置内 code_commit 明确表示准备基准版本。
 
 [offline-validation.json](offline-validation.json) 记录实际输入核验：L1 指定段、L2 全查询精确 Top20、唯一请求计数、BGE 并集的标识／文本／层级均一致；30 份交付原件仍保留，根目录临时包已清理。完整非 integration 回归 1,310 passed、23 skipped、3 deselected，6 项既存 warnings；离线阶段相关合成测试 48 项通过；替代实例的单次远端 worker 增补测试后，相关测试共 50 项通过，Ruff 通过。检查只输出聚合数；不展示 Test 单题内容或分数。
 
@@ -42,17 +42,21 @@ BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2
 
 截至 2026-09-11 16:20:49 UTC，任务专属运行目录占 8,522,133,504 字节、模型／缓存目录占 10,107,916,288 字节，合计 **18,630,049,792 字节**，距 35GB 限额约 16.37GB。3 条合成请求于 16:20:16–16:20:18 UTC 完成，2.687 秒，3 次 HTTP 200、3 次正常 stop、0 不可用、0 重试，供应商累计返回 1,041 token；这些只证明接口与格式可用，不构成准确率实验。部署阶段按 5 秒采样的整卡显存峰值 20,969 MiB，包含服务初始化，不能作为正式 Test 的运行峰值。首次服务失败及更换 Python 的证据保留于本机 `provisioning/`；第二次服务于 16:18:01 UTC 启动并完成初始化。完整回归最近一次为 1,312 passed／23 skipped／3 deselected、6 项既存 warnings，相关 50 项测试及 Ruff 均通过。
 
-## 恢复执行的顺序
+## 当前执行与后续接续
 
-**新实例工程检查已完成，负责人已授权本地提交本次配置与执行文件。** #20 要求正式推理前提交冻结配置；本提交固化新实例配置、执行入口与必要测试，研究参数不变。`workflow.py check-ready`、`baseline` 和 `qwen` 会核对主配置及 BGE 配置已按原字节进入 HEAD，否则立即拒绝。提交并部署后执行；不修改配置来追认已运行结果。
+**负责人已授权本地提交，正式执行使用冻结提交 `b4d01d7`。** #20 要求正式推理前提交冻结配置；该提交固化新实例配置、执行入口与必要测试，研究参数不变。`workflow.py check-ready`、`baseline` 和 `qwen` 会核对主配置及 BGE 配置已按原字节进入 HEAD，否则立即拒绝。提交、部署与启动的时间线已落盘；不修改配置来追认已运行结果。
 
-以下命令均尚未执行真实评分，工作目录为项目根目录。新实例的固定模型 revision、RTX 4090、vLLM／Torch／Transformers 版本与 8,192 上下文已检查；[服务入口](serve.py) 与评分驱动都运行在远端，只连接远端 127.0.0.1:8000。[synthetic_smoke.py](synthetic_smoke.py) 的 3 条独立合成检查已通过，不重复执行，不进入正式缓存。恢复时先确认两份配置及相关实现已提交、部署字节一致及现有服务仍正常；若运行环境或长度检查不符，先解决具体问题。
+以下命令已经执行，保留作复现入口；当前 worker 仍在运行，不再次调用 baseline 或 qwen。工作目录为项目根目录。新实例的固定模型 revision、RTX 4090、vLLM／Torch／Transformers 版本与 8,192 上下文已检查；[服务入口](serve.py) 与评分驱动都运行在远端，只连接远端 127.0.0.1:8000。[synthetic_smoke.py](synthetic_smoke.py) 的 3 条独立合成检查已通过，不重复执行，不进入正式缓存。恢复时先确认两份配置及相关实现已提交、部署字节一致及现有服务仍正常；若运行环境或长度检查不符，先解决具体问题。
 
 ```bash
 .venv/bin/python runs/post_recall/nevir-test-main-20260911/workflow.py check-ready
 .venv/bin/python runs/post_recall/nevir-test-main-20260911/workflow.py baseline
 .venv/bin/python runs/post_recall/nevir-test-main-20260911/workflow.py qwen
 ```
+
+截至 2026-09-11 17:40:56 UTC，L1 已完成 850/5,472 个唯一请求，其中 2 个 HTTP 200 回执以 length 结束、未形成合法评分，按原规则保留不可用且不重试；这不是最终失败总数。进程仍运行，任务磁盘约 18.66GB。仅核对失败类型和供应商回执，不查看单题内容或按中间效果调整方案。E0 原始结果在 `baseline/`，Qwen 的 `launch.json`、`worker-start.json` 和 `execution-start.json` 已取回本机。
+
+已启用当前任务的 15 分钟自动接续（`20-test`）：检查进程、进度与容量；Qwen 完成后先回收完整结果，再启动固定 BGE，最终执行两臂统计和收尾。普通单项不可用按既有规则保留，只有进程异常退出、数据缺损或资源不足等实质故障才需要处理；不自动重跑正式实验。
 
 `baseline` 在本机执行。启动 Qwen 前，将此次提交中的 `src/`、原严格驱动及本目录执行文件部署到配置中的远端 repository_root，并核对部署配置与本地已提交字节一致。`qwen` 返回远端 PID，不表示完成；远端 `launch.json` 和 `worker-start.json` 都只允许创建一次，重复调用拒绝启动，`process-exit.json` 记录成功／失败退出，不自动重启。定期读两层的 progress.json、GPU 进程与空间；完成后回收两层完整目录及运行记录到本机，再执行：
 
@@ -62,7 +66,7 @@ BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2
 
 `qwen` 的远端 worker 调用既有严格单次请求驱动 `open-judge-selection-20260911/run_frozen.py`。运行目录包含逐请求耗时、失败类型、供应商 token／结束原因回执及总耗时；输出目录已存在时拒绝重新评分，不自动恢复正式任务。实际中断或需要重跑时依 #20 原要求另行登记，保留已有分数和执行偏差。
 
-Qwen 完成后，把本目录 `bge/` 中的 `items.jsonl`、`execution-config.json`、`run_bge.py` 放到服务器同一新目录，使用 `/root/linkrag-eval-test-20260911/gpu-venv-py313/bin/python <该目录>/run_bge.py` 执行。BGE 权重尚未部署，须先将固定 revision 模型放至配置路径。脚本检查环境与未截断长度；超出 8,192 token 则停止，不静默截断。取回 `scores.jsonl`、`summary.json` 后运行：
+Qwen 完成后，把本目录 `bge/` 中的 `items.jsonl`、`execution-config.json`、`run_bge.py` 放到服务器同一新目录，使用 `/root/linkrag-eval-test-20260911/gpu-venv-py313/bin/python <该目录>/run_bge.py` 执行。BGE 的 6 个必需文件已从官方固定 revision 下载至本机 `model-staging/bge-reranker-v2-m3/`，共 2,293,242,108 字节，187.858 秒，文件大小与官方摘要全部通过，记录在其 download.json。GPU 权重尚未部署，须先将固定模型放至配置路径。为缩短后续传输，已验证 BAAI ModelScope 的 model.safetensors 与该固定 revision 权重大小、SHA256 完全一致；可在 Qwen 结果收妥后由服务器直接下载相同权重，重新核验后使用，五个配置／分词器小文件仍复制 Hugging Face 原件。下载 URL 与核验依据见本机 `provisioning/bge-weight-transfer.json`。脚本检查环境与未截断长度；超出 8,192 token 则停止，不静默截断。取回 `scores.jsonl`、`summary.json` 后运行：
 
 ```bash
 .venv/bin/python runs/post_recall/nevir-test-main-20260911/workflow.py evaluate --arm bge
@@ -70,4 +74,4 @@ Qwen 完成后，把本目录 `bge/` 中的 `items.jsonl`、`execution-config.js
 
 评价复用现有 `evaluate_pairs`／`evaluate_rankers`／`pair_statistics.comparison_table`，同时输出主口径与含冲突敏感性、严格成对准确率、双向正确、列表位置、纠正／改坏、来源组自助 95% 区间（seed 20260910，2,000 次）及逐方向符号检验。预定主比较为 Qwen `stage1_judge − stage1`。逐方向检验未校正组内依赖和多重比较；没有全池相关性标签，不报告全池 nDCG 或答案质量。
 
-所有大输入、逐题输出和运行日志留在本地并受 Git 忽略。实际推理后再将聚合结果纳入轻量产物白名单、更新既有报告与实验台账；本次没有最终结果或论文可用的新效果结论。
+所有大输入、逐题输出和运行日志留在本地并受 Git 忽略。实际推理后再将聚合结果纳入轻量产物白名单、更新既有报告与实验台账；正式评分仍在执行，没有最终结果或论文可用的新效果结论。

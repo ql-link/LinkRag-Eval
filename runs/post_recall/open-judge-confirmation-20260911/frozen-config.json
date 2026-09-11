@@ -1,0 +1,87 @@
+{
+  "record_kind": "pre-run execution config",
+  "recorded_at": "2026-09-11T04:10:10.940686+00:00",
+  "repository_root": "/Users/kawauso/Documents/Projects/LinkRag-Eval",
+  "code_commit": "50e7aa33ec8360e1e309f60ca43be1a6e81c38b5",
+  "application_source_changes": false,
+  "experiment_driver": "runs/post_recall/open-judge-selection-20260911/run_frozen.py",
+  "issue": 16,
+  "purpose": "One-pass fresh-cache reproducibility run of the already-exposed confirmation role; not a new independent test",
+  "model": {
+    "repository": "Qwen/Qwen3-14B-AWQ",
+    "served_name": "qwen3-14b-awq",
+    "revision": "31c69efc29464b6bb0aee1398b5a7b50a99340c3",
+    "format": "awq_marlin"
+  },
+  "server": {
+    "ssh_alias": "runpod",
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "vllm": "0.29.0",
+    "torch": "2.13.0",
+    "transformers": "5.17.0",
+    "context_length": 8192,
+    "gpu_memory_utilization": 0.9,
+    "reasoning_parser": "qwen3",
+    "seed": 0,
+    "launch_script": "runs/post_recall/open-judge-confirmation-20260911/serve.sh"
+  },
+  "judge_arguments": {
+    "endpoint": "http://127.0.0.1:18000",
+    "think": true,
+    "max_tokens": 6144,
+    "num_ctx": 8192,
+    "workers": 8,
+    "batch_size": 1,
+    "temperature": 0,
+    "timeout_seconds": 600,
+    "batch_shuffle_seed": 20260910,
+    "model_request_seed": null,
+    "prompt_version": "judge_prompt_v1"
+  },
+  "cache_policy": "fresh; no historical or cross-job caches",
+  "single_attempt": true,
+  "failure_policy": "Exactly one HTTP request per unique input; no retries or schema fallback; unavailable rows retained. Each L1/L2 job invoked once.",
+  "evaluation": {
+    "K": [
+      10,
+      20
+    ],
+    "primary": "stage1_judge; fusion score tie-break",
+    "auxiliary": [
+      "E0",
+      "stage1",
+      "E0_judge"
+    ],
+    "unavailable": "Retain denominators; L1 unavailable is not correct; L2 whole-query fusion fallback"
+  },
+  "constraints": [
+    "English NevIR fixed existing candidates only",
+    "No Test items, new recall, training, prompt or label changes",
+    "No selecting/tuning on confirmation results",
+    "Preserve every historical score and report all repeated results regardless of outcome"
+  ],
+  "jobs": [
+    {
+      "name": "l1-confirmation",
+      "input": "runs/post_recall/llm-judge-pilot-20260910/items-confirmation-l1/l1-confirmation.jsonl",
+      "level": "l1",
+      "items": 742,
+      "queries": 371,
+      "output": "runs/post_recall/open-judge-confirmation-20260911/l1-judge"
+    },
+    {
+      "name": "l2-confirmation",
+      "input": "runs/post_recall/llm-judge-pilot-20260910/items-stage1-top20/confirmation/confirmation.jsonl",
+      "level": "l2",
+      "items": 7480,
+      "queries": 374,
+      "output": "runs/post_recall/open-judge-confirmation-20260911/l2-judge"
+    }
+  ],
+  "model_choice_basis": "Owner-fixed Qwen14B thinking K20; historical development selection already documented before original confirmation. This repetition does not reselect the main model.",
+  "historical_record": "runs/post_recall/open-judge-confirmation-20260910/execution-config.json",
+  "engineering_smoke": {
+    "scope": "Three synthetic query/passage inputs outside NevIR; schema and transport check only; never reused as evaluation scores",
+    "request_count": 3
+  }
+}

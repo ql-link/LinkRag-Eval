@@ -1,0 +1,32 @@
+{
+  "recorded_at": "2026-09-11T04:56:42.452237+00:00",
+  "formal_judge_wall_seconds": 1889.9910375829786,
+  "formal_runner_attempts": 1536,
+  "failed_runner_attempts": 18,
+  "final_unavailable_items": 2,
+  "engineering_smoke_requests": 3,
+  "http_status_counts_including_smoke": {
+    "200": 1539
+  },
+  "total_http_requests_including_smoke": 1539,
+  "no_schema_fallback_observed": true,
+  "client_attempt_wall_seconds": {
+    "mean": 9.137290481429773,
+    "min": 3.606178624962922,
+    "max": 122.82869720901363
+  },
+  "gpu_sampling": {
+    "method": "nvidia-smi --query-gpu=timestamp,memory.used,memory.total,utilization.gpu,power.draw --format=csv -l 5",
+    "samples_during_formal_job": 378,
+    "sampled_max_memory_mib": 21256.0,
+    "limitation": "Sampled total GPU allocation during this run, including vLLM reservation; not a continuous peak, per-query memory, model-only memory or minimum VRAM requirement."
+  },
+  "sources": [
+    "judge/summary.json",
+    "judge/batch-*/metadata.json",
+    "engineering-smoke/summary.json",
+    "server-8b.log",
+    "gpu-telemetry.csv"
+  ],
+  "failure_diagnosis": "Historical runner stored content parsing errors, not provider finish_reason; cause of these invalid contents is not independently confirmed."
+}

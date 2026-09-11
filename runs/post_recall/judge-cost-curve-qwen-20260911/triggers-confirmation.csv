@@ -1,0 +1,5 @@
+role,variant,K,threshold,n,strict_correct,reverse,model_tie,unavailable,strict_accuracy,eligible_bidirectional_pairs,both_directions_correct,preferred@1,queries,triggered_queries,triggered_fraction,judged_candidates,mean_judged,requested_candidates,mean_requested,missing_judge_candidates,fallback_queries,changed_queries,missing_route_queries,missing_routes
+confirmation,always_call,20,,371,280,88,3,0,0.7547169811320755,185,106,0.5579514824797843,374,374,1.0,7476,19.989304812834224,7480,20.0,4,4,235,55,55
+confirmation,never_call,0,,371,189,179,3,0,0.5094339622641509,185,16,0.3665768194070081,374,0,0.0,0,0.0,0,0.0,0,0,0,55,55
+confirmation,fusion_margin,20,0.19029679894447327,371,275,93,3,0,0.7412398921832885,185,101,0.5471698113207547,374,357,0.9545454545454546,7136,19.080213903743317,7140,19.09090909090909,4,4,225,55,55
+confirmation,route_disagreement,20,,371,267,101,3,0,0.7196765498652291,185,93,0.5336927223719676,374,324,0.8663101604278075,6477,17.318181818181817,6480,17.32620320855615,3,3,210,55,55

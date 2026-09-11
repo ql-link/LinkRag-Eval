@@ -1,0 +1,45 @@
+{
+  "status": "completed",
+  "completed_at": "2026-09-10T17:08:11.314035+00:00",
+  "model": {
+    "repository": "BAAI/bge-reranker-v2-m3",
+    "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+    "model_card": "https://huggingface.co/BAAI/bge-reranker-v2-m3",
+    "dtype": "float16",
+    "implementation": "transformers.AutoModelForSequenceClassification; raw logits, no sigmoid or 0–4 mapping",
+    "trust_remote_code": false
+  },
+  "runtime": {
+    "ssh_alias": "runpod",
+    "python": "/workspace/venv/bin/python",
+    "torch": "2.13.0",
+    "transformers": "5.17.0",
+    "gpu": "RTX 4090 24GB",
+    "batch_size": 1,
+    "max_input_tokens": 8192,
+    "truncation_policy": "No silent truncation: measure untruncated token length before scoring and fail if any exceeds 8192.",
+    "seed": 20260910,
+    "eval_mode": true,
+    "torch_inference_mode": true,
+    "attention_implementation": "sdpa",
+    "gpu_memory_fraction_limit": 0.12,
+    "schedule": "Run only after Qwen development batch completes; keep existing Qwen server resident."
+  },
+  "items": 9034,
+  "items_by_role": {
+    "development": 1524,
+    "confirmation": 7510
+  },
+  "unavailable": 0,
+  "input_tokens": {
+    "min": 33,
+    "max": 336,
+    "mean": 194.50520256807616,
+    "truncated_items": 0
+  },
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "peak_cuda_allocated_bytes": 1151739392,
+  "inference_wall_seconds": 102.80429605068639,
+  "total_wall_seconds": 116.2728919298388,
+  "timing_scope": "Total includes input loading, tokenization, model loading and inference; excludes imports, model download and SSH file transfers. Inference includes GPU work and incremental output serialization."
+}

@@ -1,0 +1,35 @@
+{
+  "runtime_observed_before_run": {
+    "gpu": "NVIDIA GeForce RTX 4090",
+    "gpu_memory_mib": 24564,
+    "vllm": "0.29.0",
+    "torch": "2.13.0",
+    "transformers": "5.17.0",
+    "huggingface_hub": "1.30.0"
+  },
+  "smoke": {
+    "runner": "openai",
+    "endpoint": "127.0.0.1",
+    "model": "qwen3-14b-awq",
+    "effort": "think",
+    "prompt_version": "judge_prompt_v1",
+    "codex_version": null,
+    "items": 3,
+    "unique_keys": 3,
+    "cache_hits": 0,
+    "cache_misses": 3,
+    "duplicate_items": 0,
+    "planned_batches": 3,
+    "batch_count": 3,
+    "workers": 8,
+    "batch_size": 1,
+    "seed": 20260910,
+    "unavailable": 0,
+    "wall_seconds": 3.4309843750088476
+  },
+  "first_model_response": "Fresh three-item smoke succeeded through local SSH tunnel; no cache hits.",
+  "code_matches_upstream_application": true,
+  "upstream_commit_checked": "06f5f84459fc8784f3818f1d0811994eb8d547cb",
+  "inference_config": "execution-config.json",
+  "status": "full_development_completed_with_unavailable"
+}

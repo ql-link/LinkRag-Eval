@@ -195,6 +195,7 @@ def test_features_use_full_pool_before_selecting_only_the_supervised_rows() -> N
         dataset.x[:2], full_features[[full_ids.index("pool-left"), full_ids.index("pool-right")]]
     )
     assert block.selected_indices == [full_ids.index("pool-left"), full_ids.index("pool-right")]
+    assert block.loss_indices == block.selected_indices
 
     reduced = deepcopy(pair)
     for row in reduced[2]:
@@ -225,6 +226,49 @@ def test_query_ranking_groups_remain_separate_and_source_weights_balance_total_c
         by_source[source] = by_source.get(source, 0.0) + float(weights.sum())
     assert by_source["large"] == by_source["small"]
     assert dataset.weights.mean() == 1.0
+
+
+def test_background_negatives_add_a_deterministic_weak_relevance_level() -> None:
+    pair = _pair("weak-background")
+    first = prepare_pairwise_dataset(
+        role="train",
+        queries=pair[0],
+        supervision=pair[1],
+        inputs=pair[2],
+        background_negative_count=1,
+    )
+    second = prepare_pairwise_dataset(
+        role="train",
+        queries=pair[0],
+        supervision=pair[1],
+        inputs=pair[2],
+        background_negative_count=1,
+    )
+
+    assert first.groups == [3, 3]
+    assert first.y.tolist() == [2, 1, 0, 1, 2, 0]
+    np.testing.assert_array_equal(first.x, second.x)
+    np.testing.assert_array_equal(first.y, second.y)
+    assert first.summary["background_negative_count"] == 1
+    assert first.summary["loss_labels"] == {
+        "preferred": 2,
+        "other_designated": 1,
+        "background": 0,
+    }
+    assert training_parameters(GRID[2])["label_gain"] == [0, 1]
+    assert training_parameters(GRID[2], background_negative_count=1)["label_gain"] == [0, 1, 2]
+
+
+def test_background_negatives_are_rejected_for_development() -> None:
+    pair = _pair("weak-development", role="development")
+    with pytest.raises(ValueError, match="only allowed in the training loss"):
+        prepare_pairwise_dataset(
+            role="development",
+            queries=pair[0],
+            supervision=pair[1],
+            inputs=pair[2],
+            background_negative_count=1,
+        )
 
 
 def test_missing_direction_does_not_remove_the_other_valid_training_query() -> None:

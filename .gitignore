@@ -221,3 +221,11 @@ venv/
 !/runs/post_recall/open-judge-confirmation-20260911/l2-k20/
 /runs/post_recall/open-judge-confirmation-20260911/l2-k20/*
 !/runs/post_recall/open-judge-confirmation-20260911/l2-k20/results.json
+
+!/runs/post_recall/judge-cost-curve-qwen-20260911/
+/runs/post_recall/judge-cost-curve-qwen-20260911/*
+!/runs/post_recall/judge-cost-curve-qwen-20260911/README.md
+!/runs/post_recall/judge-cost-curve-qwen-20260911/results.json
+!/runs/post_recall/judge-cost-curve-qwen-20260911/verification.json
+!/runs/post_recall/judge-cost-curve-qwen-20260911/*.csv
+!/runs/post_recall/judge-cost-curve-qwen-20260911/*.svg

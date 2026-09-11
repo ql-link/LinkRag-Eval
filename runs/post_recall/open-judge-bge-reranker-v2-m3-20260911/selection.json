@@ -1,0 +1,24 @@
+{
+  "recorded_at": "2026-09-10T17:17:12.399167+00:00",
+  "record_kind": "Current-method record, not a retrospective pre-registration of the earlier Qwen choice",
+  "current_main_model": "Qwen/Qwen3-14B-AWQ",
+  "current_main_revision": "31c69efc29464b6bb0aee1398b5a7b50a99340c3",
+  "current_main_method": "fixed fusion top20, thinking pointwise judge, fusion tie-break",
+  "decision_basis": "Existing research plan section 1.3 fixes the open-weight main method; this run fills missing development evidence and adds the one planned lightweight baseline.",
+  "prior_evidence": "N10 existing 8B/14B L1 runs; not rerun in this experiment",
+  "new_reference_model": {
+    "repository": "BAAI/bge-reranker-v2-m3",
+    "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+    "model_card": "https://huggingface.co/BAAI/bge-reranker-v2-m3",
+    "dtype": "float16",
+    "implementation": "transformers.AutoModelForSequenceClassification; raw logits, no sigmoid or 0–4 mapping",
+    "trust_remote_code": false
+  },
+  "reference_config_before_inference": "execution-config.json",
+  "qwen_development_config_before_inference": "../open-judge-qwen3-14b-development-20260911/execution-config.json",
+  "selected_by_current_results": false,
+  "new_qwen_model_sweep": false,
+  "original_issue_15_pre_selection_rule_file_available": false,
+  "original_issue_15_protocol_note": "No retroactive claim that the previous Qwen selection had a timestamped rule before outcomes. This records the narrowed current plan; the old request for a new 30B model comparison is not executed.",
+  "test_used": false
+}

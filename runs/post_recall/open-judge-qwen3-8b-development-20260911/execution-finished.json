@@ -1,0 +1,26 @@
+{
+  "completed_at": "2026-09-11T04:54:26.241279+00:00",
+  "status": "completed",
+  "summaries": [
+    {
+      "runner": "openai",
+      "endpoint": "127.0.0.1",
+      "model": "qwen3-8b",
+      "effort": "think",
+      "prompt_version": "judge_prompt_v1",
+      "codex_version": null,
+      "items": 1520,
+      "unique_keys": 1520,
+      "cache_hits": 0,
+      "cache_misses": 1520,
+      "duplicate_items": 0,
+      "planned_batches": 1520,
+      "batch_count": 1536,
+      "workers": 8,
+      "batch_size": 1,
+      "seed": 20260910,
+      "unavailable": 2,
+      "wall_seconds": 1889.9910375829786
+    }
+  ]
+}

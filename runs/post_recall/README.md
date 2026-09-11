@@ -8,6 +8,9 @@
 | --- | --- | --- | --- |
 | **共享输入，不可删** | [nevir-ltr-validation-20260907](nevir-ltr-validation-20260907/README.md) | Train／开发／确认的查询、监督与完整三路候选快照；所有英文实验都读它 | 否 |
 | **当前结果** | [llm-judge-pilot-20260910](llm-judge-pilot-20260910/README.md) | N09：LLM 判断器三级试点，含判断缓存、评价与 L3 模型；正式报告见 [docs/reports](../../docs/reports/llm_judge_pilot_2026_09_10.md) | 否 |
+| **当前开源补充结果** | [open-judge-qwen3-14b-development-20260911](open-judge-qwen3-14b-development-20260911/README.md) | N14／#15：Qwen 开发 L2 缓存补齐，固定配置、失败和 K10／K20 评价；主 K20 为 54/74 | 否 |
+| **8B 开发 L2 补齐** | [open-judge-qwen3-8b-development-20260911](open-judge-qwen3-8b-development-20260911/README.md) | #15：运行前配置、全新缓存、1,520 项判断及 K10／K20 评价 | 否 |
+| **当前文本参照** | [open-judge-bge-reranker-v2-m3-20260911](open-judge-bge-reranker-v2-m3-20260911/README.md) | N14／#15：BGE 固定权重对照，9,034 条判断、L1／L2 评价与脚本；主 K20 确认 257/371 | 否 |
 | **当前模型来源** | [nevir-english-features-20260907](nevir-english-features-20260907/README.md) | 英文基线由此训练；保存的开发全池分数是各实验的一致性校验基准 | 否 |
 | **当前引用的人审与诊断** | [subject-binding-pilot-20260908](subject-binding-pilot-20260908/README.md) | N08：人审 v5 固定结果（`human/`）、五臂训练、v2/v3 修复产物 | `human/` 不可删；其余见 §3 |
 | 同上 | [nevir-offline-diagnostic-20260907](nevir-offline-diagnostic-20260907/README.md) | 人审匿名映射 `review/private/`（人审 52 题评价必需）、旧 A/B 机械诊断 | `review/` 不可删；其余见 §3 |

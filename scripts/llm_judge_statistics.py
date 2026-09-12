@@ -107,9 +107,14 @@ def derive_l3(root, role):
 def load_extra(specs):
     extras = {}
     for spec in specs:
-        name, sep, filename = spec.partition("=")
-        if not sep or not filename or not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]*", name):
-            raise ValueError("--extra must be ranker=path/to/per-query.jsonl")
+        selector, sep, filename = spec.partition("=")
+        match = re.fullmatch(
+            r"(?P<name>[A-Za-z][A-Za-z0-9_.-]*)(?::(?P<column>[A-Za-z][A-Za-z0-9_.-]*))?",
+            selector,
+        )
+        if not sep or not filename or not match:
+            raise ValueError("--extra must be ranker[:column]=path/to/per-query.jsonl")
+        name, column = match.group("name", "column")
         if name in extras or name in {
             *IDENTITY,
             "E0",
@@ -123,7 +128,8 @@ def load_extra(specs):
         path = Path(filename).resolve()
         rows = read_rows(path)
         by_id = indexed(rows)
-        column = name if rows and name in rows[0] else "judge"
+        if column is None:
+            column = name if rows and name in rows[0] else "judge"
         if not rows or any(r.get(column) not in RELATIONS for r in rows):
             raise ValueError(f"extra {name} requires valid {column} relations")
         extras[name] = (by_id, path, column)
@@ -258,7 +264,9 @@ def run(args):
         f".venv/bin/python scripts/llm_judge_statistics.py run --root {shlex.quote(str(root))} "
         f"--out runs/post_recall/judge-statistics-open --seed {args.seed} --repeats {args.repeats} "
         "--extra open_judge=path/to/per-query.jsonl\n```\n\n"
-        "--extra 可重复使用不同名称；优先读取同名关系列，否则读取 judge 列。"
+        "--extra 名称[:关系列]=路径 可重复使用不同名称；显式列必须存在且关系有效。"
+        "L2 用 --extra open_l2:stage1_judge=path/to/official-per-query.jsonl 读取融合破同分结果；"
+        "选择 E0_judge 则读取 E0 破同分结果。未指定列时优先读取同名关系列，否则读取 judge 列。"
         "按 source_query_id 连接并自动分角色；可只提供一个角色或部分查询，缺项记 unavailable，"
         "无匹配角色不生成额外比较。重复 ID、身份冲突、域外查询和非法关系直接报错。"
         "额外排序器均相对 E0 和 stage1 比较。\n\n" + notes
@@ -275,7 +283,10 @@ def main(argv=None):
     command.add_argument("--out", type=Path, required=True)
     command.add_argument("--seed", type=int, default=20260910)
     command.add_argument("--repeats", type=int, default=2000)
-    command.add_argument("--extra", action="append", default=[], metavar="RANKER=JSONL")
+    command.add_argument(
+        "--extra", action="append", default=[], metavar="RANKER[:COLUMN]=JSONL",
+        help="saved relations; select stage1_judge explicitly for fusion-tiebroken L2 results",
+    )
     run(parser.parse_args(argv))
 
 

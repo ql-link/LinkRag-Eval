@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "page_errors": [],
+  "checks": [
+    "36 items / 4 English texts each",
+    "approval validation",
+    "autosave/reload",
+    "original review date survives navigation",
+    "JSONL export / clean-context import",
+    "stale digest rejected without overwriting imported state",
+    "mobile no overflow"
+  ],
+  "identity": "synthetic browser tests only; no real human decisions or inference",
+  "real_human_records": 0
+}

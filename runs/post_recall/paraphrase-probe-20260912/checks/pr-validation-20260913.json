@@ -1,0 +1,63 @@
+{
+  "status": "preparation_delivery_verified_awaiting_real_human_review",
+  "verified_at": "2026-09-12T17:04:34.943613+00:00",
+  "implementation_commit": "640b7867970b8d1ea641a22eef905bf717ccf7ee",
+  "base_commit": "6d644b29d5f7062b71d485c3415dc9c4c91291b5",
+  "python": "3.12.13 (main, Mar  3 2026, 12:39:30) [Clang 17.0.0 (clang-1700.6.3.2)]",
+  "rag_revision": "861f24810c3482ec0d86768a24f952b1e08ae675",
+  "rag_import_locations_verified": true,
+  "checks": {
+    "full_non_integration": {
+      "command": "LINKRAG_EVAL_REQUIRE_RAG=1 \"$RUN/.venv/bin/python\" -m pytest -m \"not integration\" -q",
+      "result": "1320 passed, 23 skipped, 3 deselected, 6 warnings",
+      "wall_seconds": 83.3,
+      "log": "pr-full-pytest-20260913-attempt2.txt",
+      "skip_reason": "optional real parser runtime unavailable; not a parser integration pass"
+    },
+    "issue_tests": {
+      "command": "\"$RUN/.venv/bin/python\" -m pytest \"$RUN/test_probe.py\" -q",
+      "result": "19 passed",
+      "log": "pr-probe-pytest-20260913.txt"
+    },
+    "tracked_files_only_export": {
+      "result": "19 passed without private research inputs",
+      "log": "pr-tracked-files-pytest-20260913.txt"
+    },
+    "browser": {
+      "result": "7 checks passed, 0 page errors; desktop and mobile",
+      "log": "browser-verification.json"
+    },
+    "ruff": {
+      "result": "passed",
+      "log": "pr-ruff-20260913.txt"
+    },
+    "report_index": {
+      "result": "current; no new formal report to register",
+      "log": "pr-report-index-20260913.txt"
+    },
+    "lint_imports": {
+      "result": "passed; repository tool has no independent contracts, source boundary covered by pytest"
+    },
+    "draft_rebuild": "both scene files byte-identical in a temporary reconstruction",
+    "source_copies": "both supplied files byte-identical to local source copies",
+    "ai_review": "36 unique versions, exact input digests, AI identity only"
+  },
+  "earlier_failed_check": {
+    "step": "full pytest collection",
+    "result": "7 errors due to missing macOS libomp",
+    "resolution": "installed Homebrew libomp 23.1.0; full rerun passed",
+    "local_log": "pr-full-pytest-20260913.txt"
+  },
+  "actual_human_decisions": 0,
+  "scoring_model_requests": 0,
+  "draft_and_ai_review_cost": null,
+  "gpu_started": false,
+  "formal_outputs": "execution-config.json, frozen/, inference/, results.json and report.md absent",
+  "remaining": [
+    "real human review of all 36 active versions",
+    "resolve mural wording, but/and contrast and ability reading with actual reviewer",
+    "verify Qwen/GPT resources and freeze actual execution configuration",
+    "one first round for both models, cost evidence, results and limitations report"
+  ],
+  "issue_22_complete": false
+}

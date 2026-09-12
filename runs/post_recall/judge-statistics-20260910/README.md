@@ -14,7 +14,7 @@
 .venv/bin/python scripts/llm_judge_statistics.py run --root /Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/llm-judge-pilot-20260910 --out runs/post_recall/judge-statistics-open --seed 20260910 --repeats 2000 --extra open_judge=path/to/per-query.jsonl
 ```
 
---extra 可重复使用不同名称；优先读取同名关系列，否则读取 judge 列。按 source_query_id 连接并自动分角色；可只提供一个角色或部分查询，缺项记 unavailable，无匹配角色不生成额外比较。重复 ID、身份冲突、域外查询和非法关系直接报错。额外排序器均相对 E0 和 stage1 比较。
+2026-09-11 用法补充：`--extra 名称[:关系列]=路径` 可重复使用不同名称；L2 用 `--extra open_l2:stage1_judge=path/to/official-per-query.jsonl` 读取融合破同分结果，`E0_judge` 对应 E0 破同分。显式列必须存在且关系有效；未指定列时优先读取同名关系列，否则读取 `judge`。按 source_query_id 连接并自动分角色；可只提供一个角色或部分查询，缺项记 unavailable，无匹配角色不生成额外比较。重复 ID、身份冲突、域外查询和非法关系直接报错。额外排序器均相对 E0 和 stage1 比较。本目录原 `results.json`／`tables.md` 保留；开源 L2 实际复跑见[新目录](../judge-statistics-20260911/README.md)。
 
 差值为 a − b；pp 为百分点。严格正确仅指 strict_correct。CI 与符号检验均剔除任一排序器 unavailable 的行；双向指标剔除不完整或含缺失的配对。
 

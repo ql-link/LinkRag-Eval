@@ -1,0 +1,97 @@
+{
+  "created_at": "2026-09-11T11:12:21.501397+00:00",
+  "base_commit": "23f465d0c7a991571488173593070fecf6809e0c",
+  "preparation_code_uncommitted": true,
+  "guide_version": "v2",
+  "annotation_protocol": "human-confirmed; model assistance allowed; one or two submissions",
+  "selection": {
+    "qwen_confirmation": 91,
+    "gpt_confirmation": 60,
+    "confirmation_intersection": 50,
+    "confirmation_union": 101,
+    "development_human_v5": 21,
+    "total": 122,
+    "qwen_noncorrect_with_technical_fallback": 2
+  },
+  "source_files": [
+    "runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-k20-v2/official-per-query.jsonl",
+    "runs/post_recall/llm-judge-pilot-20260910/l2s-confirmation-k20-v2/results.json",
+    "runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/candidates/confirmation/inputs.jsonl",
+    "runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/candidates/development/inputs.jsonl",
+    "runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/confirmation/queries.jsonl",
+    "runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/confirmation/supervision.jsonl",
+    "runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/development/queries.jsonl",
+    "runs/post_recall/nevir-ltr-validation-20260907/data-preparation/experiment/prepared/development/supervision.jsonl",
+    "runs/post_recall/nevir-offline-diagnostic-20260907/review/private/reviewer_1-mapping.jsonl",
+    "runs/post_recall/open-judge-confirmation-20260910/l2-first-pass-k20/official-per-query.jsonl",
+    "runs/post_recall/open-judge-confirmation-20260910/l2-first-pass-k20/results.json",
+    "runs/post_recall/subject-binding-pilot-20260908/human/adjudication/history/results-v5-frozen.json",
+    "runs/post_recall/subject-binding-pilot-20260908/upstream-diagnostic-20260909/first-observed-output.json"
+  ],
+  "packets": [
+    {
+      "reviewer_slot": 1,
+      "packet_id": "issue21-error-types-20260911-r1-v2",
+      "cases": 122,
+      "reference_side_counts": {
+        "Y": 61,
+        "X": 61
+      },
+      "zip": "runs/post_recall/error-taxonomy-20260911/packets/issue21-reviewer-1-122-cases-v2.zip",
+      "zip_bytes": 58332,
+      "source_mapping_verified": true,
+      "public_fields_verified": true,
+      "zip_verified": true
+    },
+    {
+      "reviewer_slot": 2,
+      "packet_id": "issue21-error-types-20260911-r2-v2",
+      "cases": 122,
+      "reference_side_counts": {
+        "Y": 61,
+        "X": 61
+      },
+      "zip": "runs/post_recall/error-taxonomy-20260911/packets/issue21-reviewer-2-122-cases-v2.zip",
+      "zip_bytes": 58941,
+      "source_mapping_verified": true,
+      "public_fields_verified": true,
+      "zip_verified": true
+    }
+  ],
+  "different_orders_verified": true,
+  "human_submissions_received": 0,
+  "model_calls": 0,
+  "official_test_read": false,
+  "blinding": "model identity/scores/previous reasons hidden; existing reference preference visible",
+  "browser_acceptance": {
+    "version": "v2",
+    "reviewer_slot_tested": 1,
+    "local_http_render": "passed",
+    "model_assistance_fields": "passed",
+    "model_prompt_matches_displayed_case": "passed",
+    "assistance_metadata_save_reload": "passed",
+    "actual_draft_download_schema": "passed",
+    "draft_reimport_with_assistance_metadata": "passed",
+    "missing_human_confirmation_rejected": "passed",
+    "browser_restored_to_blank": "passed",
+    "local_file_url_preview": "not_executed_browser_tool_url_policy",
+    "synthetic_qa_not_human_submission": true
+  },
+  "supersedes": {
+    "guide_version": "v1",
+    "created_at": "2026-09-11T10:08:31.482476+00:00",
+    "packet_paths": [
+      "runs/post_recall/error-taxonomy-20260911/packets/issue21-reviewer-1-122-cases.zip",
+      "runs/post_recall/error-taxonomy-20260911/packets/issue21-reviewer-2-122-cases.zip"
+    ],
+    "change": "Allow model assistance and a single human reviewer; categories/cases/mappings unchanged."
+  },
+  "validation": {
+    "python_tests_passed": 16,
+    "ruff": "passed",
+    "javascript_syntax_both_packets": "passed",
+    "v1_v2_cases_text_reference_and_order_identical": true,
+    "both_zips_and_blank_forms_verified": true,
+    "existing_v2_overwrite_refused": true
+  }
+}

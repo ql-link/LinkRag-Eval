@@ -1,0 +1,73 @@
+{
+  "record_kind": "pre-run fixed baseline config",
+  "recorded_at": "2026-09-11T13:11:23.835917+00:00",
+  "issue": 20,
+  "purpose": "Fixed BGE Test reference; pinned model and inference settings",
+  "code_commit": "23f465d0c7a991571488173593070fecf6809e0c",
+  "model": {
+    "repository": "BAAI/bge-reranker-v2-m3",
+    "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+    "model_card": "https://huggingface.co/BAAI/bge-reranker-v2-m3",
+    "dtype": "float16",
+    "implementation": "transformers.AutoModelForSequenceClassification; raw logits, no sigmoid or 0–4 mapping",
+    "trust_remote_code": false
+  },
+  "runtime": {
+    "python": "/root/linkrag-eval-test-20260911/gpu-venv-py313/bin/python",
+    "torch": "2.13.0",
+    "transformers": "5.17.0",
+    "gpu": "RTX 4090 24GB",
+    "batch_size": 1,
+    "max_input_tokens": 8192,
+    "truncation_policy": "No silent truncation: measure untruncated token length before scoring and fail if any exceeds 8192.",
+    "seed": 20260910,
+    "eval_mode": true,
+    "torch_inference_mode": true,
+    "attention_implementation": "sdpa",
+    "gpu_memory_fraction_limit": 0.12,
+    "schedule": "After Qwen finishes and its model/cache are removed from this task directory; never delete other tasks files",
+    "ssh_host": "connect.nmb1.seetacloud.com",
+    "ssh_port": 12981,
+    "ssh_user": "root",
+    "python_version": "3.13.5",
+    "model_path": "/root/autodl-tmp/linkrag-eval-test-20260911/models/bge-reranker-v2-m3/953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e"
+  },
+  "inputs": {
+    "test": {
+      "l1": "runs/post_recall/nevir-test-main-20260911/inputs/l1-test.jsonl",
+      "l2": "runs/post_recall/nevir-test-main-20260911/inputs/l2-test.jsonl",
+      "l1_items": 5476,
+      "l2_items": 55320
+    }
+  },
+  "unique_role_query_passage_items": 55502,
+  "data_use": "Issue #23 member E0/fusion/N8 aggregates already observed; no Qwen Test outputs yet",
+  "evaluation": {
+    "l1": "Raw continuous logits; official Test primary/sensitivity populations",
+    "l2_K": [
+      20
+    ],
+    "primary_tie_break": "fixed fusion score then chunk_id; tail unchanged",
+    "auxiliary_tie_break": "E0 score then chunk_id",
+    "main_method_choice": "Qwen unchanged; no selection on these results."
+  },
+  "raw_output": "scores.jsonl",
+  "constraints": [
+    "English NevIR fixed Test candidates; no recall, training, prompt or label changes",
+    "Exactly the declared L1 and K20 L2 jobs; no K/trigger/model selection on Test",
+    "One fresh score per unique Test query/passage item; the L1/L2 union shares that score",
+    "Member Test results retained separately; never overwrite the Issue #23 folder",
+    "Only aggregate results are displayed; raw Test rows remain local experiment artifacts"
+  ],
+  "infrastructure_migration": {
+    "recorded_at": "2026-09-11T15:31:35.588879+00:00",
+    "from": "previous ssh runpod instance",
+    "to": "owner-provided replacement RTX 4090",
+    "authorization": "Owner supplied replacement SSH connection and requested a 35 GB storage budget",
+    "before_any_test_inference": true,
+    "research_configuration": "Model revision, prompt, K20, scores, population, decoding and failure policy unchanged",
+    "runtime_note": "Pinned GPU runtime on Python 3.13.5, with the project driver in a separate Python 3.13.5 environment; dependency lists recorded separately. Initial Python 3.10.8 service initialization failed in Triton source inspection before any model requests; a standalone source-inspection reproduction passed on 3.13.5. No vLLM or Triton source patches."
+  },
+  "configuration_completed_at": "2026-09-11T17:31:31.832445+00:00",
+  "code_commit_scope": "Preparation base revision; actual execution revision is recorded separately at job launch"
+}

@@ -13,6 +13,7 @@
 | 多人并行阶段谁做什么、改哪些文件、依赖顺序？ | [并行研究计划](plans/parallel-research-plan-2026-09-10.md) | 任务对应 GitHub issue #14–#27；只维护分工与规则，结果看报告 |
 | 哪次实验能回答我的效果或诊断问题？ | [报告选读](reports/REPORT_INDEX.md) | 按问题选实证，并核对开发／确认／机械诊断口径 |
 | 成对指标与全池列表为何不一致，背景弱负例有何结果？ | [列表诊断与 N=8 报告](reports/list_collapse_2026_09_11.md) | 开发／确认本地复验与成员 Test 聚合分列，保留成对精度损失 |
+| 正式英文 Test 最终结果、BGE 对照和中断成本是什么？ | [官方 Test 报告](reports/nevir_official_test_2026_09_12.md) | 固定 K20 主方案、主／敏感性口径、来源组区间及 #40 恢复记录 |
 | 开源判断器为什么选 14B，候选比较是否齐全？ | [开发选模报告](reports/open_judge_selection_2026_09_11.md) | 8B、14B 与 BGE 的统一比较，区分原选择依据与后补结果 |
 | 数据在哪，哪些已用于训练或开发？ | [数据入口](../data/README.md) | 实际输入、划分与使用范围，不从文件名猜用途 |
 | 中文／英文基线用哪个目录、配什么规则？ | [模型入口](../models/README.md) | 当前两个模型的路径、契约与旧名称对应 |
@@ -21,6 +22,7 @@
 | 修改代码要遵守什么，模块职责在哪？ | [实现约定](../AGENTS.md) → [解耦架构](architecture/decoupling-plan.md) | 当前工程规范及依赖边界，不用历史实验报告推定架构 |
 | 为什么保留或放弃某个研究想法？ | [独立审查与回应](plans/research-direction-review-2026-09-06.md) | 附录 H 为当前 Qwen 角色和主线纠偏；§3、附录 F/G 保留历史依据，讨论不等于实验结果 |
 | 某个文献判断的原始依据在哪？ | [文献地图](plans/robust-fusion-literature.md) | 定位论文与证据范围；本地全文位置见[论文目录](papers/README.md) |
+| 六页 short paper 已有哪些工作稿，如何编译？ | [论文工作稿](papers/manuscript/README.md) | 引言、设置、方法与列表诊断源码，范文学习和主张证据；工作稿不替代实验报告 |
 
 资料缺失时，区分“没有这份证据”和“本地缺少产物”。Git 忽略的数据与模型不一定随 clone 出现；位置与恢复方式按对应入口查询。
 
@@ -34,7 +36,7 @@
 | R1/R2 标签、量表与来源材料 | [Robust Fusion 历史导航](archive/robust-fusion/README.md) | 原稿按 Git 历史追溯；旧状态、提交与曝光身份保留 |
 | 重构前源码或被忽略的资产如何恢复 | [恢复说明](plans/runtime-simplification-2026-09-06.md#recovery) | 查原版本及既有备份范围，不据未跟踪状态删除数据 |
 | monorepo 早期设计 | [设计归档](archive/README.md) | 历史架构，部分与当前隔离约束不同 |
-| 遗留人工材料是什么 | [人工任务说明](../human_tasks/README.md) | 当前没有人工作业；遗留材料不构成新任务 |
+| 人工标注包和遗留材料在哪里 | [人工任务说明](../human_tasks/README.md) | #21 实际分发包与历史材料分开；遗留材料不构成新任务 |
 
 ## 更新放在哪里
 

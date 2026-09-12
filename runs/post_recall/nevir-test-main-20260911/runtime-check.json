@@ -1,0 +1,124 @@
+{
+  "status": "deployment_and_synthetic_smoke_passed_commit_authorized",
+  "recorded_at_remote_utc": "2026-09-11T16:17:04.508567+00:00",
+  "python": "3.13.5 (main, Jul 23 2025, 00:37:22) [Clang 20.1.4 ]",
+  "platform": "Linux-5.15.0-94-generic-x86_64-with-glibc2.35",
+  "gpu": "NVIDIA GeForce RTX 4090",
+  "gpu_memory_bytes": 25250627584,
+  "cuda_runtime": "13.0",
+  "driver_version": "580.76.05",
+  "packages": {
+    "torch": "2.13.0",
+    "vllm": "0.29.0",
+    "triton": "3.7.1",
+    "transformers": "5.17.0",
+    "huggingface-hub": "1.30.0",
+    "numpy": "2.2.6",
+    "tokenizers": "0.23.2"
+  },
+  "synthetic_cuda_check": "2x2 matrix multiply passed",
+  "test_requests": 0,
+  "ssh": {
+    "host": "connect.nmb1.seetacloud.com",
+    "port": 12981,
+    "user": "root"
+  },
+  "storage": {
+    "max_new_disk_bytes": 35000000000,
+    "installed_runtime_bytes": 7950238781,
+    "qwen_required_bytes": 9992654711,
+    "package_cache": "Temporary RAM cache cleared after installation; no on-disk wheel cache",
+    "unrelated_task_files": "retained",
+    "allocated_bytes_by_directory": {
+      "/root/linkrag-eval-test-20260911": 8522133504,
+      "/root/autodl-tmp/linkrag-eval-test-20260911": 10107916288
+    },
+    "total_allocated_bytes": 18630049792,
+    "installed_runtime_bytes_note": "Earlier 7.95 GB measurement refers to the removed Python 3.10 environment; current directory totals include the Python 3.13 runtime, driver and deployed inputs."
+  },
+  "smoke": {
+    "status": "passed",
+    "items": 3,
+    "unique_requests": 3,
+    "unavailable": 0,
+    "max_attempts_per_unique_input": 1,
+    "started_at": "2026-09-11T16:20:16.051989+00:00",
+    "completed_at": "2026-09-11T16:20:18.739100+00:00",
+    "wall_seconds": 2.6871084310114384,
+    "http_status_counts": {
+      "200": 3
+    },
+    "finish_reason_counts": {
+      "stop": 3
+    },
+    "provider_total_tokens": 1041,
+    "scope": "Three synthetic non-NevIR inputs; schema and transport only, not evaluation outcomes",
+    "summary": "synthetic-smoke/summary.json"
+  },
+  "formal_inference": {
+    "status": "not_started",
+    "reason": "Pre-inference checkpoint: user authorization received; commit, deploy and launch follow this record",
+    "formal_start_markers_present": false
+  },
+  "remote_driver": {
+    "python": "3.13.5",
+    "input_validation": [
+      {
+        "name": "l1-test",
+        "items": 5476,
+        "unique_requests": 5472,
+        "remote_order_matches_local": true
+      },
+      {
+        "name": "l2-test",
+        "items": 55320,
+        "unique_requests": 55260,
+        "remote_order_matches_local": true
+      }
+    ],
+    "imports": "project and worker --help passed",
+    "test_requests": 0
+  },
+  "regression": {
+    "passed": 1312,
+    "skipped": 23,
+    "deselected": 3,
+    "warnings": 6,
+    "wall_seconds": 17.01
+  },
+  "remote_worker_tests": {
+    "passed": 50,
+    "ruff": "passed"
+  },
+  "previously_failing_warmup_module": "Import passed on Python 3.13.5; no source patches",
+  "startup_attempts": [
+    {
+      "attempt": 1,
+      "python": "3.10.8",
+      "status": "failed_before_requests",
+      "cause": "Triton inspect.getsourcelines returned only decorators, without the function definition; minimal reproduction confirmed this on Python 3.10 and complete source on Python 3.13",
+      "log": "provisioning/startup-attempt-1/service.log",
+      "test_requests": 0
+    },
+    {
+      "attempt": 2,
+      "python": "3.13.5",
+      "status": "ready",
+      "test_requests": 0,
+      "service_pid": 52248,
+      "started_at": "2026-09-11T16:18:01.928039+00:00"
+    }
+  ],
+  "environment_cleanup": {
+    "removed": "Task-created Python 3.10 GPU environment",
+    "unrelated_directories": "untouched",
+    "RAM_wheel_cache": "7.5 GiB removed after copying installed packages"
+  },
+  "recorded_at": "2026-09-11T16:22:06.615956+00:00",
+  "deployment_gpu_sampled_peak_mib": 20969,
+  "gpu_measurement_scope": "Five-second whole-device samples from deployment and synthetic smoke; not allocator peak or formal Test cost",
+  "commit_authorization": {
+    "received_at": "2026-09-11T17:31:31.832445+00:00",
+    "scope": "Owner approved a local commit of Issue #20 configuration, scripts and necessary tests; no push"
+  }
+}

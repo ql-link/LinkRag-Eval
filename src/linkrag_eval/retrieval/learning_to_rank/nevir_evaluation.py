@@ -76,7 +76,7 @@ def prepare_inputs(
     Mapping supplies identity only. Missing candidate text is never filled from
     a corpus, a partner query, or a supervised passage.
     """
-    if role not in {"train", "development", "confirmation"}:
+    if role not in {"train", "development", "confirmation", "test"}:
         raise EvaluationContractError("unknown data role")
     query_by_id = _unique(queries, "source_query_id")
     labels = _unique(supervision, "source_query_id")

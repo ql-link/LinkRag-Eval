@@ -1,0 +1,115 @@
+{
+  "status": "accepted",
+  "started_utc": "2026-09-11T13:04:50.900257+00:00",
+  "completed_utc": "2026-09-11T13:06:06.085517+00:00",
+  "wall_seconds": 75.18357499991544,
+  "code_revision": "23f465d0c7a991571488173593070fecf6809e0c",
+  "local_changes": "Test input validation role and this receiver; no model or retrieval changes",
+  "snapshot": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-test-candidates-20260910/snapshot",
+  "preparation_exact_files": 4,
+  "runtime_matches_development_confirmation": [
+    "encoders",
+    "route_depths",
+    "route_thresholds",
+    "fusion_weights",
+    "rank_origin",
+    "candidate_contract_version",
+    "candidate_profile",
+    "fusion_result_limit",
+    "bm25_effective_text_weights",
+    "user_id",
+    "sparse_vector_name"
+  ],
+  "coverage": {
+    "queries": 2766,
+    "pairs": 1383,
+    "source_groups": 700,
+    "corpus_passages": 2081,
+    "candidate_rows": 421953,
+    "ready_queries": 2766,
+    "both_in_union": 2738,
+    "both_in_fusion_top20": 2631,
+    "both_directions_covered_pairs": 1364,
+    "structural_conflict_queries": 2,
+    "primary_covered_nonconflict_queries": 2736,
+    "primary_complete_pairs": 1363,
+    "primary_source_groups": 699,
+    "l2_logical_items_all_queries": 55320,
+    "route_empty_queries": {
+      "dense": 1,
+      "sparse": 528,
+      "bm25": 0
+    }
+  },
+  "sqlite": {
+    "corpus": {
+      "integrity": "ok",
+      "rows": 2081,
+      "access": "read_only_immutable"
+    },
+    "bm25": {
+      "integrity": "ok",
+      "rows": 2081,
+      "access": "read_only_immutable"
+    }
+  },
+  "exact_passage_overlap_retained": {
+    "train": 1,
+    "validation": 3,
+    "either_prior_split": 4
+  },
+  "historical_requests": {
+    "ingestion": {
+      "status": "completed",
+      "last_resume_started_utc": "2026-09-11T02:16:51.049543+00:00",
+      "finished_utc": "2026-09-11T02:18:10.397082+00:00",
+      "physical_encoder_attempts": 2337,
+      "encoder_request_counts": {
+        "dense": 256,
+        "sparse": 2081
+      },
+      "encoder_response_counts": {
+        "dense:200": 250,
+        "sparse:200": 2081,
+        "dense:400": 2
+      },
+      "recorded_http_failures": 2,
+      "requests_without_recorded_response": {
+        "dense": 4,
+        "sparse": 0
+      },
+      "limit": 2600,
+      "notes": "Cumulative attempts include resumptions; unmatched receipts are unknown outcomes."
+    },
+    "test": {
+      "status": "completed",
+      "last_resume_started_utc": "2026-09-11T02:36:42.332411+00:00",
+      "finished_utc": "2026-09-11T02:51:01.112369+00:00",
+      "physical_encoder_attempts": 5536,
+      "encoder_request_counts": {
+        "dense": 2768,
+        "sparse": 2768
+      },
+      "encoder_response_counts": {
+        "sparse:200": 2768,
+        "dense:200": 2767
+      },
+      "recorded_http_failures": 0,
+      "requests_without_recorded_response": {
+        "dense": 1,
+        "sparse": 0
+      },
+      "limit": 6000,
+      "notes": "Cumulative attempts include resumptions; unmatched receipts are unknown outcomes."
+    }
+  },
+  "new_remote_requests": 0,
+  "trained_rankers_scored": false,
+  "judge_scored": false,
+  "access": "machine_only; aggregate output; no query, passage or per-query score display",
+  "limitations": [
+    "Member Test evaluation already exists; this does not make Test globally unseen.",
+    "Original logs retain interrupted requests without response receipts; outcomes are unknown.",
+    "Remote Qdrant vectors are not included or needed for fixed-candidate offline evaluation."
+  ]
+}

@@ -240,6 +240,59 @@ def test_script_run_extra_partial_join_and_overwrite(script, pilot, tmp_path, ca
     assert before == (args.out / "results.json").read_bytes()
 
 
+def test_script_run_extra_selects_l2_tiebreak_column(script, pilot, tmp_path):
+    extra = tmp_path / "l2.jsonl"
+    write(
+        extra,
+        [
+            {
+                "source_query_id": f"confirmation-{i}",
+                "stage1_judge": "strict_correct" if i < 4 else "reverse",
+                "E0_judge": "strict_correct" if i < 2 else "reverse",
+            }
+            for i in range(8)
+        ],
+        jsonl=True,
+    )
+    original = extra.read_bytes()
+    args = SimpleNamespace(
+        root=pilot, out=tmp_path / "out", seed=20260910, repeats=31,
+        extra=[f"open_l2:stage1_judge={extra}", f"open_l2_e0:E0_judge={extra}"],
+    )
+    script.run(args)
+    result = json.loads((args.out / "results.json").read_text())
+    confirm = result["roles"]["confirmation"]
+    assert confirm["extras"]["open_l2"]["relation_column"] == "stage1_judge"
+    assert confirm["extras"]["open_l2_e0"]["relation_column"] == "E0_judge"
+    comparisons = confirm["comparisons"]
+    assert comparisons[1]["strict"]["estimate"] == 1  # Existing GPT comparison is unchanged.
+    for comparison in comparisons[4:]:
+        expected = 4 if comparison["ranker_a"] == "open_l2" else 2
+        assert comparison["strict"]["estimate"] == expected / 8
+        assert comparison["strict"]["dropped_unavailable"] == 0
+        assert comparison["sign_test"]["a_correct_b_not"] == expected
+        assert comparison["bidirectional"]["n"] == 4
+    assert len(result["roles"]["development"]["comparisons"]) == 4
+    assert extra.read_bytes() == original
+
+
+@pytest.mark.parametrize("selector", ["open:", "open::judge", ":judge", "open:judge:extra"])
+def test_extra_rejects_malformed_column_selector(script, selector):
+    with pytest.raises(ValueError, match="ranker\\[:column\\]"):
+        script.load_extra([f"{selector}=/not-read.jsonl"])
+
+
+@pytest.mark.parametrize("relation", [None, "wrong"])
+def test_extra_explicit_column_never_falls_back_to_judge(script, tmp_path, relation):
+    data = [{"source_query_id": "q0", "judge": "strict_correct"}]
+    if relation is not None:
+        data[0]["stage1_judge"] = relation
+    path = tmp_path / "extra.jsonl"
+    write(path, data, jsonl=True)
+    with pytest.raises(ValueError, match="valid stage1_judge relations"):
+        script.load_extra([f"open:stage1_judge={path}"])
+
+
 @pytest.mark.parametrize("bad", ["duplicate", "unknown", "identity", "relation"])
 def test_extra_rejects_bad_data(script, pilot, tmp_path, bad):
     r = {"source_query_id": "development-0", "judge": "strict_correct"}

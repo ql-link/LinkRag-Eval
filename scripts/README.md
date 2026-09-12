@@ -46,6 +46,8 @@
 | 原 NevIR 入库／采集 | [nevir_ltr_collect.py](nevir_ltr_collect.py) | prepared 语料或查询 → 存储／三路候选；远端编码与检索，按 `--stage` 分阶段 |
 | 部分标签训练 | [pairwise_training 模块](../src/linkrag_eval/retrieval/learning_to_rank/pairwise_training.py) | 显式 Train／开发 queries、supervision、inputs＋策略模型 → 新模型和开发分数；实际训练。`--background-negatives` 默认 0，#23 的固定 N=8 仅作实验扩展 |
 | #23 接收复验 | [evaluate.py](../runs/post_recall/list-collapse-20260910/evaluate.py) | 既有开发／确认候选和模型 → 原指标核验；不训练，不读 Test 逐题 |
+| #19 Test 快照接收 | [accept_snapshot.py](../runs/post_recall/nevir-test-candidates-20260910/accept_snapshot.py) | 补交的原始快照 → 准备重建、覆盖／参数／请求聚合验收；不重新编码或做模型评分 |
+| #20 Test 主线 | [workflow.py](../runs/post_recall/nevir-test-main-20260911/workflow.py) | 固定配置的 E0／Qwen 推理与两臂评价，已有结果拒绝覆盖；现已完成，#40 仅未派发输入续行见同目录 recover_qwen.py |
 | 历史 legacy A/B 评价 | [nevir_evaluation 模块](../src/linkrag_eval/retrieval/learning_to_rank/nevir_evaluation.py) | 指定角色的保存候选＋A/B → 新评价目录；角色须显式指定 |
 | 历史 legacy A/B 诊断 | [nevir_diagnostics 模块](../src/linkrag_eval/retrieval/learning_to_rank/nevir_diagnostics.py) | 开发快照＋A/B＋旧 B 分数＋执行说明 → 新机械诊断；不自动适用于英文特征 |
 
@@ -109,4 +111,4 @@ T2 接入目前暂停，已有 CLI 保留：
 
 - [llm_judge_cost_curve.py](llm_judge_cost_curve.py) `run --root <判断器运行目录> --candidates <候选目录> --out <新目录> [--judge-dir-suffix=-<tag>]`：只读 L2 缓存，输出开发／确认 K=1–20 成本曲线、分差与三路分歧触发、CSV／SVG。分差阈值仅开发选择；两集缓存需对应摘要且模型／推理强度／提示词一致。缺分按既有整查询回退计数，拒绝覆盖，独立校验 N09 GPT-6 K=20。详见[运行入口](../runs/post_recall/judge-cost-curve-20260910/README.md)。
 
-- `llm_judge_statistics.py run --root <判断器运行目录> --out runs/post_recall/judge-statistics-<日期> [--seed --repeats] [--extra 名称=逐题文件]`：对 L1／L2／L3 逐题关系做来源组自助 95% 区间与配对符号检验（issue #18），输出 `results.json` 与 `tables.md`。
+- `llm_judge_statistics.py run --root <判断器运行目录> --out runs/post_recall/judge-statistics-<日期> [--seed --repeats] [--extra 名称[:关系列]=逐题文件]`：对 L1／L2／L3 逐题关系做来源组自助 95% 区间与配对符号检验（issue #18），输出 `results.json` 与 `tables.md`。Qwen／BGE 的 L2 用 `--extra open_l2:stage1_judge=路径` 明确选择融合破同分结果，`E0_judge` 对应 E0 破同分；未指定列时优先读取同名关系列，否则读取 `judge`。缺列和非法关系直接报错，输出目录须不存在。实际用法见[开源缓存统计](../runs/post_recall/judge-statistics-20260911/README.md)。

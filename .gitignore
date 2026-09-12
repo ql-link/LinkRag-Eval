@@ -146,6 +146,12 @@ runs/
 reports/*.html
 /docs/papers/*
 !/docs/papers/README.md
+!/docs/papers/manuscript/
+/docs/papers/manuscript/*
+!/docs/papers/manuscript/*.tex
+!/docs/papers/manuscript/*.bib
+!/docs/papers/manuscript/README.md
+!/docs/papers/manuscript/paragraph-review-20260912.md
 /.agents/
 
 # —— Python ——

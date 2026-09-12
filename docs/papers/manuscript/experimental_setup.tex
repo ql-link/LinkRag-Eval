@@ -1,0 +1,34 @@
+\section{Setting and Evaluation}
+\label{sec:setting}
+
+% S1: Research questions and fixed candidate boundary.
+Our first question (RQ1) is whether improvements in designated-pair preference coincide with improvements in designated-passage position under training interventions. The second (RQ2) concerns bounded text reranking and its cost. For each query $q$, we fix the deduplicated union $C_q$ of dense, learned sparse, and BM25 results. All comparisons reuse the saved query, passage text, and route scores and ranks. Missing designated passages are not inserted. The saved route depths are 150/50/100, respectively. Dense retrieval uses \texttt{text-embedding-v4} (1,024 dimensions), learned sparse retrieval uses \texttt{doubao-embedding-}\allowbreak\texttt{vision-251215}, and BM25 uses the project's SQLite FTS5 implementation. This is an evaluation of post-retrieval ordering, without additional retrieval, passage rewriting, or answer generation.
+
+% S2: Data construction, exposure, and exact populations.
+We use the official passage preferences of NevIR~\cite{weller-etal-2024-nevir}. The training/development/confirmation retrieval corpus contains 1,761 distinct passages from its Train and Validation material, with one passage per document. Development contains 38 pairs, including 20 previously inspected pairs and their source-group closure; confirmation contains the remaining 187 Validation pairs. Source groups connect examples through source identifiers, identical passage text, and exact or normalized query associations. Table~\ref{tab:populations} separates planned queries from usable directions. Of 1,871 jointly covered training directions, two with identical queries and opposing preferences are excluded, leaving 1,869 for training. Development was used for parameter selection and early stopping. Confirmation was first used for an earlier model comparison and was subsequently reused for the present diagnostics and reranking studies; its name does not imply a fresh holdout for every intervention.
+
+\begin{table}[t]
+\centering
+\caption{Data populations. Used queries and source groups refer to loss-eligible training directions or jointly covered evaluation directions. Complete pairs require both directions.}
+\label{tab:populations}
+\small
+\begin{tabular}{lrrrr}
+\toprule
+Partition & Planned & Used & Complete & Source\\
+ & queries & queries & pairs & groups\\
+\midrule
+Train & 1,896 & 1,869 & -- & 472\\
+Development & 76 & 74 & 37 & 19\\
+Confirmation & 374 & 371 & 185 & 96\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% S3: Preference, coverage, ties, paired metric, and list positions.
+Let $d_q^+$ denote the officially preferred passage and $d_q^-$ its counterpart, and let $Q_c=\{q:d_q^+,d_q^-\in C_q\}$. The primary preference measure is the fraction of queries in $Q_c$ for which $d_q^+$ has a strictly higher score. For composite rerankers, the comparison uses the ordered scoring keys defined in Section~\ref{sec:methods}. Equal keys remain ties; deterministic passage identifiers establish list positions but never turn a score tie into a strict success. Separately, bidirectional accuracy requires both associated queries to be strictly correct and uses only complete pairs. Preferred-passage MRR is $|Q_c|^{-1}\sum_{q\in Q_c}1/r_q^+$, where $r_q^+$ is its one-based position in the full pool. We also report mean ranks of both designated passages and the number of queries with both in the top 10. None of these position measures assesses the relevance of unjudged background candidates.
+
+% S4: Human-label uncertainty and cost/uncertainty units.
+Official preferences define the main analysis. A later human review of development retained 19 ties and four unresolved judgments among 76 queries. Of 53 strict human preferences, 52 have joint candidate coverage: 47 agree with the official direction and five disagree. This provides a label-sensitivity analysis on already inspected data, not a replacement gold standard. Preference denominators do not shrink when judging fails; the reranker instead falls back as specified below. For window reranking, cost accounting covers all planned queries and distinguishes effective query--passage judgments, actual request attempts, tokens, and wall-clock time. Where uncertainty intervals are reported, resampling uses source groups rather than treating associated queries as independent; the list-diagnostic aggregates below are descriptive.
+
+% S5: Test use history, preserved technical correction, and incomplete results.
+Test has already been used in a separate E0/background-training comparison. Its delivered aggregate underwent a technical correction that removed identifier-based tie breaking from strict correctness. The candidate inputs have since been checked, but the original per-query model scores remain missing from that delivery. Four exact Test passages shared with earlier splits were retained. At the drafting cutoff, main Qwen/BGE Test evaluation has not yielded a complete, verified comparison. We therefore use the locally reproduced confirmation evidence for the list diagnosis below; neither Test history nor the incomplete run is presented as a completed independent validation.

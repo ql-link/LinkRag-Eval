@@ -1,0 +1,27 @@
+{
+  "received_command": [
+    ".venv/bin/python",
+    "runs/post_recall/error-taxonomy-20260911/prepare.py",
+    "receive",
+    "--reviewer-2",
+    "issue21-error-types-20260911-r2-v2-final-2026-09-12T15-54-41-498Z.json",
+    "--out",
+    "runs/post_recall/error-taxonomy-20260911/received-20260913"
+  ],
+  "started_at": "2026-09-12T16:10:26.702505+00:00",
+  "receive_seconds": 0.0347289590863511,
+  "receive_exit_code": 0,
+  "source_reconstruction_seconds": 0.2260035410290584,
+  "source_cases_reconstructed": 122,
+  "source_cases_equal": true,
+  "display_mapping_equal": true,
+  "original_bytes_equal": true,
+  "git_head": "797cb0b5657520ac54d7d3467e0bca7d17c9640a",
+  "local_changes": [
+    "prepare.py: preserve original bytes, verify display mapping, retain reviewed/undetermined uncertainty, carry previous_exposure"
+  ],
+  "model_requests": 0,
+  "official_test_read": false,
+  "annotation_human_elapsed_seconds": null,
+  "annotation_model_cost": null
+}

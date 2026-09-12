@@ -365,8 +365,11 @@ def receive(paths, out):
     for reviewer, path in zip((1, 2), paths, strict=True):
         if path is None:
             continue
-        packet, _ = make_packet(list(source.values()), reviewer)
-        mapping = unique(read_rows(HERE / f"private/reviewer-{reviewer}-mapping.jsonl"), "case_id")
+        packet, expected_mapping = make_packet(list(source.values()), reviewer)
+        mapping_rows = read_rows(HERE / f"private/reviewer-{reviewer}-mapping.jsonl")
+        if mapping_rows != expected_mapping:
+            raise ValueError("saved display mapping differs from the source packet")
+        mapping = unique(mapping_rows, "case_id")
         payload = json.loads(path.read_text())
         counts = validate_submission(payload, packet, require_final=True)
         for answer in payload["answers"]:
@@ -377,6 +380,7 @@ def receive(paths, out):
                 "annotation_mode": payload["annotation_mode"],
                 "assistance_notes": payload["assistance_notes"],
                 "human_confirmed": payload["human_confirmed"],
+                "previous_exposure": payload["previous_exposure"],
                 "source_query_id": m["source_query_id"], "role": m["role"],
                 "preferred_chunk_id": m["display_mapping"].get(pref),
                 "nondirectional_preference": pref if pref not in ("X", "Y") else None,
@@ -405,11 +409,14 @@ def receive(paths, out):
             or a["nondirectional_preference"] != b["nondirectional_preference"])
     ]
     out.mkdir(parents=True)
-    for reviewer, payload in submissions.items():
-        write_json(out / f"reviewer-{reviewer}-original.json", payload)
+    for reviewer in submissions:
+        (out / f"reviewer-{reviewer}-original.json").write_bytes(paths[reviewer - 1].read_bytes())
     write_rows(out / "reviewer-labels.jsonl", normalized)
     write_rows(out / "disagreements.jsonl", disputes)
-    uncertain = [r for r in normalized if r["status"] == "uncertain"]
+    uncertain = [
+        r for r in normalized
+        if r["status"] == "uncertain" or r["preference"] == "undetermined"
+    ]
     write_rows(out / "uncertain.jsonl", uncertain)
     write_json(out / "receipt.json", {
         "received_at": datetime.now(UTC).isoformat(), "reviewers": summary,
@@ -422,7 +429,11 @@ def receive(paths, out):
             if pairs else "unavailable_single_submission"
         ),
         "cases_needing_discussion": len({r["source_query_id"] for r in disputes + uncertain}),
-        "uncertain_judgments": len(uncertain), "adjudication_performed": False,
+        "uncertain_judgments": len(uncertain),
+        "uncertain_status_judgments": sum(r["status"] == "uncertain" for r in normalized),
+        "undetermined_preferences": sum(r["preference"] == "undetermined" for r in normalized),
+        "uncertain_definition": "status=uncertain OR preference=undetermined; original fields retained",
+        "adjudication_performed": False,
         "original_research_labels_modified": False,
     })
 

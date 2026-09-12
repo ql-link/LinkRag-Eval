@@ -1,0 +1,471 @@
+{
+  "analysis_kind": "descriptive_selected_error_cases",
+  "human_reviewer_count": 1,
+  "reviewer_slots": [
+    2
+  ],
+  "annotation_modes": [
+    "model_assisted"
+  ],
+  "assistance_notes_verbatim": [
+    "GPT 6"
+  ],
+  "previous_exposure": [
+    "yes"
+  ],
+  "cohorts": {
+    "all": {
+      "queries": 122,
+      "distinct_pairs": 107,
+      "source_groups": 79,
+      "type_counts": {
+        "否定范围": 17,
+        "主体归属": 22,
+        "比较方向": 6,
+        "改述或反义": 11,
+        "额外限制": 11,
+        "标签争议": 55,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 13.934426229508198,
+        "主体归属": 18.0327868852459,
+        "比较方向": 4.918032786885246,
+        "改述或反义": 9.01639344262295,
+        "额外限制": 9.01639344262295,
+        "标签争议": 45.08196721311475,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 67,
+        "opposite": 6,
+        "tie": 21,
+        "undetermined": 28
+      },
+      "status_counts": {
+        "reviewed": 122
+      },
+      "preference_unresolved": 28,
+      "technical_fallback_cases": 2
+    },
+    "confirmation_union": {
+      "queries": 101,
+      "distinct_pairs": 87,
+      "source_groups": 66,
+      "type_counts": {
+        "否定范围": 12,
+        "主体归属": 15,
+        "比较方向": 1,
+        "改述或反义": 7,
+        "额外限制": 11,
+        "标签争议": 55,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 11.881188118811881,
+        "主体归属": 14.851485148514852,
+        "比较方向": 0.9900990099009901,
+        "改述或反义": 6.930693069306931,
+        "额外限制": 10.891089108910892,
+        "标签争议": 54.45544554455446,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 46,
+        "opposite": 6,
+        "tie": 21,
+        "undetermined": 28
+      },
+      "status_counts": {
+        "reviewed": 101
+      },
+      "preference_unresolved": 28,
+      "technical_fallback_cases": 2
+    },
+    "E0_development": {
+      "queries": 21,
+      "distinct_pairs": 20,
+      "source_groups": 13,
+      "type_counts": {
+        "否定范围": 5,
+        "主体归属": 7,
+        "比较方向": 5,
+        "改述或反义": 4,
+        "额外限制": 0,
+        "标签争议": 0,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 23.80952380952381,
+        "主体归属": 33.333333333333336,
+        "比较方向": 23.80952380952381,
+        "改述或反义": 19.047619047619047,
+        "额外限制": 0.0,
+        "标签争议": 0.0,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 21,
+        "opposite": 0,
+        "tie": 0,
+        "undetermined": 0
+      },
+      "status_counts": {
+        "reviewed": 21
+      },
+      "preference_unresolved": 0,
+      "technical_fallback_cases": 0
+    },
+    "qwen_first_noncorrect": {
+      "queries": 91,
+      "distinct_pairs": 79,
+      "source_groups": 62,
+      "type_counts": {
+        "否定范围": 12,
+        "主体归属": 15,
+        "比较方向": 1,
+        "改述或反义": 7,
+        "额外限制": 10,
+        "标签争议": 46,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 13.186813186813186,
+        "主体归属": 16.483516483516482,
+        "比较方向": 1.098901098901099,
+        "改述或反义": 7.6923076923076925,
+        "额外限制": 10.989010989010989,
+        "标签争议": 50.54945054945055,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 45,
+        "opposite": 5,
+        "tie": 17,
+        "undetermined": 24
+      },
+      "status_counts": {
+        "reviewed": 91
+      },
+      "preference_unresolved": 24,
+      "technical_fallback_cases": 2
+    },
+    "gpt_noncorrect": {
+      "queries": 60,
+      "distinct_pairs": 57,
+      "source_groups": 46,
+      "type_counts": {
+        "否定范围": 4,
+        "主体归属": 6,
+        "比较方向": 0,
+        "改述或反义": 2,
+        "额外限制": 5,
+        "标签争议": 43,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 6.666666666666667,
+        "主体归属": 10.0,
+        "比较方向": 0.0,
+        "改述或反义": 3.3333333333333335,
+        "额外限制": 8.333333333333334,
+        "标签争议": 71.66666666666667,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 17,
+        "opposite": 6,
+        "tie": 19,
+        "undetermined": 18
+      },
+      "status_counts": {
+        "reviewed": 60
+      },
+      "preference_unresolved": 18,
+      "technical_fallback_cases": 0
+    },
+    "qwen_gpt_shared": {
+      "queries": 50,
+      "distinct_pairs": 47,
+      "source_groups": 41,
+      "type_counts": {
+        "否定范围": 4,
+        "主体归属": 6,
+        "比较方向": 0,
+        "改述或反义": 2,
+        "额外限制": 4,
+        "标签争议": 34,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 8.0,
+        "主体归属": 12.0,
+        "比较方向": 0.0,
+        "改述或反义": 4.0,
+        "额外限制": 8.0,
+        "标签争议": 68.0,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 16,
+        "opposite": 5,
+        "tie": 15,
+        "undetermined": 14
+      },
+      "status_counts": {
+        "reviewed": 50
+      },
+      "preference_unresolved": 14,
+      "technical_fallback_cases": 0
+    },
+    "qwen_only": {
+      "queries": 41,
+      "distinct_pairs": 40,
+      "source_groups": 35,
+      "type_counts": {
+        "否定范围": 8,
+        "主体归属": 9,
+        "比较方向": 1,
+        "改述或反义": 5,
+        "额外限制": 6,
+        "标签争议": 12,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 19.51219512195122,
+        "主体归属": 21.951219512195124,
+        "比较方向": 2.4390243902439024,
+        "改述或反义": 12.195121951219512,
+        "额外限制": 14.634146341463415,
+        "标签争议": 29.26829268292683,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 29,
+        "opposite": 0,
+        "tie": 2,
+        "undetermined": 10
+      },
+      "status_counts": {
+        "reviewed": 41
+      },
+      "preference_unresolved": 10,
+      "technical_fallback_cases": 2
+    },
+    "gpt_only": {
+      "queries": 10,
+      "distinct_pairs": 10,
+      "source_groups": 9,
+      "type_counts": {
+        "否定范围": 0,
+        "主体归属": 0,
+        "比较方向": 0,
+        "改述或反义": 0,
+        "额外限制": 1,
+        "标签争议": 9,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 0.0,
+        "主体归属": 0.0,
+        "比较方向": 0.0,
+        "改述或反义": 0.0,
+        "额外限制": 10.0,
+        "标签争议": 90.0,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 1,
+        "opposite": 1,
+        "tie": 4,
+        "undetermined": 4
+      },
+      "status_counts": {
+        "reviewed": 10
+      },
+      "preference_unresolved": 4,
+      "technical_fallback_cases": 0
+    },
+    "qwen_first_noncorrect_without_fallback": {
+      "queries": 89,
+      "distinct_pairs": 77,
+      "source_groups": 61,
+      "type_counts": {
+        "否定范围": 11,
+        "主体归属": 15,
+        "比较方向": 1,
+        "改述或反义": 6,
+        "额外限制": 10,
+        "标签争议": 46,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 12.359550561797754,
+        "主体归属": 16.853932584269664,
+        "比较方向": 1.1235955056179776,
+        "改述或反义": 6.741573033707865,
+        "额外限制": 11.235955056179776,
+        "标签争议": 51.68539325842696,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 43,
+        "opposite": 5,
+        "tie": 17,
+        "undetermined": 24
+      },
+      "status_counts": {
+        "reviewed": 89
+      },
+      "preference_unresolved": 24,
+      "technical_fallback_cases": 0
+    },
+    "non_disputed_without_technical_fallback": {
+      "queries": 65,
+      "distinct_pairs": 60,
+      "source_groups": 47,
+      "type_counts": {
+        "否定范围": 16,
+        "主体归属": 22,
+        "比较方向": 6,
+        "改述或反义": 10,
+        "额外限制": 11,
+        "标签争议": 0,
+        "其他": 0
+      },
+      "type_percent_of_cohort": {
+        "否定范围": 24.615384615384617,
+        "主体归属": 33.84615384615385,
+        "比较方向": 9.23076923076923,
+        "改述或反义": 15.384615384615385,
+        "额外限制": 16.923076923076923,
+        "标签争议": 0.0,
+        "其他": 0.0
+      },
+      "preference_vs_reference": {
+        "same": 65,
+        "opposite": 0,
+        "tie": 0,
+        "undetermined": 0
+      },
+      "status_counts": {
+        "reviewed": 65
+      },
+      "preference_unresolved": 0,
+      "technical_fallback_cases": 0
+    }
+  },
+  "reference_dispute_cases": 55,
+  "disputed_case_ids": [
+    "R2-052",
+    "R2-065",
+    "R2-059",
+    "R2-107",
+    "R2-050",
+    "R2-061",
+    "R2-011",
+    "R2-056",
+    "R2-090",
+    "R2-094",
+    "R2-049",
+    "R2-060",
+    "R2-055",
+    "R2-067",
+    "R2-044",
+    "R2-083",
+    "R2-019",
+    "R2-116",
+    "R2-018",
+    "R2-062",
+    "R2-039",
+    "R2-007",
+    "R2-051",
+    "R2-057",
+    "R2-086",
+    "R2-002",
+    "R2-108",
+    "R2-047",
+    "R2-063",
+    "R2-105",
+    "R2-030",
+    "R2-046",
+    "R2-072",
+    "R2-036",
+    "R2-012",
+    "R2-084",
+    "R2-005",
+    "R2-077",
+    "R2-069",
+    "R2-045",
+    "R2-068",
+    "R2-121",
+    "R2-032",
+    "R2-023",
+    "R2-087",
+    "R2-024",
+    "R2-014",
+    "R2-003",
+    "R2-071",
+    "R2-022",
+    "R2-042",
+    "R2-004",
+    "R2-066",
+    "R2-098",
+    "R2-119"
+  ],
+  "unresolved_case_ids": [
+    "R2-052",
+    "R2-065",
+    "R2-107",
+    "R2-050",
+    "R2-061",
+    "R2-090",
+    "R2-049",
+    "R2-067",
+    "R2-044",
+    "R2-083",
+    "R2-116",
+    "R2-018",
+    "R2-062",
+    "R2-039",
+    "R2-057",
+    "R2-105",
+    "R2-046",
+    "R2-012",
+    "R2-084",
+    "R2-005",
+    "R2-077",
+    "R2-069",
+    "R2-068",
+    "R2-121",
+    "R2-032",
+    "R2-023",
+    "R2-087",
+    "R2-119"
+  ],
+  "opposite_reference_case_ids": [
+    "R2-060",
+    "R2-007",
+    "R2-063",
+    "R2-045",
+    "R2-022",
+    "R2-098"
+  ],
+  "technical_fallback_case_ids": [
+    "R2-041",
+    "R2-093"
+  ],
+  "reference_relation_category_conflicts": [],
+  "reason_format_flag_counts": {
+    "embedded_reason_prefix": 1,
+    "embedded_status_text_not_a_structural_field": 3,
+    "quote_comma_fragment": 29,
+    "trailing_whitespace": 3
+  },
+  "between_human_agreement": null,
+  "reference_adjudication_performed": false,
+  "original_research_labels_modified": false,
+  "model_results_recomputed": false,
+  "official_test_read": false,
+  "denominator_note": "query-level selected cases; Qwen/GPT overlap by 50; not population prevalence"
+}

@@ -1,0 +1,73 @@
+{
+  "recorded_at": "2026-09-12T16:25:50.054174+00:00",
+  "scope": "Mechanical intake, deterministic statistics and report evidence; not independent human annotation.",
+  "checks": [
+    {
+      "command": ".venv/bin/python -m pytest runs/post_recall/error-taxonomy-20260911/test_prepare.py -q",
+      "result": "18 passed in 0.12s"
+    },
+    {
+      "command": ".venv/bin/ruff check runs/post_recall/error-taxonomy-20260911/analyze.py runs/post_recall/error-taxonomy-20260911/prepare.py runs/post_recall/error-taxonomy-20260911/test_prepare.py scripts/build_report_index.py",
+      "result": "All checks passed!"
+    },
+    {
+      "command": ".venv/bin/python runs/post_recall/error-taxonomy-20260911/analyze.py --received runs/post_recall/error-taxonomy-20260911/received-20260913 --check",
+      "result": "Verified 5 analysis files"
+    },
+    {
+      "command": "python3 scripts/build_report_index.py --check",
+      "result": "Report index is current"
+    },
+    {
+      "check": "Current short-name distribution ZIP packet IDs",
+      "result": [
+        "issue21-error-types-20260911-r1-v2",
+        "issue21-error-types-20260911-r2-v2"
+      ]
+    }
+  ],
+  "independent_computation_review": {
+    "agent": "issue21_intake_audit",
+    "source": "Original final submission, private display mapping and source cases",
+    "used_primary_statistics_functions": false,
+    "cohorts_exact": 10,
+    "labels_fieldwise_exact": 122,
+    "reference_disputes_exact": 55,
+    "uncertain_cases_exact": 28,
+    "technical_fallback_cases_exact": 2,
+    "result": "No numerical discrepancies reported."
+  },
+  "independent_paragraph_review": {
+    "agent": "issue21_report_review",
+    "natural_paragraphs_reviewed": 23,
+    "main_table_count_cells_checked": 55,
+    "examples_checked": 7,
+    "finding": "Original wording 七类均有明确填项 could imply all seven categories were nonzero.",
+    "disposition": "Changed to 122 条均为 status=reviewed，并均已明确选择一个主要类别.",
+    "result": "No other substantive correction required. Previously observed validation results are recorded here."
+  },
+  "original_research_labels_modified": false,
+  "model_results_recomputed": false,
+  "official_test_read": false,
+  "pre_pr_review": {
+    "date": "2026-09-13",
+    "basis": "origin/master 863f5a0 plus the current PR increments; original receipt checks above are retained.",
+    "annotation_mode_fix": "Preserve human_only versus model_assisted provenance; existing model-assisted output bytes unchanged.",
+    "synthetic_tests_passed": 20,
+    "existing_analysis_outputs_exact": 5,
+    "non_integration_tests": {
+      "passed": 1320,
+      "skipped": 23,
+      "deselected": 3,
+      "existing_warnings": 6
+    },
+    "standard_source_and_tests_identical_to_checked_workspace": true,
+    "production_dependency_commit": "861f24810c3482ec0d86768a24f952b1e08ae675",
+    "no_new_model_inference": true,
+    "official_test_read": false,
+    "documentation_fixes": [
+      "Move #21 entry from recording rules to experiment ledger table.",
+      "Preserve merged Test completion and historical cutoff statements."
+    ]
+  }
+}

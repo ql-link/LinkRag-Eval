@@ -113,3 +113,5 @@ T2 接入目前暂停，已有 CLI 保留：
 - [llm_judge_cost_curve.py](llm_judge_cost_curve.py) `run --root <判断器运行目录> --candidates <候选目录> --out <新目录> [--judge-dir-suffix=-<tag>]`：只读 L2 缓存，输出开发／确认 K=1–20 成本曲线、分差与三路分歧触发、CSV／SVG。分差阈值仅开发选择；两集缓存需对应摘要且模型／推理强度／提示词一致。缺分按既有整查询回退计数，拒绝覆盖，独立校验 N09 GPT-6 K=20。详见[运行入口](../runs/post_recall/judge-cost-curve-20260910/README.md)。
 
 - `llm_judge_statistics.py run --root <判断器运行目录> --out runs/post_recall/judge-statistics-<日期> [--seed --repeats] [--extra 名称[:关系列]=逐题文件]`：对 L1／L2／L3 逐题关系做来源组自助 95% 区间与配对符号检验（issue #18），输出 `results.json` 与 `tables.md`。Qwen／BGE 的 L2 用 `--extra open_l2:stage1_judge=路径` 明确选择融合破同分结果，`E0_judge` 对应 E0 破同分；未指定列时优先读取同名关系列，否则读取 `judge`。缺列和非法关系直接报错，输出目录须不存在。实际用法见[开源缓存统计](../runs/post_recall/judge-statistics-20260911/README.md)。
+
+- [Issue #22 改写探针](../runs/post_recall/paraphrase-probe-20260912/README.md)：任务目录中的 `draft.py` 从已有两份原件重建初稿，`probe.py prepare/receive/freeze/evaluate` 负责审核、输入固定与逐场景汇总，`run_model.py` 复用现有 `llm_judge_pilot.py judge` 保存首轮及重试证据。真实人审未齐时拒绝冻结；提示词与正式 Test 不变。新增测试需显式运行该目录 `test_probe.py`，不在默认 pytest testpaths 内。

@@ -75,3 +75,5 @@ data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（成�
 - [judge-statistics-20260911/](judge-statistics-20260911/README.md)（N12 补充，issue #18）：保留原 12 组统计，新增 Qwen／BGE 主 L2 在开发／确认相对 E0 与固定融合的 8 组来源组区间；L2 显式选择 `stage1_judge`，Qwen 确认沿用首次结果。跟踪 README、`tables.md`、`results.json`。
 
 - [error-taxonomy-20260911/](error-taxonomy-20260911/README.md)（issue #21）：122 条英文分类包 v2；2026-09-13 已接收包 2 单人模型辅助最终件并交付描述性分类，保留参考争议、偏好未决和技术回退。聚合与报告可追溯，原件、逐题、分发 ZIP、原文和私有映射本地保留。
+
+- [paraphrase-probe-20260912/](paraphrase-probe-20260912/README.md)（issue #22）：12 个英文原场景及 24 个改写草稿的准备交付，36 项 AI 预审已完成，真人审核 0/36、正式推理未启动。跟踪代码、审核模板、说明、AI 预审报告及轻量检查；原件、逐条草稿／审核、生成页面和分发 ZIP 本地保留，不能将 AI 预审当成人工通过。

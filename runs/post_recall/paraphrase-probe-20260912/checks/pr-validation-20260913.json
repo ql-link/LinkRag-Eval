@@ -59,5 +59,27 @@
     "verify Qwen/GPT resources and freeze actual execution configuration",
     "one first round for both models, cost evidence, results and limitations report"
   ],
-  "issue_22_complete": false
+  "issue_22_complete": false,
+  "takeover_review": {
+    "date": "2026-09-13",
+    "reviewed_head": "2716e97cabfde2c0b43839dbe36aad99608c3f28",
+    "reviewer": "Codex root and independent issue22_pr_review subagent; engineering review only",
+    "finding": "A revised original could retain rewrite approvals about an older original.",
+    "fix": "Bind each review to original version and digest; preserve historical rows, require fresh rewrite review after original revision.",
+    "synthetic_tests_passed": 20,
+    "non_integration_tests": {
+      "passed": 1320,
+      "skipped": 23,
+      "deselected": 3,
+      "existing_warnings": 6
+    },
+    "ruff": "passed",
+    "report_index": "current",
+    "review_page_javascript_syntax": "passed",
+    "ci_change": "Explicitly run probe test file, outside default testpaths.",
+    "preparation_attempts": "Initial invocation resolved the venv executable symlink and lost numpy; using the venv path generated the page successfully, without source changes or inference.",
+    "real_human_reviews": 0,
+    "formal_scores": 0,
+    "official_test_read": false
+  }
 }

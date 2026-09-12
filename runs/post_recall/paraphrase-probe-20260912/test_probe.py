@@ -128,6 +128,22 @@ def fake_scores(items, outcomes=None):
     return rows
 
 
+def fake_review(scene, original):
+    return {
+        "version_id": scene["version_id"],
+        **probe.review_binding(scene, original),
+        "status": "approved",
+        "reviewer": "SYNTHETIC TEST FIXTURE — NOT A PERSON",
+        "reviewed_at": "2026-09-12",
+        "reason": "synthetic control, not a semantic judgment",
+        "assistance": "test only",
+        "human_confirmed": True,
+        "conditions_checked": True,
+        "preferences_checked": True,
+        "equivalence_checked": True,
+    }
+
+
 def test_exact_scene_scope_and_no_label_prompt(scenes):
     items = probe.build_items(scenes)
     assert len(items) == 144
@@ -212,27 +228,84 @@ def test_no_human_approvals_cannot_freeze(copied):
 
 def test_stale_and_unconfirmed_review_rejected(scenes):
     scene = scenes[0]
-    row = {
-        "input_digest": probe.scene_digest(scene),
-        "status": "approved",
-        "reviewer": "SYNTHETIC TEST ONLY",
-        "reviewed_at": "2026-09-12",
-        "reason": "test",
-        "assistance": "test fixture",
-        "human_confirmed": True,
-        "conditions_checked": True,
-        "preferences_checked": True,
-        "equivalence_checked": True,
-    }
-    probe.validate_review(row, scene)
+    row = fake_review(scene, scene)
+    probe.validate_review(row, scene, scene)
     changed = copy.deepcopy(scene)
     changed["paragraphs"][0] += " Additional condition."
     with pytest.raises(ValueError, match="digest mismatch"):
-        probe.validate_review(row, changed)
+        probe.validate_review(row, changed, changed)
     with pytest.raises(ValueError, match="actual reviewer"):
-        probe.validate_review({**row, "human_confirmed": False}, scene)
+        probe.validate_review({**row, "human_confirmed": False}, scene, scene)
     with pytest.raises(ValueError, match="all three"):
-        probe.validate_review({**row, "equivalence_checked": False}, scene)
+        probe.validate_review({**row, "equivalence_checked": False}, scene, scene)
+    without_reference = {k: v for k, v in row.items() if not k.startswith("reference_original_")}
+    with pytest.raises(ValueError, match="original reference mismatch"):
+        probe.validate_review(without_reference, scene, scene)
+
+
+def test_original_revision_requires_fresh_rewrite_reviews(copied):
+    scenes, _ = probe.load_scenes(copied)
+    originals = {s["source_scene_id"]: s for s in scenes if s["rewrite_type"] == "original"}
+    submitted = [fake_review(s, originals[s["source_scene_id"]]) for s in scenes]
+    initial_submission = copied / "synthetic-initial-review.jsonl"
+    probe.write_rows(initial_submission, submitted)
+    probe.receive(initial_submission, copied)
+    assert len(probe.approved_reviews(scenes, copied)) == 36
+    history = copied / "human-review.jsonl"
+    initial_history = history.read_bytes()
+    receipts = {p: p.read_bytes() for p in copied.glob("review-submissions/*/original.jsonl")}
+    source = copied / "source/control-scenes.json"
+    source_bytes = source.read_bytes()
+
+    original = scenes[0]
+    revised = {
+        **original,
+        "version_id": original["version_id"] + "-revision2",
+        "revision": 2,
+        "supersedes": original["version_id"],
+        "paragraphs": [p.replace("boats", "cars") for p in original["paragraphs"]],
+        "queries": [q.replace("boats", "cars") for q in original["queries"]],
+    }
+    with (copied / "scenes-original.jsonl").open("a") as stream:
+        stream.write(json.dumps(revised) + "\n")
+    revision_submission = copied / "synthetic-original-revision-review.jsonl"
+    probe.write_rows(revision_submission, [fake_review(revised, revised)])
+    probe.receive(revision_submission, copied)
+    with pytest.raises(ValueError, match="2 versions need approval or revision"):
+        probe.freeze(copied / "nonexistent-runtime.json", copied)
+    assert not (copied / "frozen").exists()
+
+    shutil.copyfile(probe.HERE / "review-template.html", copied / "review-template.html")
+    probe.prepare(copied)
+    template = probe.read_rows(copied / "human-review-template.jsonl")
+    html = (copied / "review.html").read_text()
+    payload = json.loads(
+        html.split('<script id="scene-data" type="application/json">', 1)[1]
+        .split("</script>", 1)[0]
+    )
+    for rows in (template, payload):
+        for index, row in enumerate(rows[1:3], 1):
+            assert row["input_digest"] == submitted[index]["input_digest"]
+            assert row["reference_original_version_id"] == revised["version_id"]
+            assert row["reference_original_digest"] == probe.scene_digest(revised)
+
+    stale_submission = copied / "synthetic-stale-rewrite-review.jsonl"
+    probe.write_rows(stale_submission, submitted[1:3])
+    before_stale = history.read_bytes()
+    with pytest.raises(ValueError, match="original reference mismatch"):
+        probe.receive(stale_submission, copied)
+    assert history.read_bytes() == before_stale
+
+    fresh_submission = copied / "synthetic-fresh-rewrite-review.jsonl"
+    probe.write_rows(fresh_submission, [fake_review(s, revised) for s in scenes[1:3]])
+    assert probe.receive(fresh_submission, copied)["new_decisions"] == 2
+    active, _ = probe.load_scenes(copied)
+    approved = probe.approved_reviews(active, copied)
+    assert len(approved) == 36
+    assert all(r["reference_original_version_id"] == revised["version_id"] for r in approved[:3])
+    assert history.read_bytes().startswith(initial_history)
+    assert all(p.read_bytes() == data for p, data in receipts.items())
+    assert source.read_bytes() == source_bytes
 
 
 def test_first_failure_never_replaced_by_successful_retry(tmp_path, scenes):
@@ -335,25 +408,11 @@ def test_evaluate_rejects_changed_frozen_scene(copied):
 def test_full_synthetic_freeze_run_and_report(copied, monkeypatch):
     """Exercise handoff end-to-end, with temporary self-declared test records only."""
     scenes, _ = probe.load_scenes(copied)
+    originals = {s["source_scene_id"]: s for s in scenes if s["rewrite_type"] == "original"}
     submission = copied / "synthetic-submission.jsonl"
     probe.write_rows(
         submission,
-        [
-            {
-                "version_id": s["version_id"],
-                "input_digest": probe.scene_digest(s),
-                "status": "approved",
-                "reviewer": "SYNTHETIC TEST FIXTURE — NOT A PERSON",
-                "reviewed_at": "2026-09-12",
-                "reason": "synthetic control, not a semantic judgment",
-                "assistance": "test only",
-                "human_confirmed": True,
-                "conditions_checked": True,
-                "preferences_checked": True,
-                "equivalence_checked": True,
-            }
-            for s in scenes
-        ],
+        [fake_review(s, originals[s["source_scene_id"]]) for s in scenes],
     )
     assert probe.receive(submission, copied)["new_decisions"] == 36
     monkeypatch.setattr(probe, "code_identity", lambda directory: {"test": "synthetic"})

@@ -67,6 +67,20 @@ def scene_digest(scene):
     )
 
 
+def review_binding(scene, original):
+    if (
+        original["rewrite_type"] != "original"
+        or original["source_scene_id"] != scene["source_scene_id"]
+        or (scene["rewrite_type"] == "original" and original["version_id"] != scene["version_id"])
+    ):
+        raise ValueError("review reference must be the same-scene original")
+    return {
+        "input_digest": scene_digest(scene),
+        "reference_original_version_id": original["version_id"],
+        "reference_original_digest": scene_digest(original),
+    }
+
+
 def load_scenes(directory=HERE):
     sources = json.loads((directory / "source/control-scenes.json").read_text())
     source_index = {s["probe_id"]: s for s in sources}
@@ -175,14 +189,15 @@ def build_items(scenes):
 def prepare(directory=HERE):
     scenes, _ = load_scenes(directory)
     items = build_items(scenes)
-    payload = [{**s, "input_digest": scene_digest(s)} for s in scenes]
+    originals = {s["source_scene_id"]: s for s in scenes if s["rewrite_type"] == "original"}
+    payload = [{**s, **review_binding(s, originals[s["source_scene_id"]])} for s in scenes]
     encoded = json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c")
     template = (directory / "review-template.html").read_text()
     (directory / "review.html").write_text(template.replace("__SCENES_JSON__", encoded))
     template_rows = [
         {
             "version_id": s["version_id"],
-            "input_digest": scene_digest(s),
+            **review_binding(s, originals[s["source_scene_id"]]),
             "status": "pending",
             "reviewer": None,
             "reviewed_at": None,
@@ -211,9 +226,11 @@ def prepare(directory=HERE):
     }
 
 
-def validate_review(row, scene):
+def validate_review(row, scene, original):
     if row.get("input_digest") != scene_digest(scene):
         raise ValueError("review text/target digest mismatch; re-review changed input")
+    if any(row.get(k) != value for k, value in review_binding(scene, original).items()):
+        raise ValueError("review original reference mismatch; re-review against current original")
     if row.get("status") not in STATUSES:
         raise ValueError("unknown review status")
     if row["status"] == "pending":
@@ -234,7 +251,8 @@ def validate_review(row, scene):
 
 
 def receive(path, directory=HERE):
-    _, known = load_scenes(directory)
+    scenes, known = load_scenes(directory)
+    originals = {s["source_scene_id"]: s for s in scenes if s["rewrite_type"] == "original"}
     rows = read_rows(path)
     seen = set()
     for row in rows:
@@ -242,7 +260,8 @@ def receive(path, directory=HERE):
         if vid not in known or vid in seen:
             raise ValueError("unknown or duplicate review version")
         seen.add(vid)
-        validate_review(row, known[vid])
+        scene = known[vid]
+        validate_review(row, scene, originals[scene["source_scene_id"]])
     history = directory / "human-review.jsonl"
     existing = read_rows(history)
     new = [r for r in rows if r["status"] != "pending" and r not in existing]
@@ -265,16 +284,26 @@ def receive(path, directory=HERE):
 
 def approved_reviews(scenes, directory=HERE):
     _, known = load_scenes(directory)
+    originals = {s["source_scene_id"]: s for s in scenes if s["rewrite_type"] == "original"}
     latest = {}
     for row in read_rows(directory / "human-review.jsonl"):
         if row["version_id"] not in known:
             raise ValueError("unknown version in review history")
-        validate_review(row, known[row["version_id"]])
+        original = known.get(row.get("reference_original_version_id"))
+        if original is None:
+            raise ValueError("unknown original reference in review history")
+        # Historical decisions remain valid evidence about their original reference;
+        # only a decision about the current reference may authorize inference.
+        validate_review(row, known[row["version_id"]], original)
         latest[row["version_id"]] = row
     missing = [
         s["version_id"]
         for s in scenes
         if latest.get(s["version_id"], {}).get("status") != "approved"
+        or any(
+            latest.get(s["version_id"], {}).get(k) != value
+            for k, value in review_binding(s, originals[s["source_scene_id"]]).items()
+        )
     ]
     if missing:
         raise ValueError(

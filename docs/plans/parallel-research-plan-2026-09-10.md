@@ -8,7 +8,7 @@
 
 主研究链条为错误证据、来源诊断、开源方案修复与代价。N08 的提取缺口不直接解释 E0 的全部错排；#23 的列表观察与背景负例因果对照分开，不将原论文骨架中的强归因当作已证实结果。实际完成度看 [CURRENT_STATUS](../CURRENT_STATUS.md)，不以 issue 是否关闭推断产物是否存在。
 
-下表是本轮纠偏后的本地任务口径。GitHub 原 issue 保留其发布时间的要求，本轮没有代负责人改写 issue；执行时将本轮明确决定与原验收缺口一起记录，不补造事前选择或冻结记录。
+下表源于 2026-09-10 纠偏后的本地任务口径；当日未改写 GitHub 原 issue。2026-09-11 按负责人要求更新了 [#22](https://github.com/ql-link/LinkRag-Eval/issues/22) 的英文输入、交付、依赖和显卡交接说明，随后将 [#21](https://github.com/ql-link/LinkRag-Eval/issues/21) 更新为允许模型辅助、人工确认及单人提交；执行时仍需区分后续明确要求与原验收缺口，不补造事前选择或冻结记录。
 
 ## 2. 任务分解
 
@@ -20,9 +20,9 @@
 | [#17](https://github.com/ql-link/LinkRag-Eval/issues/17) | 成本曲线与原触发对照；负结果照常交付，不要求产出成功门控 | eval／must | 一期无；二期 #16＋开发 L2 缓存 | 1 天 | `scripts/llm_judge_cost_curve.py`、`runs/post_recall/judge-cost-curve-*` |
 | [#18](https://github.com/ql-link/LinkRag-Eval/issues/18) | 置信区间与配对检验 | eval／must | 无 | 1 天 | `pair_statistics.py`、`scripts/llm_judge_statistics.py`、`runs/post_recall/judge-statistics-*` |
 | [#19](https://github.com/ql-link/LinkRag-Eval/issues/19) | 官方 Test 入库与候选快照（不评分） | data／must | 无 | 1–2 天 | Test 准备脚本、`runs/post_recall/nevir-test-candidates-*` |
-| [#20](https://github.com/ql-link/LinkRag-Eval/issues/20) | 官方 Test 一次性终评；固定主配置和必要对照 | eval／must | #15 #16 #18 #19；#17 的结果用于报告，不要求触发成功 | 1 天 | `runs/post_recall/nevir-test-final-*` |
-| [#21](https://github.com/ql-link/LinkRag-Eval/issues/21) | 错误类型双人标注 | analysis／must | 无 | 人工半天 | `runs/post_recall/error-taxonomy-*`、`docs/reports/error_taxonomy_*` |
-| [#22](https://github.com/ql-link/LinkRag-Eval/issues/22) | 污染声明与改写探针 | analysis／must | 开源部分 #14 | 1 天 | `runs/post_recall/paraphrase-probe-*` |
+| [#20](https://github.com/ql-link/LinkRag-Eval/issues/20) | 官方 Test 一次性终评；固定主配置和必要对照 | eval／must | #15 #16 #18 #19；#17 的结果用于报告，不要求触发成功 | 1 天 | `runs/post_recall/nevir-test-main-*`（成员旧 Test 聚合另存） |
+| [#21](https://github.com/ql-link/LinkRag-Eval/issues/21) | Qwen／GPT 错例去重 101 条＋开发 21 条的描述性分类，允许模型辅助、人工确认 | analysis／must | 已有缓存与至少一位实际确认者；第二位复核可选 | 122 条；模型辅助后的工时待实测 | `runs/post_recall/error-taxonomy-*`、`docs/reports/error_taxonomy_*` |
+| [#22](https://github.com/ql-link/LinkRag-Eval/issues/22) | 英文保义改写探针与污染限制说明 | analysis／must | 运行器 #14；人工审核输入及推理资源 | 原估 1 天，另受审核／资源交接影响 | `runs/post_recall/paraphrase-probe-*` |
 | [#23](https://github.com/ql-link/LinkRag-Eval/issues/23) | 四排序器列表诊断必需；背景负例重训为因果扩展 | analysis／must＋optional | 无 | 0.5 + 2–3 天 | `pairwise_training.py`（唯一允许改它的任务）、`runs/post_recall/list-collapse-*` |
 | [#24](https://github.com/ql-link/LinkRag-Eval/issues/24) | 跨分布小探针 | analysis／optional | #14 | 1 天 | `runs/post_recall/ood-probe-*` |
 | [#25](https://github.com/ql-link/LinkRag-Eval/issues/25) | 论文骨架与图表 | paper／must | 骨架无；数字 #16 #17 #18 #20 | 4–5 天 | `docs/papers/manuscript/` |
@@ -40,6 +40,8 @@
 #14 → #22（开源部分）、#24
 #17、#18、#20、#21、#22、#23 → #25
 ```
+
+#22 不等待 #19–#21，也不阻塞 #20；结果供 #25 的稳健性与限制部分使用。改写、人工审核和离线验证可以无显卡推进，最后 Qwen 推理可在现有 Runpod 服务器执行。真正遇到输入、审核或推理权限／排期阻塞时，在 [#22](https://github.com/ql-link/LinkRag-Eval/issues/22) 评论中 @ottercoconut，附已完成产物、具体缺项和续跑命令；详细验收只在该 issue 维护。
 
 ## 4. 协作规则（防止分支冲突）
 

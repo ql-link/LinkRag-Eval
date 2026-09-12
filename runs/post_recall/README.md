@@ -16,8 +16,9 @@
 | **固定配置确认复验** | [open-judge-confirmation-20260911](open-judge-confirmation-20260911/README.md) | #16：已曝光确认上的单次请求复现，保留原 N11 并列对照；非新独立 Test | 否 |
 | **当前成本分析** | [judge-cost-curve-20260910](judge-cost-curve-20260910/README.md)、[judge-cost-curve-qwen-20260911](judge-cost-curve-qwen-20260911/README.md) | N13／#17：GPT 一期与 Qwen 二期缓存曲线，分别保留触发规则的负／正结果及复验产物 | 否 |
 | **已核验的列表诊断与训练扩展** | [list-collapse-20260910](list-collapse-20260910/README.md) | #23：四排序器及背景 N=8 开发／确认复验、训练模型；默认关闭 | 否 |
-| **成员交付的 Test 聚合** | [nevir-test-final-20260911](nevir-test-final-20260911/README.md) | #23 Test 最终聚合及原冻结记录；缺原始输入／评分／日志，未本地独立复现 | 否 |
-| **成员 Test 脚本，候选未接齐** | [nevir-test-candidates-20260910](nevir-test-candidates-20260910/README.md) | 仅准备／采集脚本，不含原 snapshot | 保留源码；不可误认为候选齐备 |
+| **成员交付的 Test 聚合** | [nevir-test-final-20260911](nevir-test-final-20260911/README.md) | #23 Test 最终聚合及原冻结记录；输入后续补齐，仍缺逐题模型分数且未本地重评 | 否 |
+| **已验收的 Test 候选** | [nevir-test-candidates-20260910](nevir-test-candidates-20260910/README.md) | #23 原快照、SQLite 和编码／采集日志补交；#19 输入及覆盖验收，不含新模型评分 | 否 |
+| **正式 Test 主线** | [nevir-test-main-20260911](nevir-test-main-20260911/README.md) | #20 固定 E0、Qwen K20 与 BGE 已完成；完整回收、主／敏感性区间、成本和 #40 中断恢复；GPU 已关机 | 否 |
 | **小样本边界探针** | [ood-probe-20260910](ood-probe-20260910/README.md) | N10／#24：英文 6 查询与中文 12 对，原模型评分、中文完成复核表及离线复算；只作单段判断能力旁证 | 否 |
 | **当前模型来源** | [nevir-english-features-20260907](nevir-english-features-20260907/README.md) | 英文基线由此训练；保存的开发全池分数是各实验的一致性校验基准 | 否 |
 | **当前引用的人审与诊断** | [subject-binding-pilot-20260908](subject-binding-pilot-20260908/README.md) | N08：人审 v5 固定结果（`human/`）、五臂训练、v2/v3 修复产物 | `human/` 不可删；其余见 §3 |
@@ -27,12 +28,11 @@
 | 历史，保留不引用 | [nevir-suitability-20260907](nevir-suitability-20260907/)、[english-capability-20260907](english-capability-20260907/README.md) | 数据适用性审计、普通英文链路检查 | 否（小） |
 | 历史，暂停 | [t2-full-20260906](t2-full-20260906/) | 暂停的 T2 入库及 `process-logs/` 故障记录 | 待定 |
 | 归档 | [_archive](_archive/) | 早期连通性探针、Sparse 前缀探针、两份外部咨询提示词（ChatGPT Pro、Codex 统一执行稿） | 待定（小） |
-| **正式 Test 主线** | [nevir-test-main-20260911](nevir-test-main-20260911/README.md) | #20 固定 E0、Qwen K20 与 BGE 已完成；完整回收、主／敏感性区间、成本和 #40 中断恢复；GPU 已关机 | 否 |
 
 ## 2. 当前研究的文件依赖链
 
 ```
-data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（成员已报告 Test 终评；本机本轮未读 Test 逐题）
+data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（成员已报告 Test 终评；补交快照由程序验证，只输出聚合）
   → nevir-ltr-validation-20260907/data-preparation/experiment/  prepared/ 与 candidates/（共享输入）
     → nevir-english-features-20260907/comparison/english/       英文基线与保存的开发分数
     → nevir-offline-diagnostic-20260907/review/private/         人审匿名映射
@@ -71,3 +71,7 @@ data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（成�
 - 两期成本曲线均保存聚合 JSON、CSV、SVG、README 和复验记录；原始判断与候选从既有共享输入取得。二期仅离线重放，不把开发补齐的 GPU 成本省略为零成本。
 
 - `judge-statistics-20260910/`（N12，issue #18）：N09 主要差值的来源组自助区间与符号检验表；跟踪 README、`tables.md`、`results.json`。
+
+- [judge-statistics-20260911/](judge-statistics-20260911/README.md)（N12 补充，issue #18）：保留原 12 组统计，新增 Qwen／BGE 主 L2 在开发／确认相对 E0 与固定融合的 8 组来源组区间；L2 显式选择 `stage1_judge`，Qwen 确认沿用首次结果。跟踪 README、`tables.md`、`results.json`。
+
+- [error-taxonomy-20260911/](error-taxonomy-20260911/README.md)（issue #21）：122 条英文分类包 v2，允许模型辅助、人工确认及单人回收，第二位复核可选；旧包、分发 ZIP、原文和私有映射本地保留，当前未收到真实提交。

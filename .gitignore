@@ -160,6 +160,9 @@ reports/*.html
 !/docs/papers/manuscript/*.bib
 !/docs/papers/manuscript/README.md
 !/docs/papers/manuscript/paragraph-review-20260912.md
+# 自撰论文只维护一份 PDF，与源码一起纳入 Git。
+!/docs/papers/manuscript/paper.pdf
+!/docs/papers/manuscript/Makefile
 /.agents/
 
 # —— Python ——

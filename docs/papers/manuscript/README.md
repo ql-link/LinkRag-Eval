@@ -2,7 +2,7 @@
 
 9 月 11 日已写英文 Introduction；9 月 12 日按用户指定的第一批任务补齐场景／数据／指标、对照方法与两种干预、列表诊断及必要限制。未启动新实验或完整写作流水线。[main.tex](main.tex) 组合当前工作稿，题名暂定，作者和摘要尚未加入。研究进度仍以 [CURRENT_STATUS.md](../../CURRENT_STATUS.md) 为准，本文件记录写作证据及编译方法，不维护另一套进度。
 
-当前预览 PDF：`build/working-draft.pdf`；旧 `build/introduction-preview.pdf` 保留为 9 月 11 日引言预览。使用用户已安装的 MacTeX / IEEEtran 编译，PDF 和辅助文件只保留在本地；源码及实际引用的 BibTeX 可以进入版本控制。写作阶段未提交或推送；本次版本整理纳入现有源码。正式 Test 已有[核验报告](../../reports/nevir_official_test_2026_09_12.md)，本稿尚未整合其结果章节。
+唯一论文 PDF 为 [paper.pdf](paper.pdf)，主入口为 [main.tex](main.tex)。后续继续编辑现有章节源码并覆盖生成 `paper.pdf`，不另存引言预览、日期版或其他稿件 PDF。LaTeX、BibTeX、PDF、[Makefile](Makefile) 和写作说明均纳入 Git，历史版本通过 Git 追溯；编译辅助文件留在被忽略的 `build/`。旧引言预览和旧工作稿 PDF 已清理。正式 Test 已有[核验报告](../../reports/nevir_official_test_2026_09_12.md)，本稿尚未整合其结果章节。
 
 | 正文编辑入口 | 本批用途 | 自然段编号（源码注释，不进入 PDF） |
 | --- | --- | --- |
@@ -94,8 +94,10 @@
 编译（在本目录运行）：
 
 ```sh
-PATH="/Library/TeX/texbin:$PATH" latexmk -pdf -interaction=nonstopmode -halt-on-error -jobname=working-draft -outdir=build main.tex
+make
 ```
+
+编译成功后，`Makefile` 将 PDF 移至固定路径 `paper.pdf`，`build/` 只保留辅助文件；编译失败时保留上一次成功生成的 `paper.pdf`。从仓库根目录也可运行 `make -C docs/papers/manuscript`。
 
 引用条目取自 ACL Anthology 正式 BibTeX、已核验 DOI 的 Zotero 会议记录、NeurIPS 论文入口、Qwen3 技术报告和 BAAI 官方模型卡。不把范文摘要、模型预标或旧讨论稿当作本项目的实验结论。
 

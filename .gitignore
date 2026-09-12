@@ -71,6 +71,8 @@ runs/
 !/runs/post_recall/nevir-test-main-20260911/README.md
 !/runs/post_recall/nevir-test-main-20260911/prepare.py
 !/runs/post_recall/nevir-test-main-20260911/workflow.py
+!/runs/post_recall/nevir-test-main-20260911/recover_qwen.py
+!/runs/post_recall/nevir-test-main-20260911/recovery-config.json
 !/runs/post_recall/nevir-test-main-20260911/serve.py
 !/runs/post_recall/nevir-test-main-20260911/synthetic_smoke.py
 !/runs/post_recall/nevir-test-main-20260911/runtime-check.json

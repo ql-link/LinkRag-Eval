@@ -1,4 +1,4 @@
-# #20 官方 Test 主方案：实例已关机，结果回收受阻
+# #20 官方 Test 主方案：中断产物已回收，准备继续未派发输入
 
 配置与执行代码已纳入本地提交 **`b4d01d7bae361f72ab83643cc0a9df7280e06e65`**，未推送，并通过 Git archive 将该版本部署到替代 GPU。2026-09-11 17:33:29 UTC 开始 E0，17:34:43 完成全部 2,766 查询，73.442 秒；Qwen 单次 worker 于 17:33:42 UTC 启动，PID 55064，顺序执行 L1 与 L2。L1 已于 18:22:19 UTC 完成并回收核验；2026-09-12 00:59–01:01 UTC 检查发现实例已关机且余额不足，L2 最终完成状态与退出记录尚待回收确认。BGE 权重及分词器已在本机下载并校验，暂未上传或推理。原 #23 成员 Test 聚合继续保存在 [nevir-test-final-20260911](../nevir-test-final-20260911/README.md)，不在本目录覆盖或复用为判断缓存。
 
@@ -71,6 +71,10 @@ BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2
 ```
 
 `qwen` 的远端 worker 调用既有严格单次请求驱动 `open-judge-selection-20260911/run_frozen.py`。运行目录包含逐请求耗时、失败类型、供应商 token／结束原因回执及总耗时；输出目录已存在时拒绝重新评分，不自动恢复正式任务。实际中断或需要重跑时依 #20 原要求另行登记，保留已有分数和执行偏差。
+
+**2026-09-12 恢复访问后的核验与继续方案。** 负责人已开机并要求继续。03:40:55 UTC 按原批次计划、提示、输入映射、缓存与请求记录核验：L2 共 55,060 个已开始批次，其中 **55,052 个完整结果**（54,981 可用、71 个 length 不可用），**8 个在途批次只有派发材料、无回执**，另有 **200 个从未开始**。最后完整回执为 00:50:05 UTC；原进程没有正常退出记录。62,566,003 字节压缩包已在本机完整解压，原 L2 及服务／资源日志保留，接收记录为 `provisioning/interruption-receipt.json`。
+
+中断与后续执行单独登记在 [#40](https://github.com/ql-link/LinkRag-Eval/issues/40)。[恢复配置](recovery-config.json) 与 [恢复脚本](recover_qwen.py) 在执行前提交；先 `audit` 固化未开始输入清单，再 `run` 仅提交这 200 个原批次，保持原编号、顺序和固定请求参数。已完成的结果与 71 个失败不重试，8 个在途输入明确记为中断不可用，不伪造回执。`assemble` 将原缓存、续行结果与缺失项还原为 55,320 条逻辑结果，原始缓存／进度／日志保留不改，派生评分标明来源；沿用原缺失回退和统计口径。不能把这次执行描述为单段无中断运行。恢复服务使用原 `b4d01d7` 入口，日志及新资源采样在远端 `recovery-runtime-20260912/`。
 
 Qwen 完成后，把本目录 `bge/` 中的 `items.jsonl`、`execution-config.json`、`run_bge.py` 放到服务器同一新目录，使用 `/root/linkrag-eval-test-20260911/gpu-venv-py313/bin/python <该目录>/run_bge.py` 执行。BGE 的 6 个必需文件已从官方固定 revision 下载至本机 `model-staging/bge-reranker-v2-m3/`，共 2,293,242,108 字节，187.858 秒，文件大小与官方摘要全部通过，记录在其 download.json。GPU 权重尚未部署，须先将固定模型放至配置路径。为缩短后续传输，已验证 BAAI ModelScope 的 model.safetensors 与该固定 revision 权重大小、SHA256 完全一致；可在 Qwen 结果收妥后由服务器直接下载相同权重，重新核验后使用，五个配置／分词器小文件仍复制 Hugging Face 原件。下载 URL 与核验依据见本机 `provisioning/bge-weight-transfer.json`。脚本检查环境与未截断长度；超出 8,192 token 则停止，不静默截断。取回 `scores.jsonl`、`summary.json` 后运行：
 

@@ -1,0 +1,20 @@
+{
+  "issue": "https://github.com/ql-link/LinkRag-Eval/issues/40",
+  "original_frozen_commit": "b4d01d7bae361f72ab83643cc0a9df7280e06e65",
+  "continuation_directory": "l2-continuation-20260912",
+  "plan_directory": "recovery-plan-20260912",
+  "expected_counts": {
+    "completed": 55052,
+    "interrupted": 8,
+    "pending": 200,
+    "logical_items": 55320
+  },
+  "policy": {
+    "completed_inputs": "Preserve original scores and failures without requests",
+    "interrupted_without_receipt": "Unavailable; do not repeat and do not invent provider receipts",
+    "pending_inputs": "Only never-started original batches, same indices and submission order",
+    "request_configuration": "Unchanged frozen-config.json and original SingleRequestRunner",
+    "original_evidence": "Preserved; final scores are explicitly assembled across execution segments",
+    "evaluation": "Unchanged population, missing-result fallback and statistical rules"
+  }
+}

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Issue #22 · 英文场景语义审核</title>
+<style>
+:root{color-scheme:light;font-family:system-ui,-apple-system,"PingFang SC",sans-serif;color:#182b36;background:#f3f6f6}
+*{box-sizing:border-box}body{margin:0}main{max-width:1220px;margin:auto;padding:28px 24px 60px}
+h1{font-size:27px;margin:0 0 10px}h2{font-size:20px;margin:0 0 12px}h3{font-size:16px;margin:18px 0 8px}
+p{line-height:1.7;margin:8px 0}.muted,small{color:#526571}.notice{border-left:4px solid #20796c;padding:10px 16px;background:#e8f3ef}
+.bar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:16px 0}.bar>*{max-width:100%}
+.identity{display:grid;grid-template-columns:1fr 170px 2fr;gap:14px}.columns{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.card{background:white;border:1px solid #d4e0de;border-radius:12px;padding:22px;margin:18px 0;min-width:0}
+.english{font-family:Georgia,"Times New Roman",serif;font-size:18px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.caption{font-size:12px;font-weight:700;letter-spacing:.08em;color:#20796c;margin:15px 0 5px}
+.target{font-size:13px;background:#edf3f2;border-radius:5px;padding:5px 8px;display:inline-block}
+input,select,textarea,button{font:inherit}input:not([type=checkbox]),select,textarea{border:1px solid #b9c9c5;border-radius:6px;padding:10px;background:#fff;max-width:100%}
+.identity input,.identity select,textarea{width:100%}label{display:block;font-size:14px;line-height:1.7}textarea{min-height:90px;margin:6px 0}
+button{padding:10px 16px;border:1px solid #9aafaa;border-radius:6px;background:white;color:#16352d;cursor:pointer}button.primary{background:#176b58;color:white;border-color:#176b58}
+button:disabled{opacity:.45;cursor:default}button:hover:not(:disabled){filter:brightness(.95)}:focus-visible{outline:3px solid #65ab9b;outline-offset:3px}
+.checks label{margin:10px 0}.checks input{margin-right:8px}#message{min-height:25px;color:#90461c;line-height:1.5}#progress{font-weight:650}
+details{padding:10px 0;border-top:1px solid #dce6e4;margin-top:16px}summary{cursor:pointer;color:#35675c}.tag{color:#176b58;font-size:13px;font-weight:600}
+footer{font-size:13px;color:#526571;margin-top:24px}.hidden{display:none}
+@media(max-width:760px){main{padding:18px 14px}.columns,.identity{grid-template-columns:1fr}.card{padding:17px}.english{font-size:17px}h1{font-size:23px}}
+</style>
+<main>
+<div class="tag">LINKRAG-EVAL · ISSUE #22 · 推理前人工审核</div>
+<h1>换一种说法，条件关系是否仍然相同？</h1>
+<p class="muted">共 12 个场景，每个包含原版、同义改述、实体换名，共 36 个版本。逐项检查英文；可以分多次完成。</p>
+<p class="notice">全部材料目前均待人工审核。“预期优选”来自 AI 构造者，只是待核对的假设。请核对两段、两个问题、否定范围和主体归属；中文仅为 AI 辅助释义。页面没有任何本轮模型评分。</p>
+<section class="card identity" aria-label="审核人信息">
+<label>你的姓名或可追溯标识<input id="reviewer" placeholder="由实际审核人填写" autocomplete="name"></label>
+<label>实际审核日期<input id="date" type="date"></label>
+<label>实际使用的辅助方式<select id="assistance"><option value="">请选择实际情况</option><option>使用页面 AI 中文释义，并由本人核对英文</option><option>仅核对英文，未使用页面中文释义</option><option>使用其他模型辅助；具体工具和用途写在各题理由中</option></select></label>
+</section>
+<nav class="bar" aria-label="审核导航"><button id="prev">← 上一项</button><select id="jump" aria-label="选择场景版本"></select><button id="next">下一项 →</button><span id="position"></span></nav>
+<div class="bar"><span id="progress"></span><span id="saveState" class="muted" role="status"></span></div>
+<h2 id="heading"></h2><p id="category" class="muted"></p><p id="note" class="muted"></p>
+<div class="columns"><section class="card" id="original" aria-label="原版对照"></section><section class="card" id="current" aria-label="当前待审核版本"></section></div>
+<section class="card" aria-label="本版本审核结论">
+<h2>本版本的人工判断</h2>
+<p class="muted">“通过”需要你确认下列各项。对原版，第三项表示核对原始英文与构造意图；对改写版，表示与原版保持等价。没有写出的信息保持未知，不自行补充人物能力或活动。</p>
+<div class="checks">
+<label><input id="conditions" type="checkbox">我检查了两段正文及两条查询的条件、主体归属和否定范围。</label>
+<label><input id="preferences" type="checkbox">我确认 Q1、Q2 标出的预期优选段均成立。</label>
+<label><input id="equivalence" type="checkbox">原版构造意图成立；或本改写保持原版事实关系、答案和两方向对应。</label>
+</div>
+<label>审核结论<select id="status"><option value="pending">尚未审核</option><option value="approved">通过</option><option value="needs_revision">需要修改</option><option value="undecided">未决／需要讨论</option></select></label>
+<label>理由或具体修改建议<textarea id="reason" placeholder="请写出判断依据；若有歧义，指出具体英文表达和原因。"></textarea></label>
+<label><input id="confirmed" type="checkbox">这是我本人实际核对后作出的判断，辅助工具不计为另一名真人审核者。</label>
+</section>
+<div id="message" role="alert"></div>
+<div class="bar"><button class="primary" id="export">导出审核记录 JSONL</button><button id="import">导入已保存的记录</button><input id="file" class="hidden" type="file" accept=".jsonl,.json,text/plain"></div>
+<footer>进度尽可能自动保存在当前浏览器。换电脑、浏览器或新版材料前，请导出备份。未决和需修改项可以照实导出，不会被自动标成通过。导出后把文件交回 Codex；真人审核齐全前不会生成正式推理配置。</footer>
+</main>
+<script id="scene-data" type="application/json">__SCENES_JSON__</script>
+<script>
+"use strict";
+const scenes=JSON.parse(document.getElementById("scene-data").textContent);
+const $=id=>document.getElementById(id), names={original:"原版",synonym:"同义改述",entity_rename:"实体换名"};
+const categoryNames={repeated_name_across_sentences:"跨句重复人名",multiple_subjects_same_sentence:"同一句中多个主体",grammatical_shared_subject:"同一主语共享两个谓语"};
+const storageKey="issue22-review-"+scenes.map(s=>s.input_digest).join("-");
+const empty=s=>({version_id:s.version_id,input_digest:s.input_digest,status:"pending",reviewer:null,reviewed_at:null,reason:"",conditions_checked:false,preferences_checked:false,equivalence_checked:false,human_confirmed:false,assistance:"",source:"review.html; actual reviewer self-declaration"});
+let rows=scenes.map(empty),index=0,storageOK=true;
+try{const saved=localStorage.getItem(storageKey);if(saved){const state=JSON.parse(saved);if(state.rows.length!==scenes.length||state.rows.some((r,i)=>r.version_id!==scenes[i].version_id||r.input_digest!==scenes[i].input_digest))throw Error("已存记录不匹配，请导入备份");rows=state.rows;index=state.index||0;$("reviewer").value=state.reviewer||"";$("date").value=state.date||"";$("assistance").value=state.assistance||"";}}catch(e){storageOK=false;$("message").textContent="无法恢复自动保存，请使用导出／导入。";}
+scenes.forEach((s,i)=>{const option=document.createElement("option");option.value=i;option.textContent=`${String(i+1).padStart(2,"0")} · 场景 ${Math.floor(i/3)+1} · ${names[s.rewrite_type]}`;$("jump").append(option);});
+function save(){try{localStorage.setItem(storageKey,JSON.stringify({rows,index,reviewer:$("reviewer").value,date:$("date").value,assistance:$("assistance").value}));storageOK=true;}catch(e){storageOK=false;}$("saveState").textContent=storageOK?"已在当前浏览器保存草稿":"自动保存不可用，请导出备份";const done=rows.filter(r=>r.status!=="pending").length,approved=rows.filter(r=>r.status==="approved").length;$("progress").textContent=`已填写 ${done}/36 · 通过 ${approved} · 需修改 ${rows.filter(r=>r.status==="needs_revision").length} · 未决 ${rows.filter(r=>r.status==="undecided").length}`;}
+function collect(){const row=rows[index];Object.assign(row,{status:$("status").value,reason:$("reason").value,conditions_checked:$("conditions").checked,preferences_checked:$("preferences").checked,equivalence_checked:$("equivalence").checked,human_confirmed:$("confirmed").checked,reviewer:$("reviewer").value.trim()||null,reviewed_at:$("date").value||null,assistance:$("assistance").value});save();}
+function element(tag,text,cls){const e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;return e;}
+function panel(id,scene,title){const root=$(id);root.replaceChildren(element("h2",title));scene.paragraphs.forEach((text,i)=>{root.append(element("div",`段落 ${i===0?"A":"B"}`,"caption"),element("p",text,"english"));});scene.queries.forEach((text,i)=>{root.append(element("div",`QUERY ${i+1}`,"caption"),element("p",text,"english"),element("div",`待核对的预期优选：${scene.expected_preferences[i]===0?"A":"B"}`,"target"));});const aid=document.createElement("details");aid.append(element("summary","展开 AI 中文辅助释义"));aid.append(element("p",scene.chinese_aid.identity,"muted"));scene.chinese_aid.paragraphs.forEach((text,i)=>aid.append(element("p",`${i===0?"A":"B"}：${text}`)));scene.chinese_aid.queries.forEach((text,i)=>aid.append(element("p",`Q${i+1}：${text}`)));root.append(aid);}
+function render(){const scene=scenes[index],row=rows[index],original=scenes.find(s=>s.source_scene_id===scene.source_scene_id&&s.rewrite_type==="original");$("heading").textContent=`场景 ${Math.floor(index/3)+1} · ${names[scene.rewrite_type]}`;$("category").textContent=categoryNames[scene.category]+" · "+scene.version_id;$("note").textContent=scene.rewrite_type==="entity_rename"?"换名对应："+Object.entries(scene.entity_mapping).map(([a,b])=>a+" → "+b).join("；")+"。查询未含人名，因此保持原样。":scene.rewrite_type==="synonym"?"本版改述活动与能力表达，并调换正向查询的条件顺序。请特别核对同义表达是否扩大或缩小了原意。":"先审核原版自身的条件关系。原文件标记为 AI 构造、尚待真人审核。";panel("original",original,"原版对照");panel("current",scene,"当前待审核版本");$("status").value=row.status;$("reason").value=row.reason;$("conditions").checked=row.conditions_checked;$("preferences").checked=row.preferences_checked;$("equivalence").checked=row.equivalence_checked;$("confirmed").checked=row.human_confirmed;$("jump").value=index;$("position").textContent=`${index+1} / ${scenes.length}`;$("prev").disabled=index===0;$("next").disabled=index===scenes.length-1;save();}
+function navigate(next){index=next;$("message").textContent="";render();}
+$("prev").onclick=()=>navigate(index-1);$("next").onclick=()=>navigate(index+1);$("jump").onchange=()=>navigate(Number($("jump").value));
+for(const id of ["reviewer","date","assistance","status","reason","conditions","preferences","equivalence","confirmed"]){$(id).addEventListener("input",collect);$(id).addEventListener("change",collect);}
+function validate(row){if(!["pending","approved","needs_revision","undecided"].includes(row.status))return "结论字段无效";if(row.status==="pending")return null;if(!row.reviewer||!row.reviewed_at||!row.reason.trim()||!row.assistance)return "请填写审核人、日期、理由和辅助方式";if(!row.human_confirmed)return "请确认由本人实际审核";if(row.status==="approved"&&!(row.conditions_checked&&row.preferences_checked&&row.equivalence_checked))return "通过前请完成三项语义核对";return null;}
+$("export").onclick=()=>{const bad=rows.map((r,i)=>({i,error:validate(r)})).find(x=>x.error);if(bad){$("message").textContent=`第 ${bad.i+1} 项：${bad.error}。草稿已保留，可返回修改。`;return;}const blob=new Blob([rows.map(r=>JSON.stringify(r)).join("\n")+"\n"],{type:"application/x-ndjson"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="issue22-human-review.jsonl";a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);$("message").textContent="已导出。请保留文件并交回 Codex；尚未审核的条目仍为 pending。";};
+$("import").onclick=()=>$("file").click();$("file").onchange=async()=>{try{const file=$("file").files[0];if(!file)return;const imported=(await file.text()).split(/\r?\n/).filter(x=>x.trim()).map(x=>JSON.parse(x));const seen=new Set();for(const row of imported){const i=scenes.findIndex(s=>s.version_id===row.version_id);if(i<0||seen.has(row.version_id)||row.input_digest!==scenes[i].input_digest)throw Error("版本、内容或重复记录不匹配");seen.add(row.version_id);if(validate(row))throw Error(validate(row));}for(const row of imported){rows[scenes.findIndex(s=>s.version_id===row.version_id)]=row;}const last=[...imported].reverse().find(r=>r.reviewer);if(last){$("reviewer").value=last.reviewer;$("date").value=last.reviewed_at;$("assistance").value=last.assistance;}render();$("message").textContent=`已导入 ${imported.length} 项记录。`;}catch(e){$("message").textContent="导入失败："+e.message;}finally{$("file").value="";}};
+render();
+</script>
+</html>

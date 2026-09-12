@@ -66,6 +66,8 @@ runs/
 !/runs/post_recall/nevir-test-candidates-20260910/README.md
 !/runs/post_recall/nevir-test-candidates-20260910/prepare_official_test.py
 !/runs/post_recall/nevir-test-candidates-20260910/collect_official_test.py
+!/runs/post_recall/nevir-test-candidates-20260910/accept_snapshot.py
+!/runs/post_recall/nevir-test-candidates-20260910/run.json
 !/runs/post_recall/nevir-test-main-20260911/
 /runs/post_recall/nevir-test-main-20260911/*
 !/runs/post_recall/nevir-test-main-20260911/README.md
@@ -133,7 +135,6 @@ runs/
 !/runs/post_recall/judge-cost-curve-20260910/*.csv
 !/runs/post_recall/judge-cost-curve-20260910/*.svg
 reports/*.html
-/linkrag-eval-sqlite-share-20260827/
 /docs/papers/*
 !/docs/papers/README.md
 /.agents/

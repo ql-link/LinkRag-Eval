@@ -1,6 +1,6 @@
 # 文件与产物存放总览
 
-本页回答“东西保存在哪、是否随 Git、能否清理”；按 2026-09-07 的实际工作树核对，包含隐藏目录和被忽略的本地产物。文档怎么选见[文档选读](DOCUMENT_CATALOG.md)，进度只看[当前状态](CURRENT_STATUS.md)。
+本页回答“东西保存在哪、是否随 Git、能否清理”；基础盘点为 2026-09-07，后续清理见各节日期（最新 2026-09-11），包含隐藏目录和被忽略的本地产物。文档怎么选见[文档选读](DOCUMENT_CATALOG.md)，进度只看[当前状态](CURRENT_STATUS.md)。
 
 路径相对仓库根目录。下文“可纳入 Git”不表示已经提交；当前有未提交改动与新文件，单独 clone 不能还原这个工作区。
 
@@ -23,7 +23,8 @@
 | 本地论文全文 | [docs/papers/README.md](papers/README.md) | PDF 仅本地；文献地图与目录进 Git |
 | 助手资料 | `.ai/`、`.agents/skills/` | 前者是随仓库保留的共享资料，含旧生产流程；后者是被忽略的本地技能，不是实验数据 |
 | 运行环境与工具缓存 | `.venv/`、`__pycache__/`；工具按需生成 `.pytest_cache/`、`.ruff_cache/`、`.import_linter_cache/` | 后三类已清理；虚拟环境及 Python 字节码保留，虚拟环境含单独安装的生产依赖 |
-| 历史数据库副本 | [linkrag-eval-sqlite-share-20260827/README.md](../linkrag-eval-sqlite-share-20260827/README.md) | 三个数据库的一致性导出，约 306 MiB；不是整个项目备份 |
+| 历史数据库分享目录 | 原 `linkrag-eval-sqlite-share-20260827/`，已删除 | 2026-09-11 核对当前工作库覆盖原有数据后按负责人要求清理，见 §6 |
+| #23 成员成果与原件 | [列表实验](../runs/post_recall/list-collapse-20260910/README.md)、[原交付归档](../runs/post_recall/_handover/issue23-n8-delivery-20260911.tar.gz) | 有用模型、代码和结果接入既有结构；32 文件原包另以约 157 KiB 归档保留 |
 | Git 历史与独立备份 | `.git/`、[恢复说明](plans/runtime-simplification-2026-09-06.md#recovery) | Git 保存已提交源码；独立 tar 只覆盖当时选入的本地产物，范围见 §3 |
 
 `golden/`、`.specs/`、`runs/golden_v2/` 当前本地不存在。历史报告引用它们只说明当时的位置，不表示可以直接打开，也不要求恢复旧流程。
@@ -54,7 +55,7 @@
 - `source-before-restructure.bundle`：重构前源码与本地标签；不包含当前未提交工作。
 - `protected-research-artifacts.tar`：当时纳入的 Robust Fusion 运行、派生材料、人工材料与部分论文，含旧 Internal v6 的四个 SQLite 文件。已经从工作树消失的 R2 路径可在其成员目录中定位；具体恢复仍按[恢复说明](plans/runtime-simplification-2026-09-06.md#recovery)。
 - **该归档不包含** `runs/post_recall/`、`data/post_recall/`、`models/english-baseline/`、公共下载、下载模型缓存、根级工作数据库及密钥。不能用它证明 9 月 7 日英文实验已有备份；旧 Internal v6 数据库也不能替代当前库。
-- `linkrag-eval-sqlite-share-20260827/` 只保存旧时点的三个 SQLite 副本，不含远端向量，也不含后续 NevIR 独立数据库。
+- 原 `linkrag-eval-sqlite-share-20260827/` 只保存旧时点的三个 SQLite 副本，不含远端向量及后续 NevIR 独立数据库；2026-09-11 已在核对原有数据由当前工作库覆盖后删除目录，见 §6。
 
 本轮没有创建新备份，未核实其他备份渠道。后续若做保全，应覆盖当前未提交源码、两个模型包及对应输入／运行证据；不因已有旧归档就先删工作副本。
 
@@ -71,7 +72,7 @@
 | 历史 B 与 legacy 控制模型包，合计约 144 KiB | 保留 | 分别位于上表同特征训练目录和 `nevir-english-features-20260907/comparison/legacy/model-b/`；用于解释权重重训及规则适配对照，占用很小，不列为当前工作模型 |
 | 当前／历史 NevIR 候选、分数、追踪、检查日志与 `before-code/` | 保留 | 包含当前共享输入、历史负结果和旧行为回归依据；部分源码当时尚未提交，不能假定可从 Git 还原，也未被 9 月 6 日归档覆盖 |
 | `data/robust_fusion/derived/`、`internal_stress_v6/`、`runs/robust_fusion/` | 保留证据 | 派生标签、来源／曝光记录和历史实测，不是仅靠再次下载即可恢复的公共缓存；备份有部分覆盖，不等于现有文件全部可删 |
-| `runs/` 内 SQLite 与 `linkrag-eval-sqlite-share-20260827/` | 保留 | 工作库与旧时点一致性副本职责不同，没有确认新的等价恢复副本。T2 的 `-wal`／`-shm` 不能按普通日志单独删除 |
+| `runs/` 内工作 SQLite | 保留 | 2026-09-11 仅删除已核对为旧数据副本的根级分享目录，工作库、其 WAL／SHM 和 NevIR 独立库均保留；详见 §6 |
 | `docs/papers/` 的相似题名 PDF、`.ai/` 的旧共享资料 | 暂不整体清理 | 同题可能是不同论文版本，旧助手资料也含通用能力；本轮只核对位置，没有完成内容替代与引用审查 |
 
 本次没有扩大到公共数据、两个当前 LambdaMART 基线、历史控制模型、数据库、实验候选或原始结果。
@@ -101,3 +102,16 @@
 另有系统临时目录下的 `linkrag-upstream-pr-ntn90g38/worktree`，对应已合并 [引号／准入修复 #12](https://github.com/ql-link/LinkRag-Eval/pull/12)。源码树与合并结果一致，无未提交源码，仅有 Python／pytest／Ruff 缓存，约 10 MiB，也属于完成用途的临时工作树。
 
 负责人随后明确授权清理三个同级 `LinkRag-Eval-pr-*` 目录。再次核对未提交、未跟踪及被忽略产物为空后，已用 `git worktree remove` 逐一移除，并确认三个目录和对应登记均不存在。分支与提交历史保留；主仓库、历史备份及上述系统临时工作树保持。容量为清理前 `du -sh` 读数，不含共用的主仓库 `.git`，不等于实测文件系统释放量。
+
+
+## 6. 成员交付接入与根目录清理（2026-09-11）
+
+负责人明确要求使用 #23 成果、移出有价值内容后删除交付目录，并清理历史 SQLite 分享目录。本轮已完成，未扩大删除范围：
+
+| 原目录 | 保留内容与核对依据 | 处理结果 |
+| --- | --- | --- |
+| `LinkRag-Eval-Issue23-N8-20260911/` | 31 项原文件 checksum 全部通过；完整 32 文件归档后再次逐文件核对。代码接入训练模块和测试；两个模型包、selection 与开发／确认结果进入 `runs/post_recall/list-collapse-20260910/`；Test 原聚合与配置进入 `nevir-test-final-20260911/`，准备／采集脚本进入 `nevir-test-candidates-20260910/`；报告进入 `docs/reports/list_collapse_2026_09_11.md`。原 README、项目／状态／台账快照和补丁保留在 `_handover/issue23-n8-delivery-20260911.tar.gz`。 | 根目录交付文件夹已删除，成果及原件保留；Test 原始候选、评分和日志本就未随包交付 |
+| `LinkRag-Eval-Issue23-Test-Snapshot-20260911/` | 补交 30 文件共 498,795,116 字节；29 项原 SHA256SUMS 在迁移前及使用后均通过。原 `snapshot/` 移入 `runs/post_recall/nevir-test-candidates-20260910/snapshot/`，其余原件移入同目录 `delivery-20260911/`。四份准备文件精确重建，SQLite、候选覆盖和参数验收见该目录 `run.json`；主线离线输入另在 `nevir-test-main-20260911/`。 | 原文件均保留，验收后仅用 rmdir 删除根目录空文件夹；没有复制覆盖当前工作数据库，也没有再做召回或模型评分 |
+| `linkrag-eval-sqlite-share-20260827/` | 原评测库 22 datasets、49,774 chunks、51 runs、2,884 metrics（queries/qrels 均 0）的已有字段与当前工作库逐行一致；当前库多两项编码输入长度字段，alembic 从 0003 升至 0004。20,772 条 embedding 缓存精确相同；31,072 条 BM25 存储行相同，当前 FTS sidecar 已从 v1 升至 v2。未把仅文件字节不同误判为独有研究数据。 | 已删除约 306.4 MiB 的旧分享副本，`runs/` 下三份工作库及 WAL／SHM 保留，没有用旧库覆盖当前库 |
+
+上述 tar 只保存 #23 首次小交付包，补交大快照在本地 snapshot／delivery 目录受 Git 忽略；两者都不是全项目备份。已有其他备份、`.handoff/`、共享候选、当前模型与其他成员的未提交改动均未删除。本轮新代码、实验轻量结果和文档尚未提交或推送；模型、原始分数和压缩原件继续按本地产物保存。

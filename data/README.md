@@ -17,7 +17,7 @@
 | `train` 训练 | Train | 948 对／1,896 查询；1,869 查询进入损失 | 已用于拟合；排除 25 条目标未共同召回、2 条结构冲突查询 |
 | `development` 开发 | Validation 的 38 对 | 76 查询，74 条目标共同覆盖 | 已用于选模、早停和诊断，不是独立测试 |
 | `confirmation` 历史确认 | Validation 的其余 187 对 | 374 查询，371 条目标共同覆盖 | 已用于历史 A/B 确认并曝光，不作为新方法的独立确认 |
-| 官方 Test | Test | 成员已交付 #23 的 E0／融合／N=8 终评聚合，未用于当前英文基线拟合 | [Test 接收范围](../runs/post_recall/nevir-test-final-20260911/README.md)：原候选／监督与编码采集记录已补交并通过 #19 程序验收，成员逐题模型分数仍缺；#20 仅完成离线准备。不得称全局未曝光，不显示逐题内容或据结果调参 |
+| 官方 Test | Test | 成员已交付 #23 的 E0／融合／N=8 终评聚合，未用于当前英文基线拟合 | [Test 接收范围](../runs/post_recall/nevir-test-final-20260911/README.md)：原候选／监督与编码采集记录已补交并通过 #19 程序验收，成员逐题模型分数仍缺；#20 已完成正式 Test，见[当前状态](../docs/CURRENT_STATUS.md)。不得称全局未曝光，不显示逐题内容或据结果调参 |
 
 官方 Validation 不等于本项目 `development`。划分与历史用途依据见[同特征重训报告](../docs/reports/nevir_same38_retraining_2026_09_07.md)；当前训练数量以英文 `selection.json` 为准。
 

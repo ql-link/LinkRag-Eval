@@ -15,6 +15,7 @@
 | 诊断中文／英文基线 | [nevir_english_diagnostics.py](nevir_english_diagnostics.py) | 开发快照＋两模型＋英文训练产物＋旧 A/B 诊断 → 新诊断目录 | 写本地统计、追踪与盲审材料；不训练、不召回 |
 | 重现两种特征版本的训练比较 | [nevir_compare_feature_versions.py](nevir_compare_feature_versions.py) | [比较配置](../runs/post_recall/nevir-english-features-20260907/comparison-config.json)＋已有 Train／开发输入 → 新比较目录 | 实际训练 legacy／英文各一组；历史对照复现 |
 | 检查／更新报告索引 | [build_report_index.py](build_report_index.py) | 现有报告 → `docs/reports/REPORT_INDEX.md` | `--check` 只校验；无此参数会更新索引 |
+| #21 最终标注回收与描述性分类 | [prepare.py / analyze.py](../runs/post_recall/error-taxonomy-20260911/README.md) | 单人确认最终件＋已有私有映射 → 原件、最终分类、参考争议／偏好未决／技术回退及分组统计 | 本地处理；保留模型辅助来源，不重标或重算模型成绩；`analyze.py --check` 只读核验已有产物 |
 | 查通用评测命令 | [linkrag-eval CLI](../src/linkrag_eval/cli.py) | 按子命令指定 | 入库、生成、检索和评价的动作不同，先查子命令帮助 |
 
 比较脚本原名 `nevir_feature_compare.py`，现已改名；参数与行为不变，历史运行记录仍可能记旧名。它不是“只比较已有分数”的工具，也不是每次诊断的前置步骤。

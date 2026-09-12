@@ -69,6 +69,7 @@ runs/
 !/runs/post_recall/nevir-test-main-20260911/
 /runs/post_recall/nevir-test-main-20260911/*
 !/runs/post_recall/nevir-test-main-20260911/README.md
+!/runs/post_recall/nevir-test-main-20260911/paper-summary.json
 !/runs/post_recall/nevir-test-main-20260911/prepare.py
 !/runs/post_recall/nevir-test-main-20260911/workflow.py
 !/runs/post_recall/nevir-test-main-20260911/recover_qwen.py

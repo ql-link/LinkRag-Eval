@@ -27,6 +27,7 @@
 | 历史，保留不引用 | [nevir-suitability-20260907](nevir-suitability-20260907/)、[english-capability-20260907](english-capability-20260907/README.md) | 数据适用性审计、普通英文链路检查 | 否（小） |
 | 历史，暂停 | [t2-full-20260906](t2-full-20260906/) | 暂停的 T2 入库及 `process-logs/` 故障记录 | 待定 |
 | 归档 | [_archive](_archive/) | 早期连通性探针、Sparse 前缀探针、两份外部咨询提示词（ChatGPT Pro、Codex 统一执行稿） | 待定（小） |
+| **正式 Test 主线** | [nevir-test-main-20260911](nevir-test-main-20260911/README.md) | #20 固定 E0、Qwen K20 与 BGE 已完成；完整回收、主／敏感性区间、成本和 #40 中断恢复；GPU 已关机 | 否 |
 
 ## 2. 当前研究的文件依赖链
 

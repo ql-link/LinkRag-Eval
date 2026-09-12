@@ -1,6 +1,10 @@
-# #20 官方 Test 主方案：中断产物已回收，准备继续未派发输入
+# #20 官方 Test 主方案：两臂已完成，GPU 已关机
 
-配置与执行代码已纳入本地提交 **`b4d01d7bae361f72ab83643cc0a9df7280e06e65`**，未推送，并通过 Git archive 将该版本部署到替代 GPU。2026-09-11 17:33:29 UTC 开始 E0，17:34:43 完成全部 2,766 查询，73.442 秒；Qwen 单次 worker 于 17:33:42 UTC 启动，PID 55064，顺序执行 L1 与 L2。L1 已于 18:22:19 UTC 完成并回收核验；2026-09-12 00:59–01:01 UTC 检查发现实例已关机且余额不足，L2 最终完成状态与退出记录尚待回收确认。BGE 权重及分词器已在本机下载并校验，暂未上传或推理。原 #23 成员 Test 聚合继续保存在 [nevir-test-final-20260911](../nevir-test-final-20260911/README.md)，不在本目录覆盖或复用为判断缓存。
+配置与原执行代码固定为本地提交 **`b4d01d7bae361f72ab83643cc0a9df7280e06e65`**，未推送。E0 与 Qwen L1 完成后，L2 因实例关机中断；原始结果已取回，恢复代码和配置在执行前另行提交 **`be94f49b128f1e9e4ced09b367f1484a2896eb76`**，并登记 [#40](https://github.com/ql-link/LinkRag-Eval/issues/40)。仅继续 200 个未开始输入，已完成与无回执的输入均未重发。2026-09-12 03:59:25 UTC 已完整回收并核验 L2 的 55,320 条逻辑结果，79 条不可用（71 条原有 length 失败、8 条中断无回执）；原失败回退和分母不变。Qwen 统计已在本机完成。
+
+固定 BGE 已于 **2026-09-12 04:16:35 UTC** 完成 55,502 项，0 不可用、0 截断，推理 366.043 秒，主体 372.892 秒，进程退出 0；全部产物与资源日志已于 04:18:58 UTC 收妥核验。随后通过 Safari 定时关机，目标服务器时间 12:27（04:27 UTC），刷新已确认 `fb0c4680e1-a580f590` **已关机**，没有释放／删除实例。两臂本机评价完成，最终数字见 [paper-summary.json](paper-summary.json)和[正式 Test 报告](../../../docs/reports/nevir_official_test_2026_09_12.md)。
+
+主口径 Qwen K20 严格成对正确 2,119/2,736＝77.45%，固定融合 1,431/2,736＝52.30%，BGE 同主排序 1,909/2,736＝69.77%。Qwen 对融合差值 25.15 个百分点，来源组 95% 区间 [23.54, 26.78]；BGE 的 L1 严格正确率和 L2 指定优选段 Top3 更高，均完整报告。原 #23 成员 Test 聚合仍在 [nevir-test-final-20260911](../nevir-test-final-20260911/README.md)，本实验不覆盖或复用其评分。下方离线准备、原运行、受阻与续行段落保留各阶段的执行事实。
 
 ## 输入与固定方案
 
@@ -14,9 +18,9 @@
 | L2 固定融合 Top20 | 55,320 | 2,766 | Qwen 55,260 |
 | BGE 两层输入并集 | 55,502 | 2,766 | BGE 55,502 |
 
-Qwen 每个任务使用全新独立缓存，每个唯一输入只请求一次，不重试、不作 schema fallback；两任务合计 **60,732 次计划请求**，实际完成数读取远端 progress.json。L1 不可用项保留在准确率分母，配对区间只用共同可用项；L2 任一判断不可用则整个查询回退到原固定融合。全查询都生成 Top20 输入，评价时才按事先口径筛选，不能只推理较容易的覆盖子集。
+Qwen 每个任务使用全新独立缓存，每个唯一输入只请求一次，不重试、不作 schema fallback；两任务合计 **60,732 个计划请求槽位**，最终有 60,724 份完整回执和 8 个中断无回执项。旧 L2 progress.json 保留中间值，不作为最终完成数。L1 不可用项保留在准确率分母，配对区间只用共同可用项；L2 任一判断不可用则整个查询回退到原固定融合。全查询都生成 Top20 输入，评价时才按事先口径筛选，不能只推理较容易的覆盖子集。
 
-BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e`，保留连续原始 logits，不转成 0–4 分。其 [配置](bge/execution-config.json) 与 [运行脚本](bge/run_bge.py) 沿用已执行的开发／确认参照，适配 Test 角色及配置中的新模型路径；本次模型推理和完整分词检查仍待执行；计算过程不变。E0 使用当前英文基线，配置中的摘要用于启动时核对模型包身份，不重训。
+BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e`，保留连续原始 logits，不转成 0–4 分。其 [配置](bge/execution-config.json) 与 [运行脚本](bge/run_bge.py) 沿用已执行的开发／确认参照，适配 Test 角色及配置中的新模型路径；本次分词检查与推理均已完成；计算过程不变。E0 使用当前英文基线，配置中的摘要用于启动时核对模型包身份，不重训。
 
 ## 已执行的离线工作
 
@@ -46,7 +50,7 @@ BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2
 
 **负责人已授权本地提交，正式执行使用冻结提交 `b4d01d7`。** #20 要求正式推理前提交冻结配置；该提交固化新实例配置、执行入口与必要测试，研究参数不变。`workflow.py check-ready`、`baseline` 和 `qwen` 会核对主配置及 BGE 配置已按原字节进入 HEAD，否则立即拒绝。提交、部署与启动的时间线已落盘；不修改配置来追认已运行结果。
 
-以下命令已经执行，保留作复现入口；实例现已关机，恢复后先检查已落盘产物，不再次调用 baseline 或 qwen。工作目录为项目根目录。新实例的固定模型 revision、RTX 4090、vLLM／Torch／Transformers 版本与 8,192 上下文已检查；[服务入口](serve.py) 与评分驱动都运行在远端，只连接远端 127.0.0.1:8000。[synthetic_smoke.py](synthetic_smoke.py) 的 3 条独立合成检查已通过，不重复执行，不进入正式缓存。恢复时先确认两份配置及相关实现已提交、部署字节一致及现有服务仍正常；若运行环境或长度检查不符，先解决具体问题。
+以下命令已经执行，保留作复现入口；原 Qwen 进程因关机中断，已按 #40 完成恢复，不再次调用 baseline 或 qwen。工作目录为项目根目录。新实例的固定模型 revision、RTX 4090、vLLM／Torch／Transformers 版本与 8,192 上下文已检查；[服务入口](serve.py) 与评分驱动都运行在远端，只连接远端 127.0.0.1:8000。[synthetic_smoke.py](synthetic_smoke.py) 的 3 条独立合成检查已通过，不重复执行，不进入正式缓存。恢复时先确认两份配置及相关实现已提交、部署字节一致及现有服务仍正常；若运行环境或长度检查不符，先解决具体问题。
 
 ```bash
 .venv/bin/python runs/post_recall/nevir-test-main-20260911/workflow.py check-ready
@@ -56,9 +60,9 @@ BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2
 
 截至 2026-09-11 17:40:56 UTC，L1 已完成 850/5,472 个唯一请求，其中 2 个 HTTP 200 回执以 length 结束、未形成合法评分，按原规则保留不可用且不重试；这不是最终失败总数。进程仍运行，任务磁盘约 18.66GB。仅核对失败类型和供应商回执，不查看单题内容或按中间效果调整方案。E0 原始结果在 `baseline/`，Qwen 的 `launch.json`、`worker-start.json` 和 `execution-start.json` 已取回本机。
 
-**L1 阶段完成。** 2026-09-11 18:22:19 UTC 完成 5,472 次唯一请求、5,476 条逻辑评分，2,917.793 秒；23 条不可用均为 HTTP 200／length 回执，每个唯一输入恰好请求一次。完整 `l1-judge/` 已于 18:38:28 UTC 取回本机，评分数量、输入标识、5,472 份请求记录和缓存文件核验通过；原始目录及 `provisioning/l1-receipt.json` 保留，尚未计算准确率。远端单次 worker 随后自动进入 L2，截至 18:36:01 UTC 完成 1,800/55,260 次请求，4 项不可用；服务健康、GPU 100%，任务磁盘约 18.85GB。L1 已经回收，后续完成时只需补收 L2、退出记录和整体资源日志，再按固定方案接续 BGE。
+**L1 阶段完成。** 2026-09-11 18:22:19 UTC 完成 5,472 次唯一请求、5,476 条逻辑评分，2,917.793 秒；23 条不可用均为 HTTP 200／length 回执，每个唯一输入恰好请求一次。完整 `l1-judge/` 已于 18:38:28 UTC 取回本机，评分数量、输入标识、5,472 份请求记录和缓存文件核验通过；原始目录及 `provisioning/l1-receipt.json` 保留，当时尚未计算准确率。远端单次 worker 随后自动进入 L2，截至 18:36:01 UTC 完成 1,800/55,260 次请求，4 项不可用；服务健康、GPU 100%，任务磁盘约 18.85GB。L1 已经回收，后续完成时只需补收 L2、退出记录和整体资源日志，再按固定方案接续 BGE。
 
-此前已启用当前任务的 15 分钟自动接续（`20-test`，2026-09-12 因下述阻塞暂停）：检查进程、进度与容量；Qwen 完成后先回收完整结果，再启动固定 BGE，最终执行两臂统计和收尾。普通单项不可用按既有规则保留，只有进程异常退出、数据缺损或资源不足等实质故障才需要处理；不自动重跑正式实验。
+此前已启用当前任务的 15 分钟自动接续（`20-test`，2026-09-12 因下述阻塞暂停，负责人重新开机后已恢复）：检查进程、进度与容量；Qwen 完成后先回收完整结果，再启动固定 BGE，最终执行两臂统计和收尾。普通单项不可用按既有规则保留，只有进程异常退出、数据缺损或资源不足等实质故障才需要处理；不自动重跑正式实验。
 
 负责人已授权全部 GPU 推理完成后的自动关机。Qwen 两层和固定 BGE 完成、完整结果及必要资源日志已回收到本机并核验后，通过 computer-use 在 Safari 已打开的 AutoDL 页面关闭实例，再在本机继续统计与文档收尾。2026-09-11 20:42 UTC 已核对目标为 `fb0c4680e1-a580f590`（内蒙 B 区 / 220 机，RTX 4090 单卡），与现有 SSH 返回的 `autodl-container-fb0c4680e1-a580f590` 一致。执行时重新核对实例 ID，选择“关机”并确认页面已关机；不释放或删除实例。此要求已写入原自动接续，GPU 工作尚未结束时保持运行；若页面操作受阻，报告具体原因，不能将待关机记为已完成。
 
@@ -76,7 +80,7 @@ BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2
 
 中断与后续执行单独登记在 [#40](https://github.com/ql-link/LinkRag-Eval/issues/40)。[恢复配置](recovery-config.json) 与 [恢复脚本](recover_qwen.py) 在执行前提交；先 `audit` 固化未开始输入清单，再 `run` 仅提交这 200 个原批次，保持原编号、顺序和固定请求参数。已完成的结果与 71 个失败不重试，8 个在途输入明确记为中断不可用，不伪造回执。`assemble` 将原缓存、续行结果与缺失项还原为 55,320 条逻辑结果，原始缓存／进度／日志保留不改，派生评分标明来源；沿用原缺失回退和统计口径。不能把这次执行描述为单段无中断运行。恢复服务使用原 `b4d01d7` 入口，日志及新资源采样在远端 `recovery-runtime-20260912/`。
 
-Qwen 完成后，把本目录 `bge/` 中的 `items.jsonl`、`execution-config.json`、`run_bge.py` 放到服务器同一新目录，使用 `/root/linkrag-eval-test-20260911/gpu-venv-py313/bin/python <该目录>/run_bge.py` 执行。BGE 的 6 个必需文件已从官方固定 revision 下载至本机 `model-staging/bge-reranker-v2-m3/`，共 2,293,242,108 字节，187.858 秒，文件大小与官方摘要全部通过，记录在其 download.json。GPU 权重尚未部署，须先将固定模型放至配置路径。为缩短后续传输，已验证 BAAI ModelScope 的 model.safetensors 与该固定 revision 权重大小、SHA256 完全一致；可在 Qwen 结果收妥后由服务器直接下载相同权重，重新核验后使用，五个配置／分词器小文件仍复制 Hugging Face 原件。下载 URL 与核验依据见本机 `provisioning/bge-weight-transfer.json`。脚本检查环境与未截断长度；超出 8,192 token 则停止，不静默截断。取回 `scores.jsonl`、`summary.json` 后运行：
+以下 BGE 部署和评价已完成，保留命令说明供追溯。Qwen 完成后，把本目录 `bge/` 中的 `items.jsonl`、`execution-config.json`、`run_bge.py` 放到服务器同一新目录，使用 `/root/linkrag-eval-test-20260911/gpu-venv-py313/bin/python <该目录>/run_bge.py` 执行。BGE 的 6 个必需文件已从官方固定 revision 下载至本机 `model-staging/bge-reranker-v2-m3/`，共 2,293,242,108 字节，187.858 秒，文件大小与官方摘要全部通过，记录在其 download.json。该本机准备记录早于部署；后续权重已放至固定配置路径并完成推理。为缩短后续传输，已验证 BAAI ModelScope 的 model.safetensors 与该固定 revision 权重大小、SHA256 完全一致；可在 Qwen 结果收妥后由服务器直接下载相同权重，重新核验后使用，五个配置／分词器小文件仍复制 Hugging Face 原件。下载 URL 与核验依据见本机 `provisioning/bge-weight-transfer.json`。脚本检查环境与未截断长度；超出 8,192 token 则停止，不静默截断。取回 `scores.jsonl`、`summary.json` 后运行：
 
 ```bash
 .venv/bin/python runs/post_recall/nevir-test-main-20260911/workflow.py evaluate --arm bge
@@ -84,4 +88,24 @@ Qwen 完成后，把本目录 `bge/` 中的 `items.jsonl`、`execution-config.js
 
 评价复用现有 `evaluate_pairs`／`evaluate_rankers`／`pair_statistics.comparison_table`，同时输出主口径与含冲突敏感性、严格成对准确率、双向正确、列表位置、纠正／改坏、来源组自助 95% 区间（seed 20260910，2,000 次）及逐方向符号检验。预定主比较为 Qwen `stage1_judge − stage1`。逐方向检验未校正组内依赖和多重比较；没有全池相关性标签，不报告全池 nDCG 或答案质量。
 
-所有大输入、逐题输出和运行日志留在本地并受 Git 忽略。实际推理后再将聚合结果纳入轻量产物白名单、更新既有报告与实验台账；L2 最终状态待回收、BGE 未执行，没有最终结果或论文可用的新效果结论。
+所有大输入、逐题输出和运行日志留在本地并受 Git 忽略。两臂输出已完整取回、评价并独立核对计数；轻量聚合纳入 Git 白名单，逐题与资源日志保留本地。
+
+
+## 2026-09-12 已执行的恢复与 BGE 接续
+
+`recover_qwen.py run` 于 03:54:14–03:55:37 UTC 完成 200/200 个原计划未开始输入，83.141 秒，0 新不可用，每项一次。`assemble` 于 03:55:42 UTC 完成；恢复推理与组装退出码均为 0。`provisioning/recovery-receipt.json` 核对原 55,052 个完成键、200 个续行键、8 个中断键互不相交，完整 55,320 条逻辑结果身份正确，原缓存与回执保持不变。逐项来源在派生评分中明示；原进程没有正常退出记录，不能将恢复退出码冒充原运行退出码。
+
+Qwen 的 `workflow.py evaluate --arm qwen` 已执行一次，2.498 秒；结果在 `qwen-evaluation/`。独立按保存的逐方向结果核对严格正确、同分、不可用、完整配对、来源组平均以及配对差值和纠正／改坏计数，记录在 `provisioning/qwen-evaluation-validation.json`。只显示聚合，不作 Test 配置选择。
+
+收妥 Qwen 后停止本任务服务 PID 1475，确认 GPU 归零；只删除可重新下载的任务自有 Qwen 权重与编译／下载缓存，保留原始结果、环境和其他任务。BGE 五份配置／分词器文件来自已核验的 Hugging Face 原件，权重从 BAAI 官方 ModelScope 镜像下载，2,271,071,852 字节、SHA256 与固定 Hugging Face revision 一致，04:04:00 UTC 完成，125.967 秒。04:10:18 UTC 按原脚本和配置启动 BGE，任务目录合计 11,148,457,288 字节；没有重训、改参数或重新调用 Qwen。启动／退出／日志保存在 `bge/`，新 GPU 采样在远端 `recovery-runtime-20260912/gpu-samples.csv`。
+
+
+## 最终验收与产物入口
+
+BGE 启动记录为 04:10:18 UTC，主体于 04:16:35 UTC 完成，进程 04:16:38 UTC 退出 0。55,502 条连续分数的输入身份、层级、模型 revision、有限值、无截断和完整退出均通过核验，`provisioning/bge-receipt.json` 保存接收记录。Qwen／BGE 本机评价各执行一次，2.498／3.401 秒；`provisioning/qwen-evaluation-validation.json` 与 `bge-evaluation-validation.json` 独立核对逐方向计数和配对差值，均通过。原始中断、失败与 8 项未知成本没有清除；主评价中 78 查询回退，全 Test 共 79。
+
+[paper-summary.json](paper-summary.json)是论文表格的轻量聚合，包含主口径、敏感性、全部预定差值区间、同分／缺失、纠正／改坏、列表位置、实际耗时及资源口径；逐来源／逐题标识留在两臂原始评价中。[正式报告](../../../docs/reports/nevir_official_test_2026_09_12.md)解释研究结果和限制，成本回执在 `provisioning/qwen-observed-cost.json`，GPU 原／新日志分别在 `interruption-original-runtime/` 和 `recovery-runtime-final/`。
+
+所有 GPU 任务均已结束。`provisioning/shutdown-receipt.json` 记录 Safari 设置定时关机成功及刷新确认已关机。完整非 integration 回归 1,320 passed／23 skipped／3 deselected、6 项既存 warnings；恢复 8 项、原工作流 11 项合成测试通过。正式 Test 的模型不重跑；原始输入、回执与大结果受 Git 忽略，当前结果在本机保存，代码与轻量报告只做本地提交、不推送。
+
+[#40](https://github.com/ql-link/LinkRag-Eval/issues/40#issuecomment-5643494526) 与 [#20](https://github.com/ql-link/LinkRag-Eval/issues/20#issuecomment-5643494834) 已分别于 2026-09-12 04:37:57／04:38:01 UTC 按 completed 关闭，验收评论保留关键数字和执行偏差。

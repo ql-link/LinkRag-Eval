@@ -103,6 +103,15 @@ runs/
 !/runs/post_recall/judge-statistics-20260911/README.md
 !/runs/post_recall/judge-statistics-20260911/tables.md
 !/runs/post_recall/judge-statistics-20260911/results.json
+!/runs/post_recall/error-taxonomy-20260911/
+/runs/post_recall/error-taxonomy-20260911/*
+!/runs/post_recall/error-taxonomy-20260911/README.md
+!/runs/post_recall/error-taxonomy-20260911/GUIDE.md
+!/runs/post_recall/error-taxonomy-20260911/reviewer-instructions.md
+!/runs/post_recall/error-taxonomy-20260911/prepare.py
+!/runs/post_recall/error-taxonomy-20260911/test_prepare.py
+!/runs/post_recall/error-taxonomy-20260911/review-template.html
+!/runs/post_recall/error-taxonomy-20260911/packet-manifest.json
 !/runs/post_recall/open-judge-confirmation-20260910/
 /runs/post_recall/open-judge-confirmation-20260910/*
 !/runs/post_recall/open-judge-confirmation-20260910/README.md

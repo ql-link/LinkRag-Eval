@@ -109,9 +109,17 @@ runs/
 !/runs/post_recall/error-taxonomy-20260911/GUIDE.md
 !/runs/post_recall/error-taxonomy-20260911/reviewer-instructions.md
 !/runs/post_recall/error-taxonomy-20260911/prepare.py
+!/runs/post_recall/error-taxonomy-20260911/analyze.py
 !/runs/post_recall/error-taxonomy-20260911/test_prepare.py
 !/runs/post_recall/error-taxonomy-20260911/review-template.html
 !/runs/post_recall/error-taxonomy-20260911/packet-manifest.json
+!/runs/post_recall/error-taxonomy-20260911/received-20260913/
+/runs/post_recall/error-taxonomy-20260911/received-20260913/*
+!/runs/post_recall/error-taxonomy-20260911/received-20260913/summary.json
+!/runs/post_recall/error-taxonomy-20260911/received-20260913/execution.json
+!/runs/post_recall/error-taxonomy-20260911/received-20260913/analysis-execution.json
+!/runs/post_recall/error-taxonomy-20260911/received-20260913/verification.json
+/issue21-error-types-20260911-r2-v2-final-2026-09-12T15-54-41-498Z.json
 !/runs/post_recall/open-judge-confirmation-20260910/
 /runs/post_recall/open-judge-confirmation-20260910/*
 !/runs/post_recall/open-judge-confirmation-20260910/README.md

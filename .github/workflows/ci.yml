@@ -66,6 +66,7 @@ jobs:
       - name: Unit tests and import boundary
         run: |
           python -m pytest -m "not integration and not contract" -q
+          python -m pytest runs/post_recall/error-taxonomy-20260911/test_prepare.py -q
           lint-imports
 
       - name: Production contract tests

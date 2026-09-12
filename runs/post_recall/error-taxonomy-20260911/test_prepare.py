@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -178,6 +179,91 @@ def test_receive_needs_at_least_one_submission(tmp_path):
     with pytest.raises(ValueError, match="at least one"):
         MODULE.receive([None, None], tmp_path / "not-created")
     assert not (tmp_path / "not-created").exists()
+
+
+def test_reviewed_undetermined_is_preserved_as_uncertainty(records, tmp_path, monkeypatch):
+    monkeypatch.setattr(MODULE, "HERE", tmp_path)
+    (tmp_path / "private").mkdir()
+    MODULE.write_rows(tmp_path / "private/source-cases.jsonl", records)
+    packet, mapping = MODULE.make_packet(records, 2)
+    MODULE.write_rows(tmp_path / "private/reviewer-2-mapping.jsonl", mapping)
+    payload = final_payload(packet, 2)
+    payload["previous_exposure"] = "yes"
+    payload["answers"][0].update(preference="undetermined", primary_type="标签争议")
+    payload["answers"][1].update(preference="tie", primary_type="标签争议")
+    path = tmp_path / "original.json"
+    path.write_bytes((json.dumps(payload, ensure_ascii=False, indent=3) + "\n\n").encode())
+    out = tmp_path / "received"
+    MODULE.receive([None, path], out)
+    assert (out / "reviewer-2-original.json").read_bytes() == path.read_bytes()
+    unresolved = MODULE.read_rows(out / "uncertain.jsonl")
+    assert len(unresolved) == 1
+    assert unresolved[0]["status"] == "reviewed"
+    assert unresolved[0]["previous_exposure"] == "yes"
+    receipt = json.loads((out / "receipt.json").read_text())
+    assert receipt["uncertain_status_judgments"] == 0
+    assert receipt["undetermined_preferences"] == receipt["cases_needing_discussion"] == 1
+    assert receipt["primary_type_agreement_rate"] is None
+
+
+def test_receive_rejects_mismatched_display_mapping(records, tmp_path, monkeypatch):
+    monkeypatch.setattr(MODULE, "HERE", tmp_path)
+    (tmp_path / "private").mkdir()
+    MODULE.write_rows(tmp_path / "private/source-cases.jsonl", records)
+    packet, mapping = MODULE.make_packet(records, 2)
+    mapping[0]["display_mapping"] = dict(reversed(list(mapping[0]["display_mapping"].items())))
+    sides = mapping[0]["display_mapping"]
+    sides["X"], sides["Y"] = sides["Y"], sides["X"]
+    MODULE.write_rows(tmp_path / "private/reviewer-2-mapping.jsonl", mapping)
+    path = tmp_path / "original.json"
+    MODULE.write_json(path, final_payload(packet, 2))
+    with pytest.raises(ValueError, match="display mapping"):
+        MODULE.receive([None, path], tmp_path / "not-created")
+    assert not (tmp_path / "not-created").exists()
+
+
+@pytest.mark.parametrize("mode,basis", [
+    ("human_only", "single_human_only_confirmed_submission"),
+    ("model_assisted", "single_model_assisted_human_confirmed_submission"),
+])
+def test_analysis_preserves_actual_annotation_mode(records, tmp_path, monkeypatch, mode, basis):
+    monkeypatch.setattr(MODULE, "HERE", tmp_path)
+    monkeypatch.setitem(sys.modules, "prepare", MODULE)
+    spec = importlib.util.spec_from_file_location(
+        "issue21_analyze", Path(__file__).with_name("analyze.py"),
+    )
+    analysis = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(analysis)
+    monkeypatch.setattr(analysis, "HERE", tmp_path)
+    source = [
+        {
+            **row, "pair_id": f"synthetic-pair-{i}", "source_group_id": "synthetic-group",
+            "reference_basis": "synthetic_fixture",
+            "official_preferred_chunk_id": row["reference_chunk_id"],
+            "selected_for": [], "model_outcomes": {}, "technical_fallback": {},
+        }
+        for i, row in enumerate(records)
+    ]
+    (tmp_path / "private").mkdir()
+    MODULE.write_rows(tmp_path / "private/source-cases.jsonl", source)
+    packet, mapping = MODULE.make_packet(source, 1)
+    MODULE.write_rows(tmp_path / "private/reviewer-1-mapping.jsonl", mapping)
+    payload = final_payload(packet, 1)
+    payload.update(
+        annotation_mode=mode,
+        assistance_notes="SYNTHETIC MODEL; QA fixture only" if mode == "model_assisted" else "",
+    )
+    path = tmp_path / "synthetic-final.json"
+    MODULE.write_json(path, payload)
+    received = tmp_path / "received"
+    MODULE.receive([path, None], received)
+
+    outputs = analysis.build(received)
+    labels = [json.loads(line) for line in outputs["labels.jsonl"].splitlines()]
+    assert len(labels) == len(source)
+    assert {row["annotation_mode"] for row in labels} == {mode}
+    assert {row["classification_basis"] for row in labels} == {basis}
+    assert json.loads(outputs["summary.json"])["annotation_modes"] == [mode]
 
 
 def test_untrusted_passage_cannot_close_embedded_json_script(records):

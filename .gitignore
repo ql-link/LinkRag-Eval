@@ -22,6 +22,22 @@ runs/
 !/runs/post_recall/
 /runs/post_recall/*
 !/runs/post_recall/README.md
+# Issue #22: portable synthetic scenes and their recorded reviews.
+!/runs/post_recall/paraphrase-probe-20260912/
+/runs/post_recall/paraphrase-probe-20260912/*
+!/runs/post_recall/paraphrase-probe-20260912/scenes-original.jsonl
+!/runs/post_recall/paraphrase-probe-20260912/scenes-paraphrased.jsonl
+!/runs/post_recall/paraphrase-probe-20260912/human-review.jsonl
+!/runs/post_recall/paraphrase-probe-20260912/review-state.json
+!/runs/post_recall/paraphrase-probe-20260912/review.html
+!/runs/post_recall/paraphrase-probe-20260912/source/
+/runs/post_recall/paraphrase-probe-20260912/source/*
+!/runs/post_recall/paraphrase-probe-20260912/source/control-scenes.json
+!/runs/post_recall/paraphrase-probe-20260912/source/control-texts.jsonl
+!/runs/post_recall/paraphrase-probe-20260912/ai-review/
+/runs/post_recall/paraphrase-probe-20260912/ai-review/*
+!/runs/post_recall/paraphrase-probe-20260912/ai-review/report.md
+!/runs/post_recall/paraphrase-probe-20260912/ai-review/review.jsonl
 !/runs/post_recall/nevir-english-features-20260907/
 /runs/post_recall/nevir-english-features-20260907/*
 !/runs/post_recall/nevir-english-features-20260907/README.md

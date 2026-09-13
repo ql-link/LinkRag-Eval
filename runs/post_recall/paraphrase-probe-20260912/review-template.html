@@ -27,7 +27,11 @@ footer{font-size:13px;color:#526571;margin-top:24px}.hidden{display:none}
 <div class="tag">LINKRAG-EVAL · ISSUE #22 · 推理前人工审核</div>
 <h1>换一种说法，条件关系是否仍然相同？</h1>
 <p class="muted">共 12 个场景，每个包含原版、同义改述、实体换名，共 36 个版本。逐项检查英文；可以分多次完成。</p>
-<p class="notice">全部材料目前均待人工审核。“预期优选”来自 AI 构造者，只是待核对的假设。请核对两段、两个问题、否定范围和主体归属；中文仅为 AI 辅助释义。页面没有任何本轮模型评分。</p>
+<p class="notice" id="reviewNotice">“预期优选”来自 AI 构造者，只是待核对的假设。请核对两段、两个问题、否定范围和主体归属；中文仅为 AI 辅助释义。页面没有任何本轮模型评分。</p>
+<section class="card" aria-label="已有审核记录">
+<h2>已有审核记录</h2><p id="aiProgress"></p><p id="acceptanceStatus"></p>
+<details><summary>查看当前版本的 AI 逐项意见</summary><div id="aiOpinion"></div></details>
+</section>
 <section class="card identity" aria-label="审核人信息">
 <label>你的姓名或可追溯标识<input id="reviewer" placeholder="由实际审核人填写" autocomplete="name"></label>
 <label>实际审核日期<input id="date" type="date"></label>
@@ -45,7 +49,7 @@ footer{font-size:13px;color:#526571;margin-top:24px}.hidden{display:none}
 <label><input id="preferences" type="checkbox">我确认 Q1、Q2 标出的预期优选段均成立。</label>
 <label><input id="equivalence" type="checkbox">原版构造意图成立；或本改写保持原版事实关系、答案和两方向对应。</label>
 </div>
-<label>审核结论<select id="status"><option value="pending">尚未审核</option><option value="approved">通过</option><option value="needs_revision">需要修改</option><option value="undecided">未决／需要讨论</option></select></label>
+<label>本人的逐项审核结论<select id="status"><option value="pending">尚无本人的逐项审核记录</option><option value="approved">通过</option><option value="needs_revision">需要修改</option><option value="undecided">未决／需要讨论</option></select></label>
 <label>理由或具体修改建议<textarea id="reason" placeholder="请写出判断依据；若有歧义，指出具体英文表达和原因。"></textarea></label>
 <label><input id="confirmed" type="checkbox">这是我本人实际核对后作出的判断，辅助工具不计为另一名真人审核者。</label>
 </section>
@@ -54,22 +58,31 @@ footer{font-size:13px;color:#526571;margin-top:24px}.hidden{display:none}
 <footer>进度尽可能自动保存在当前浏览器。换电脑、浏览器或新版材料前，请导出备份。未决和需修改项可以照实导出，不会被自动标成通过。导出后把文件交回 Codex；真人审核齐全前不会生成正式推理配置。</footer>
 </main>
 <script id="scene-data" type="application/json">__SCENES_JSON__</script>
+<script id="review-data" type="application/json">__REVIEW_STATE_JSON__</script>
 <script>
 "use strict";
 const scenes=JSON.parse(document.getElementById("scene-data").textContent);
+const recorded=JSON.parse(document.getElementById("review-data").textContent);
 const $=id=>document.getElementById(id), names={original:"原版",synonym:"同义改述",entity_rename:"实体换名"};
 const categoryNames={repeated_name_across_sentences:"跨句重复人名",multiple_subjects_same_sentence:"同一句中多个主体",grammatical_shared_subject:"同一主语共享两个谓语"};
-const storageKey="issue22-review-"+scenes.map(s=>s.input_digest+"-"+s.reference_original_digest).join("-");
+const storageKey="issue22-review-"+scenes.map(s=>s.input_digest+"-"+s.reference_original_digest).join("-")+"-"+recorded.human_review_digest;
 const matches=(row,scene)=>row.version_id===scene.version_id&&["input_digest","reference_original_version_id","reference_original_digest"].every(k=>row[k]===scene[k]);
 const empty=s=>({version_id:s.version_id,input_digest:s.input_digest,reference_original_version_id:s.reference_original_version_id,reference_original_digest:s.reference_original_digest,status:"pending",reviewer:null,reviewed_at:null,reason:"",conditions_checked:false,preferences_checked:false,equivalence_checked:false,human_confirmed:false,assistance:"",source:"review.html; actual reviewer self-declaration"});
-let rows=scenes.map(empty),index=0,storageOK=true;
+const savedHuman=new Map(recorded.human_reviews.map(r=>[r.version_id,r]));
+let rows=scenes.map(s=>savedHuman.get(s.version_id)||empty(s)),index=0,storageOK=true;
+const aiOpinions=new Map(recorded.ai_reviews.map(r=>[r.version_id,r]));
+$("aiProgress").textContent=`AI 预审：${recorded.ai_reviews.length}/${scenes.length} 项与当前输入匹配；共保存 ${recorded.ai_record_count} 项历史意见。`;
+const acceptance=recorded.acceptance;
+$("acceptanceStatus").textContent=acceptance.status==="accepted"?`用户已整体接受 AI 预审结论。原话：“${acceptance.statement}”（记录时间：${new Date(acceptance.recorded_at).toLocaleString("zh-CN")}）。`:acceptance.status==="stale"?"已有用户整体接受记录，但输入或 AI 意见已变化，需要重新核对。":"尚无用户整体接受 AI 预审的记录。";
+$("reviewNotice").textContent="AI 预审、用户整体接受和逐项人工审核分别显示。下方表单用于本人逐项复核，不会把整体接受自动改成 36 条独立人审。中文释义仅为辅助，页面没有本轮模型评分。";
 try{const saved=localStorage.getItem(storageKey);if(saved){const state=JSON.parse(saved);if(state.rows.length!==scenes.length||state.rows.some((r,i)=>!matches(r,scenes[i])))throw Error("已存记录不匹配，请导入备份");rows=state.rows;index=state.index||0;$("reviewer").value=state.reviewer||"";$("date").value=state.date||"";$("assistance").value=state.assistance||"";}}catch(e){storageOK=false;$("message").textContent="无法恢复自动保存，请使用导出／导入。";}
 scenes.forEach((s,i)=>{const option=document.createElement("option");option.value=i;option.textContent=`${String(i+1).padStart(2,"0")} · 场景 ${Math.floor(i/3)+1} · ${names[s.rewrite_type]}`;$("jump").append(option);});
-function save(){try{localStorage.setItem(storageKey,JSON.stringify({rows,index,reviewer:$("reviewer").value,date:$("date").value,assistance:$("assistance").value}));storageOK=true;}catch(e){storageOK=false;}$("saveState").textContent=storageOK?"已在当前浏览器保存草稿":"自动保存不可用，请导出备份";const done=rows.filter(r=>r.status!=="pending").length,approved=rows.filter(r=>r.status==="approved").length;$("progress").textContent=`已填写 ${done}/36 · 通过 ${approved} · 需修改 ${rows.filter(r=>r.status==="needs_revision").length} · 未决 ${rows.filter(r=>r.status==="undecided").length}`;}
+function save(){try{localStorage.setItem(storageKey,JSON.stringify({rows,index,reviewer:$("reviewer").value,date:$("date").value,assistance:$("assistance").value}));storageOK=true;}catch(e){storageOK=false;}$("saveState").textContent=storageOK?"已在当前浏览器保存草稿":"自动保存不可用，请导出备份";const done=rows.filter(r=>r.status!=="pending").length,approved=rows.filter(r=>r.status==="approved").length;$("progress").textContent=`逐项人工审核：已填写 ${done}/${scenes.length} · 通过 ${approved} · 需修改 ${rows.filter(r=>r.status==="needs_revision").length} · 未决 ${rows.filter(r=>r.status==="undecided").length}`;}
 function collect(){const row=rows[index];Object.assign(row,{status:$("status").value,reason:$("reason").value,conditions_checked:$("conditions").checked,preferences_checked:$("preferences").checked,equivalence_checked:$("equivalence").checked,human_confirmed:$("confirmed").checked,reviewer:$("reviewer").value.trim()||null,reviewed_at:$("date").value||null,assistance:$("assistance").value});save();}
 function element(tag,text,cls){const e=document.createElement(tag);e.textContent=text;if(cls)e.className=cls;return e;}
 function panel(id,scene,title){const root=$(id);root.replaceChildren(element("h2",title));scene.paragraphs.forEach((text,i)=>{root.append(element("div",`段落 ${i===0?"A":"B"}`,"caption"),element("p",text,"english"));});scene.queries.forEach((text,i)=>{root.append(element("div",`QUERY ${i+1}`,"caption"),element("p",text,"english"),element("div",`待核对的预期优选：${scene.expected_preferences[i]===0?"A":"B"}`,"target"));});const aid=document.createElement("details");aid.append(element("summary","展开 AI 中文辅助释义"));aid.append(element("p",scene.chinese_aid.identity,"muted"));scene.chinese_aid.paragraphs.forEach((text,i)=>aid.append(element("p",`${i===0?"A":"B"}：${text}`)));scene.chinese_aid.queries.forEach((text,i)=>aid.append(element("p",`Q${i+1}：${text}`)));root.append(aid);}
-function render(){const scene=scenes[index],row=rows[index],original=scenes.find(s=>s.version_id===scene.reference_original_version_id);$("heading").textContent=`场景 ${Math.floor(index/3)+1} · ${names[scene.rewrite_type]}`;$("category").textContent=categoryNames[scene.category]+" · "+scene.version_id;$("note").textContent=scene.rewrite_type==="entity_rename"?"换名对应："+Object.entries(scene.entity_mapping).map(([a,b])=>a+" → "+b).join("；")+"。查询未含人名，因此保持原样。":scene.rewrite_type==="synonym"?"本版改述活动与能力表达，并调换正向查询的条件顺序。请特别核对同义表达是否扩大或缩小了原意。":"先审核原版自身的条件关系。原文件标记为 AI 构造、尚待真人审核。";panel("original",original,`原版对照（v${original.revision}）`);panel("current",scene,"当前待审核版本");$("status").value=row.status;$("reason").value=row.reason;$("conditions").checked=row.conditions_checked;$("preferences").checked=row.preferences_checked;$("equivalence").checked=row.equivalence_checked;$("confirmed").checked=row.human_confirmed;$("jump").value=index;$("position").textContent=`${index+1} / ${scenes.length}`;$("prev").disabled=index===0;$("next").disabled=index===scenes.length-1;save();}
+function renderOpinion(vid){const root=$("aiOpinion"),row=aiOpinions.get(vid);root.replaceChildren();if(!row){root.append(element("p","当前版本暂无匹配的 AI 意见；历史记录仍保留。"));return;}const labels={no_issue_found:"未发现明确问题",needs_revision:"建议修改",uncertain:"未决"};root.append(element("p","AI 意见："+(labels[row.recommendation]||row.recommendation)));for(const [field,label] of [["q1_assessment","Q1 核对"],["q2_assessment","Q2 核对"],["equivalence_assessment","改写等价性"]]){if(row[field]&&row[field]!=="not_applicable")root.append(element("h3",label),element("p",row[field]));}for(const finding of row.findings||[])root.append(element("p",finding.detail));}
+function render(){const scene=scenes[index],row=rows[index],original=scenes.find(s=>s.version_id===scene.reference_original_version_id);renderOpinion(scene.version_id);$("heading").textContent=`场景 ${Math.floor(index/3)+1} · ${names[scene.rewrite_type]}`;$("category").textContent=categoryNames[scene.category]+" · "+scene.version_id;$("note").textContent=scene.rewrite_type==="entity_rename"?"换名对应："+Object.entries(scene.entity_mapping).map(([a,b])=>a+" → "+b).join("；")+"。查询未含人名，因此保持原样。":scene.rewrite_type==="synonym"?"本版改述活动与能力表达，并调换正向查询的条件顺序。请特别核对同义表达是否扩大或缩小了原意。":"先审核原版自身的条件关系。原文件保留 AI 构造时的标记；已有审核进度见上方。";panel("original",original,`原版对照（v${original.revision}）`);panel("current",scene,"当前待审核版本");$("status").value=row.status;$("reason").value=row.reason;$("conditions").checked=row.conditions_checked;$("preferences").checked=row.preferences_checked;$("equivalence").checked=row.equivalence_checked;$("confirmed").checked=row.human_confirmed;$("jump").value=index;$("position").textContent=`${index+1} / ${scenes.length}`;$("prev").disabled=index===0;$("next").disabled=index===scenes.length-1;save();}
 function navigate(next){index=next;$("message").textContent="";render();}
 $("prev").onclick=()=>navigate(index-1);$("next").onclick=()=>navigate(index+1);$("jump").onchange=()=>navigate(Number($("jump").value));
 for(const id of ["reviewer","date","assistance","status","reason","conditions","preferences","equivalence","confirmed"]){$(id).addEventListener("input",collect);$(id).addEventListener("change",collect);}

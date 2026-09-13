@@ -1,0 +1,254 @@
+[
+  {
+    "probe_id": "repeated_name_across_sentences-1",
+    "category": "repeated_name_across_sentences",
+    "paragraphs": [
+      "Mira Vale recites poems. Mira Vale cannot read. Noah Stone can read.",
+      "Mira Vale recites poems. Noah Stone cannot read. Mira Vale can read."
+    ],
+    "queries": [
+      "Who recites poems but cannot read?",
+      "Who recites poems and can read?"
+    ],
+    "paraphrases": [
+      "Who recites poems and cannot read?",
+      "Who recites poems but can read?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "repeated_name_across_sentences-2",
+    "category": "repeated_name_across_sentences",
+    "paragraphs": [
+      "Clara Moss repairs clocks. Clara Moss cannot swim. Owen Reed can swim.",
+      "Clara Moss repairs clocks. Owen Reed cannot swim. Clara Moss can swim."
+    ],
+    "queries": [
+      "Who repairs clocks but cannot swim?",
+      "Who repairs clocks and can swim?"
+    ],
+    "paraphrases": [
+      "Who repairs clocks and cannot swim?",
+      "Who repairs clocks but can swim?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "repeated_name_across_sentences-3",
+    "category": "repeated_name_across_sentences",
+    "paragraphs": [
+      "Nora Lake paints murals. Nora Lake cannot drive. Evan Hill can drive.",
+      "Nora Lake paints murals. Evan Hill cannot drive. Nora Lake can drive."
+    ],
+    "queries": [
+      "Who paints murals but cannot drive?",
+      "Who paints murals and can drive?"
+    ],
+    "paraphrases": [
+      "Who paints murals and cannot drive?",
+      "Who paints murals but can drive?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "repeated_name_across_sentences-4",
+    "category": "repeated_name_across_sentences",
+    "paragraphs": [
+      "Elena Wood writes songs. Elena Wood cannot dance. Iris West can dance.",
+      "Elena Wood writes songs. Iris West cannot dance. Elena Wood can dance."
+    ],
+    "queries": [
+      "Who writes songs but cannot dance?",
+      "Who writes songs and can dance?"
+    ],
+    "paraphrases": [
+      "Who writes songs and cannot dance?",
+      "Who writes songs but can dance?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "multiple_subjects_same_sentence-1",
+    "category": "multiple_subjects_same_sentence",
+    "paragraphs": [
+      "Mira Vale recites poems and Mira Vale cannot read and Noah Stone can read.",
+      "Mira Vale recites poems and Noah Stone cannot read and Mira Vale can read."
+    ],
+    "queries": [
+      "Who recites poems but cannot read?",
+      "Who recites poems and can read?"
+    ],
+    "paraphrases": [
+      "Who recites poems and cannot read?",
+      "Who recites poems but can read?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "multiple_subjects_same_sentence-2",
+    "category": "multiple_subjects_same_sentence",
+    "paragraphs": [
+      "Clara Moss repairs clocks and Clara Moss cannot swim and Owen Reed can swim.",
+      "Clara Moss repairs clocks and Owen Reed cannot swim and Clara Moss can swim."
+    ],
+    "queries": [
+      "Who repairs clocks but cannot swim?",
+      "Who repairs clocks and can swim?"
+    ],
+    "paraphrases": [
+      "Who repairs clocks and cannot swim?",
+      "Who repairs clocks but can swim?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "multiple_subjects_same_sentence-3",
+    "category": "multiple_subjects_same_sentence",
+    "paragraphs": [
+      "Nora Lake paints murals and Nora Lake cannot drive and Evan Hill can drive.",
+      "Nora Lake paints murals and Evan Hill cannot drive and Nora Lake can drive."
+    ],
+    "queries": [
+      "Who paints murals but cannot drive?",
+      "Who paints murals and can drive?"
+    ],
+    "paraphrases": [
+      "Who paints murals and cannot drive?",
+      "Who paints murals but can drive?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "multiple_subjects_same_sentence-4",
+    "category": "multiple_subjects_same_sentence",
+    "paragraphs": [
+      "Elena Wood writes songs and Elena Wood cannot dance and Iris West can dance.",
+      "Elena Wood writes songs and Iris West cannot dance and Elena Wood can dance."
+    ],
+    "queries": [
+      "Who writes songs but cannot dance?",
+      "Who writes songs and can dance?"
+    ],
+    "paraphrases": [
+      "Who writes songs and cannot dance?",
+      "Who writes songs but can dance?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "grammatical_shared_subject-1",
+    "category": "grammatical_shared_subject",
+    "paragraphs": [
+      "Mira Vale recites poems but cannot read. Noah Stone can read.",
+      "Mira Vale recites poems and can read. Noah Stone cannot read."
+    ],
+    "queries": [
+      "Who recites poems but cannot read?",
+      "Who recites poems and can read?"
+    ],
+    "paraphrases": [
+      "Who recites poems and cannot read?",
+      "Who recites poems but can read?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "grammatical_shared_subject-2",
+    "category": "grammatical_shared_subject",
+    "paragraphs": [
+      "Clara Moss repairs clocks but cannot swim. Owen Reed can swim.",
+      "Clara Moss repairs clocks and can swim. Owen Reed cannot swim."
+    ],
+    "queries": [
+      "Who repairs clocks but cannot swim?",
+      "Who repairs clocks and can swim?"
+    ],
+    "paraphrases": [
+      "Who repairs clocks and cannot swim?",
+      "Who repairs clocks but can swim?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "grammatical_shared_subject-3",
+    "category": "grammatical_shared_subject",
+    "paragraphs": [
+      "Nora Lake paints murals but cannot drive. Evan Hill can drive.",
+      "Nora Lake paints murals and can drive. Evan Hill cannot drive."
+    ],
+    "queries": [
+      "Who paints murals but cannot drive?",
+      "Who paints murals and can drive?"
+    ],
+    "paraphrases": [
+      "Who paints murals and cannot drive?",
+      "Who paints murals but can drive?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  },
+  {
+    "probe_id": "grammatical_shared_subject-4",
+    "category": "grammatical_shared_subject",
+    "paragraphs": [
+      "Elena Wood writes songs but cannot dance. Iris West can dance.",
+      "Elena Wood writes songs and can dance. Iris West cannot dance."
+    ],
+    "queries": [
+      "Who writes songs but cannot dance?",
+      "Who writes songs and can dance?"
+    ],
+    "paraphrases": [
+      "Who writes songs and cannot dance?",
+      "Who writes songs but can dance?"
+    ],
+    "construction_status": "AI-authored intended controls; pending human semantic review; not training or evaluation labels",
+    "intended_entity_preferences": [
+      0,
+      1
+    ]
+  }
+]

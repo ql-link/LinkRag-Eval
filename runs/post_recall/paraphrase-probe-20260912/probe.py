@@ -186,14 +186,91 @@ def build_items(scenes):
     return items
 
 
+def review_history(known, directory=HERE):
+    path = directory / "human-review.jsonl"
+    latest = {}
+    for row in read_rows(path) if path.exists() else []:
+        scene = known.get(row.get("version_id"))
+        original = known.get(row.get("reference_original_version_id"))
+        if scene is None or original is None:
+            raise ValueError("unknown version or original reference in review history")
+        validate_review(row, scene, original)
+        latest[row["version_id"]] = row
+    return latest
+
+
+def saved_review_state(scenes, known, directory=HERE):
+    """Restore recorded work without converting AI acceptance into human labels."""
+    originals = {s["source_scene_id"]: s for s in scenes if s["rewrite_type"] == "original"}
+    path = directory / "ai-review/review.jsonl"
+    ai_rows = read_rows(path) if path.exists() else []
+    ai_by_id = {}
+    for row in ai_rows:
+        vid = row.get("version_id")
+        if vid not in known or vid in ai_by_id or row.get("reviewer_type") != "ai":
+            raise ValueError("unknown, duplicate or non-AI pre-review record")
+        if row.get("input_digest") != scene_digest(known[vid]):
+            raise ValueError("AI review text/target digest mismatch")
+        ai_by_id[vid] = row
+    current_ai = []
+    for scene in scenes:
+        original = originals[scene["source_scene_id"]]
+        if scene["version_id"] in ai_by_id and original["version_id"] in ai_by_id:
+            current_ai.append(ai_by_id[scene["version_id"]])
+    acceptance = {"status": "not_recorded"}
+    acceptance_path = directory / "review-state.json"
+    if acceptance_path.exists():
+        record = json.loads(acceptance_path.read_text())
+        if (
+            record.get("kind") != "user_acceptance_of_ai_pre_review"
+            or record.get("status") != "accepted_without_changes"
+            or record.get("independent_human_per_item_review") is not False
+        ):
+            raise ValueError("expected a separately identified global AI-review acceptance")
+        current = (
+            len(current_ai) == len(scenes)
+            and record["scene_digests"] == {s["version_id"]: scene_digest(s) for s in scenes}
+            and path.exists()
+            and record["ai_review_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+        )
+        acceptance = {
+            "status": "accepted" if current else "stale",
+            "recorded_at": record["recorded_at"],
+            "statement": record["verbatim_user_message"],
+            "independent_human_per_item_review": False,
+        }
+    latest = review_history(known, directory)
+    human_rows = [
+        latest[s["version_id"]]
+        for s in scenes
+        if s["version_id"] in latest
+        and all(
+            latest[s["version_id"]].get(k) == value
+            for k, value in review_binding(s, originals[s["source_scene_id"]]).items()
+        )
+    ]
+    return {
+        "ai_reviews": current_ai,
+        "ai_record_count": len(ai_rows),
+        "acceptance": acceptance,
+        "human_reviews": human_rows,
+        # New repository decisions must not be hidden by an older browser draft.
+        "human_review_digest": digest(human_rows),
+    }
+
+
 def prepare(directory=HERE):
-    scenes, _ = load_scenes(directory)
+    scenes, known = load_scenes(directory)
     items = build_items(scenes)
+    state = saved_review_state(scenes, known, directory)
     originals = {s["source_scene_id"]: s for s in scenes if s["rewrite_type"] == "original"}
     payload = [{**s, **review_binding(s, originals[s["source_scene_id"]])} for s in scenes]
     encoded = json.dumps(payload, ensure_ascii=False).replace("<", "\\u003c")
     template = (directory / "review-template.html").read_text()
-    (directory / "review.html").write_text(template.replace("__SCENES_JSON__", encoded))
+    state_json = json.dumps(state, ensure_ascii=False).replace("<", "\\u003c")
+    (directory / "review.html").write_text(
+        template.replace("__SCENES_JSON__", encoded).replace("__REVIEW_STATE_JSON__", state_json)
+    )
     template_rows = [
         {
             "version_id": s["version_id"],
@@ -222,7 +299,9 @@ def prepare(directory=HERE):
         "queries": len(items) // 2,
         "logical_items_per_model": len(items),
         "human_decisions": len(read_rows(directory / "human-review.jsonl")),
-        "status": "awaiting_human_review",
+        "ai_reviews": len(state["ai_reviews"]),
+        "user_acceptance": state["acceptance"]["status"],
+        "status": "review_page_prepared",
     }
 
 
@@ -285,17 +364,7 @@ def receive(path, directory=HERE):
 def approved_reviews(scenes, directory=HERE):
     _, known = load_scenes(directory)
     originals = {s["source_scene_id"]: s for s in scenes if s["rewrite_type"] == "original"}
-    latest = {}
-    for row in read_rows(directory / "human-review.jsonl"):
-        if row["version_id"] not in known:
-            raise ValueError("unknown version in review history")
-        original = known.get(row.get("reference_original_version_id"))
-        if original is None:
-            raise ValueError("unknown original reference in review history")
-        # Historical decisions remain valid evidence about their original reference;
-        # only a decision about the current reference may authorize inference.
-        validate_review(row, known[row["version_id"]], original)
-        latest[row["version_id"]] = row
+    latest = review_history(known, directory)
     missing = [
         s["version_id"]
         for s in scenes

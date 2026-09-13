@@ -1,0 +1,40 @@
+{"kind": "paragraph", "text": "Mira Vale recites poems. Mira Vale cannot read. Noah Stone can read."}
+{"kind": "paragraph", "text": "Mira Vale recites poems. Noah Stone cannot read. Mira Vale can read."}
+{"kind": "query", "text": "Who recites poems but cannot read?"}
+{"kind": "query", "text": "Who recites poems and can read?"}
+{"kind": "query", "text": "Who recites poems and cannot read?"}
+{"kind": "query", "text": "Who recites poems but can read?"}
+{"kind": "paragraph", "text": "Clara Moss repairs clocks. Clara Moss cannot swim. Owen Reed can swim."}
+{"kind": "paragraph", "text": "Clara Moss repairs clocks. Owen Reed cannot swim. Clara Moss can swim."}
+{"kind": "query", "text": "Who repairs clocks but cannot swim?"}
+{"kind": "query", "text": "Who repairs clocks and can swim?"}
+{"kind": "query", "text": "Who repairs clocks and cannot swim?"}
+{"kind": "query", "text": "Who repairs clocks but can swim?"}
+{"kind": "paragraph", "text": "Nora Lake paints murals. Nora Lake cannot drive. Evan Hill can drive."}
+{"kind": "paragraph", "text": "Nora Lake paints murals. Evan Hill cannot drive. Nora Lake can drive."}
+{"kind": "query", "text": "Who paints murals but cannot drive?"}
+{"kind": "query", "text": "Who paints murals and can drive?"}
+{"kind": "query", "text": "Who paints murals and cannot drive?"}
+{"kind": "query", "text": "Who paints murals but can drive?"}
+{"kind": "paragraph", "text": "Elena Wood writes songs. Elena Wood cannot dance. Iris West can dance."}
+{"kind": "paragraph", "text": "Elena Wood writes songs. Iris West cannot dance. Elena Wood can dance."}
+{"kind": "query", "text": "Who writes songs but cannot dance?"}
+{"kind": "query", "text": "Who writes songs and can dance?"}
+{"kind": "query", "text": "Who writes songs and cannot dance?"}
+{"kind": "query", "text": "Who writes songs but can dance?"}
+{"kind": "paragraph", "text": "Mira Vale recites poems and Mira Vale cannot read and Noah Stone can read."}
+{"kind": "paragraph", "text": "Mira Vale recites poems and Noah Stone cannot read and Mira Vale can read."}
+{"kind": "paragraph", "text": "Clara Moss repairs clocks and Clara Moss cannot swim and Owen Reed can swim."}
+{"kind": "paragraph", "text": "Clara Moss repairs clocks and Owen Reed cannot swim and Clara Moss can swim."}
+{"kind": "paragraph", "text": "Nora Lake paints murals and Nora Lake cannot drive and Evan Hill can drive."}
+{"kind": "paragraph", "text": "Nora Lake paints murals and Evan Hill cannot drive and Nora Lake can drive."}
+{"kind": "paragraph", "text": "Elena Wood writes songs and Elena Wood cannot dance and Iris West can dance."}
+{"kind": "paragraph", "text": "Elena Wood writes songs and Iris West cannot dance and Elena Wood can dance."}
+{"kind": "paragraph", "text": "Mira Vale recites poems but cannot read. Noah Stone can read."}
+{"kind": "paragraph", "text": "Mira Vale recites poems and can read. Noah Stone cannot read."}
+{"kind": "paragraph", "text": "Clara Moss repairs clocks but cannot swim. Owen Reed can swim."}
+{"kind": "paragraph", "text": "Clara Moss repairs clocks and can swim. Owen Reed cannot swim."}
+{"kind": "paragraph", "text": "Nora Lake paints murals but cannot drive. Evan Hill can drive."}
+{"kind": "paragraph", "text": "Nora Lake paints murals and can drive. Evan Hill cannot drive."}
+{"kind": "paragraph", "text": "Elena Wood writes songs but cannot dance. Iris West can dance."}
+{"kind": "paragraph", "text": "Elena Wood writes songs and can dance. Iris West cannot dance."}

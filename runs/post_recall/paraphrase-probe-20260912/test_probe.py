@@ -1,6 +1,7 @@
 """Synthetic checks only; no human decisions or real model calls are generated."""
 
 import copy
+import hashlib
 import json
 import shutil
 from collections import Counter
@@ -101,6 +102,102 @@ def test_prepare_refreshes_blank_template_without_replacing_history(copied):
     assert newer["version_id"] in {r["version_id"] for r in template}
     assert rows[0]["version_id"] not in {r["version_id"] for r in template}
     assert history.read_bytes() == original_history
+
+
+def record_synthetic_ai_acceptance(directory):
+    scenes, _ = probe.load_scenes(directory)
+    path = directory / "ai-review/review.jsonl"
+    path.parent.mkdir()
+    probe.write_rows(
+        path,
+        [
+            {
+                "version_id": s["version_id"],
+                "input_digest": probe.scene_digest(s),
+                "reviewer_type": "ai",
+                "recommendation": "no_issue_found",
+            }
+            for s in scenes
+        ],
+    )
+    probe.write_json(
+        directory / "review-state.json",
+        {
+            "kind": "user_acceptance_of_ai_pre_review",
+            "status": "accepted_without_changes",
+            "independent_human_per_item_review": False,
+            "recorded_at": "2026-09-13",
+            "verbatim_user_message": "SYNTHETIC TEST ACCEPTANCE ONLY",
+            "ai_review_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "scene_digests": {s["version_id"]: probe.scene_digest(s) for s in scenes},
+        },
+    )
+
+
+def test_page_restores_ai_acceptance_without_creating_human_decisions(copied):
+    record_synthetic_ai_acceptance(copied)
+    shutil.copyfile(probe.HERE / "review-template.html", copied / "review-template.html")
+    result = probe.prepare(copied)
+    assert (result["ai_reviews"], result["user_acceptance"], result["human_decisions"]) == (
+        36,
+        "accepted",
+        0,
+    )
+    html = (copied / "review.html").read_text()
+    state = json.loads(
+        html.split('<script id="review-data" type="application/json">')[1].split("</script>")[0]
+    )
+    assert len(state["ai_reviews"]) == 36
+    assert state["acceptance"]["status"] == "accepted"
+    assert state["human_reviews"] == []
+    assert (copied / "human-review.jsonl").read_bytes() == b""
+    with pytest.raises(ValueError, match="human review incomplete"):
+        probe.freeze(copied / "unused-runtime.json", copied)
+
+
+def test_saved_human_review_is_embedded_in_regenerated_page(copied):
+    scenes, _ = probe.load_scenes(copied)
+    original = scenes[0]
+    record = fake_review(original, original)
+    path = copied / "human-review.jsonl"
+    path.unlink()
+    probe.write_rows(path, [record])
+    shutil.copyfile(probe.HERE / "review-template.html", copied / "review-template.html")
+    before = path.read_bytes()
+    probe.prepare(copied)
+    state = probe.saved_review_state(*probe.load_scenes(copied), copied)
+    assert state["human_reviews"] == [record]
+    assert "SYNTHETIC TEST FIXTURE" in (copied / "review.html").read_text()
+    assert path.read_bytes() == before
+
+
+def test_global_acceptance_does_not_survive_original_revision(copied):
+    record_synthetic_ai_acceptance(copied)
+    path = copied / "scenes-original.jsonl"
+    rows = probe.read_rows(path)
+    newer = {
+        **rows[0],
+        "version_id": rows[0]["version_id"] + "-revision2",
+        "revision": 2,
+        "supersedes": rows[0]["version_id"],
+    }
+    path.unlink()
+    probe.write_rows(path, [*rows, newer])
+    state = probe.saved_review_state(*probe.load_scenes(copied), copied)
+    assert state["acceptance"]["status"] == "stale"
+    assert state["ai_record_count"] == 36
+    assert len(state["ai_reviews"]) == 33
+
+
+def test_acceptance_does_not_survive_changed_ai_opinion(copied):
+    record_synthetic_ai_acceptance(copied)
+    path = copied / "ai-review/review.jsonl"
+    rows = probe.read_rows(path)
+    rows[0]["recommendation"] = "needs_revision"
+    path.unlink()
+    probe.write_rows(path, rows)
+    state = probe.saved_review_state(*probe.load_scenes(copied), copied)
+    assert state["acceptance"]["status"] == "stale"
 
 
 def fake_scores(items, outcomes=None):
@@ -280,8 +377,9 @@ def test_original_revision_requires_fresh_rewrite_reviews(copied):
     template = probe.read_rows(copied / "human-review-template.jsonl")
     html = (copied / "review.html").read_text()
     payload = json.loads(
-        html.split('<script id="scene-data" type="application/json">', 1)[1]
-        .split("</script>", 1)[0]
+        html.split('<script id="scene-data" type="application/json">', 1)[1].split("</script>", 1)[
+            0
+        ]
     )
     for rows in (template, payload):
         for index, row in enumerate(rows[1:3], 1):

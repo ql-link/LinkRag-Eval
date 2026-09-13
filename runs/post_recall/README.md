@@ -76,4 +76,4 @@ data/post_recall/nevir/{train,validation,test}.jsonl        原始划分（成�
 
 - [error-taxonomy-20260911/](error-taxonomy-20260911/README.md)（issue #21）：122 条英文分类包 v2；2026-09-13 已接收包 2 单人模型辅助最终件并交付描述性分类，保留参考争议、偏好未决和技术回退。聚合与报告可追溯，原件、逐题、分发 ZIP、原文和私有映射本地保留。
 
-- [paraphrase-probe-20260912/](paraphrase-probe-20260912/README.md)（issue #22）：36/36 项人工审核已验收，12 个同义版更新为 v2；原版、换名版和预期偏好保持，正式推理未启动。收件详情、审核者信息与下一步见运行说明；原件、逐条场景／审核、生成页面和分发 ZIP 本地保留。
+- [paraphrase-probe-20260912/](paraphrase-probe-20260912/README.md)（N16，issue #22）：36 项人工审核与两模型各 144 条首轮评分完成；原版／同义／换名严格正确为 Qwen 23／20／23、GPT 均 24（各分母 24），无重试或不可用。配置、轻量聚合与正式报告随版本保留；原件、逐项、完整结果和过程本地保留。独立复核通过，GPU 已关机。

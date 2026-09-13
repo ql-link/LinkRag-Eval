@@ -1,0 +1,249 @@
+{
+  "status": "completed_independently_verified",
+  "evaluated_at": "2026-09-13T07:54:05.354045+00:00",
+  "code_commit": "d4b7880b727628db01d3e9233c9689408c06decd",
+  "execution_config": "execution-config.json",
+  "full_results_local": "results.json",
+  "scope": "12 AI-authored English scenes; 4 repeated content families and 3 structures. Human-reviewed before inference; no official Test items.",
+  "human_review": {
+    "reviewer": "Yifan Yuan",
+    "review_date": "2026-09-13",
+    "assistance": "human review",
+    "approved_versions": 36,
+    "metadata_source": "Explicit project-owner reply; original reviewed JSON preserved locally"
+  },
+  "models": {
+    "qwen": {
+      "by_type": {
+        "original": {
+          "n_queries": 24,
+          "strict": 23,
+          "reverse": 0,
+          "tie": 1,
+          "unavailable": 0,
+          "strict_accuracy": 0.9583333333333334
+        },
+        "synonym": {
+          "n_queries": 24,
+          "strict": 20,
+          "reverse": 0,
+          "tie": 4,
+          "unavailable": 0,
+          "strict_accuracy": 0.8333333333333334
+        },
+        "entity_rename": {
+          "n_queries": 24,
+          "strict": 23,
+          "reverse": 0,
+          "tie": 1,
+          "unavailable": 0,
+          "strict_accuracy": 0.9583333333333334
+        }
+      },
+      "consistency": {
+        "synonym": {
+          "n_comparisons": 24,
+          "jointly_available": 24,
+          "excluded_unavailable": 0,
+          "same_direction_including_both_ties": 21,
+          "agreement_including_both_ties": 0.875,
+          "both_tie": 1,
+          "one_side_tie": 3,
+          "strict_non_tie_denominator": 20,
+          "same_strict_direction": 20,
+          "strict_direction_agreement": 1.0,
+          "both_correct": 20,
+          "both_reverse": 0
+        },
+        "entity_rename": {
+          "n_comparisons": 24,
+          "jointly_available": 24,
+          "excluded_unavailable": 0,
+          "same_direction_including_both_ties": 22,
+          "agreement_including_both_ties": 0.9166666666666666,
+          "both_tie": 0,
+          "one_side_tie": 2,
+          "strict_non_tie_denominator": 22,
+          "same_strict_direction": 22,
+          "strict_direction_agreement": 1.0,
+          "both_correct": 22,
+          "both_reverse": 0
+        }
+      },
+      "execution": {
+        "status": "completed",
+        "error_type": null,
+        "started_at": "2026-09-13T07:25:33.393353+00:00",
+        "completed_at": "2026-09-13T07:27:13.800413+00:00",
+        "wall_seconds": 100.40405641600955,
+        "logical_items": 144,
+        "unique_inputs": 144,
+        "duplicate_items": 0,
+        "historical_cache_hits": 0,
+        "first_attempt_batches": 144,
+        "retry_or_split_batches": 0,
+        "recorded_http_attempt_starts": 144,
+        "completed_http_receipts": 144,
+        "codex_processes": 0,
+        "observed_http_tokens": {
+          "prompt_tokens": 29764,
+          "completion_tokens": 36125,
+          "total_tokens": 65889
+        },
+        "http_receipts_without_usage": 0,
+        "gpt_provider_tokens": null,
+        "monetary_cost": null,
+        "cost_note": "Missing usage/billing and provider-internal requests remain unknown; raw Codex stdout/stderr and Qwen envelopes are retained for later reconciliation.",
+        "primary_availability": {
+          "available": 144
+        },
+        "primary_attempt_states": {
+          "first_attempt_succeeded": 144
+        },
+        "stock_cli_summary_including_retries": {
+          "runner": "openai",
+          "endpoint": "127.0.0.1",
+          "model": "Qwen/Qwen3-14B-AWQ",
+          "effort": "think",
+          "prompt_version": "judge_prompt_v1",
+          "codex_version": null,
+          "items": 144,
+          "unique_keys": 144,
+          "cache_hits": 0,
+          "cache_misses": 144,
+          "duplicate_items": 0,
+          "planned_batches": 144,
+          "batch_count": 144,
+          "workers": 4,
+          "batch_size": 1,
+          "seed": 20260910,
+          "unavailable": 0,
+          "wall_seconds": 100.33644170791376
+        }
+      }
+    },
+    "gpt": {
+      "by_type": {
+        "original": {
+          "n_queries": 24,
+          "strict": 24,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0
+        },
+        "synonym": {
+          "n_queries": 24,
+          "strict": 24,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0
+        },
+        "entity_rename": {
+          "n_queries": 24,
+          "strict": 24,
+          "reverse": 0,
+          "tie": 0,
+          "unavailable": 0,
+          "strict_accuracy": 1.0
+        }
+      },
+      "consistency": {
+        "synonym": {
+          "n_comparisons": 24,
+          "jointly_available": 24,
+          "excluded_unavailable": 0,
+          "same_direction_including_both_ties": 24,
+          "agreement_including_both_ties": 1.0,
+          "both_tie": 0,
+          "one_side_tie": 0,
+          "strict_non_tie_denominator": 24,
+          "same_strict_direction": 24,
+          "strict_direction_agreement": 1.0,
+          "both_correct": 24,
+          "both_reverse": 0
+        },
+        "entity_rename": {
+          "n_comparisons": 24,
+          "jointly_available": 24,
+          "excluded_unavailable": 0,
+          "same_direction_including_both_ties": 24,
+          "agreement_including_both_ties": 1.0,
+          "both_tie": 0,
+          "one_side_tie": 0,
+          "strict_non_tie_denominator": 24,
+          "same_strict_direction": 24,
+          "strict_direction_agreement": 1.0,
+          "both_correct": 24,
+          "both_reverse": 0
+        }
+      },
+      "execution": {
+        "status": "completed",
+        "error_type": null,
+        "started_at": "2026-09-13T07:25:34.583455+00:00",
+        "completed_at": "2026-09-13T07:50:34.352588+00:00",
+        "wall_seconds": 1499.8106687079417,
+        "logical_items": 144,
+        "unique_inputs": 144,
+        "duplicate_items": 0,
+        "historical_cache_hits": 0,
+        "first_attempt_batches": 144,
+        "retry_or_split_batches": 0,
+        "recorded_http_attempt_starts": 0,
+        "completed_http_receipts": 0,
+        "codex_processes": 144,
+        "observed_http_tokens": null,
+        "http_receipts_without_usage": 0,
+        "gpt_provider_tokens": null,
+        "monetary_cost": null,
+        "cost_note": "Missing usage/billing and provider-internal requests remain unknown; raw Codex stdout/stderr and Qwen envelopes are retained for later reconciliation.",
+        "primary_availability": {
+          "available": 144
+        },
+        "primary_attempt_states": {
+          "first_attempt_succeeded": 144
+        },
+        "stock_cli_summary_including_retries": {
+          "prompt_version": "judge_prompt_v1",
+          "model": "gpt-6-astra",
+          "effort": "low",
+          "codex_version": "codex-cli 0.153.4",
+          "items": 144,
+          "unique_keys": 144,
+          "cache_hits": 0,
+          "cache_misses": 144,
+          "duplicate_items": 0,
+          "planned_batches": 144,
+          "batch_count": 144,
+          "workers": 2,
+          "batch_size": 1,
+          "seed": 20260910,
+          "unavailable": 0,
+          "wall_seconds": 1499.6823473749682
+        }
+      }
+    }
+  },
+  "validation": {
+    "full_non_integration_before_inference": {
+      "passed": 1320,
+      "skipped": 23,
+      "deselected": 3
+    },
+    "probe_tests_passed": 20,
+    "independent_raw_and_aggregate_audit": {
+      "qwen": "passed",
+      "gpt": "passed"
+    },
+    "evidence_local": "provisioning/"
+  },
+  "gpu_shutdown": {
+    "state": "powered_off_verified",
+    "scheduled_at": "2026-09-13T15:31:00+08:00",
+    "verified_at": "2026-09-13T07:31:43.548448+00:00",
+    "evidence_local": "provisioning/shutdown-receipt.json"
+  },
+  "limitations": "Small wording/entity sensitivity probe. Consistency is not accuracy. Cannot establish absence of NevIR training exposure or contamination; cannot replace #20."
+}

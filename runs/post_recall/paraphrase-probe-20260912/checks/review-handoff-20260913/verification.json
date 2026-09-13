@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "clean_git_export_prepares_identical_page": true,
+  "ai_reviews": 36,
+  "user_acceptance": "accepted",
+  "actual_human_rows": 0,
+  "targeted_tests": "24 passed in both workspace and Git-only export",
+  "full_non_integration": "1320 passed, 23 skipped, 3 deselected",
+  "browser_existing_checks": 7,
+  "browser_new_checks": [
+    "fresh browser displays saved AI opinions and user acceptance",
+    "older browser draft does not hide a newly saved human decision",
+    "fresh browser restores a synthetic human decision; reload and mobile pass"
+  ],
+  "earlier_check_correction": "Textarea assertion changed from inner text to value; no application change required",
+  "page_errors": [],
+  "original_sources_and_ai_review_unchanged": true,
+  "acceptance_original_preserved": true,
+  "formal_model_calls": 0,
+  "verified_at": "2026-09-13T06:32:34.940484+00:00",
+  "implementation_commit": "1c94fb47e26ee513769f8df2eaf790e4bfb4bce5",
+  "base_commit": "05696160bc61742c744e5cf5261e8cf848692d56",
+  "ruff": "passed",
+  "report_index": "current"
+}

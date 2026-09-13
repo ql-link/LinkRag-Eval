@@ -1,0 +1,121 @@
+{
+  "status": "frozen_before_inference",
+  "frozen_at": "2026-09-13T07:25:33.097997+00:00",
+  "code_commit": "d4b7880b727628db01d3e9233c9689408c06decd",
+  "code_files": {
+    "runs/post_recall/paraphrase-probe-20260912/probe.py": "865e97cb6c0ff25f04e441c16d34fd7f47ad8e9a1f666a0c11e94f208bcaa323",
+    "runs/post_recall/paraphrase-probe-20260912/run_model.py": "dab26672c542f5a77a7d0f2f125b7041a7a472888a8802cb3e0bf625038cf699",
+    "scripts/llm_judge_pilot.py": "6fdea5ff0b3cf35bf0209d7340764a4d06034c1aad51f8ee62f32206940e9c46",
+    "src/linkrag_eval/retrieval/learning_to_rank/llm_judge.py": "5ff9af0b4168d781efbd44876077b47dd0ddb6e684e27d560d4f5b0d86136375",
+    "src/linkrag_eval/retrieval/learning_to_rank/llm_judge_local.py": "e682d5de700a27fef3b5705cf30abd6b1752b6c2d2717a3976bc60380e5b70d5"
+  },
+  "python": "3.11.15 (main, Mar  3 2026, 00:52:57) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "packages": {
+    "numpy": "2.4.6",
+    "httpx": "0.28.1",
+    "linkrag-eval": "0.1.0"
+  },
+  "codex_version": "codex-cli 0.153.4",
+  "runtime_observation": {
+    "qwen_revision": "31c69efc29464b6bb0aee1398b5a7b50a99340c3",
+    "qwen_server_environment": "AutoDL autodl-container-fb0c4680e1-a580f590; Python 3.13.5; torch 2.13.0; vLLM 0.29.0; transformers 5.17.0; driver 580.76.05. Reused existing runtime without installing or upgrading packages.",
+    "qwen_deployment_evidence": "provisioning/download-receipt.json: both AWQ shards match the pinned Hugging Face LFS SHA256; provisioning/service-launch.json: all loaded config/tokenizer files match the same revision. Service PID 1547 loads /root/autodl-tmp/linkrag-eval-issue22-20260913/model; GET /v1/models and one synthetic scoring check passed via SSH forward 18022 -> 8000. Full launch parameters in provisioning/server-config.json.",
+    "gpu": "NVIDIA GeForce RTX 4090, 24564 MiB; UUID GPU-62892a89-a8fa-4386-b05a-df1d94745a4c",
+    "gpt_access": "Local codex-cli 0.153.4, logged in using ChatGPT; synthetic CodexRunner check passed with gpt-6-astra / low, provider openai, isolated state. No API key configured by this task.",
+    "operator_confirmed": true,
+    "local_python": "3.11.15 (main, Mar  3 2026, 00:52:57) [Clang 21.0.0 (clang-2100.0.123.102)]",
+    "probe_preflight": {
+      "logical_items_per_model": 144,
+      "unique_items_per_model": 144,
+      "approved_reviews": 36,
+      "probe_tests_passed": 20,
+      "regression_tests_passed": 1320,
+      "regression_tests_skipped": 23,
+      "regression_tests_deselected": 3
+    },
+    "synthetic_requests_before_freeze": {
+      "qwen": 1,
+      "gpt": 1
+    },
+    "formal_probe_requests_before_freeze": 0
+  },
+  "items_file": "frozen/items.jsonl",
+  "items_digest": "ccad4b83b69cd03982e344bc6b47a7175fbf5bf55fa55321bf8e44e0540b08d9",
+  "scene_digests": {
+    "repeated_name_across_sentences-1--original-v1": "444a6a836a702da434b2145784d4b9360cd3c6cc4674f21e6ee213f19f523c59",
+    "repeated_name_across_sentences-1--synonym-v2": "3edddc9c1cdcaf186d43fb6401497f2ab9e0107b41de900581d5c0379220e710",
+    "repeated_name_across_sentences-1--entity-rename-v1": "c5af14c8f35218573f52b9b0de33fe41b33695726f12acca2336b186e6eb36ec",
+    "repeated_name_across_sentences-2--original-v1": "b5598ae3b688e929ebd05638f9e5cf496e5bbfe3848f6f1196ed03a2a26c79ae",
+    "repeated_name_across_sentences-2--synonym-v2": "889ea9ffe547b644a7f89c516f8ad7d3f9ba7eb25dd223b33dcf9cc5d80cb734",
+    "repeated_name_across_sentences-2--entity-rename-v1": "d7ae63487ce467e0a005b8a2a635dc5e5d7e69b74d3d23a281feceb4f4ed41b1",
+    "repeated_name_across_sentences-3--original-v1": "e70166b4b61edcd358426c562ab21d64792f2c2951cc51f0f8ff8dc201e133c6",
+    "repeated_name_across_sentences-3--synonym-v2": "3c2ff9360f5dcb6288b4e5080cc66a428a52d83d0868acc954aacad2c3b63aa1",
+    "repeated_name_across_sentences-3--entity-rename-v1": "517100a11d7f7c4602a275c2dd4019e166da2ffad5977e75bb042aab19883f03",
+    "repeated_name_across_sentences-4--original-v1": "cfc1e6827cedf9c487422965e2e87b8cf0ec214de69791570a8b3bbfc2ced4e0",
+    "repeated_name_across_sentences-4--synonym-v2": "45a3ca259373a3ea140661626d2f0967c06acc26efe3acaef5026ce21159dcb2",
+    "repeated_name_across_sentences-4--entity-rename-v1": "6f29aab83a29ca0fca2da81e643a5ebfdb6e4af51593bdbf2fad008673d358d8",
+    "multiple_subjects_same_sentence-1--original-v1": "c75c529cbdd41f6928ff665d37569829709c84791367bd0d3249a8735dc2e4eb",
+    "multiple_subjects_same_sentence-1--synonym-v2": "197967ca9dfa25d7d81bf3dc0350425eba23bc3a5fe65986e228d474df083851",
+    "multiple_subjects_same_sentence-1--entity-rename-v1": "167c0c021cc4c19a3b31d92fa5e8b437b66150522c54eb25b6c7e4b7b5554656",
+    "multiple_subjects_same_sentence-2--original-v1": "845a6956c608c1af1757bc40bbbaf0c34d322a7a3a708806e486313f7d877d01",
+    "multiple_subjects_same_sentence-2--synonym-v2": "92366cab40ae17e704c522bcd4ba0cdc295e3a2445080dd01764147751aac7f9",
+    "multiple_subjects_same_sentence-2--entity-rename-v1": "138bfbcc73e80eabc9ffb5d70837c84f2edd5409a93142b75425d114865503d0",
+    "multiple_subjects_same_sentence-3--original-v1": "0de14c4deec5a25950f174aad76c8d8c8c1ef0493c7fe86c93f13de067d0e285",
+    "multiple_subjects_same_sentence-3--synonym-v2": "d0f583f58c30e333425cfd694f2af423fed385a870fca71094ed75edec9e295b",
+    "multiple_subjects_same_sentence-3--entity-rename-v1": "66e47cbe23357e68c5dbc92edee2dd52516aa1450d936e10fd62bc8cf60c4a34",
+    "multiple_subjects_same_sentence-4--original-v1": "7f0d2dd398d9353f71e317a1ec8b5afeb80acab20469ee1547787f0e7249e5ce",
+    "multiple_subjects_same_sentence-4--synonym-v2": "ab944260e2919c231367eacc8bfe87b40bc5cb87f4329289f149904901f732ca",
+    "multiple_subjects_same_sentence-4--entity-rename-v1": "2f796b9f5284923e11a4d87132802cb5bec2b5935b729943613ff6918bd649b0",
+    "grammatical_shared_subject-1--original-v1": "b382cfac2fd183b1445b69cc337dde39e972215f1363aacd8469dcc3c34ca3ed",
+    "grammatical_shared_subject-1--synonym-v2": "b2ba5c73104fadab02b102e0fe7229972e6daf1d1352fa448831c3440090bb0a",
+    "grammatical_shared_subject-1--entity-rename-v1": "109b22d779f64d57bc79755b901e441bdf8e0fcbec2bd1059ebfe842480bf2e6",
+    "grammatical_shared_subject-2--original-v1": "438448ae42569c0f913644ab7dcc223c5ce2857cf01ae3a9c3720b31d724a02c",
+    "grammatical_shared_subject-2--synonym-v2": "8e40689c4f08a9baa0f59a782a7fa32014509e4289e6f12ee5ca28672eb7aa95",
+    "grammatical_shared_subject-2--entity-rename-v1": "f02efc6607478e9baa8aac2d53b6342fd0a060e724f870a38c42987cf9a72eec",
+    "grammatical_shared_subject-3--original-v1": "845dfb9af9785e213b5d0a8a9acbb34ce3ef69226e7cfd9cbd6ae9a5364a653c",
+    "grammatical_shared_subject-3--synonym-v2": "6e2f4e464efa9a934b7f78d39f69c8b6bb7a291f187feaaafbdb3c20ed248e21",
+    "grammatical_shared_subject-3--entity-rename-v1": "19a47029a3b636c12d4ac268d649177729918891aa9f28ba582e1a9ccf1b38b8",
+    "grammatical_shared_subject-4--original-v1": "8c54db51ea18d962533181f3ce71adbd34a49804f2233f5854347927099563c2",
+    "grammatical_shared_subject-4--synonym-v2": "37d1e66fd14b968dda6163f4d63955846728e3dfe1d6735591973a048bbf6393",
+    "grammatical_shared_subject-4--entity-rename-v1": "b62c9a5c33d38fcfcbfb76dce6c83c60f91ef50604ac533fd577727ae262c7cf"
+  },
+  "review_decisions_digest": "637f6128ca4cb8fb0ff99328c15a174b0ee8229f03e19ec982832a539d00ad4a",
+  "prompt_version": "judge_prompt_v1",
+  "score_schema": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "models": {
+    "qwen": {
+      "model": "Qwen/Qwen3-14B-AWQ",
+      "runner": "openai",
+      "revision": "31c69efc29464b6bb0aee1398b5a7b50a99340c3",
+      "think": true,
+      "temperature": 0,
+      "max_tokens": 6144,
+      "num_ctx": 8192
+    },
+    "gpt": {
+      "model": "gpt-6-astra",
+      "runner": "codex",
+      "effort": "low",
+      "weights_revision": null,
+      "note": "Hosted model weights and training data unknown."
+    }
+  },
+  "batch_size": 1,
+  "workers": {
+    "qwen": 4,
+    "gpt": 2
+  },
+  "seed": 20260910,
+  "failure_policy": "Primary scores use the first batch attempt only. Existing CLI retries stay in raw/ and never replace primary scores; missing first output is unavailable. Interrupted/unstarted items remain unavailable and are distinguished.",
+  "cache_policy": "Reject matching historical caches before invoking the existing CLI. In-run exact query/passage deduplication is logged separately.",
+  "logical_items_per_model": 144,
+  "accuracy_denominator": "all planned query directions including ties/unavailable",
+  "consistency_denominator": "both versions available; ties separately, strict non-tie agreement additionally reported",
+  "monetary_cost": null
+}

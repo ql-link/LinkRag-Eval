@@ -1,6 +1,6 @@
 # 文件与产物存放总览
 
-本页回答“东西保存在哪、是否随 Git、能否清理”；基础盘点为 2026-09-07，后续清理见各节日期（最新 2026-09-11），包含隐藏目录和被忽略的本地产物。文档怎么选见[文档选读](DOCUMENT_CATALOG.md)，进度只看[当前状态](CURRENT_STATUS.md)。
+本页回答“东西保存在哪、是否随 Git、能否清理”；基础盘点为 2026-09-07，后续清理见各节日期（最新 2026-09-13），包含隐藏目录和被忽略的本地产物。文档怎么选见[文档选读](DOCUMENT_CATALOG.md)，进度只看[当前状态](CURRENT_STATUS.md)。
 
 路径相对仓库根目录。下文“可纳入 Git”不表示已经提交；当前有未提交改动与新文件，单独 clone 不能还原这个工作区。
 
@@ -22,6 +22,7 @@
 | 旧人工材料 | [human_tasks/README.md](../human_tasks/README.md)、`runs/robust_fusion/` 及既有归档 | 无当前人工任务；指南可进 Git，提交／原始记录仅本地或在旧归档，三个失效入口链接已清理 |
 | 本地论文全文 | [docs/papers/README.md](papers/README.md) | PDF 仅本地；文献地图与目录进 Git |
 | 助手资料 | `.ai/`、`.agents/skills/` | 前者是随仓库保留的共享资料，含旧生产流程；后者是被忽略的本地技能，不是实验数据 |
+| 工程审查与历史交接证据 | [master 审查](audits/master-20260913/README.md) · [Qwen 交接恢复](../runs/post_recall/open-judge-selection-20260911/README.md) | 审查报告、脚本与工程检查证据进 Git，写作相关编译记录和原始链接候选清单仅本地保存；被研究报告引用的原始会话在实验 `handoff-source/` 本地保留，见 §7 |
 | 运行环境与工具缓存 | `.venv/`、`__pycache__/`；工具按需生成 `.pytest_cache/`、`.ruff_cache/`、`.import_linter_cache/` | 后三类已清理；虚拟环境及 Python 字节码保留，虚拟环境含单独安装的生产依赖 |
 | 历史数据库分享目录 | 原 `linkrag-eval-sqlite-share-20260827/`，已删除 | 2026-09-11 核对当前工作库覆盖原有数据后按负责人要求清理，见 §6 |
 | #23 成员成果与原件 | [列表实验](../runs/post_recall/list-collapse-20260910/README.md)、[原交付归档](../runs/post_recall/_handover/issue23-n8-delivery-20260911.tar.gz) | 有用模型、代码和结果接入既有结构；32 文件原包另以约 157 KiB 归档保留 |
@@ -115,3 +116,17 @@
 | `linkrag-eval-sqlite-share-20260827/` | 原评测库 22 datasets、49,774 chunks、51 runs、2,884 metrics（queries/qrels 均 0）的已有字段与当前工作库逐行一致；当前库多两项编码输入长度字段，alembic 从 0003 升至 0004。20,772 条 embedding 缓存精确相同；31,072 条 BM25 存储行相同，当前 FTS sidecar 已从 v1 升至 v2。未把仅文件字节不同误判为独有研究数据。 | 已删除约 306.4 MiB 的旧分享副本，`runs/` 下三份工作库及 WAL／SHM 保留，没有用旧库覆盖当前库 |
 
 上述 tar 只保存 #23 首次小交付包，补交大快照在本地 snapshot／delivery 目录受 Git 忽略；两者都不是全项目备份。已有其他备份、`.handoff/`、共享候选、当前模型与其他成员的未提交改动均未删除。本轮新代码、实验轻量结果和文档尚未提交或推送；模型、原始分数和压缩原件继续按本地产物保存。
+
+<a id="handoff-organization"></a>
+
+## 7. 交接目录整理（2026-09-13）
+
+原 `.handoff/` 共 31 文件，含 4 份被通用 JSONL 规则忽略的会话。按实际用途迁移，不把整个目录加入 `.gitignore`：
+
+| 原内容 | 处理与保存位置 | 依据 |
+| --- | --- | --- |
+| `audits/master-20260913/` 的 20 个文件 | 迁入 [docs/audits/master-20260913/](audits/master-20260913/README.md)：报告改名 README，3 个脚本集中于 `reproduce/`，机器清单与 `evidence/` 保留；纳入本次提交 | 15 项发现仍有后续核实或修复用途。脚本与机器证据按原字节保留，报告仅补归档说明并转换源码链接，没有改变发现或重新执行审查 |
+| 会话、子任务与工具输出共 8 个文件 | 原样迁入 [#14–#16 恢复目录的 handoff-source/](../runs/post_recall/open-judge-selection-20260911/handoff-source/)；沿用实验原件仅本地保存方式 | 现有报告及 `handoff-evidence.json`、`selection.json`、`summary.json` 引用这些会话证明选模与重试时间线。三份索引仅更新来源路径，原始行号与正文不变；不能当临时日志删除 |
+| `git/master-switch-20260913*` 的 3 个记录 | 已完成用途，删除；核对结论保留在本节 | 当时保存的 66 个路径中，49 个与 `a6e2cc7` 相同，17 个被已合并后续版本替代，0 个存在独有待合并开发内容；对应 stash `cecbd5c7f949dd8ec850bba893e636e15f9fad58` 已在此前授权清理中删除。本次没有再次操作 stash、分支或其他工作树 |
+
+28 个保留文件在迁移时逐文件比对字节一致，随后仅编辑审查 README 的归档说明和链接；公开提交另排除了写作相关编译记录与原始链接候选清单，并在公开报告中省略对应细节，完整原件继续本地保存；原记录内的绝对路径仍代表当时环境。完成迁移后删除原 `.handoff/` 空目录及上述 3 个切换记录。没有删除研究原始会话、模型、候选、分数或数据库；上节“`.handoff/` 未删除”保留为 2026-09-11 的历史事实。本次没有重跑模型、测试全套或修复审查问题，只核验迁移完整性、JSON／Python 语法和新入口链接。

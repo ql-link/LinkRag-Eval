@@ -1,0 +1,83 @@
+{
+  "audit_head": "a6e2cc7019c9204bb0ccf7ac64051c41afa81342",
+  "repository": "/Users/kawauso/Documents/Projects/LinkRag-Eval-issue22-completion",
+  "input_scope": "entirely synthetic; no official inputs read",
+  "execution_scope": "pure local functions and patched fake retrieval pipeline",
+  "real_model_calls": 0,
+  "network_calls": 0,
+  "historical_result_impact_confirmed": false,
+  "findings": [
+    {
+      "id": "stale_supervision_on_candidate_cache_reuse",
+      "requested_expected_chunk_ids": [
+        "new"
+      ],
+      "requested_expected_doc_ids": [
+        2
+      ],
+      "observed": {
+        "resumed": 1,
+        "fetched": 0,
+        "second_call_fake_retriever_calls": 0,
+        "saved_expected_chunk_ids": [
+          "old"
+        ],
+        "saved_expected_doc_ids": [
+          1
+        ],
+        "downstream_training_labels": {
+          "old": 1,
+          "new": 0
+        }
+      },
+      "expected_downstream_training_labels": {
+        "old": 0,
+        "new": 1
+      },
+      "status": "reproduced"
+    },
+    {
+      "id": "map_denominator_shrinks_with_returned_length",
+      "relevant_chunk_ids": [
+        "old",
+        "new"
+      ],
+      "returned_chunk_ids": [
+        "old"
+      ],
+      "observed": {
+        "metric": "map",
+        "k": null,
+        "value": 1.0
+      },
+      "expected_standard_untruncated_ap": 0.5,
+      "status": "reproduced"
+    },
+    {
+      "id": "false_positive_rate_zero_when_reference_has_no_elements",
+      "reference": "Only text.",
+      "image_case": {
+        "produced": "Only text.\n\n![fabricated](imaginary.png)",
+        "observed": {
+          "recall": 1.0,
+          "false_rate": 0.0,
+          "context_position_ok": 1.0,
+          "misplaced": []
+        }
+      },
+      "heading_case": {
+        "produced": "# Fabricated heading\n\nOnly text.",
+        "observed": {
+          "recall": 1.0,
+          "false_rate": 0.0,
+          "level_consistency_abs": 1.0,
+          "level_consistency_rel": 1.0,
+          "missed": []
+        }
+      },
+      "expected_image_false_rate": 1.0,
+      "expected_heading_false_rate": 1.0,
+      "status": "reproduced"
+    }
+  ]
+}

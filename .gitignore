@@ -72,6 +72,8 @@ runs/
 /runs/post_recall/nevir-test-main-20260911/*
 !/runs/post_recall/nevir-test-main-20260911/README.md
 !/runs/post_recall/nevir-test-main-20260911/paper-summary.json
+!/runs/post_recall/nevir-test-main-20260911/decompose_qwen.py
+!/runs/post_recall/nevir-test-main-20260911/qwen-decision-decomposition.json
 !/runs/post_recall/nevir-test-main-20260911/prepare.py
 !/runs/post_recall/nevir-test-main-20260911/workflow.py
 !/runs/post_recall/nevir-test-main-20260911/recover_qwen.py
@@ -164,6 +166,9 @@ reports/*.html
 !/docs/papers/manuscript/paper.pdf
 !/docs/papers/manuscript/Makefile
 /.agents/
+# 本地科研 skills 分别服务 Codex 与 Claude；助手配置不随仓库发布。
+/.claude/
+/.devin/
 
 # —— Python ——
 __pycache__/

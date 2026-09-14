@@ -1,0 +1,23 @@
+usage: linkrag-eval [-h]
+                    {config,ingest,exploration,golden-gen,golden-opensource,golden-v2,cleaning,run,tune-recall,bm25-backfill,query-rewrite,ltr}
+                    ...
+
+toLink-Rag 独立评测/质检
+
+positional arguments:
+  {config,ingest,exploration,golden-gen,golden-opensource,golden-v2,cleaning,run,tune-recall,bm25-backfill,query-rewrite,ltr}
+    config              打印已解析配置(脱敏)做自检
+    ingest              灌库:collection+manifest → eval namespace
+    exploration         固定三路候选与独立官方标签的探索接入
+    golden-gen          反向合成黄金集:eval 语料 → 采样 → LLM 生成 →(门禁)→ jsonl
+    golden-opensource   开源数据集端到端:段落灌 eval 库 → 标注转 GoldenSample(doc 粒度)
+    golden-v2           Golden V2 构建工具
+    cleaning            清洗质检:对应关系表 → 解析回 md → 分桶比对 → 报告
+    run                 跑召回评测:golden → recall → 指标
+    tune-recall         参数搜索:dense/sparse topK + score threshold
+    bm25-backfill       从 eval SQLite 语料重建 FTS5 BM25 sidecar
+    query-rewrite       生成三路Query重写计划并做原始/重写配对评测
+    ltr                 学习型三路融合候选缓存与交叉验证
+
+options:
+  -h, --help            show this help message and exit

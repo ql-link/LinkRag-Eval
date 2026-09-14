@@ -11,7 +11,7 @@
     "issue_created_at": "2026-09-10T04:20:43Z",
     "issue_last_updated_before_this_audit": "2026-09-10T04:21:29Z",
     "session_evidence": {
-      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "source": "runs/post_recall/open-judge-selection-20260911/handoff-source/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
       "line": 608,
       "timestamp": "2026-09-10T04:20:17.726Z",
       "event": "Selection criteria authored before model comparisons and confirmation"
@@ -297,13 +297,13 @@
     "thinking": true,
     "reason": "Original L1: 42 official / 41 human correct versus 8B thinking 41 / 38, with 223.016 s versus 535.591 s observed wall time. Small differences are not a significance claim.",
     "provisional_selection_evidence": {
-      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "source": "runs/post_recall/open-judge-selection-20260911/handoff-source/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
       "line": 1137,
       "timestamp": "2026-09-10T07:22:20.282Z",
       "event": "Qwen3-14B-AWQ thinking provisionally selected; 32B question still open"
     },
     "larger_model_exclusion_evidence": {
-      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
+      "source": "runs/post_recall/open-judge-selection-20260911/handoff-source/59217ec6-eda1-45fc-ba09-48af4608ae57.jsonl",
       "line": 1141,
       "timestamp": "2026-09-10T09:53:05.678Z",
       "event": "User explicitly excludes Qwen3-32B-AWQ"

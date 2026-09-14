@@ -12,7 +12,7 @@
   "configuration_source": "runs/post_recall/open-judge-confirmation-20260910/execution-config.json",
   "memory_snapshots": [
     {
-      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a34a92e054e4a7171.jsonl",
+      "source": "runs/post_recall/open-judge-selection-20260911/handoff-source/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a34a92e054e4a7171.jsonl",
       "line": 11,
       "timestamp": "2026-09-10T06:47:59.490Z",
       "event": "8B server resident, nvidia-smi snapshot",
@@ -21,7 +21,7 @@
       "total_mib": 24564
     },
     {
-      "source": ".handoff/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a34a92e054e4a7171.jsonl",
+      "source": "runs/post_recall/open-judge-selection-20260911/handoff-source/59217ec6-eda1-45fc-ba09-48af4608ae57/subagents/agent-a34a92e054e4a7171.jsonl",
       "line": 123,
       "timestamp": "2026-09-10T07:11:56.698Z",
       "event": "14B AWQ server ready, nvidia-smi snapshot",

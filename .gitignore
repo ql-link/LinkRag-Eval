@@ -166,6 +166,9 @@ reports/*.html
 !/docs/papers/manuscript/paper.pdf
 !/docs/papers/manuscript/Makefile
 /.agents/
+# 本地科研 skills 分别服务 Codex 与 Claude；助手配置不随仓库发布。
+/.claude/
+/.devin/
 
 # —— Python ——
 __pycache__/

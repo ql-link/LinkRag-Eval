@@ -1,0 +1,49 @@
+{
+  "status": "ANALYZED",
+  "repository": "/Users/kawauso/Documents/Projects/LinkRag-Eval-issue22-completion",
+  "head": "a6e2cc7019c9204bb0ccf7ac64051c41afa81342",
+  "scope": "Tracked aggregate JSON only; no raw official Test or model calls. Arithmetic identities, not score recomputation or model reproducibility.",
+  "files": [
+    "runs/post_recall/judge-cost-curve-20260910/results.json",
+    "runs/post_recall/judge-cost-curve-qwen-20260911/results.json",
+    "runs/post_recall/judge-statistics-20260910/results.json",
+    "runs/post_recall/judge-statistics-20260911/results.json",
+    "runs/post_recall/list-collapse-20260910/results.json",
+    "runs/post_recall/nevir-test-final-20260911/results.json",
+    "runs/post_recall/nevir-test-main-20260911/paper-summary.json",
+    "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/confirmation-l1/results.json",
+    "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/confirmation-l2-k10/results.json",
+    "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/confirmation-l2-k20/results.json",
+    "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/development-l1/results.json",
+    "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/development-l2-k10/results.json",
+    "runs/post_recall/open-judge-bge-reranker-v2-m3-20260911/development-l2-k20/results.json",
+    "runs/post_recall/open-judge-confirmation-20260910/l1-first-pass/results.json",
+    "runs/post_recall/open-judge-confirmation-20260910/l1-retry/results.json",
+    "runs/post_recall/open-judge-confirmation-20260910/l2-first-pass-k10/results.json",
+    "runs/post_recall/open-judge-confirmation-20260910/l2-first-pass-k20/results.json",
+    "runs/post_recall/open-judge-confirmation-20260910/l2-retry-k10/results.json",
+    "runs/post_recall/open-judge-confirmation-20260910/l2-retry-k20/results.json",
+    "runs/post_recall/open-judge-confirmation-20260911/l1/results.json",
+    "runs/post_recall/open-judge-confirmation-20260911/l2-k10/results.json",
+    "runs/post_recall/open-judge-confirmation-20260911/l2-k20/results.json",
+    "runs/post_recall/open-judge-qwen3-14b-development-20260911/l1/results.json",
+    "runs/post_recall/open-judge-qwen3-14b-development-20260911/l2-k10/results.json",
+    "runs/post_recall/open-judge-qwen3-14b-development-20260911/l2-k20/results.json",
+    "runs/post_recall/open-judge-qwen3-8b-development-20260911/l1/results.json",
+    "runs/post_recall/open-judge-qwen3-8b-development-20260911/l2-k10/results.json",
+    "runs/post_recall/open-judge-qwen3-8b-development-20260911/l2-k20/results.json"
+  ],
+  "metric_objects_checked": 724,
+  "checks": [
+    "strict_correct+reverse+model_tie+unavailable == n",
+    "strict_accuracy == strict_correct/n, tolerance 1e-10, when present and n>0"
+  ],
+  "problems": [],
+  "statistical_fallacy_checklist_coverage": "11/11",
+  "not_rerun": [
+    "source-group confidence intervals",
+    "original model inference",
+    "training",
+    "per-query official Test"
+  ]
+}

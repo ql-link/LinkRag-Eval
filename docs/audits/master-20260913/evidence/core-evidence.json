@@ -1,0 +1,56 @@
+{
+  "bm25_weights": {
+    "configured_100_0": [
+      [
+        "coarse",
+        1e-06
+      ],
+      [
+        "fine",
+        1e-06
+      ]
+    ],
+    "configured_0_100": [
+      [
+        "coarse",
+        1e-06
+      ],
+      [
+        "fine",
+        1e-06
+      ]
+    ],
+    "correct_column_100_0": [
+      [
+        "coarse",
+        2.173913043478261e-06
+      ],
+      [
+        "fine",
+        0.0
+      ]
+    ]
+  },
+  "migration_guard": {
+    "accepted_url": "mysql+pymysql://example.invalid/tolink_rag_db",
+    "network_calls": 0
+  },
+  "run_overwrite": {
+    "runs": [
+      {
+        "current": 1.0,
+        "baseline": null
+      },
+      {
+        "current": 0.0,
+        "baseline": 0.0
+      }
+    ],
+    "result_files": 1,
+    "saved_metric": 0.0
+  },
+  "ingest_failure": {
+    "total": 0,
+    "raised": false
+  }
+}

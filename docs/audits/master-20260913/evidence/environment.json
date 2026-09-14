@@ -1,0 +1,16 @@
+{
+  "python": "3.11.15 (main, Mar  3 2026, 00:52:57) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "package_path": "/Users/kawauso/Documents/Projects/LinkRag-Eval-issue22-completion/src/linkrag_eval/__init__.py",
+  "rag_version": "0.1.0",
+  "rag_source": {
+    "url": "https://github.com/ql-link/LinkRag.git",
+    "vcs_info": {
+      "vcs": "git",
+      "commit_id": "861f24810c3482ec0d86768a24f952b1e08ae675",
+      "requested_revision": "861f24810c3482ec0d86768a24f952b1e08ae675"
+    }
+  },
+  "ruff": "0.16.2",
+  "pytest": "9.1.1",
+  "head": "a6e2cc7019c9204bb0ccf7ac64051c41afa81342"
+}

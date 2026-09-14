@@ -20,6 +20,7 @@
 | 要调用什么脚本，依赖哪些已有产物？ | [脚本与命令入口](../scripts/README.md) | 入口、输入输出、训练／远端／本地动作；历史脚本另列 |
 | 某次运行的配置、模型、统计和日志在哪？ | [实验目录](../runs/post_recall/README.md) | 先读对应实验的短 README，再查具体产物 |
 | 修改代码要遵守什么，模块职责在哪？ | [实现约定](../AGENTS.md) → [解耦架构](architecture/decoupling-plan.md) | 当前工程规范及依赖边界，不用历史实验报告推定架构 |
+| 工程审查发现了哪些待核实或修复的问题，原依据在哪？ | [master 工程审查](audits/master-20260913/README.md) | 原审查的 15 项发现、复现脚本与检查证据；按原版本理解，不当作最新自动状态 |
 | 为什么保留或放弃某个研究想法？ | [独立审查与回应](plans/research-direction-review-2026-09-06.md) | 附录 H 为当前 Qwen 角色和主线纠偏；§3、附录 F/G 保留历史依据，讨论不等于实验结果 |
 | 某个文献判断的原始依据在哪？ | [文献地图](plans/robust-fusion-literature.md) | 定位论文与证据范围；本地全文位置见[论文目录](papers/README.md) |
 | 六页 short paper 已有哪些工作稿，如何编译？ | [论文工作稿](papers/manuscript/README.md) | 引言、设置、方法与列表诊断源码，范文学习和主张证据；工作稿不替代实验报告 |

@@ -1,0 +1,97 @@
+{
+  "cache": {
+    "calls": 0,
+    "report": {
+      "samples": 1,
+      "generated": 0,
+      "resumed": 1,
+      "fallback": 0,
+      "model": "new-model",
+      "prompt_version": "new-prompt",
+      "output": "/tmp/linkrag-master-audit-20260913/stale-rewrite-plans.jsonl"
+    },
+    "saved_plan": {
+      "sample_id": "synthetic-q",
+      "original_query": "synthetic query",
+      "query_type": "general",
+      "queries": {
+        "dense": "synthetic query",
+        "sparse": "synthetic query",
+        "bm25": "synthetic query"
+      },
+      "weights": {
+        "dense": 0.7,
+        "sparse": 0.15,
+        "bm25": 0.15
+      },
+      "protected_candidates": {
+        "dense": 0,
+        "sparse": 0,
+        "bm25": 0
+      },
+      "preserved_terms": [],
+      "confidence": 0.0,
+      "reason_code": "planner_fallback",
+      "model": "old-model",
+      "prompt_version": "old-prompt",
+      "fallback": false
+    }
+  },
+  "review": {
+    "fake_calls": 1,
+    "review": {
+      "query_id": "synthetic-q",
+      "query": "synthetic query",
+      "candidate": {
+        "chunk_id": "synthetic-c",
+        "doc_id": 1,
+        "dataset_id": 1
+      },
+      "original_relevant": true,
+      "original_grade": 2,
+      "review_reason": "synthetic",
+      "review_relevant": false,
+      "review_grade": 0,
+      "review_evidence_span": "",
+      "reviewer_reason": "review_json_parse_failed",
+      "reviewer_model": "unknown"
+    },
+    "adjudicated": {
+      "query_id": "synthetic-q",
+      "query": "synthetic query",
+      "candidate": {
+        "chunk_id": "synthetic-c",
+        "doc_id": 1,
+        "dataset_id": 1
+      },
+      "original_relevant": true,
+      "original_grade": 2,
+      "review_reason": "synthetic",
+      "relevant": false,
+      "grade": 0,
+      "adjudication_status": "review_changed",
+      "adjudication_policy": "review_overrides",
+      "adjudication_review_reason": "synthetic",
+      "adjudication_original_relevant": true,
+      "adjudication_original_grade": 2,
+      "adjudication_review_relevant": false,
+      "adjudication_review_grade": 0,
+      "adjudication_reviewer_model": "unknown",
+      "adjudication_reviewer_reason": "review_json_parse_failed",
+      "adjudication_review_evidence_span": ""
+    },
+    "report": {
+      "input_judgments": 1,
+      "review_items": 1,
+      "unique_review_items": 1,
+      "duplicate_reviews": 0,
+      "changed": 1,
+      "kept": 0,
+      "conflicts": 0,
+      "missing_review": 0,
+      "output_path": "/tmp/linkrag-master-audit-20260913/synthetic-adjudicated.jsonl",
+      "report_path": null,
+      "conflict_path": null
+    }
+  }
+}

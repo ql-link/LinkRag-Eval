@@ -1,0 +1,60 @@
+{
+  "status": "completed_match",
+  "started_at": "2026-09-14T10:48:33.119830+00:00",
+  "issue": 49,
+  "code_revision": "489180fc8e143de3946fec232c33764bead1f874",
+  "implementation": "uncommitted issue49 replay.py and its synthetic tests; core code unchanged",
+  "command": [
+    "replay.py",
+    "--data-root",
+    "/Users/kawauso/Documents/Projects/LinkRag-Eval",
+    "--out",
+    "/Users/kawauso/Documents/Projects/LinkRag-Eval-issue49/runs/post_recall/n8-test-replay-20260914"
+  ],
+  "snapshot": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-test-candidates-20260910/snapshot",
+  "model": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/list-collapse-20260910/background-n8-training/model-b",
+  "model_bundle": {
+    "model_version": "issue23-background-n8-20260910",
+    "feature_version": "candidate_difference_v3_en_v1",
+    "feature_signature": "0aa6f9b1b58f8aba935b4c1c97e42f56ab83e8ddc0922fe59dc5786a675dc808",
+    "alias_enabled": false,
+    "verified_files": [
+      "feature_contract.json",
+      "manifest.json",
+      "model.txt",
+      "short_fallback.json",
+      "test_vectors.json"
+    ],
+    "verified_test_vectors": 3
+  },
+  "model_trees": 69,
+  "feature_count": 38,
+  "versions": {
+    "lightgbm": "4.7.0",
+    "numpy": "2.4.6",
+    "scikit-learn": "1.9.0"
+  },
+  "python": "3.11.15",
+  "platform": "macOS-26.5.2-arm64-arm-64bit",
+  "num_threads": 1,
+  "saved_e0": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-test-main-20260911/baseline/scores.jsonl",
+  "saved_fusion": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-test-main-20260911/inputs/stage1-test.jsonl",
+  "member_results": "/Users/kawauso/Documents/Projects/LinkRag-Eval/runs/post_recall/nevir-test-final-20260911/results.json",
+  "training": false,
+  "new_retrieval": false,
+  "remote_requests": 0,
+  "exposure": "Previously exposed member Test aggregates; fixed-model local replay only",
+  "historical_limitations": [
+    "Member per-query scores and original execution logs remain unavailable",
+    "Aggregate agreement cannot establish original run timing or per-query identity",
+    "Original fusion version label differs from the actual feature contract",
+    "Query-level Wilson/McNemar do not adjust paired/source dependence"
+  ],
+  "feature_and_prediction_seconds": 72.73790704202838,
+  "scored_queries": 2766,
+  "scored_candidates": 421953,
+  "comparison_mismatches": 0,
+  "completed_at": "2026-09-14T10:49:48.666428+00:00",
+  "wall_seconds": 75.54653370811138,
+  "timing_scope": "model validation, input loading, N8 features/prediction, score output, aggregation and comparison"
+}

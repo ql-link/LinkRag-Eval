@@ -20,7 +20,17 @@ from linkrag_eval.retrieval.learning_to_rank.llm_judge import (
     prompt_for,
 )
 
-META = {"model": "synthetic-test-only", "effort": "low", "prompt_version": "judge_prompt_v1"}
+META = {
+    "model": "synthetic-test-only",
+    "effort": "low",
+    "prompt_version": "judge_prompt_v1",
+    "generation": {"interface": "synthetic"},
+}
+
+
+class FakeRunner:
+    def run(self, prompt, out):
+        return {"items": [{"id": "i01", "score": 2, "reason": "synthetic"}]}
 
 
 @pytest.fixture
@@ -330,6 +340,59 @@ def test_first_failure_never_replaced_by_successful_retry(tmp_path, scenes):
     assert sum(r["attempt_state"] == "first_attempt_failed" for r in first) == 1
 
 
+@pytest.mark.parametrize("keep_summary", [True, False], ids=["summary", "interrupted-mapping"])
+def test_first_pass_uses_actual_generation_with_legacy_metadata(tmp_path, scenes, keep_summary):
+    items = probe.build_items(scenes[:1])
+    raw = tmp_path / "raw"
+    actual = {**META, "codex_version": "synthetic", "runner": "fake", "endpoint": "local"}
+    judge_items(items, FakeRunner(), raw, metadata=actual, batch_size=1, workers=1)
+    if not keep_summary:
+        (raw / "summary.json").unlink()
+    legacy_meta = {key: value for key, value in META.items() if key != "generation"}
+    first = extract_first_pass(items, legacy_meta, raw)
+    assert all(row["attempt_state"] == "first_attempt_succeeded" for row in first)
+    assert all(row["score"] == 2 for row in first)
+    assert all(row["generation"] == actual["generation"] for row in first)
+    assert all(all(row[key] == value for key, value in actual.items()) for row in first)
+    assert all("items" not in row and "batch_count" not in row and "id" not in row for row in first)
+
+
+@pytest.mark.parametrize("keep_summary", [True, False], ids=["summary", "interrupted-mapping"])
+def test_first_pass_reads_pre_generation_artifacts(tmp_path, scenes, keep_summary):
+    items = probe.build_items(scenes[:1])
+    legacy_meta = {key: value for key, value in META.items() if key != "generation"}
+    for index, item in enumerate(items, 1):
+        folder = tmp_path / f"batch-{index:03d}"
+        folder.mkdir()
+        probe.write_rows(folder / "mapping.jsonl", [{
+            **legacy_meta, "id": "i01", "key": cache_key(item, legacy_meta),
+            "source_query_id": item["source_query_id"], "chunk_id": item["chunk_id"],
+            "pair_id": item["pair_id"],
+        }])
+        probe.write_json(folder / "metadata.json", {**legacy_meta, "error": None})
+        probe.write_json(folder / "out.json", FakeRunner().run("synthetic", folder))
+    if keep_summary:
+        probe.write_json(tmp_path / "summary.json", {**legacy_meta, "items": len(items)})
+    first = extract_first_pass(items, legacy_meta, tmp_path)
+    assert all(row["attempt_state"] == "first_attempt_succeeded" for row in first)
+    assert all(row["score"] == 2 and "generation" not in row for row in first)
+    assert [row["key"] for row in first] == [cache_key(item, legacy_meta) for item in items]
+
+
+@pytest.mark.parametrize("field", ["model", "effort", "prompt_version"])
+@pytest.mark.parametrize("source", ["summary", "mapping"])
+def test_first_pass_rejects_mismatched_actual_metadata(tmp_path, scenes, field, source):
+    actual = {**META, field: "different-run"}
+    if source == "summary":
+        probe.write_json(tmp_path / "summary.json", actual)
+    else:
+        folder = tmp_path / "batch-001"
+        folder.mkdir()
+        probe.write_rows(folder / "mapping.jsonl", [{**actual, "key": "unused"}])
+    with pytest.raises(ValueError, match="actual judge metadata differs"):
+        extract_first_pass(probe.build_items(scenes[:1]), META, tmp_path)
+
+
 def test_missing_and_inflight_results_remain_distinct(tmp_path, scenes):
     items = probe.build_items(scenes[:1])
     folder = tmp_path / "batch-001"
@@ -338,6 +401,12 @@ def test_missing_and_inflight_results_remain_distinct(tmp_path, scenes):
     rows = extract_first_pass(items, META, tmp_path)
     assert rows[0]["attempt_state"] == "interrupted_after_dispatch"
     assert all(r["attempt_state"] == "not_dispatched" for r in rows[1:])
+
+
+def test_no_dispatch_falls_back_to_caller_metadata(tmp_path, scenes):
+    rows = extract_first_pass(probe.build_items(scenes[:1]), META, tmp_path / "absent-raw")
+    assert all(row["attempt_state"] == "not_dispatched" for row in rows)
+    assert all(row["generation"] == META["generation"] for row in rows)
 
 
 def test_transport_records_usage_without_authorization_header(tmp_path):
@@ -405,8 +474,9 @@ def test_evaluate_rejects_changed_frozen_scene(copied):
     assert not (copied / "report.md").exists()
 
 
-def test_full_synthetic_freeze_run_and_report(copied, monkeypatch):
-    """Exercise handoff end-to-end, with temporary self-declared test records only."""
+@pytest.fixture
+def frozen_probe(copied, monkeypatch):
+    """Freeze synthetic inputs and install a no-network judge CLI for execution checks."""
     scenes, _ = probe.load_scenes(copied)
     originals = {s["source_scene_id"]: s for s in scenes if s["rewrite_type"] == "original"}
     submission = copied / "synthetic-submission.jsonl"
@@ -441,20 +511,27 @@ def test_full_synthetic_freeze_run_and_report(copied, monkeypatch):
             model = args["--model"]
             meta = {**META, "model": model, "effort": "think" if "Qwen" in model else "low"}
 
-            class Runner:
-                def run(self, prompt, out):
-                    return {"items": [{"id": "i01", "score": 2, "reason": "synthetic"}]}
-
             judge_items(
                 probe.read_rows(args["--items"]),
-                Runner(),
+                FakeRunner(),
                 args["--out"],
                 metadata=meta,
                 batch_size=1,
                 workers=1,
             )
 
+    config = json.loads((copied / "execution-config.json").read_text())
+    items = probe.read_rows(copied / config["items_file"])
     monkeypatch.setattr(run_model, "load_cli", lambda: FakeCLI)
+    return SimpleNamespace(
+        directory=copied, items=items, cli=FakeCLI,
+        metadata={**META, "model": config["models"]["qwen"]["model"], "effort": "think"},
+    )
+
+
+def test_full_synthetic_freeze_run_and_report(frozen_probe):
+    """Exercise handoff end-to-end, with temporary self-declared test records only."""
+    copied = frozen_probe.directory
     run_model.execute("qwen", "http://synthetic.invalid", directory=copied)
     run_model.execute("gpt", directory=copied)
     probe.evaluate(copied)
@@ -467,3 +544,50 @@ def test_full_synthetic_freeze_run_and_report(copied, monkeypatch):
     assert (copied / "report.md").exists()
     with pytest.raises(FileExistsError):
         probe.evaluate(copied)
+
+
+@pytest.mark.parametrize("legacy", [True, False], ids=["legacy-key", "generation-key"])
+@pytest.mark.parametrize("identities", ["absent", "different"])
+def test_historical_cache_matches_content_without_sibling_mapping(frozen_probe, legacy, identities):
+    metadata = dict(frozen_probe.metadata)
+    if legacy:
+        del metadata["generation"]
+    else:
+        metadata["generation"] = {"max_tokens": 2048, "think": True}
+    item = {**frozen_probe.items[0], "source_query_id": "previous-query", "chunk_id": "previous-chunk"}
+    record = {
+        **metadata, "key": cache_key(item, metadata), "status": "available",
+        "score": 2, "reason": "synthetic history",
+    }
+    if identities == "different":
+        record.update(source_query_id=item["source_query_id"], chunk_id=item["chunk_id"])
+    cache = frozen_probe.cli.RUN / "copied-cache-only/judge-cache"
+    cache.mkdir(parents=True)
+    probe.write_rows(cache / "cache.jsonl", [record])
+    with pytest.raises(ValueError, match="historical cache matches these inputs"):
+        run_model.execute("qwen", "http://synthetic.invalid", directory=frozen_probe.directory)
+    assert not (frozen_probe.directory / "inference").exists()
+
+
+@pytest.mark.parametrize("field", ["model", "effort", "prompt_version", "status", "passage"])
+def test_historical_cache_does_not_block_other_contracts_or_inputs(frozen_probe, monkeypatch, field):
+    metadata = dict(frozen_probe.metadata)
+    item = dict(frozen_probe.items[0])
+    if field in {"model", "effort", "prompt_version"}:
+        metadata[field] = "different-run"
+    elif field == "passage":
+        item["passage"] = "Different synthetic evidence."
+    record = {
+        **metadata, "key": cache_key(item, metadata),
+        "status": "unavailable" if field == "status" else "available",
+        "score": None if field == "status" else 2, "reason": "synthetic history",
+    }
+    cache = frozen_probe.cli.RUN / "other-run/judge-cache"
+    cache.mkdir(parents=True)
+    probe.write_rows(cache / "cache.jsonl", [record])
+    calls = []
+    monkeypatch.setattr(frozen_probe.cli, "main", lambda argv: calls.append(argv))
+    run_model.execute("qwen", "http://synthetic.invalid", directory=frozen_probe.directory)
+    assert len(calls) == 1
+    invocation = json.loads((frozen_probe.directory / "inference/qwen/invocation.json").read_text())
+    assert invocation["historical_cache_files_checked"] == 1

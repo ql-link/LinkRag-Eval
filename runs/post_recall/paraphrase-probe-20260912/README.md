@@ -8,6 +8,8 @@
 
 执行配置已于 2026-09-13 07:25:33 UTC 固定，代码为 `d4b7880`。两模型首轮各 144 条评分均独立复核通过，`probe.py evaluate` 已一次生成两模型最终汇总。Qwen 评分 100.404 秒、GPT 1,499.811 秒；Qwen 144 次 HTTP 全成功，GPT 144 个 Codex 进程正常退出，供应商内部请求和 token 用量未知。GPU 日志已回收，Safari 确认实例于北京时间 15:31 关机。已完成结果与边界见[本轮报告](../../../docs/reports/paraphrase_probe_2026_09_13.md)，最终状态以本节和项目当前状态为准；下方收件段落描述推理之前的验收。
 
+2026-09-14（#48）：探针从完成后的 `summary.json` 或中断时已写入的 `mapping.jsonl` 读取实际生成参数，按同一缓存键重建首轮评分；旧产物仍按旧键读取。执行前的历史缓存检查按缓存自身记录的参数识别相同文本，保留原 model／effort／prompt_version 边界，不依赖输入 ID 或旁侧映射文件；该检查只阻止重复首轮，不会把缓存并入新运行。原实验结果、执行配置与代码版本 `d4b7880` 不变。当前代码已与当时冻结的 `code_files` 不同，后续新实验须另存输入与输出并重新 freeze，不覆盖本轮产物。
+
 - 随版本保留：[执行配置](execution-config.json)、[轻量聚合](summary.json)、本文及正式报告。
 - 本地完整结果：[results.json](results.json)、[程序报告](report.md)；首次评分和原始过程见 `inference/qwen/`、`inference/gpt/`，两者各有 `execution-summary.json`。
 - 本地审核与输入：`review-submissions/`、`human-review.jsonl`、两份 `scenes-*.jsonl` 和 `frozen/`。

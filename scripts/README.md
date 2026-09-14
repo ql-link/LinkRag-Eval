@@ -115,3 +115,5 @@ T2 接入目前暂停，已有 CLI 保留：
 - `llm_judge_statistics.py run --root <判断器运行目录> --out runs/post_recall/judge-statistics-<日期> [--seed --repeats] [--extra 名称[:关系列]=逐题文件]`：对 L1／L2／L3 逐题关系做来源组自助 95% 区间与配对符号检验（issue #18），输出 `results.json` 与 `tables.md`。Qwen／BGE 的 L2 用 `--extra open_l2:stage1_judge=路径` 明确选择融合破同分结果，`E0_judge` 对应 E0 破同分；未指定列时优先读取同名关系列，否则读取 `judge`。缺列和非法关系直接报错，输出目录须不存在。实际用法见[开源缓存统计](../runs/post_recall/judge-statistics-20260911/README.md)。
 
 - [Issue #22 改写探针](../runs/post_recall/paraphrase-probe-20260912/README.md)：任务目录中的 `draft.py` 从已有两份原件重建初稿，`probe.py prepare/receive/freeze/evaluate` 负责审核、输入固定与逐场景汇总，`run_model.py` 复用现有 `llm_judge_pilot.py judge` 保存首轮及重试证据。真实人审未齐时拒绝冻结；提示词与正式 Test 不变。新增测试需显式运行该目录 `test_probe.py`，不在默认 pytest testpaths 内。
+
+修改共享判断器（如 #48 缓存键）时，完整离线回归须覆盖 CI 的两组额外脚本测试：`PYTHONPATH=src LINKRAG_EVAL_REQUIRE_RAG=1 python -m pytest tests runs/post_recall/error-taxonomy-20260911/test_prepare.py runs/post_recall/paraphrase-probe-20260912/test_probe.py -m "not integration" -q`。仅运行默认 `pytest` 不包含 `runs/` 中的测试。

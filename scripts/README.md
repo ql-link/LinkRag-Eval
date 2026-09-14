@@ -20,7 +20,7 @@
 
 比较脚本原名 `nevir_feature_compare.py`，现已改名；参数与行为不变，历史运行记录仍可能记旧名。它不是“只比较已有分数”的工具，也不是每次诊断的前置步骤。
 
-`llm_judge_pilot.py judge --runner {codex,ollama,openai}` 默认使用 codex；本地服务必须传 `--endpoint`（服务根 URL，不含 API 路径）和 `--model`。`--num-ctx` 默认 8192，分别设置 Ollama 上下文大小和 OpenAI 兼容服务的生成 token 上限；后者的服务端上下文容量需自行配置。OpenAI 兼容服务可用 `--api-key-env EVAL_JUDGE_API_KEY` 指定已有密钥环境变量名，密钥不写日志。`--batch-size` 未指定时 codex 为 40、本地为 1；`--workers` 默认 4，可按 vLLM 容量设为 8–16。本地 effort 固定为 `none`，与 codex 缓存区分；原提示词、`--cache`、`--seed`、`--smoke` 及分数目录结构沿用。
+`llm_judge_pilot.py judge --runner {codex,ollama,openai}` 默认使用 codex；本地服务必须传 `--endpoint`（服务根 URL，不含 API 路径）和 `--model`。`--num-ctx` 默认 8192，设置 Ollama 上下文大小；OpenAI 兼容服务仅用它校验 `--max-tokens` 上限，服务端上下文容量需自行配置。OpenAI 兼容服务可用 `--api-key-env EVAL_JUDGE_API_KEY` 指定已有密钥环境变量名，密钥不写日志。`--batch-size` 未指定时 codex 为 40、本地为 1；`--workers` 默认 4，可按 vLLM 容量设为 8–16。本地 effort 默认为 `none`，OpenAI 兼容服务开启 `--think` 后为 `think`；原提示词、`--seed`、`--smoke` 及分数目录结构沿用。缓存只按显式 `--cache` 合并，不再自动扫描历史目录；缓存键包含生成参数，#48 之前或生成参数不同的缓存不能复用于新运行，会明确报错。
 
 `llm_judge_pilot.py agreement --a <judge-dir> --b <judge-dir> --output <新文件.json>` 读取两边 `scores.jsonl`，按查询 ID＋chunk ID 对齐。报告包含共享／双方可用条目数、精确及相差不超过 1 分的一致率、平均秩 Spearman、Kendall tau-b、5×5 混淆矩阵（行 A、列 B，均为 0–4 分）及成对方向一致率。成对比较使用相同查询和 pair ID 内共享候选的所有无序组合，平局单独作为一种关系；不可用分数不进入一致率分母，无有效样本或相关性无定义时写 `null`。拒绝覆盖已有输出文件。
 
@@ -115,3 +115,5 @@ T2 接入目前暂停，已有 CLI 保留：
 - `llm_judge_statistics.py run --root <判断器运行目录> --out runs/post_recall/judge-statistics-<日期> [--seed --repeats] [--extra 名称[:关系列]=逐题文件]`：对 L1／L2／L3 逐题关系做来源组自助 95% 区间与配对符号检验（issue #18），输出 `results.json` 与 `tables.md`。Qwen／BGE 的 L2 用 `--extra open_l2:stage1_judge=路径` 明确选择融合破同分结果，`E0_judge` 对应 E0 破同分；未指定列时优先读取同名关系列，否则读取 `judge`。缺列和非法关系直接报错，输出目录须不存在。实际用法见[开源缓存统计](../runs/post_recall/judge-statistics-20260911/README.md)。
 
 - [Issue #22 改写探针](../runs/post_recall/paraphrase-probe-20260912/README.md)：任务目录中的 `draft.py` 从已有两份原件重建初稿，`probe.py prepare/receive/freeze/evaluate` 负责审核、输入固定与逐场景汇总，`run_model.py` 复用现有 `llm_judge_pilot.py judge` 保存首轮及重试证据。真实人审未齐时拒绝冻结；提示词与正式 Test 不变。新增测试需显式运行该目录 `test_probe.py`，不在默认 pytest testpaths 内。
+
+修改共享判断器（如 #48 缓存键）时，完整离线回归须覆盖 CI 的两组额外脚本测试：`PYTHONPATH=src LINKRAG_EVAL_REQUIRE_RAG=1 python -m pytest tests runs/post_recall/error-taxonomy-20260911/test_prepare.py runs/post_recall/paraphrase-probe-20260912/test_probe.py -m "not integration" -q`。仅运行默认 `pytest` 不包含 `runs/` 中的测试。

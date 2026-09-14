@@ -234,6 +234,11 @@ class OpenAICompatRunner:
         if self.max_tokens >= num_ctx:
             raise ValueError("max_tokens must be smaller than num_ctx")
         self.extra_body = dict(extra_body or {})
+        self.metadata["generation"] = {
+            "temperature": 0, "max_tokens": self.max_tokens, "num_ctx": num_ctx,
+            "think": self.think, "response_format": "json_schema",
+            "extra_body": {**self.extra_body, "chat_template_kwargs": {
+                **self.extra_body.get("chat_template_kwargs", {}), "enable_thinking": self.think}}}
         self._headers = {"Authorization": f"Bearer {api_key}"} if api_key is not None else {}
         self._transport = transport
 
@@ -260,6 +265,8 @@ class OllamaRunner:
         if num_ctx < 1:
             raise ValueError("num_ctx must be positive")
         self.model, self.num_ctx, self.timeout = model, num_ctx, timeout
+        self.metadata["generation"] = {"temperature": 0, "num_ctx": num_ctx,
+                                       "think": False, "format": "schema"}
         self._transport = transport
 
     def run(self, prompt, out):

@@ -114,7 +114,25 @@ def load_cli():
     return cli
 
 
+def actual_metadata(raw, fallback):
+    fields = ("model", "effort", "prompt_version", "generation", "codex_version", "runner", "endpoint")
+    summary = raw / "summary.json"
+    if summary.exists():
+        source = json.loads(summary.read_text())
+    else:
+        source = next(
+            (row for path in sorted(raw.glob("batch-*/mapping.jsonl")) for row in read_rows(path)
+             if any(field in row for field in fields)),
+            fallback,
+        )
+    metadata = {field: source[field] for field in fields if field in source}
+    if any(metadata.get(field) != fallback[field] for field in ("model", "effort", "prompt_version")):
+        raise ValueError("actual judge metadata differs from frozen model/effort/prompt_version")
+    return metadata
+
+
 def extract_first_pass(items, metadata, raw):
+    metadata = actual_metadata(raw, metadata)
     first = {}
     for folder in sorted(raw.glob("batch-*")):
         if not folder.is_dir() or re.fullmatch(r"batch-\d+", folder.name) is None:
@@ -194,13 +212,25 @@ def execute(model, endpoint=None, api_key_env=None, directory=HERE):
         ):
             raise ValueError("plain server endpoint required; credentials only via --api-key-env")
     cli = load_cli()
-    keys = {cache_key(item, metadata) for item in items}
     cache_files = [p for d in cli.RUN.rglob("judge-cache") for p in d.glob("*.jsonl")]
+    keys_by_metadata = {}
     for path in cache_files:
-        if any(r.get("key") in keys and r.get("status") == "available" for r in read_rows(path)):
-            raise ValueError(
-                "historical cache matches these inputs; do not reuse it as a new first round"
-            )
+        for row in read_rows(path):
+            if row.get("status") != "available" or any(
+                row.get(field) != value for field, value in metadata.items()
+            ):
+                continue
+            # Detect prior attempts using their recorded generation, including legacy keys.
+            recorded = dict(metadata)
+            if "generation" in row:
+                recorded["generation"] = row["generation"]
+            identity = json.dumps(recorded, sort_keys=True, ensure_ascii=False, allow_nan=False)
+            if identity not in keys_by_metadata:
+                keys_by_metadata[identity] = {cache_key(item, recorded) for item in items}
+            if row.get("key") in keys_by_metadata[identity]:
+                raise ValueError(
+                    "historical cache matches these inputs; do not reuse it as a new first round"
+                )
     out = directory / "inference" / model
     out.mkdir(parents=True, exist_ok=False)
     argv = [
@@ -244,6 +274,7 @@ def execute(model, endpoint=None, api_key_env=None, directory=HERE):
     finally:
         raw = out / "raw"
         scores = extract_first_pass(items, metadata, raw)
+        keys = {row["key"] for row in scores}
         write_rows(out / "first-pass-scores.jsonl", scores)
         receipts = [json.loads(p.read_text()) for p in raw.glob("batch-*/http-*/receipt.json")]
         processes = [json.loads(p.read_text()) for p in raw.glob("batch-*/codex-process.json")]

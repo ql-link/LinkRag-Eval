@@ -1,6 +1,7 @@
 """No-network checks for pointwise judging, constrained batches and strict metrics."""
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from collections import Counter
@@ -13,7 +14,8 @@ import pytest
 from linkrag_eval.retrieval.learning_to_rank import llm_judge as judge
 
 META = {"model": "fake-model", "effort": "low", "codex_version": "fake-cli",
-        "prompt_version": judge.PROMPT_VERSION}
+        "prompt_version": judge.PROMPT_VERSION,
+        "generation": {"interface": "codex_exec", "reasoning_effort": "low"}}
 
 
 class FakeRunner:
@@ -91,6 +93,10 @@ def test_cache_hits_dedup_and_conflicting_metadata(tmp_path):
     runner = FakeRunner()
     first, summary = judge.judge_items(items, runner, tmp_path / "first", metadata=META, workers=1)
     assert summary["duplicate_items"] == 1 and summary["batch_count"] == 4
+    assert summary["generation"] == META["generation"]
+    assert all(r["generation"] == META["generation"] for r in first)
+    assert json.loads((tmp_path / "first/summary.json").read_text())["generation"] == META["generation"]
+    assert judge.read_rows(tmp_path / "first/scores.jsonl") == first
     again = FakeRunner()
     second, cached = judge.judge_items(items, again, tmp_path / "second", metadata=META,
                                       cache_dirs=[tmp_path / "first/judge-cache"])
@@ -98,6 +104,77 @@ def test_cache_hits_dedup_and_conflicting_metadata(tmp_path):
     with pytest.raises(FileExistsError):
         judge.judge_items(items, again, tmp_path / "second", metadata=META)
     assert judge.cache_key(items[0], META) != judge.cache_key(items[0], dict(META, effort="medium"))
+
+
+def test_legacy_cache_key_reproduces_original_formula():
+    item = {"query": "哪扇门开着？", "passage": "A 门开着。"}
+    meta = {k: v for k, v in META.items() if k != "generation"}
+    expected = hashlib.sha256(json.dumps(
+        [meta["prompt_version"], meta["model"], meta["effort"], item["query"], item["passage"]],
+        ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+    assert judge.cache_key(item, meta) == expected
+    assert judge.cache_key(item, META) != expected
+
+
+def test_cache_key_canonicalizes_nested_generation():
+    item = sample_items(1)[0]
+    generation = {"max_tokens": 1024, "extra_body": {"中文": True, "top_p": .9}}
+    reordered = {"extra_body": {"top_p": .9, "中文": True}, "max_tokens": 1024}
+    expected = hashlib.sha256(json.dumps(
+        [META["prompt_version"], META["model"], META["effort"],
+         json.dumps(generation, sort_keys=True, ensure_ascii=False, separators=(",", ":")),
+         item["query"], item["passage"]], ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
+    assert judge.cache_key(item, dict(META, generation=generation)) == expected
+    assert judge.cache_key(item, dict(META, generation=reordered)) == expected
+
+
+@pytest.mark.parametrize("generation", [None, [], "default", {"bad": {1}}, {"bad": float("nan")}])
+def test_cache_key_rejects_invalid_generation(generation):
+    with pytest.raises(ValueError, match="JSON-serializable dict"):
+        judge.cache_key(sample_items(1)[0], dict(META, generation=generation))
+
+
+@pytest.mark.parametrize("recorded", [{}, {"generation": None}, {"generation": []}])
+def test_judge_items_requires_generation(recorded, tmp_path):
+    meta = {k: v for k, v in META.items() if k != "generation"}
+    runner = FakeRunner()
+    with pytest.raises(ValueError, match="^judge metadata must record generation parameters$"):
+        judge.judge_items(sample_items(1), runner, tmp_path / "out", metadata={**meta, **recorded})
+    assert not runner.calls and not (tmp_path / "out").exists()
+
+
+@pytest.mark.parametrize("status", ["available", "unavailable"])
+@pytest.mark.parametrize("field", ["missing", "generation", "model", "effort", "prompt_version"])
+def test_judge_items_rejects_incompatible_cache(field, status, tmp_path):
+    items = sample_items(1)
+    judge.judge_items(items, FakeRunner(), tmp_path / "first", metadata=META)
+    record = judge.read_rows(tmp_path / "first/judge-cache/batch-001.jsonl")[0]
+    record.update(status=status, score=None if status == "unavailable" else 4)
+    if field == "missing":
+        del record["generation"]
+        record["key"] = judge.cache_key(items[0], record)
+    else:
+        record[field] = {"max_tokens": 2048} if field == "generation" else "different"
+        record["key"] = judge.cache_key(items[0], record)
+    incompatible = tmp_path / "incompatible/judge-cache"
+    incompatible.mkdir(parents=True)
+    judge.write_rows(incompatible / "batch-001.jsonl", [record])
+    runner = FakeRunner()
+    message = "generation parameters" if field in {"missing", "generation"} else "metadata mismatch"
+    with pytest.raises(ValueError, match=message):
+        judge.judge_items(items, runner, tmp_path / "out", metadata=META,
+                          cache_dirs=[tmp_path / "first/judge-cache", incompatible])
+    assert not runner.calls
+
+
+@pytest.mark.parametrize("effort", ["low", "medium"])
+def test_codex_runtime_records_generation(effort, tmp_path, monkeypatch):
+    (tmp_path / ".codex").mkdir()
+    (tmp_path / ".codex/config.toml").write_text('model = "fake-model"\n')
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(judge.subprocess, "check_output", lambda *a, **kw: "fake-cli\n")
+    assert judge.CodexRunner(effort=effort).metadata == dict(
+        META, effort=effort, generation={"interface": "codex_exec", "reasoning_effort": effort})
 
 
 def test_retry_once_then_split_and_terminal_failure(tmp_path):

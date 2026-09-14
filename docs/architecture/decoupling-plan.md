@@ -40,7 +40,11 @@ chunk ID 使用 `uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{
 
 BM25 由 eval 的 SQLite FTS5 sidecar 承载，使用预分词 token 和 FTS5 `bm25()` 排序，不依赖生产 ES。`bm25_mode=sqlite_fts5` 启用第三路；`stub` 仅运行 Dense／Sparse。旧 `qdrant_bm25` 模式明确拒绝运行，不是兼容后端；不得用 Sparse 结果伪装 BM25。
 
+`EVAL_BM25_SQLITE_COARSE_WEIGHT`／`EVAL_BM25_SQLITE_FINE_WEIGHT` 是 BM25 内部两正文列的权重，默认 2.0／1.0；`EVAL_RECALL_BM25_WEIGHT` 是三路融合时 BM25 支路的权重，两者作用不同。FTS5 的权重参数按表的全部列顺序对应，包含 `UNINDEXED` 列，未传入的列权重默认为 1.0（见 [SQLite 文档](https://sqlite.org/fts5.html#the_bm25_function)）。`bm25_fts` 的前五列是未索引元数据，第六、七列才是 `coarse`／`fine`；查询使用 `-bm25(bm25_fts, 0, 0, 0, 0, 0, ?, ?)` 返回分数，并按同一分数降序排列。
+
 FTS sidecar 的 schema 2 用普通索引表 `bm25_chunk_rows` 将 chunk ID 关联到 FTS rowid，更新时先定位 rowid，避免按 FTS 的未索引 ID 列反复扫描。现有 schema 1 在初始化时一次迁移，保留 FTS 正文、rowid 和排序口径；正常读批次不执行迁移。该 sidecar 版本由 `SQLiteBm25Store` 管理，不属于六表的 Alembic schema。
+
+2026-09-14 的 #50 修复纠正了正文权重的位置。旧查询仅传两个权重，实际正文按 1.0／1.0 评分，历史 NevIR 候选快照据此生成；其英文分词还会对 token 去重，本次不调整分词行为。修复只影响新查询的评分，已有 schema 2 索引无需迁移或重建。冻结候选与实验结果保持原样；若后续重新召回，须记录修复后的代码与实际配置，使用独立快照目录，不续接旧候选快照或用新分数覆盖旧产物。
 
 ## 检索与评测职责
 

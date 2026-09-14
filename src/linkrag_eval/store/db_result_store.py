@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import json
 from collections import Counter
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import datetime
 from typing import Any
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from linkrag_eval.models import EvalResult, Layer, MetricResult, QuestionType, Snapshot
@@ -130,6 +133,41 @@ class EvalDbResultStore:
         sessionmaker: async_sessionmaker[AsyncSession] | None = None,
     ) -> None:
         self._sessionmaker = sessionmaker or get_eval_sessionmaker()
+
+    @asynccontextmanager
+    async def reserve_run(
+        self, run_id: str, *, dataset: str, baseline_run_id: str | None = None,
+    ) -> AsyncIterator[None]:
+        """普通 run 用主键占位，跨目录防覆盖；评测期间不持有事务。"""
+        async with self._sessionmaker() as session:
+            if await session.scalar(
+                select(EvalMetricResultDB.id).where(EvalMetricResultDB.run_id == run_id).limit(1)
+            ) is not None:
+                raise FileExistsError(
+                    f"Run {run_id!r} already has SQLite metrics; use a new run label"
+                )
+            session.add(EvalRunDB(
+                run_id=run_id, dataset_ids_json=_json_dumps({"dataset": dataset}),
+                baseline_run_id=baseline_run_id, status="running",
+            ))
+            try:
+                await session.commit()
+            except IntegrityError as exc:
+                raise FileExistsError(
+                    f"Run {run_id!r} already exists in SQLite; use a new run label"
+                ) from exc
+        try:
+            yield
+        except BaseException:
+            # 失败/取消也保留身份；已有文件和指标不删除，重试须换标签。
+            async with self._sessionmaker() as session:
+                await session.execute(
+                    update(EvalRunDB).where(EvalRunDB.run_id == run_id).values(
+                        status="failed", finished_at=datetime.now().astimezone(),
+                    )
+                )
+                await session.commit()
+            raise
 
     async def save_snapshot(self, snapshot: Snapshot) -> None:
         result = EvalResult(run_id=snapshot.run_id, snapshot=snapshot, metrics=[])

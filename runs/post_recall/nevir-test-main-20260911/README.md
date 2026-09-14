@@ -4,7 +4,7 @@
 
 固定 BGE 已于 **2026-09-12 04:16:35 UTC** 完成 55,502 项，0 不可用、0 截断，推理 366.043 秒，主体 372.892 秒，进程退出 0；全部产物与资源日志已于 04:18:58 UTC 收妥核验。随后通过 Safari 定时关机，目标服务器时间 12:27（04:27 UTC），刷新已确认 `fb0c4680e1-a580f590` **已关机**，没有释放／删除实例。两臂本机评价完成，最终数字见 [paper-summary.json](paper-summary.json)和[正式 Test 报告](../../../docs/reports/nevir_official_test_2026_09_12.md)。
 
-主口径 Qwen K20 严格成对正确 2,119/2,736＝77.45%，固定融合 1,431/2,736＝52.30%，BGE 同主排序 1,909/2,736＝69.77%。Qwen 对融合差值 25.15 个百分点，来源组 95% 区间 [23.54, 26.78]；BGE 的 L1 严格正确率和 L2 指定优选段 Top3 更高，均完整报告。原 #23 成员 Test 聚合仍在 [nevir-test-final-20260911](../nevir-test-final-20260911/README.md)，本实验不覆盖或复用其评分。下方离线准备、原运行、受阻与续行段落保留各阶段的执行事实。
+主口径 Qwen K20 单查询严格正确 2,119/2,736＝77.45%，固定融合 1,431/2,736＝52.30%，BGE 同主排序 1,909/2,736＝69.77%。Qwen 对融合差值 25.15 个百分点，来源组 95% 区间 [23.54, 26.78]；BGE 的 L1 单查询严格偏好准确率和 L2 指定优选段 Top3 更高，均完整报告。原 #23 成员 Test 聚合仍在 [nevir-test-final-20260911](../nevir-test-final-20260911/README.md)，本实验不覆盖或复用其评分。下方离线准备、原运行、受阻与续行段落保留各阶段的执行事实。
 
 <a id="qwen-decision-decomposition"></a>
 
@@ -104,7 +104,7 @@ BGE 沿用 `BAAI/bge-reranker-v2-m3` 固定 revision `953dc6f6f85a1b2dbfca4c34a2
 .venv/bin/python runs/post_recall/nevir-test-main-20260911/workflow.py evaluate --arm bge
 ```
 
-评价复用现有 `evaluate_pairs`／`evaluate_rankers`／`pair_statistics.comparison_table`，同时输出主口径与含冲突敏感性、严格成对准确率、双向正确、列表位置、纠正／改坏、来源组自助 95% 区间（seed 20260910，2,000 次）及逐方向符号检验。预定主比较为 Qwen `stage1_judge − stage1`。逐方向检验未校正组内依赖和多重比较；没有全池相关性标签，不报告全池 nDCG 或答案质量。
+评价复用现有 `evaluate_pairs`／`evaluate_rankers`／`pair_statistics.comparison_table`，同时输出主口径与含冲突敏感性、单查询严格偏好准确率、双向正确、列表位置、纠正／改坏、来源组自助 95% 区间（seed 20260910，2,000 次）及逐方向符号检验。预定主比较为 Qwen `stage1_judge − stage1`。逐方向检验未校正组内依赖和多重比较；没有全池相关性标签，不报告全池 nDCG 或答案质量。
 
 所有大输入、逐题输出和运行日志留在本地并受 Git 忽略。两臂输出已完整取回、评价并独立核对计数；轻量聚合纳入 Git 白名单，逐题与资源日志保留本地。
 

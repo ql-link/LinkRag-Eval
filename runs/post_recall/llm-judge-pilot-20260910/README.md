@@ -28,7 +28,7 @@ E0 排名无法覆盖指定对：经理诊断的双候选 top-10 覆盖仅 dev 1
 - `stage1-scores --role --out`：从已保存候选重算英文特征，提取 `baseline_score`，按候选顺序输出 `stage1-{role}.jsonl`。Development 必须与 `items-stage1-top20/development/stage1-development.jsonl` 逐值逐序一致。
 - `items --level l2|l3 --stage1 <分数> --top-k 20 --out <新目录>`：仅按 stage 1 选择，输出 `{role}.jsonl`。Development 的 `(query, chunk)` 集合必须与经理 scratch 一致；较小 K 检查同一 scratch 的前 K 子集。L1 继续使用 `--baseline` 和指定候选。
 - `evaluate-l2`：同时报告 `E0`、`stage1`、`stage1_judge`、`E0_judge`。两个 judge 排序器只重排 stage-1 top-K，次级分数分别为 stage 1、E0；余下候选都保持 stage-1 顺序。已判 top-20 可用于 K=10，只使用 top-10 分数。任一范围内候选 unavailable 时，该查询整体回退 stage 1；范围外的 unavailable 不触发回退。
-- 四个排序器均有官方严格成对指标，development 另有 human v5 52 题指标；均有相对 E0 和 stage1 的 corrected/damaged 四格及来源组明细。列表指标为共同覆盖查询上的 `preferred@1`、`preferred@3`、`preferred_mrr`、`mean_rank_preferred`、`mean_rank_other`。Human 列表指标使用其可评价子集和人类偏好方向。
+- 四个排序器均有官方单查询严格偏好指标，development 另有 human v5 52 题指标；均有相对 E0 和 stage1 的 corrected/damaged 四格及来源组明细。列表指标为共同覆盖查询上的 `preferred@1`、`preferred@3`、`preferred_mrr`、`mean_rank_preferred`、`mean_rank_other`。Human 列表指标使用其可评价子集和人类偏好方向。
 - 成对评价遵循严格数值／排序键同分；`chunk_id` 不把模型同分变成成对正确。列表名次使用确定性 ID 同分顺序，名次从 1 开始。列表命中率和 MRR 为 0–1 数值。重排后 top-K 与剩余部分是两个连续区段，同一区段内相同排序键仍为严格同分。
 - Trigger 的 `fallback_queries`、`changed_queries` 及 `by_query` 覆盖所有输入查询，列表／成对指标才使用共同覆盖人群。`judged_calls_per_query` 指本次使用的查询／段落判断数（含缓存，不是远端子进程数）；原 judge 批次、缓存和耗时保留在 `judge_run`。
 - L3 使用离线 **`candidate_difference_v3_en_llm_judge_v2`**：English38 + `judge_available` + `judge_score`。只有 stage-1 top-K 可进入新增列，其他候选为 0／NaN；传入更多已判候选时忽略范围外分数。训练／推理均校验 stage1 值确实等于完整特征矩阵的 `baseline_score` 列，旧 E0 选择契约的模型包拒绝加载。
@@ -44,11 +44,12 @@ E0 排名无法覆盖指定对：经理诊断的双候选 top-10 覆盖仅 dev 1
 
 ## 经理可运行的命令
 
-从仓库根目录运行，等待对应 judge 的 `scores.jsonl` 和 `summary.json` 完整后再使用。以下每个输出目录必须尚不存在；不覆盖旧结果。
+从仓库根目录运行，等待对应 judge 的 `scores.jsonl` 和 `summary.json` 完整后再使用。以下是历史流程的复现示例，不是当前待执行任务；先将 `pilot_replay` 的占位标识换成本次唯一名称，所有输出子目录必须尚不存在，不覆盖上表中的已完成结果。`train-l3` 会实际训练，查看既有产物不需要运行它。
 
 ```bash
 pilot_run=runs/post_recall/llm-judge-pilot-20260910
 stage1_root="$pilot_run/items-stage1-top20"
+pilot_replay="$pilot_run/replay-<新的唯一标识>"
 
 # Four L2 evaluations: development/confirmation, K=10/20 from the same judged top 20.
 for pilot_role in development confirmation; do
@@ -59,7 +60,7 @@ for pilot_role in development confirmation; do
       --stage1 "$stage1_root/$pilot_role/stage1-$pilot_role.jsonl" \
       --scores "$pilot_run/l2s-$pilot_role-judge/scores.jsonl" \
       --top-k "$pilot_k" \
-      --out "$pilot_run/l2s-$pilot_role-k$pilot_k-v2"
+      --out "$pilot_replay/l2s-$pilot_role-k$pilot_k-v2"
   done
 done
 
@@ -70,10 +71,10 @@ done
   --dev-baseline "$pilot_run/baseline/development/scores.jsonl" \
   --train-stage1 "$stage1_root/train/stage1-train.jsonl" \
   --dev-stage1 "$stage1_root/development/stage1-development.jsonl" \
-  --train-scores "$pilot_run/l3s-train-judge/scores.jsonl" \
+  --train-scores "$pilot_run/l3s-train-judge-8w/scores.jsonl" \
   --dev-scores "$pilot_run/l2s-development-judge/scores.jsonl" \
   --model gpt-6-astra --effort low --top-k 20 \
-  --out "$pilot_run/l3s-stage1-v2-training"
+  --out "$pilot_replay/l3s-stage1-v2-training"
 
 # Reload the trained bundle and evaluate each role; K comes from the model contract.
 for pilot_role in development confirmation; do
@@ -82,8 +83,8 @@ for pilot_role in development confirmation; do
     --baseline "$pilot_run/baseline/$pilot_role/scores.jsonl" \
     --stage1 "$stage1_root/$pilot_role/stage1-$pilot_role.jsonl" \
     --scores "$pilot_run/l2s-$pilot_role-judge/scores.jsonl" \
-    --bundle "$pilot_run/l3s-stage1-v2-training/judge-model" \
-    --out "$pilot_run/l3s-$pilot_role-v2-evaluation"
+    --bundle "$pilot_replay/l3s-stage1-v2-training/judge-model" \
+    --out "$pilot_replay/l3s-$pilot_role-v2-evaluation"
 done
 ```
 

@@ -144,7 +144,10 @@ def _add_golden_gen(sub: argparse._SubParsersAction) -> None:
 def _add_run(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("run", help="跑召回评测:golden → recall → 指标")
     p.add_argument("--golden", required=True, help="golden jsonl")
-    p.add_argument("--run-label", default="run", help="run_id 后缀标签")
+    p.add_argument(
+        "--run-label", default="run",
+        help="run_id 为 <标签>-top<K>；文件或 SQLite 已有该 ID 时拒绝运行，请换新标签",
+    )
     p.add_argument("--top-k", type=int, default=10)
     p.add_argument(
         "--dense-top-k",
@@ -183,7 +186,7 @@ def _add_run(sub: argparse._SubParsersAction) -> None:
     p.add_argument(
         "--baseline",
         default=None,
-        help="基线 run_id(读 results/<id>.json 出回归 diff;须先以该 id 跑过)",
+        help="基线 run_id(从本输出目录 results/<id>.json 提前读取；缺失或与当前 ID 同名时报错)",
     )
     p.add_argument("--precheck", action="store_true", help="跑前校验 golden chunk reference 在库")
     p.add_argument(
@@ -801,50 +804,59 @@ async def _do_run(args) -> int:
     enabled_sources = _parse_enabled_sources(args.enabled_sources)
     _normalize_single_route_weight(settings, enabled_sources)
     run_id = f"{args.run_label}-top{args.top_k}"
+    store = FilesystemResultStore(args.out_dir, dataset=args.dataset)
+    store.validate_run_id(run_id)
+    baseline = None
+    if args.baseline:
+        store.validate_run_id(args.baseline)
+        if args.baseline == run_id:
+            raise ValueError("基线 run_id 不能与当前运行相同，请换新 --run-label")
+        baseline = store.load_baseline(args.baseline)
+        if baseline is None:
+            raise ValueError(f"未找到基线 {args.baseline}，需先在本输出目录保存 results/<id>.json")
+        if baseline.run_id != args.baseline:
+            raise ValueError("基线文件中的 run_id 与请求的基线不一致")
+    db_store = EvalDbResultStore()
     fetch_status = None
     if args.precheck:
         from linkrag_eval.store.corpus_repo import EvalCorpusRepo
 
         fetch_status = EvalCorpusRepo().fetch_status
 
-    store = FilesystemResultStore(args.out_dir, dataset=args.dataset)
-    result = await run_eval(
-        args.golden,
-        top_k=args.top_k,
-        run_id=run_id,
-        evaluable=build_eval_recall_evaluable(
-            args.top_k, settings=settings, enabled_sources=enabled_sources
-        ),
-        metrics=default_retrieval_metrics(),
-        store=store,
-        settings=settings,
-        fetch_status=fetch_status,
-        require_chunk_refs=args.require_chunk_references,
-        enabled_sources=enabled_sources,
-        progress=print,
-    )
-    print("\n" + format_retrieval_summary(result))
+    with store.reserve_run(run_id):
+        async with db_store.reserve_run(
+            run_id, dataset=args.dataset, baseline_run_id=args.baseline,
+        ):
+            result = await run_eval(
+                args.golden,
+                top_k=args.top_k,
+                run_id=run_id,
+                evaluable=build_eval_recall_evaluable(
+                    args.top_k, settings=settings, enabled_sources=enabled_sources
+                ),
+                metrics=default_retrieval_metrics(),
+                store=store,
+                settings=settings,
+                fetch_status=fetch_status,
+                require_chunk_refs=args.require_chunk_references,
+                enabled_sources=enabled_sources,
+                progress=print,
+            )
+            print("\n" + format_retrieval_summary(result))
 
-    # 落快照 + 结构化结果(后者是后续 --baseline 对比的可 reload 源)
-    store.save_snapshot(result.snapshot)
-    result_path = store.save_result(result)
-    await EvalDbResultStore().save_result(
-        result, dataset=args.dataset, baseline_run_id=args.baseline
-    )
-
-    baseline = None
-    if args.baseline:
-        baseline = store.load_baseline(args.baseline)
-        if baseline is None:
-            print(f"提示:未找到基线 {args.baseline}(需先以该 run_id 跑过并落 results/)")
-
-    paths = write_retrieval_reports(
-        result,
-        args.out_dir,
-        run_id=run_id,
-        dataset=args.dataset,
-        baseline=baseline,
-    )
+            # 落快照 + 结构化结果(后者是后续 --baseline 对比的可 reload 源)
+            store.save_snapshot(result.snapshot)
+            result_path = store.save_result(result)
+            await db_store.save_result(
+                result, dataset=args.dataset, baseline_run_id=args.baseline
+            )
+            paths = write_retrieval_reports(
+                result,
+                args.out_dir,
+                run_id=run_id,
+                dataset=args.dataset,
+                baseline=baseline,
+            )
     print(f"结果: {result_path}")
     print("DB台账: eval_run / eval_metric_result")
     print(f"报告: {paths['html']}\n      {paths['json']}")

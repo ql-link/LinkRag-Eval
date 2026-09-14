@@ -16,6 +16,8 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -90,6 +92,37 @@ class FilesystemResultStore:
         self.dataset = dataset
         for sub in ("snapshots", "results", "reports"):
             (self.base / sub).mkdir(parents=True, exist_ok=True)
+
+    @staticmethod
+    def validate_run_id(run_id: str) -> None:
+        if (
+            not run_id or len(run_id) > 96 or run_id in {".", ".."}
+            or Path(run_id).name != run_id or "\\" in run_id
+        ):
+            raise ValueError("run_id must be a single filename of at most 96 characters")
+
+    @contextmanager
+    def reserve_run(self, run_id: str) -> Iterator[None]:
+        """普通 run 独占文件输出；保留历史碎片，拒绝同名并发。"""
+        self.validate_run_id(run_id)
+        lock = self.base / f".run-{run_id}.lock"
+        # 只有成功创建锁后才进入 finally，不能删除另一个运行的锁。
+        with lock.open("x", encoding="utf-8"):
+            pass
+        try:
+            artifacts = (
+                self.base / "snapshots" / f"{run_id}.json",
+                self.base / "results" / f"{run_id}.json",
+                self.base / "reports" / f"{run_id}.html",
+                self.base / f"{run_id}.html",
+                self.base / f"{run_id}.json",
+            )
+            for path in artifacts:
+                if path.exists() or path.is_symlink():
+                    raise FileExistsError(f"Run {run_id!r} already has output; use a new run label")
+            yield
+        finally:
+            lock.unlink()
 
     def save_snapshot(self, snapshot: Snapshot) -> None:
         path = self.base / "snapshots" / f"{snapshot.run_id}.json"

@@ -1,8 +1,9 @@
 """Alembic 运行环境(LinkRag-Eval 独立评测库)。
 
 DB URL 解析(同步 driver):程序化 ``config.attributes['database_url']`` 优先，
-其次 ``ALEMBIC_DATABASE_URL`` 环境变量，否则读取 ``EVAL_DB_URL``，
-并把异步 driver 换成同步 driver。``target_metadata``
+其次 ``ALEMBIC_DATABASE_URL`` 环境变量，否则读取 ``EVAL_DB_URL``。
+最终 URL 统一校验为本地 SQLite，并把异步 driver 换成同步 driver；
+配置错误直接终止，不回退到 ``alembic.ini`` 中的 URL。``target_metadata``
 取 ``EvalBase.metadata``——评测库 schema 演进的唯一权威源,绝不碰生产 ``tolink_rag_db``。
 
 只依赖 ``linkrag_eval.store.models``(纯 ORM,零 rag/零 src.* 依赖),与承重约定一致。
@@ -21,30 +22,21 @@ from linkrag_eval.store.models import EvalBase
 config = context.config
 
 
-def _resolve_url() -> str | None:
-    explicit_url = config.attributes.get("database_url")
-    if explicit_url is not None:
-        if not explicit_url.startswith(("sqlite+aiosqlite:///", "sqlite:///")):
-            raise ValueError("程序化迁移只允许显式本地 SQLite URL")
-        return explicit_url.replace("sqlite+aiosqlite://", "sqlite://", 1)
-    url = os.environ.get("ALEMBIC_DATABASE_URL")
-    if url:
-        return url
-    # best-effort:缺 .env.eval 也允许离线生成,只在真正连库时才需要
-    try:
+def _resolve_url() -> str:
+    url = config.attributes.get("database_url")
+    if url is None:
+        url = os.environ.get("ALEMBIC_DATABASE_URL")
+    if url is None:
         from linkrag_eval.config import get_settings
 
-        dsn = get_settings().database_url()
-        return dsn.replace("mysql+aiomysql://", "mysql+pymysql://").replace(
-            "sqlite+aiosqlite://", "sqlite://"
-        )
-    except Exception:  # noqa: BLE001
-        return None
+        url = get_settings().database_url()
+    if not isinstance(url, str) or not url.startswith(("sqlite+aiosqlite:///", "sqlite:///")):
+        raise ValueError("迁移只允许显式本地 SQLite URL")
+    return url.replace("sqlite+aiosqlite://", "sqlite://", 1)
 
 
 runtime_url = _resolve_url()
-if runtime_url:
-    config.set_main_option("sqlalchemy.url", runtime_url)
+config.set_main_option("sqlalchemy.url", runtime_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

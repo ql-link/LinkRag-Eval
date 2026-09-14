@@ -34,6 +34,12 @@ chunk ID 使用 `uuid5(NAMESPACE_DNS, f"tolink-eval:eval-{dataset_id}-{doc_id}-{
 
 `EvalCorpusRepo` 与结果台账使用 `runs/linkrag_eval.sqlite3`。`EvalBase` 包含 `eval_dataset`、`eval_corpus_chunk`、`eval_query`、`eval_qrel`、`eval_run`、`eval_metric_result` 六表；schema 演进经仓库根目录 `alembic/` 完成，与生产迁移隔离。当前不保留旧 MySQL 配置、驱动或迁移入口，禁止访问生产库。
 
+迁移 URL 按程序化 `config.attributes["database_url"]`、`ALEMBIC_DATABASE_URL`、eval 配置 `EVAL_DB_URL` 的顺序选择；最终 URL 在在线连接和离线生成 SQL 前统一校验，只接受本地 `sqlite:///`／`sqlite+aiosqlite:///`，后者转换为同步 driver。显式空值或非法 URL、eval 配置加载错误直接终止，不吞掉错误后回退到 `alembic.ini` 的 `sqlalchemy.url`；合法高优先级 URL 不受低优先级配置影响。
+
+普通 `linkrag-eval run` 的 ID 仍为 `<run-label>-top<K>`，默认 `run-top10`；ID 是单个文件名且最多 96 字符，也是 SQLite 中跨数据集的主键。每轮先独占输出目录内该 ID 的临时锁，检查快照、结果及报告是否已存在，再用 SQLite 主键插入并提交 `running` 占位，之后才装配召回和执行评测。已有任一文件（含未完成碎片）、同名运行或遗留指标都会拒绝运行；换 `--out-dir` 或 `--dataset` 不能绕过共享 SQLite 的检查。重跑应指定新 `--run-label`，不覆盖或重命名原结果。
+
+`--baseline` 从本输出目录的 `results/<id>.json` 在本轮写入前读取；缺失、文件身份不一致或与当前 ID 同名时明确报错。对照示例：先以 `--run-label before` 保存，再以 `--run-label after --baseline before-top10` 运行（两轮均为 `--top-k 10`），报告比较新结果与原基线。失败或取消保留 `failed` 台账和已写产物，释放本进程创建的文件锁；强制终止可能留下 `running` 占位或 `.run-<id>.lock`，仍拒绝复用，后续使用新标签。这里保护普通 run 的历史记录，其他消费者原有的幂等保存接口不变。
+
 迁移 `0004` 给 corpus 行新增可空整数 `dense_input_chars`、`sparse_input_chars`，旧行保留 NULL，不推定为全文编码。入库始终从原文分别生成两路编码和全文 BM25，正文、原始 `char_len`、ID 不随编码截短改变。重写已有行时，先撤销旧的三路完成标记和长度回执，再写索引；最终将全文、两路回执与完成标记同次写入 SQLite。跨存储失败后该行需重新核对，不继承旧完成状态。长度回执用于接入记录、续接完整性核验与汇总，不加入排序候选字段。
 
 完整 T2 接入通过 `runners/t2_workflow.py` 绑定运行目录内独立的 `corpus.sqlite3`、`bm25.sqlite3` 和专用 eval Qdrant collection，不改全局环境配置。独立语料库仍使用同一 Alembic 迁移链，程序化显式 SQLite URL 优先于默认库。正文流式分批处理，续接按原始身份与正文核对实际索引；状态说明见研究计划，不凭本地写入标记断言远端数据存在。

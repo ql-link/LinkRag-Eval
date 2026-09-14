@@ -11,6 +11,7 @@
 - [acceptance.json](acceptance.json)：本地复验结果；整数精确相同，浮点列表聚合允许 1e-12 绝对误差。
 - [实验报告](../../../docs/reports/list_collapse_2026_09_11.md)：结果、代价、历史纠错和证据限制。
 - [成员 Test 聚合](../nevir-test-final-20260911/README.md)：独立于本目录已复现的开发／确认。
+- [#49 固定 N=8 Test 本地重放](../n8-test-replay-20260914/README.md)：2026-09-14 从已验收快照生成模型分数，全部聚合与成员原件一致；本目录原接收与开发／确认记录保留。
 
 源码接入 `pairwise_training.py` 及对应单元测试。`--background-negatives` 默认为 0；显式 N=8 时只在 Train 加入确定性抽取的背景候选，标签为 2/1/0，Development 沿用指定两段早停。N=8 是实验模型，不替换 `models/english-baseline/`。
 

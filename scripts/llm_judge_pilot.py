@@ -421,7 +421,8 @@ def main(argv=None):
     p.add_argument("--runner", choices=("codex", "ollama", "openai"), default="codex")
     p.add_argument("--endpoint", help="server base URL, without /v1/chat/completions or /api/chat")
     p.add_argument("--max-tokens", type=int, default=None,
-                   help="OpenAI 兼容后端的生成上限；默认 max(1024, 80×batch_size)，须小于 --num-ctx")
+                   help="OpenAI 兼容后端的生成上限；默认 max(1024, 80×batch_size)，"
+                        "开启 --think 时默认 max(4096, 80×batch_size)；须小于 --num-ctx")
     p.add_argument("--num-ctx", type=int, default=8192,
                    help="Ollama num_ctx；OpenAI 兼容后端仅用于校验 --max-tokens 上限（默认 8192）")
     p.add_argument("--think", action="store_true",

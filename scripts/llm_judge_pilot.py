@@ -158,7 +158,7 @@ def judge(args):
             max_tokens = args.max_tokens if args.max_tokens is not None else max(floor, 80 * batch_size)
             runner = OpenAICompatRunner(args.endpoint, args.model, api_key=api_key, think=args.think,
                                         num_ctx=args.num_ctx, max_tokens=max_tokens)
-    caches = sorted({*args.cache, *RUN.rglob("judge-cache")})
+    caches = sorted(set(args.cache))
     _, summary = judge_items(rows, runner, args.out, metadata=runner.metadata,
                              cache_dirs=caches, batch_size=batch_size,
                              workers=args.workers, seed=args.seed)
@@ -201,7 +201,7 @@ def evaluate(args):
     judged = judged_scores(raw)
     summary = json.loads(args.scores.with_name("summary.json").read_text())
     if summary["items"] != len(raw) or any(any(r.get(k) != summary[k] for k in
-            ("model", "effort", "prompt_version")) for r in raw):
+            ("model", "effort", "prompt_version", "generation") if k in summary) for r in raw):
         raise ValueError("judge result metadata/count mismatch")
     base = score_maps(baseline_rows)
     labels = read_rows(role_paths(args.role)["supervision"])
@@ -227,7 +227,8 @@ def evaluate(args):
 def load_judge_arm(path, schema):
     rows = read_rows(path)
     for row in rows:
-        if any(row.get(k) != schema[k] for k in ("model", "effort", "prompt_version")):
+        if any(row.get(k) != schema[k] for k in
+               ("model", "effort", "prompt_version", "generation") if k in schema):
             raise ValueError("judge score cache does not match model contract")
         if row.get("level") not in {"l2", "l3"}:
             raise ValueError("L3 requires top-K judging, not L1 designated pairs")
@@ -430,7 +431,8 @@ def main(argv=None):
     p.add_argument("--batch-size", type=int, help="default: 40 for codex, 1 for local runners")
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--seed", type=int, default=20260910)
-    p.add_argument("--cache", type=Path, action="append", default=[])
+    p.add_argument("--cache", type=Path, action="append", default=[],
+                   help="只合并显式 --cache 目录；缓存键包含生成参数，#48 之前的缓存不能复用于新运行")
     p.add_argument("--smoke", action="store_true")
     p.add_argument("--smoke-offset", type=int, default=0)
     p.add_argument("--isolated-state", action="store_true")

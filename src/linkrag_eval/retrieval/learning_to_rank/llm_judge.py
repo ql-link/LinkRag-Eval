@@ -60,6 +60,7 @@ def runtime_metadata(model=None, effort="low"):
     if not effective:
         raise ValueError("cannot resolve effective Codex model")
     return {"prompt_version": PROMPT_VERSION, "model": effective, "effort": effort,
+            "generation": {"interface": "codex_exec", "reasoning_effort": effort},
             "codex_version": subprocess.check_output(["codex", "--version"], text=True).strip()}
 
 
@@ -168,7 +169,19 @@ def plan_batches(items, *, batch_size=40, seed=20260910):
 
 
 def cache_key(item, metadata):
+    """Metadata without generation only reads historical caches from before #48.
+
+    judge_items rejects such metadata for new runs.
+    """
     parts = [metadata[k] for k in ("prompt_version", "model", "effort")]
+    if "generation" in metadata:
+        if not isinstance(metadata["generation"], dict):
+            raise ValueError("judge generation parameters must be a JSON-serializable dict")
+        try:
+            parts.append(json.dumps(metadata["generation"], sort_keys=True, ensure_ascii=False,
+                                    separators=(",", ":"), allow_nan=False))
+        except (TypeError, ValueError) as exc:
+            raise ValueError("judge generation parameters must be a JSON-serializable dict") from exc
     return hashlib.sha256(json.dumps([*parts, item["query"], item["passage"]],
                                      ensure_ascii=False, separators=(",", ":")).encode()).hexdigest()
 
@@ -240,6 +253,8 @@ class CodexRunner:
 
 
 def judge_items(items, runner, out, *, metadata, cache_dirs=(), batch_size=40, workers=4, seed=20260910):
+    if "generation" not in metadata or not isinstance(metadata["generation"], dict):
+        raise ValueError("judge metadata must record generation parameters")
     if workers < 1 or metadata["prompt_version"] != PROMPT_VERSION:
         raise ValueError("invalid workers/prompt version")
     out = Path(out)
@@ -249,6 +264,10 @@ def judge_items(items, runner, out, *, metadata, cache_dirs=(), batch_size=40, w
     for directory in cache_dirs:
         for path in sorted(Path(directory).glob("*.jsonl")):
             for r in read_rows(path):
+                if r.get("generation") != metadata["generation"]:
+                    raise ValueError("cache record lacks or differs in generation parameters (pre-#48 or another run); regenerate instead of reusing")
+                if any(r.get(k) != metadata[k] for k in ("model", "effort", "prompt_version")):
+                    raise ValueError("cache key metadata mismatch")
                 judged_scores([dict(r, source_query_id="cache", chunk_id="cache")])
                 if r["status"] == "unavailable":
                     continue  # infrastructure failures are not terminal; retry in later runs
@@ -256,9 +275,6 @@ def judge_items(items, runner, out, *, metadata, cache_dirs=(), batch_size=40, w
                     raise ValueError("conflicting cache records")
                 cache[r["key"]] = r
     unique = {cache_key(r, metadata): r for r in items}
-    if any(any(cache[key].get(k) != metadata[k] for k in ("model", "effort", "prompt_version"))
-           for key in unique if key in cache):
-        raise ValueError("cache key metadata mismatch")
     pending = [r for key, r in unique.items() if key not in cache]
     cache_out = out / "judge-cache"
     cache_out.mkdir()

@@ -49,9 +49,13 @@ def test_http_happy_path_and_shared_pipeline(kind, runner_type, tmp_path):
         return httpx.Response(200, json=envelope(kind, json.dumps(VALUE)))
     runner = runner_type("http://localhost:8000/?private=query#fragment", "qwen3", num_ctx=4096,
                          transport=httpx.MockTransport(respond))
+    generation = {"temperature": 0, "num_ctx": 4096, "think": False}
+    generation.update({"max_tokens": 1024, "response_format": "json_schema",
+                       "extra_body": {"chat_template_kwargs": {"enable_thinking": False}}}
+                      if kind == "openai" else {"format": "schema"})
     assert runner.metadata == {"runner": kind, "endpoint": "localhost", "model": "qwen3",
                                "effort": "none", "prompt_version": judge.PROMPT_VERSION,
-                               "codex_version": None}
+                               "codex_version": None, "generation": generation}
     rows, summary = judge.judge_items([ITEM], runner, tmp_path / "run", metadata=runner.metadata)
     assert rows[0]["score"] == 4 and summary["batch_count"] == 1
     assert json.loads((tmp_path / "run/batch-001/out.json").read_text()) == VALUE
@@ -77,6 +81,8 @@ def test_openai_fallback_auth_and_extra_body(tmp_path):
                                    "enable_thinking": True, "custom": True}},
                                transport=httpx.MockTransport(respond))
     assert runner.run("prompt", tmp_path) == VALUE and len(calls) == 2
+    assert runner.metadata["generation"]["extra_body"] == {
+        "top_p": .9, "chat_template_kwargs": {"enable_thinking": False, "custom": True}}
     assert "synthetic-test-token" not in json.dumps(runner.metadata)
 
 
@@ -131,12 +137,26 @@ def test_transport_error_and_empty_choices_use_pipeline_error_types(tmp_path):
 
 
 def test_cache_key_distinguishes_local_from_codex(tmp_path, monkeypatch):
-    meta = {"prompt_version": judge.PROMPT_VERSION, "model": "qwen3", "effort": "low", "codex_version": "fake"}
-    monkeypatch.setattr(judge, "runtime_metadata", lambda *args: meta)
+    (tmp_path / ".codex").mkdir()
+    (tmp_path / ".codex/config.toml").write_text('model = "qwen3"\n')
+    monkeypatch.setattr(Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(judge.subprocess, "check_output", lambda *a, **kw: "fake\n")
     codex = judge.CodexRunner()
     for runner_type in (OpenAICompatRunner, OllamaRunner):
         runner = runner_type("http://localhost", "qwen3")
         assert judge.cache_key(ITEM, runner.metadata) != judge.cache_key(ITEM, codex.metadata)
+
+
+@pytest.mark.parametrize("changed", [{"max_tokens": 2048}, {"num_ctx": 16384}, {"think": True},
+                                     {"extra_body": {"top_p": .9}},
+                                     {"extra_body": {"chat_template_kwargs": {"custom": True}}}])
+def test_openai_cache_key_distinguishes_generation(changed):
+    options = {"max_tokens": 1024, "num_ctx": 8192, "think": False}
+    first = OpenAICompatRunner("http://localhost", "qwen3", **options)
+    second = OpenAICompatRunner("http://localhost", "qwen3", **{**options, **changed})
+    assert judge.cache_key(ITEM, first.metadata) != judge.cache_key(ITEM, second.metadata)
+    assert judge.cache_key(ITEM, first.metadata) != judge.cache_key(
+        ITEM, dict(second.metadata, effort=first.metadata["effort"]))
 
 
 def load_script():
@@ -145,6 +165,35 @@ def load_script():
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+@pytest.mark.parametrize("generation", [None, {"max_tokens": 1024}])
+def test_load_judge_arm_accepts_matching_legacy_and_current_scores(generation, tmp_path):
+    script = load_script()
+    schema = {"model": "qwen3", "effort": "none", "prompt_version": judge.PROMPT_VERSION}
+    if generation is not None:
+        schema["generation"] = generation
+    path = tmp_path / "scores.jsonl"
+    judge.write_rows(path, [dict(ITEM, **schema, level="l3", score=4, status="available")])
+    assert script.load_judge_arm(path, schema) == {"q": {"a": 4}}
+    with pytest.raises(ValueError, match="does not match model contract"):
+        script.load_judge_arm(path, dict(schema, generation={"max_tokens": 2048}))
+
+
+@pytest.mark.parametrize("generation", [None, {"max_tokens": 2048}])
+def test_evaluate_l1_rejects_missing_or_different_generation(generation, tmp_path):
+    script = load_script()
+    meta = {"model": "qwen3", "effort": "none", "prompt_version": judge.PROMPT_VERSION}
+    row = dict(ITEM, **meta, score=4, status="available")
+    if generation is not None:
+        row["generation"] = generation
+    judge.write_rows(tmp_path / "scores.jsonl", [row])
+    judge.write_rows(tmp_path / "baseline.jsonl", [])
+    judge.write_json(tmp_path / "summary.json", dict(meta, items=1, generation={"max_tokens": 1024}))
+    with pytest.raises(ValueError, match="judge result metadata/count mismatch"):
+        script.main(["evaluate-l1", "--role", "confirmation", "--out", str(tmp_path / "out"),
+                     "--scores", str(tmp_path / "scores.jsonl"),
+                     "--baseline", str(tmp_path / "baseline.jsonl")])
 
 
 def scored(values):
@@ -214,7 +263,8 @@ def test_judge_cli_defaults_and_explicit_batch_size(kind, explicit_size, tmp_pat
             self.metadata = {"model": "fake", "effort": "low" if kind == "codex" else "none"}
     monkeypatch.setattr(script, {"codex": "CodexRunner", "ollama": "OllamaRunner",
                                 "openai": "OpenAICompatRunner"}[kind], FakeRunner)
-    monkeypatch.setattr(script, "RUN", tmp_path / "no-caches")
+    monkeypatch.setattr(script, "RUN", tmp_path / "history")
+    (script.RUN / "old/judge-cache").mkdir(parents=True)
     def fake_judge(rows, runner, out, **kwargs):
         seen.update(run=kwargs)
         return [], {"unavailable": 0}
@@ -229,7 +279,9 @@ def test_judge_cli_defaults_and_explicit_batch_size(kind, explicit_size, tmp_pat
         argv += ["--api-key-env", "EVAL_JUDGE_TEST_KEY"]
     if explicit_size is not None:
         argv += ["--batch-size", str(explicit_size)]
+        argv += ["--cache", str(tmp_path / "explicit")] * 2
     script.main(argv)
+    assert seen["run"]["cache_dirs"] == ([tmp_path / "explicit"] if explicit_size is not None else [])
     assert seen["run"]["batch_size"] == (explicit_size or (40 if kind == "codex" else 1))
     assert seen["run"]["workers"] == 12
     if kind != "codex":
@@ -425,7 +477,7 @@ def test_probe_items_use_shared_judge_and_cache(tiny_probe, tmp_path):
             calls.append(prompt)
             return VALUE
     meta = {"prompt_version": judge.PROMPT_VERSION, "model": "fake-probe", "effort": "none",
-            "codex_version": None}
+            "codex_version": None, "generation": {"temperature": 0}}
     first, _ = judge.judge_items(items, FakeRunner(), tmp_path / "first", metadata=meta, batch_size=1)
     second, summary = judge.judge_items(items, FakeRunner(), tmp_path / "second", metadata=meta,
                                        cache_dirs=[tmp_path / "first/judge-cache"], batch_size=1)

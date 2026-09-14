@@ -20,7 +20,7 @@
 | 默认评测库与两个 sidecar | `runs/linkrag_eval.sqlite3`、`runs/bm25_eval.sqlite3`、`runs/alt_embedding_eval.sqlite3` | 分别保存评测元数据／正文／结果、FTS5 索引、替代 embedding 缓存；均仅本地，不是本轮 NevIR 的独立库 |
 | 真实召回的向量索引 | 远端 eval Qdrant collection；实验的 `storage/owner.json` 等记录位置 | 不在 Git 或 SQLite 内；本轮未连接远端检查。已有离线候选诊断不依赖重建索引 |
 | 旧人工材料 | [human_tasks/README.md](../human_tasks/README.md)、`runs/robust_fusion/` 及既有归档 | 无当前人工任务；指南可进 Git，提交／原始记录仅本地或在旧归档，三个失效入口链接已清理 |
-| 本地论文全文 | [docs/papers/README.md](papers/README.md) | PDF 仅本地；文献地图与目录进 Git |
+| 本地论文与写作材料 | [docs/papers/README.md](papers/README.md) | 正文、PDF、稿件参考文献和审查记录仅本地管理；目录只公开通用存放说明 |
 | 助手资料 | `.ai/`、`.agents/skills/` | 前者是随仓库保留的共享资料，含旧生产流程；后者是被忽略的本地技能，不是实验数据 |
 | 工程审查与历史交接证据 | [master 审查](audits/master-20260913/README.md) · [Qwen 交接恢复](../runs/post_recall/open-judge-selection-20260911/README.md) | 审查报告、脚本与工程检查证据进 Git，写作相关编译记录和原始链接候选清单仅本地保存；被研究报告引用的原始会话在实验 `handoff-source/` 本地保留，见 §7 |
 | 运行环境与工具缓存 | `.venv/`、`__pycache__/`；工具按需生成 `.pytest_cache/`、`.ruff_cache/`、`.import_linter_cache/` | 后三类已清理；虚拟环境及 Python 字节码保留，虚拟环境含单独安装的生产依赖 |

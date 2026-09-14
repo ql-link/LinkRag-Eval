@@ -1,9 +1,5 @@
-# 论文全文与写作目录
+# 本地论文与参考资料
 
-本目录根层的参考文献 PDF 仅用于本地科研复核，不进入 Git 版本库，也不随公开 PR 分发。
+本目录用于本地保存参考文献全文和未公开的论文写作材料。除本说明外，目录内容不纳入公开 Git 提交或 PR；稿件正文、PDF、稿件参考文献、作者信息、写作说明及审查记录均仅在本地管理。
 
-可核验的题名、DOI、证据边界和本地文件名映射统一维护在
-[`robust-fusion-literature.md`](../plans/robust-fusion-literature.md)。需要复核全文时，研究成员应按 DOI
-从有权访问的正式来源自行获取，并使用文献地图中约定的文件名放入本目录。
-
-本项目的论文工作稿位于 [`manuscript/`](manuscript/README.md)，唯一 PDF 为 [`manuscript/paper.pdf`](manuscript/paper.pdf)。后续在同一份源码上修改并覆盖生成该 PDF；LaTeX、BibTeX、PDF、编译入口和写作说明均纳入 Git，历史版本通过 Git 追溯。编译辅助文件保留在本地 `manuscript/build/`。当前工作稿包含六页 short paper 的引言、设置、方法与列表诊断。
+公开的文献元数据、证据边界和阅读记录见[文献地图](../plans/robust-fusion-literature.md)。参考文献全文应从有权访问的正式来源自行获取。

@@ -154,17 +154,12 @@ runs/
 !/runs/post_recall/judge-cost-curve-20260910/*.csv
 !/runs/post_recall/judge-cost-curve-20260910/*.svg
 reports/*.html
+# 论文与写作材料只在本地管理，仅公开通用存放说明。
 /docs/papers/*
 !/docs/papers/README.md
-!/docs/papers/manuscript/
-/docs/papers/manuscript/*
-!/docs/papers/manuscript/*.tex
-!/docs/papers/manuscript/*.bib
-!/docs/papers/manuscript/README.md
-!/docs/papers/manuscript/paragraph-review-20260912.md
-# 自撰论文只维护一份 PDF，与源码一起纳入 Git。
-!/docs/papers/manuscript/paper.pdf
-!/docs/papers/manuscript/Makefile
+# 写作相关的审查原件仅在本地保留。
+/docs/audits/master-20260913/evidence/latex-build.log
+/docs/audits/master-20260913/evidence/links.json
 /.agents/
 # 本地科研 skills 分别服务 Codex 与 Claude；助手配置不随仓库发布。
 /.claude/

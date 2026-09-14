@@ -249,38 +249,29 @@ class SQLiteBm25Store:
             return []
         where_doc = "AND doc_id = ?" if doc_id is not None else ""
         params: list[object] = [
-            query,
             self.coarse_weight,
             self.fine_weight,
+            query,
             dataset_id,
         ]
         if doc_id is not None:
             params.append(doc_id)
         params.append(top_k)
+        # FTS5 权重按全部列位置对应；前五列是 UNINDEXED 元数据，正文在第六、七列。
         sql = f"""
             SELECT
                 chunk_id,
                 doc_id,
-                -bm25(bm25_fts, ?, ?) AS score
+                -bm25(bm25_fts, 0, 0, 0, 0, 0, ?, ?) AS score
             FROM bm25_fts
             WHERE bm25_fts MATCH ?
               AND dataset_id = ?
               {where_doc}
-            ORDER BY bm25(bm25_fts, {self.coarse_weight:g}, {self.fine_weight:g}) ASC
+            ORDER BY score DESC
             LIMIT ?
         """
-        # MATCH 参数必须紧跟 FROM 表达式;为了保持 SQL 可读,这里按最终 SQL 顺序重排。
-        ordered_params: list[object] = [
-            self.coarse_weight,
-            self.fine_weight,
-            query,
-            dataset_id,
-        ]
-        if doc_id is not None:
-            ordered_params.append(doc_id)
-        ordered_params.append(top_k)
         with self._connect() as con:
-            rows = con.execute(sql, ordered_params).fetchall()
+            rows = con.execute(sql, params).fetchall()
         return [
             SQLiteBm25Hit(chunk_id=str(chunk_id), doc_id=int(row_doc_id), score=float(score))
             for chunk_id, row_doc_id, score in rows

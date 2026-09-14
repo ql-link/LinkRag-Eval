@@ -76,6 +76,50 @@ async def test_sqlite_bm25_upsert_and_search(tmp_path) -> None:
     assert [h.chunk_id for h in doc_hits] == ["c1"]
 
 
+@pytest.mark.parametrize(
+    "coarse_weight, fine_weight, first",
+    [(100.0, 0.0, "coarse"), (0.0, 100.0, "fine"),
+     (2.0, 1.0, "coarse"), (0.25, 0.75, "fine"),
+     (0.99999999, 1.0, "fine")],
+)
+async def test_body_column_weights_control_scores_and_topk(
+    tmp_path, coarse_weight, fine_weight, first
+) -> None:
+    path = tmp_path / "bm25.sqlite3"
+    store = SQLiteBm25Store(path, coarse_weight=coarse_weight, fine_weight=fine_weight)
+    # 相同长度、相同词项，仅所在正文列不同；先插 coarse，避免同分顺序掩盖 fine 权重。
+    await store.upsert_chunks([
+        replace(_point("coarse", ""), tokens=Bm25Tokens(coarse="needle", fine="filler")),
+        replace(_point("fine", ""), tokens=Bm25Tokens(coarse="filler", fine="needle")),
+    ])
+    request = SimpleNamespace(dataset_id=990101, doc_id=None, tokens=["needle"], top_k=2)
+    hits = await store.recall_topk_chunks(request)
+    assert [hit.chunk_id for hit in hits] == [first, "fine" if first == "coarse" else "coarse"]
+    assert hits[0].score > hits[1].score >= 0
+    if min(coarse_weight, fine_weight) == 0:
+        assert hits[1].score == 0
+
+    # 排序与返回分数必须使用同样的权重，尤其不能在 ORDER BY 中截短浮点精度。
+    request.top_k = 1
+    assert await store.recall_topk_chunks(request) == hits[:1]
+
+
+async def test_default_body_weights_change_scores_on_an_existing_local_token_index(tmp_path) -> None:
+    path = tmp_path / "bm25.sqlite3"
+    historical_weights = SQLiteBm25Store(path, coarse_weight=1.0, fine_weight=1.0)
+    await historical_weights.upsert_chunks([_point("c1", "needle")])
+    request = SimpleNamespace(dataset_id=990101, doc_id=None, tokens=["needle"], top_k=1)
+    historical_hit, = await historical_weights.recall_topk_chunks(request)
+
+    # 本地分词的 coarse/fine 内容相同；默认 2/1 仍应改变分数，无需重建索引。
+    default_hit, = await SQLiteBm25Store(path).recall_topk_chunks(request)
+    assert default_hit.chunk_id == historical_hit.chunk_id
+    assert default_hit.score > historical_hit.score > 0
+    with sqlite3.connect(path) as con:
+        assert con.execute("SELECT coarse, fine FROM bm25_fts").fetchall() == [("needle", "needle")]
+        assert con.execute("SELECT version FROM bm25_meta").fetchall() == [(2,)]
+
+
 async def test_sqlite_bm25_upsert_replaces_existing(tmp_path) -> None:
     store = SQLiteBm25Store(tmp_path / "bm25.sqlite3")
     point = SQLiteBm25Point(
@@ -218,10 +262,12 @@ async def test_v1_upgrade_preserves_rows_and_scores_then_updates_by_id(tmp_path)
              (15, "c1", "old", "old"), (23, "c2", "shared", "shared")],
         )
         before = con.execute("SELECT rowid, * FROM bm25_fts ORDER BY rowid").fetchall()
+        # 按当前正文列权重比较迁移前后；schema 升级只补 ID 映射，不改变评分。
         scored_before = con.execute(
-            "SELECT chunk_id, doc_id, -bm25(bm25_fts, 2, 1) FROM bm25_fts "
+            "SELECT chunk_id, doc_id, -bm25(bm25_fts, 0, 0, 0, 0, 0, 2, 1) AS score "
+            "FROM bm25_fts "
             "WHERE bm25_fts MATCH 'shared' AND dataset_id = 990101 "
-            "ORDER BY bm25(bm25_fts, 2, 1) ASC"
+            "ORDER BY score DESC"
         ).fetchall()
 
     store = SQLiteBm25Store(path)

@@ -6,6 +6,24 @@
 
 主口径 Qwen K20 严格成对正确 2,119/2,736＝77.45%，固定融合 1,431/2,736＝52.30%，BGE 同主排序 1,909/2,736＝69.77%。Qwen 对融合差值 25.15 个百分点，来源组 95% 区间 [23.54, 26.78]；BGE 的 L1 严格正确率和 L2 指定优选段 Top3 更高，均完整报告。原 #23 成员 Test 聚合仍在 [nevir-test-final-20260911](../nevir-test-final-20260911/README.md)，本实验不覆盖或复用其评分。下方离线准备、原运行、受阻与续行段落保留各阶段的执行事实。
 
+<a id="qwen-decision-decomposition"></a>
+
+## 2026-09-13：Qwen 判断与融合破同分的离线分解
+
+补充问题、表格与机制解释统一见[原 Test 报告 §3.1](../../../docs/reports/nevir_official_test_2026_09_12.md#qwen-decision-decomposition)。基于已保存的实际 L2 输出、融合分、官方监督和逐方向评价重建主口径 2,736 个方向；不再次执行推理、训练或召回。2,119 个正确结果分为 Qwen 异分决定 1,667、Qwen 同分后融合决定 359、窗口／窗外／回退 93。相对融合的 753 个纠正、65 个改坏全部发生于异分组。
+
+新入口为 [decompose_qwen.py](decompose_qwen.py)，轻量产物为 [qwen-decision-decomposition.json](qwen-decision-decomposition.json)，包含六分支、0–4 等级分布和 L1／L2 连接统计，不导出单题文本。脚本以 `a6e2cc7019c9204bb0ccf7ac64051c41afa81342` 加本地新分析脚本执行，原配置、评分和评价实现不变。首次成功读取与核验 **0.406 秒**，不含写盘或审阅；模型请求为 0。首次使用系统 Python 3.9 在导入阶段失败，未读数据，随后使用已有项目 Python 3.11 成功。
+
+在项目根目录首次执行的命令如下；输出已存在时入口拒绝覆盖。复核使用 `--check`，只重新读取本地原件并比对聚合，不写入任何原结果。
+
+```bash
+.venv/bin/python runs/post_recall/nevir-test-main-20260911/decompose_qwen.py
+.venv/bin/python runs/post_recall/nevir-test-main-20260911/decompose_qwen.py --check
+.venv/bin/python -m pytest tests/unit/test_qwen_decision_decomposition.py -q
+```
+
+重建与保存关系 2,736/2,736 一致，独立数值分解和同分等级复核一致；20 项合成测试与 Ruff 通过。完整原件仍保留在本机原目录，Git 只纳入分析脚本和不含逐题数据的聚合，不把忽略文件判为缺失。
+
 ## 输入与固定方案
 
 输入来自 [#19 已验收快照](../nevir-test-candidates-20260910/README.md)，包含 2,766 查询、1,383 对。主评价采用官方标签可用、两段共同覆盖且无结构冲突的 **2,736 查询／1,363 完整配对／699 来源组**；另报含结构冲突的 2,738 查询敏感性结果。跨划分 4 个完全相同段落保留。成员已有 E0／融合／N=8 Test 聚合已曝光，不能把这次准备称为从未曝光的完整 Test；此前没有 Qwen Test 输出。

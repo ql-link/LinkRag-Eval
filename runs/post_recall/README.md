@@ -16,7 +16,8 @@
 | **固定配置确认复验** | [open-judge-confirmation-20260911](open-judge-confirmation-20260911/README.md) | #16：已曝光确认上的单次请求复现，保留原 N11 并列对照；非新独立 Test | 否 |
 | **当前成本分析** | [judge-cost-curve-20260910](judge-cost-curve-20260910/README.md)、[judge-cost-curve-qwen-20260911](judge-cost-curve-qwen-20260911/README.md) | N13／#17：GPT 一期与 Qwen 二期缓存曲线，分别保留触发规则的负／正结果及复验产物 | 否 |
 | **已核验的列表诊断与训练扩展** | [list-collapse-20260910](list-collapse-20260910/README.md) | #23：四排序器及背景 N=8 开发／确认复验、训练模型；默认关闭 | 否 |
-| **成员交付的 Test 聚合** | [nevir-test-final-20260911](nevir-test-final-20260911/README.md) | #23 Test 最终聚合及原冻结记录；输入后续补齐，仍缺逐题模型分数且未本地重评 | 否 |
+| **成员交付的 Test 聚合** | [nevir-test-final-20260911](nevir-test-final-20260911/README.md) | #23 Test 最终聚合及原冻结记录；输入后续补齐，成员原逐题分数／执行日志仍缺，后续本地核验见 #20／#49 | 否 |
+| **固定 N=8 Test 本地重放** | [n8-test-replay-20260914](n8-test-replay-20260914/README.md) | #49：已恢复模型在 #19 快照上重放，完整聚合与成员结果一致；保存本地分数和独立核验，不追认原执行时间线 | 否 |
 | **已验收的 Test 候选** | [nevir-test-candidates-20260910](nevir-test-candidates-20260910/README.md) | #23 原快照、SQLite 和编码／采集日志补交；#19 输入及覆盖验收，不含新模型评分 | 否 |
 | **正式 Test 主线** | [nevir-test-main-20260911](nevir-test-main-20260911/README.md) | #20 固定 E0、Qwen K20 与 BGE 已完成；完整回收、主／敏感性区间、成本和 #40 中断恢复；GPU 已关机 | 否 |
 | **小样本边界探针** | [ood-probe-20260910](ood-probe-20260910/README.md) | N10／#24：英文 6 查询与中文 12 对，原模型评分、中文完成复核表及离线复算；只作单段判断能力旁证 | 否 |

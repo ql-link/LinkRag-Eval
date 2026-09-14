@@ -306,3 +306,13 @@ venv/
 
 !/runs/post_recall/ood-probe-20260910/review-sheet-completed.md
 !/runs/post_recall/ood-probe-20260910/review-validation.json
+
+# #49 fixed N=8 Test replay: code and aggregates only; per-query scores/logs stay local.
+!/runs/post_recall/n8-test-replay-20260914/
+/runs/post_recall/n8-test-replay-20260914/*
+!/runs/post_recall/n8-test-replay-20260914/replay.py
+!/runs/post_recall/n8-test-replay-20260914/verify.py
+!/runs/post_recall/n8-test-replay-20260914/README.md
+!/runs/post_recall/n8-test-replay-20260914/results.json
+!/runs/post_recall/n8-test-replay-20260914/run.json
+!/runs/post_recall/n8-test-replay-20260914/verification.json

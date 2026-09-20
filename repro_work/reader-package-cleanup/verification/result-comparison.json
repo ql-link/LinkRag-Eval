@@ -1,0 +1,50 @@
+[
+  {
+    "file": "table1-populations.csv",
+    "original_sha256": "c03c8f3beec84c0e29ea76745963d74a0a2bd016e4e0a0900003e017d052aeee",
+    "candidate_sha256": "c03c8f3beec84c0e29ea76745963d74a0a2bd016e4e0a0900003e017d052aeee",
+    "byte_identical": true
+  },
+  {
+    "file": "table2-main.csv",
+    "original_sha256": "02ee325299f2465fc930d14345cb5e76a3b69d28501a3713811b80f622d0f465",
+    "candidate_sha256": "02ee325299f2465fc930d14345cb5e76a3b69d28501a3713811b80f622d0f465",
+    "byte_identical": true
+  },
+  {
+    "file": "table3-l1-l2.csv",
+    "original_sha256": "14d0d8adf8e5e98046d8833daac9fe98a3ca076dd0cbd15b8b6c74f5f195d037",
+    "candidate_sha256": "14d0d8adf8e5e98046d8833daac9fe98a3ca076dd0cbd15b8b6c74f5f195d037",
+    "byte_identical": true
+  },
+  {
+    "file": "figure1-preference-position.csv",
+    "original_sha256": "901d735572309fec690a958ee9e0b0113e60a38a8f9c8fdca2bf8f25ea62e239",
+    "candidate_sha256": "901d735572309fec690a958ee9e0b0113e60a38a8f9c8fdca2bf8f25ea62e239",
+    "byte_identical": true
+  },
+  {
+    "file": "figure2-decision-decomposition.csv",
+    "original_sha256": "081ac22d66f314061821806a7c4ea1744792e808b21270bcd83b06faab9a775b",
+    "candidate_sha256": "081ac22d66f314061821806a7c4ea1744792e808b21270bcd83b06faab9a775b",
+    "byte_identical": true
+  },
+  {
+    "file": "auxiliary-tiebreak.csv",
+    "original_sha256": "aaa0d6dde522d8de22c44c3067d252bd7f0b9d901697e57650908b57f282ddfc",
+    "candidate_sha256": "aaa0d6dde522d8de22c44c3067d252bd7f0b9d901697e57650908b57f282ddfc",
+    "byte_identical": true
+  },
+  {
+    "file": "summary.json",
+    "original_sha256": "7d2c8a8b1c72bd3cf89ef6cf66f8b981450144921ac518323ee5a9313eab9c37",
+    "candidate_sha256": "7d2c8a8b1c72bd3cf89ef6cf66f8b981450144921ac518323ee5a9313eab9c37",
+    "byte_identical": true
+  },
+  {
+    "file": "verification.json",
+    "original_sha256": "5134fc7e434fb47f5075438e0874ac54333af075a55c47bafef6b8b53fc4e77a",
+    "candidate_sha256": "5134fc7e434fb47f5075438e0874ac54333af075a55c47bafef6b8b53fc4e77a",
+    "byte_identical": true
+  }
+]

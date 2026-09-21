@@ -12,6 +12,6 @@ test_tie_ids_do_not_create_strict_success (test_reproduction.ReproductionTests.t
 test_window_boundary_is_a_key_and_tail_is_unchanged (test_reproduction.ReproductionTests.test_window_boundary_is_a_key_and_tail_is_unchanged) ... ok
 
 ----------------------------------------------------------------------
-Ran 10 tests in 0.510s
+Ran 10 tests in 0.522s
 
 OK

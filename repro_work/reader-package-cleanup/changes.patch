@@ -1,6 +1,30 @@
 --- original/README.md
 +++ candidate/README.md
-@@ -55,7 +55,6 @@
+@@ -1,7 +1,7 @@
+ # NevIR 固定候选池复现包（issue #26）
+ 
+ 本目录准备可独立分发的研究产物，**不含论文正文、TeX、PDF、参考文献库或作者信息**。
+-完整分发包是 `linkrag-nevir-reproduction-v1.zip`；解压得到
++完整分发包是 `linkrag-nevir-reproduction.zip`；解压得到
+ `linkrag-nevir-reproduction/`。本说明随包一起分发。
+ 
+ ## 1. 可以复现什么
+@@ -32,7 +32,7 @@
+ git clone https://github.com/ql-link/LinkRag-Eval.git
+ cd LinkRag-Eval
+ # 将单独取得的复现包放在当前目录；它不是论文或仓库运行目录的备份。
+-unzip linkrag-nevir-reproduction-v1.zip
++unzip linkrag-nevir-reproduction.zip
+ cd linkrag-nevir-reproduction
+ python3 -m venv .venv
+ .venv/bin/python -m pip install -r requirements.txt
+@@ -50,12 +50,11 @@
+ ```bash
+ .venv/bin/python scripts/build_paper_reproduction.py \
+   --output docs/papers/artifacts/bundle \
+-  --archive docs/papers/artifacts/linkrag-nevir-reproduction-v1.zip
++  --archive docs/papers/artifacts/linkrag-nevir-reproduction.zip
+ ```
  
  构建需要尚未纳入 Git 的研究缓存，以及访问固定 NevIR 数据版本进行公开文本核对。
  **接收者无需重新构建包**。`checksums.json` 服务于传输完整性，不代替科学验证。
@@ -43,7 +67,7 @@
    "LICENSE-NevIR.txt": "1d219a1779942b44c97c031bc3b43ec191e45b36a637ef8a0c81d64bebbe2058",
 -  "README.md": "8a0e801488f06969da86e1250720524103a4127439c56f6367fbc1d285beca3a",
 -  "SELF_CHECK.md": "fdb58d76c32d0a3daacc758e8d4db3b388c45248fd50fa0b53a76fc8845221ef",
-+  "README.md": "084dbae45debc537223b05313fb461564d9e6ae744d779f2edb9f210472181fd",
++  "README.md": "1ef46ac66c44b71f84f05409dccbd6d7414fe359184941eda31af4f2594d5e26",
 +  "SELF_CHECK.md": "03e541681be2d900364a4d4f2b5fa91997474b788febab233a8ea1d7287a44dd",
    "config.json": "ecb3e8a2e63a00b78af0816ae534a21392f7ab6c2e4a097b28c83aae93bbf23c",
    "core.py": "14416b33c4d71cd590074c6955cc728d13af2d58885d10f7bbee9414386cd420",

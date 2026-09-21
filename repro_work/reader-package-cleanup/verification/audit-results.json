@@ -1,8 +1,8 @@
 {
   "input_zip_sha256": "d1ac1a19a29fb302fd7901a5853a5c8179ee17f21bb32d0f86cb9e38b46b6332",
   "input_zip_bytes": 40912182,
-  "candidate_zip_sha256": "9597f5b8eb4e1669d83baeb5d5f72e37df0731a510cef9b93839897454a32630",
-  "candidate_zip_bytes": 40911998,
+  "candidate_zip_sha256": "06f6a7ee7360ad61943161f922ea7f4db2b5566d05da749dca1632065ff552dc",
+  "candidate_zip_bytes": 40911995,
   "zip_members": 39,
   "checksummed_files": 38,
   "modified_files": [

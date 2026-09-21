@@ -1,10 +1,12 @@
 # 复现包文档清理候选
 
-本目录提交针对正式复现附件的可应用补丁和核验证据。清理两份说明文件中的五处内部流程文字，保留研究来源及验证事实。原包共 39 个文件；仅 `README.md`、`SELF_CHECK.md` 和 `checksums.json` 改变，其余 36 个文件逐字节不变。
+本目录提交针对正式复现附件的可应用补丁和核验证据。清理两份说明文件中的五处内部流程文字，并统一包内 README 的三处归档文件名，保留研究来源及验证事实。原包共 39 个文件；仅 `README.md`、`SELF_CHECK.md` 和 `checksums.json` 改变，其余 36 个文件逐字节不变。
 
 ## 范围
 
-[changes.patch](changes.patch) 删除 `Origin Skill`、`Origin Mode`、旧任务的 Git/发布操作说明，并将“按 ARS 清单”改为不依赖内部流程名称的统计检查表述。保留验证日期、范围、版本、历史 8 项测试结果、全部实际命令、模型与工具、提示词、参数、数据来源、许可及归属。
+[changes.patch](changes.patch) 删除 `Origin Skill`、`Origin Mode`、旧任务的 Git/发布操作说明，并将“按 ARS 清单”改为不依赖内部流程名称的统计检查表述。保留验证日期、范围、版本、历史 8 项测试结果、验证命令的语义、模型与工具、提示词、参数、数据来源、许可及归属。
+
+包内 README 的分发包名称、`unzip` 命令和维护者 `--archive` 路径统一使用正式附件名 `linkrag-nevir-reproduction.zip`，避免下载后照说明执行却找不到文件。解压目录仍为 `linkrag-nevir-reproduction/`。
 
 `manifest.json` 的历史 `publication` 字段原样保留；它属于本轮受保护的结构化来源记录，不代表当前 Release 的发布状态。其他科学文件、可执行代码、数据、评分、配置和 `expected/` 全部原样保留。没有把自动检查改写成人工审核或第三方认证。
 
@@ -14,8 +16,8 @@
 
 | 项目 | 原包 | 本次验收的候选包 |
 | --- | --- | --- |
-| 字节数 | 40,912,182 | 40,911,998 |
-| SHA256 | `d1ac1a19a29fb302fd7901a5853a5c8179ee17f21bb32d0f86cb9e38b46b6332` | `9597f5b8eb4e1669d83baeb5d5f72e37df0731a510cef9b93839897454a32630` |
+| 字节数 | 40,912,182 | 40,911,995 |
+| SHA256 | `d1ac1a19a29fb302fd7901a5853a5c8179ee17f21bb32d0f86cb9e38b46b6332` | `06f6a7ee7360ad61943161f922ea7f4db2b5566d05da749dca1632065ff552dc` |
 
 候选 ZIP 独立保留，不纳入 Git。本 PR 只提交补丁和证据；合并不会发布或替换 Release 附件。
 
@@ -34,7 +36,7 @@ git apply /path/to/LinkRag-Eval/repro_work/reader-package-cleanup/changes.patch
 
 ## 已执行验证（2026-09-21）
 
-在新建的独立虚拟环境中，仅安装未修改 requirements 中的 NumPy；实际为 macOS arm64、Python 3.11.15、NumPy 2.4.6。原包和从候选 ZIP 新解压的包分别运行原有单元测试及离线缓存复算，输出置于包外。下列命令用占位符表达路径，不是改写后的原始日志：
+使用同日新建并验证的独立虚拟环境，仅安装未修改 requirements 中的 NumPy；实际为 macOS arm64、Python 3.11.15、NumPy 2.4.6。原包哈希保持不变，沿用同日已执行的原包测试及复算基线；文件名修正后的候选 ZIP 重新解压，并再次执行原有单元测试及离线缓存复算，输出置于包外。下列命令用占位符表达路径，不是改写后的原始日志：
 
 ```bash
 <venv>/bin/python -B -m unittest -v test_reproduction

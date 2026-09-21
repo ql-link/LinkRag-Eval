@@ -1,0 +1,1 @@
+{"status": "VERIFIED_CACHE_REPLAY", "compared_scalar_fields": 96572, "files_verified": 38, "integer_comparison": "exact", "float_absolute_tolerance": 1e-12, "python": "3.11.15", "numpy": "2.4.6", "inference_executed_by_this_command": false, "scope": "Three tables, two Test figure data sets, list-diagnostic controls; not timing replay"}

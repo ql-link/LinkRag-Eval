@@ -1,0 +1,74 @@
+--- original/README.md
++++ candidate/README.md
+@@ -1,7 +1,7 @@
+ # NevIR 固定候选池复现包（issue #26）
+ 
+ 本目录准备可独立分发的研究产物，**不含论文正文、TeX、PDF、参考文献库或作者信息**。
+-完整分发包是 `linkrag-nevir-reproduction-v1.zip`；解压得到
++完整分发包是 `linkrag-nevir-reproduction.zip`；解压得到
+ `linkrag-nevir-reproduction/`。本说明随包一起分发。
+ 
+ ## 1. 可以复现什么
+@@ -32,7 +32,7 @@
+ git clone https://github.com/ql-link/LinkRag-Eval.git
+ cd LinkRag-Eval
+ # 将单独取得的复现包放在当前目录；它不是论文或仓库运行目录的备份。
+-unzip linkrag-nevir-reproduction-v1.zip
++unzip linkrag-nevir-reproduction.zip
+ cd linkrag-nevir-reproduction
+ python3 -m venv .venv
+ .venv/bin/python -m pip install -r requirements.txt
+@@ -50,12 +50,11 @@
+ ```bash
+ .venv/bin/python scripts/build_paper_reproduction.py \
+   --output docs/papers/artifacts/bundle \
+-  --archive docs/papers/artifacts/linkrag-nevir-reproduction-v1.zip
++  --archive docs/papers/artifacts/linkrag-nevir-reproduction.zip
+ ```
+ 
+ 构建需要尚未纳入 Git 的研究缓存，以及访问固定 NevIR 数据版本进行公开文本核对。
+ **接收者无需重新构建包**。`checksums.json` 服务于传输完整性，不代替科学验证。
+-本任务只准备本地产物，不自动上传、提交 Git、发布 release 或关闭 issue。
+ 
+ ## 3. 打包清单与数据来源
+ 
+--- original/SELF_CHECK.md
++++ candidate/SELF_CHECK.md
+@@ -2,8 +2,6 @@
+ 
+ ## Material Passport
+ 
+-- Origin Skill: academic-research-suite / experiment-agent
+-- Origin Mode: validate
+ - Origin Date: 2026-09-15
+ - Verification Status: VERIFIED（仅缓存重建与接口测试）
+ - Version Label: issue26-reproduction-v1
+@@ -35,7 +33,6 @@
+ | Ruff | 打包脚本及手写重建、推理、测试入口全部通过 |
+ | 文本出处核对 | 全部导出 Test 查询/正文与固定 NevIR 公开版本的精确文本集合一致，判断输入文本也与快照一致 |
+ | 导出文件检查 | 采用字段白名单；未发现稿件 TeX/PDF/bib、数据库、权重、私钥、服务器地址或原工作区绝对路径 |
+-| Git/公开操作 | 未提交、未推送、未建 PR、未上传分发包、未关闭 issue；保留原有工作区修改 |
+ 
+ 主表关键计数再次核对：
+ 
+@@ -61,7 +58,7 @@
+ 
+ ## 统计表达检查
+ 
+-按 ARS 清单检查了 11/11 类问题；以下结论限于本包的评价和说明，
++本节检查了以下 11 类统计表达问题；以下结论限于本包的评价和说明，
+ 不是对完整研究进行独立方法学认证。
+ 
+ | 类型 | 本包的处理或保留限制 |
+--- original/checksums.json
++++ candidate/checksums.json
+@@ -1,7 +1,7 @@
+ {
+   "LICENSE-NevIR.txt": "1d219a1779942b44c97c031bc3b43ec191e45b36a637ef8a0c81d64bebbe2058",
+-  "README.md": "8a0e801488f06969da86e1250720524103a4127439c56f6367fbc1d285beca3a",
+-  "SELF_CHECK.md": "fdb58d76c32d0a3daacc758e8d4db3b388c45248fd50fa0b53a76fc8845221ef",
++  "README.md": "1ef46ac66c44b71f84f05409dccbd6d7414fe359184941eda31af4f2594d5e26",
++  "SELF_CHECK.md": "03e541681be2d900364a4d4f2b5fa91997474b788febab233a8ea1d7287a44dd",
+   "config.json": "ecb3e8a2e63a00b78af0816ae534a21392f7ab6c2e4a097b28c83aae93bbf23c",
+   "core.py": "14416b33c4d71cd590074c6955cc728d13af2d58885d10f7bbee9414386cd420",
+   "data/confirmation/E0-scores.jsonl.gz": "c65d6ec8f95fcbceb78fbe3e0c98a1a3ed1e05ebc41015c11648bfea0c6bc411",

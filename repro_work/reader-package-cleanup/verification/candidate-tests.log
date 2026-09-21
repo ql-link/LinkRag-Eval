@@ -1,0 +1,17 @@
+test_any_missing_window_item_falls_back_entire_query (test_reproduction.ReproductionTests.test_any_missing_window_item_falls_back_entire_query) ... ok
+test_auxiliary_tiebreak_csv_exports_fusion_then_e0 (test_reproduction.ReproductionTests.test_auxiliary_tiebreak_csv_exports_fusion_then_e0) ... ok
+test_cache_key_contains_generation_and_revision (test_reproduction.ReproductionTests.test_cache_key_contains_generation_and_revision) ... ok
+test_figure1_csv_exports_all_five_rankers_in_main_rows_order (test_reproduction.ReproductionTests.test_figure1_csv_exports_all_five_rankers_in_main_rows_order) ... ok
+test_generation_has_no_labels_or_request_seed (test_reproduction.ReproductionTests.test_generation_has_no_labels_or_request_seed) ... ok
+test_incomplete_pairs_and_unavailable_stay_distinct (test_reproduction.ReproductionTests.test_incomplete_pairs_and_unavailable_stay_distinct) ... ok
+test_missing_duplicate_and_invalid_scores_fail_closed (test_reproduction.ReproductionTests.test_missing_duplicate_and_invalid_scores_fail_closed) ... ok
+test_single_attempt_http_failure_and_text_dedup (test_reproduction.ReproductionTests.test_single_attempt_http_failure_and_text_dedup) ... {"arm": "qwen", "level": "l1", "completed": 2, "total": 2}
+{"arm": "qwen", "level": "l2", "completed": 2, "total": 2}
+ok
+test_tie_ids_do_not_create_strict_success (test_reproduction.ReproductionTests.test_tie_ids_do_not_create_strict_success) ... ok
+test_window_boundary_is_a_key_and_tail_is_unchanged (test_reproduction.ReproductionTests.test_window_boundary_is_a_key_and_tail_is_unchanged) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.522s
+
+OK

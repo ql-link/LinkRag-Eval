@@ -122,3 +122,11 @@ described in
 No human tasks are active; [human_tasks/README.md](human_tasks/README.md) only
 documents historical entry points. Steps and thresholds in historical protocols
 do not automatically become prerequisites for current research.
+
+## Also from our team
+
+[DrawOffer](https://www.drawoffer.com) is an AI job-search tool built by the same team: AI resume editing, tailoring to job descriptions, mock interviews and application tracking. It uses LinkRag for document retrieval.
+
+## License
+
+This project is released under the [MIT License](LICENSE). Bundled third-party code that ships its own license file is covered by that license.

@@ -93,3 +93,11 @@ Git 忽略证据的备份位置与恢复方式见
 [恢复说明](docs/plans/runtime-simplification-2026-09-06.md#recovery)。
 当前没有人工作业，[human_tasks/README.md](human_tasks/README.md) 仅说明历史入口；
 历史协议中的步骤与门槛不自动成为当前研究的前置条件。
+
+## 团队的其他产品
+
+[DrawOffer 职绘](https://www.drawoffer.com) 是同一团队开发的 AI 求职工具：AI 改简历、按岗位 JD 调整简历、AI 模拟面试与求职进度管理。LinkRag 为它提供资料检索。
+
+## 许可证
+
+本项目基于 [MIT License](LICENSE) 开源。目录中自带许可证文件的第三方代码以各自的许可证为准。
